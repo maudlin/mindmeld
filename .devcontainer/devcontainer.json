@@ -7,8 +7,11 @@
   "customizations": {
     "vscode": {
       "extensions": [
+        "ms-vscode-remote.remote-containers",
         "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-typescript-tslint-plugin",
+        "ms-azuretools.vscode-docker"
       ],
       "settings": {
         "terminal.integrated.shell.linux": "/bin/bash"

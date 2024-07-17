@@ -10,6 +10,9 @@ WORKDIR /workspace
 COPY package*.json ./
 RUN npm install
 
+# Install ESLint and Prettier globally (optional)
+RUN npm install -g eslint prettier
+
 # Copy the rest of the application code
 COPY . .
 
