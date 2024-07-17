@@ -1,0 +1,19 @@
+{
+  "name": "Mindmeld",
+  "dockerFile": "Dockerfile",
+  "context": "..",
+  "appPort": [3000],
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ],
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash"
+      }
+    }
+  },
+  "postCreateCommand": "npm install"
+}
