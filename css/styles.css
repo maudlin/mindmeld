@@ -113,8 +113,26 @@ html {
   user-select: none; /* Prevent text selection */
 }
 
+/* Connection Handle Styles */
+.connection-handle {
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  background-color: #007bff; /* Blue color for handle */
+  border-radius: 50%;
+  cursor: pointer;
+}
+
 /* Ensure note text does not collide with delete button */
 .note-content {
   padding-right: 30px; /* Add padding to avoid text collision with delete button */
   outline: none; /* Remove default outline when focused */
+}
+
+/* Line Styles */
+line.connection-line {
+  pointer-events: none; /* Ensure lines do not interfere with interactions */
 }

@@ -1,7 +1,6 @@
 import { addNote, updateNote, deleteNoteById } from './dataStore.js';
-
-let activeNote = null;
-let shiftX, shiftY;
+import { createConnectionHandle, isConnecting } from './connections.js';
+import { moveNote } from './movement.js';
 
 export function createNoteAtPosition(canvas, event) {
   const note = document.createElement('div');
@@ -21,6 +20,7 @@ export function createNoteAtPosition(canvas, event) {
 
   note.appendChild(deleteBtn);
   note.appendChild(noteContent);
+  createConnectionHandle(note); // Add connection handle
   canvas.appendChild(note);
 
   // Get the dimensions of the note
@@ -46,38 +46,9 @@ export function createNoteAtPosition(canvas, event) {
   addNoteEventListeners(note);
 }
 
-function moveAt(note, pageX, pageY) {
-  note.style.left = pageX - shiftX + 'px';
-  note.style.top = pageY - shiftY + 'px';
-  updateNote(note.id, { left: note.style.left, top: note.style.top });
-}
-
-function onMouseMove(event) {
-  if (activeNote) {
-    moveAt(activeNote, event.pageX, event.pageY);
-  }
-}
-
-function onMouseUp() {
-  if (activeNote) {
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-    activeNote = null;
-  }
-}
-
-export function moveNote(note, event) {
-  shiftX = event.clientX - note.getBoundingClientRect().left;
-  shiftY = event.clientY - note.getBoundingClientRect().top;
-
-  document.addEventListener('mousemove', onMouseMove);
-  document.addEventListener('mouseup', onMouseUp);
-}
-
 export function addNoteEventListeners(note) {
   note.addEventListener('mousedown', (event) => {
-    if (!activeNote) {
-      activeNote = note;
+    if (!isConnecting) {
       moveNote(note, event);
       selectNote(note);
     }
@@ -115,7 +86,3 @@ export function selectNote(note) {
   }
   note.classList.add('selected');
 }
-
-// Ensure the note is dropped on mouse up anywhere in the document
-document.addEventListener('mouseup', onMouseUp);
-document.addEventListener('mousemove', onMouseMove);
