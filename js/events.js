@@ -17,11 +17,16 @@ export function setupCanvasEvents(canvas) {
   canvas.addEventListener(
     'dblclick',
     debounce((event) => {
-      event.preventDefault(); // Prevent default double-click behavior
-      event.stopPropagation(); // Stop propagation of the event
       createNoteAtPosition(canvas, event);
-    }, 200),
-  ); // Increased debounce time to 200ms
+    }, 100),
+  );
+
+  document.addEventListener('click', () => {
+    const selected = document.querySelector('.note.selected');
+    if (selected) {
+      selected.classList.remove('selected');
+    }
+  });
 }
 
 export function setupDocumentEvents() {
