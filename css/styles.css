@@ -1,51 +1,43 @@
-/* Canvas Styles */
 #canvas {
-    width: 100%;
-    height: 100vh;
-    position: relative;
-    background-color: #f9f9f9; /* Neutral background color */
-    margin: 10px;
-    padding: 10px;
-    box-sizing: border-box;
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  background-color: #f9f9f9; /* Neutral background color */
+  margin: 10px;
+  padding: 10px;
+  box-sizing: border-box;
 }
 
-/* Note Styles */
 .note {
-    position: absolute;
-    width: 150px;
-    padding: 10px;
-    background-color: #fff9c4; /* Light yellow background color */
-    border: 1px solid #ccc;
-    border-radius: 8px; /* Rounded corners */
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
-    cursor: move;
-    font-family: Arial, sans-serif; /* Readable font */
-    font-size: 14px; /* Text size */
-    color: #333; /* Text color */
+  position: absolute;
+  width: 150px;
+  padding: 10px;
+  background-color: #fff9c4; /* Light yellow background color */
+  border: 1px solid #ccc;
+  border-radius: 8px; /* Rounded corners */
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+  cursor: move;
+  font-family: Arial, sans-serif; /* Readable font */
+  font-size: 14px; /* Text size */
+  color: #333; /* Text color */
+  user-select: none; /* Disable text selection */
+}
+
+.note[contenteditable] {
+  outline: none;
+  user-select: text; /* Allow text selection when editing */
 }
 
 /* Hover and Focus States */
 .note:hover {
-    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow on hover */
+  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow on hover */
 }
 
-.note:focus, .note[contenteditable="true"] {
-    border: 1px solid #ffeb3b; /* Highlight with a border on focus */
-    background-color: #fff59d; /* Slightly different background on focus */
-    outline: none; /* Remove default outline */
-}
-
-/* Responsive Styles */
-@media (max-width: 600px) {
-    .note {
-        width: 100px; /* Smaller notes on small screens */
-        font-size: 12px; /* Smaller text size */
-    }
-}
-
-@media (min-width: 1200px) {
-    .note {
-        width: 200px; /* Larger notes on large screens */
-        font-size: 16px; /* Larger text size */
-    }
+.note:focus,
+.note[contenteditable='true'] {
+  border: 1px solid #ffeb3b; /* Highlight with a
+  
+border on focus */
+  background-color: #fff59d; /* Slightly different background on focus */
+  outline: none; /* Remove default outline */
 }
