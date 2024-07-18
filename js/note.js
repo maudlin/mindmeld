@@ -1,3 +1,5 @@
+import { addNote, updateNote, deleteNoteById } from './dataStore.js';
+
 let activeNote = null;
 let shiftX, shiftY;
 
@@ -12,7 +14,10 @@ export function createNoteAtPosition(canvas, event) {
   const deleteBtn = document.createElement('button');
   deleteBtn.className = 'delete-btn';
   deleteBtn.innerHTML = 'x';
-  deleteBtn.addEventListener('click', () => note.remove());
+  deleteBtn.addEventListener('click', () => {
+    note.remove();
+    deleteNoteById(note.id);
+  });
 
   note.appendChild(deleteBtn);
   note.appendChild(noteContent);
@@ -26,12 +31,25 @@ export function createNoteAtPosition(canvas, event) {
   note.style.left = `${event.clientX - noteWidth / 2}px`;
   note.style.top = `${event.clientY - noteHeight / 2}px`;
 
+  note.id = `note-${Date.now()}`;
+  addNote({
+    id: note.id,
+    content: '',
+    left: note.style.left,
+    top: note.style.top,
+  });
+
+  noteContent.addEventListener('input', () => {
+    updateNote(note.id, { content: noteContent.innerHTML });
+  });
+
   addNoteEventListeners(note);
 }
 
 function moveAt(note, pageX, pageY) {
   note.style.left = pageX - shiftX + 'px';
   note.style.top = pageY - shiftY + 'px';
+  updateNote(note.id, { left: note.style.left, top: note.style.top });
 }
 
 function onMouseMove(event) {
@@ -58,7 +76,6 @@ export function moveNote(note, event) {
 
 export function addNoteEventListeners(note) {
   note.addEventListener('mousedown', (event) => {
-    // Ensure only one note can be moved at a time
     if (!activeNote) {
       activeNote = note;
       moveNote(note, event);
@@ -86,6 +103,7 @@ export function addNoteEventListeners(note) {
 export function deleteNote() {
   const selected = document.querySelector('.note.selected');
   if (selected) {
+    deleteNoteById(selected.id);
     selected.remove();
   }
 }
