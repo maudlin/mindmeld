@@ -1,12 +1,63 @@
+/* Global Styles */
+body,
+html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  font-family: 'Poppins', sans-serif;
+}
+
+#navbar {
+  width: 100%;
+  height: 40px;
+  background-color: #2f4f4f; /* Dark slate color */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  box-sizing: border-box;
+  color: #d3d3d3; /* Light grey text */
+}
+
+#logo {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+#menu button {
+  background: none;
+  border: none;
+  color: #d3d3d3; /* Light grey text */
+  font-size: 16px;
+  cursor: pointer;
+}
+
+#menu button:hover {
+  text-decoration: underline;
+}
+
 /* Canvas Styles */
 #canvas {
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - 40px);
   position: relative;
   background-color: #f9f9f9; /* Neutral background color */
-  margin: 10px;
+  margin: 0;
   padding: 10px;
   box-sizing: border-box;
+}
+
+#watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 100px;
+  font-weight: 700; /* Heavier bold version */
+  color: rgba(211, 211, 211, 0.15); /* 50% lighter */
+  pointer-events: none; /* Ensure watermark does not interfere with interactions */
+  user-select: none; /* Prevent text selection */
 }
 
 /* Note Styles */
@@ -19,7 +70,7 @@
   border-radius: 8px; /* Rounded corners */
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
   cursor: move;
-  font-family: 'Arial', sans-serif; /* Readable font */
+  font-family: 'Poppins', sans-serif; /* Readable font */
   font-size: 14px; /* Text size */
   font-weight: bold; /* Bold text */
   color: #000; /* Black text color */
@@ -35,9 +86,8 @@
   box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow on hover */
 }
 
-/* Remove default focus outline */
 .note:focus,
-.note[contenteditable='true']:focus {
+.note[contenteditable='true'] {
   outline: none; /* Remove default outline */
 }
 
@@ -60,6 +110,7 @@
   padding: 0;
   line-height: 1;
   box-shadow: 0 0 3px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+  user-select: none; /* Prevent text selection */
 }
 
 /* Ensure note text does not collide with delete button */
