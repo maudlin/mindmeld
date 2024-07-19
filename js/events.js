@@ -1,4 +1,5 @@
 import { createNoteAtPosition, deleteNote } from './note.js';
+import { initializeConnectionDrawing } from './connections.js';
 
 let isDebouncing = false;
 
@@ -18,8 +19,10 @@ export function setupCanvasEvents(canvas) {
     'dblclick',
     debounce((event) => {
       createNoteAtPosition(canvas, event);
-    }, 100),
+    }, 300), // Adjust the delay if needed
   );
+
+  initializeConnectionDrawing(canvas);
 
   document.addEventListener('click', () => {
     const selected = document.querySelector('.note.selected');

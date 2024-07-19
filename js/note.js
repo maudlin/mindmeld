@@ -1,7 +1,10 @@
-let activeNote = null;
-let shiftX, shiftY;
+import { addNote, updateNote, deleteNoteById } from './dataStore.js';
+import { createConnectionHandle } from './connections.js';
+import { moveNote } from './movement.js';
+import { deleteConnectionsByNote } from './connections.js';
 
 export function createNoteAtPosition(canvas, event) {
+  console.log('Creating note at position:', event.clientX, event.clientY);
   const note = document.createElement('div');
   note.className = 'note';
 
@@ -12,10 +15,13 @@ export function createNoteAtPosition(canvas, event) {
   const deleteBtn = document.createElement('button');
   deleteBtn.className = 'delete-btn';
   deleteBtn.innerHTML = 'x';
-  deleteBtn.addEventListener('click', () => note.remove());
+  deleteBtn.addEventListener('click', () => {
+    deleteNoteWithConnections(note);
+  });
 
   note.appendChild(deleteBtn);
   note.appendChild(noteContent);
+  createConnectionHandle(note); // Add connection handle
   canvas.appendChild(note);
 
   // Get the dimensions of the note
@@ -26,41 +32,25 @@ export function createNoteAtPosition(canvas, event) {
   note.style.left = `${event.clientX - noteWidth / 2}px`;
   note.style.top = `${event.clientY - noteHeight / 2}px`;
 
+  note.id = `note-${Date.now()}`;
+  console.log('Created note with id:', note.id);
+  addNote({
+    id: note.id,
+    content: '',
+    left: note.style.left,
+    top: note.style.top,
+  });
+
+  noteContent.addEventListener('input', () => {
+    updateNote(note.id, { content: noteContent.innerHTML });
+  });
+
   addNoteEventListeners(note);
-}
-
-function moveAt(note, pageX, pageY) {
-  note.style.left = pageX - shiftX + 'px';
-  note.style.top = pageY - shiftY + 'px';
-}
-
-function onMouseMove(event) {
-  if (activeNote) {
-    moveAt(activeNote, event.pageX, event.pageY);
-  }
-}
-
-function onMouseUp() {
-  if (activeNote) {
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-    activeNote = null;
-  }
-}
-
-export function moveNote(note, event) {
-  shiftX = event.clientX - note.getBoundingClientRect().left;
-  shiftY = event.clientY - note.getBoundingClientRect().top;
-
-  document.addEventListener('mousemove', onMouseMove);
-  document.addEventListener('mouseup', onMouseUp);
 }
 
 export function addNoteEventListeners(note) {
   note.addEventListener('mousedown', (event) => {
-    // Ensure only one note can be moved at a time
-    if (!activeNote) {
-      activeNote = note;
+    if (!event.target.classList.contains('connection-handle')) {
       moveNote(note, event);
       selectNote(note);
     }
@@ -83,10 +73,16 @@ export function addNoteEventListeners(note) {
   });
 }
 
+export function deleteNoteWithConnections(note) {
+  deleteConnectionsByNote(note);
+  deleteNoteById(note.id);
+  note.remove();
+}
+
 export function deleteNote() {
   const selected = document.querySelector('.note.selected');
   if (selected) {
-    selected.remove();
+    deleteNoteWithConnections(selected);
   }
 }
 
@@ -97,7 +93,3 @@ export function selectNote(note) {
   }
   note.classList.add('selected');
 }
-
-// Ensure the note is dropped on mouse up anywhere in the document
-document.addEventListener('mouseup', onMouseUp);
-document.addEventListener('mousemove', onMouseMove);
