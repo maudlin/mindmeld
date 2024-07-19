@@ -4,25 +4,25 @@ import { updateConnections } from './connections.js';
 let activeNote = null;
 let shiftX, shiftY;
 
-export function moveNote(note, event) {
+export function moveNote(note, event, canvas) {
   activeNote = note;
   shiftX = event.clientX - note.getBoundingClientRect().left;
   shiftY = event.clientY - note.getBoundingClientRect().top;
 
-  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mousemove', (e) => onMouseMove(e, canvas));
   document.addEventListener('mouseup', onMouseUp);
 }
 
-function moveAt(note, pageX, pageY) {
+function moveAt(note, pageX, pageY, canvas) {
   note.style.left = pageX - shiftX + 'px';
   note.style.top = pageY - shiftY + 'px';
   updateNote(note.id, { left: note.style.left, top: note.style.top });
-  updateConnections(note); // Update connection positions
+  updateConnections(note, canvas); // Update connection positions
 }
 
-function onMouseMove(event) {
+function onMouseMove(event, canvas) {
   if (activeNote) {
-    moveAt(activeNote, event.pageX, event.pageY);
+    moveAt(activeNote, event.pageX, event.pageY, canvas);
   }
 }
 
