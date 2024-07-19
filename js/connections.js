@@ -15,7 +15,7 @@ export function createConnectionHandle(note) {
   note.appendChild(handle);
 }
 
-export function updateConnections(note) {
+export function updateConnections(note, canvas) {
   const connections = document.querySelectorAll(
     `line[data-start="${note.id}"], line[data-end="${note.id}"]`,
   );
@@ -59,8 +59,8 @@ export function initializeConnectionDrawing(canvas) {
   let startNote = null;
   let currentLine = null;
 
-  // Ensure a dedicated SVG container for connections is below the notes
   let svgContainer = document.getElementById('svg-container');
+
   if (!svgContainer) {
     svgContainer = document.createElementNS(
       'http://www.w3.org/2000/svg',
@@ -160,8 +160,8 @@ export function initializeConnectionDrawing(canvas) {
 
           currentLine.dataset.start = startNote.id;
           currentLine.dataset.end = endNote.id;
-          updateConnections(startNote);
-          updateConnections(endNote);
+          updateConnections(startNote, canvas);
+          updateConnections(endNote, canvas);
         } else {
           svgContainer.removeChild(line);
         }
