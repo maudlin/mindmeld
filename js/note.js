@@ -1,8 +1,10 @@
 import { addNote, updateNote, deleteNoteById } from './dataStore.js';
-import { createConnectionHandle, isConnecting } from './connections.js';
+import { createConnectionHandle } from './connections.js';
 import { moveNote } from './movement.js';
+import { deleteConnectionsByNote } from './connections.js';
 
 export function createNoteAtPosition(canvas, event) {
+  console.log('Creating note at position:', event.clientX, event.clientY);
   const note = document.createElement('div');
   note.className = 'note';
 
@@ -14,8 +16,7 @@ export function createNoteAtPosition(canvas, event) {
   deleteBtn.className = 'delete-btn';
   deleteBtn.innerHTML = 'x';
   deleteBtn.addEventListener('click', () => {
-    note.remove();
-    deleteNoteById(note.id);
+    deleteNoteWithConnections(note);
   });
 
   note.appendChild(deleteBtn);
@@ -32,6 +33,7 @@ export function createNoteAtPosition(canvas, event) {
   note.style.top = `${event.clientY - noteHeight / 2}px`;
 
   note.id = `note-${Date.now()}`;
+  console.log('Created note with id:', note.id);
   addNote({
     id: note.id,
     content: '',
@@ -48,7 +50,7 @@ export function createNoteAtPosition(canvas, event) {
 
 export function addNoteEventListeners(note) {
   note.addEventListener('mousedown', (event) => {
-    if (!isConnecting) {
+    if (!event.target.classList.contains('connection-handle')) {
       moveNote(note, event);
       selectNote(note);
     }
@@ -71,11 +73,16 @@ export function addNoteEventListeners(note) {
   });
 }
 
+export function deleteNoteWithConnections(note) {
+  deleteConnectionsByNote(note);
+  deleteNoteById(note.id);
+  note.remove();
+}
+
 export function deleteNote() {
   const selected = document.querySelector('.note.selected');
   if (selected) {
-    deleteNoteById(selected.id);
-    selected.remove();
+    deleteNoteWithConnections(selected);
   }
 }
 

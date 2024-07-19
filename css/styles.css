@@ -75,6 +75,11 @@ html {
   font-weight: bold; /* Bold text */
   color: #000; /* Black text color */
   box-sizing: border-box;
+  z-index: 1; /* Ensure notes are above the SVG container */
+}
+
+#svg-container {
+  z-index: 0; /* Ensure SVG container is below the notes */
 }
 
 .note.selected {
