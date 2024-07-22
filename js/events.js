@@ -43,6 +43,7 @@ export function setupCanvasEvents(canvas) {
         // Otherwise, start drawing the selection box
         isDrawingSelectionBox = true;
         isDraggingNote = false;
+        clearSelections();
         startX = event.clientX - canvas.getBoundingClientRect().left;
         startY = event.clientY - canvas.getBoundingClientRect().top;
         selectionBox = document.createElement('div');
@@ -58,6 +59,11 @@ export function setupCanvasEvents(canvas) {
         document.addEventListener('mouseup', onMouseUp);
       }
     }
+  });
+
+  // Disable default right-click menu
+  document.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
   });
 }
 
@@ -119,6 +125,13 @@ function selectNotesWithinBox() {
     } else {
       note.classList.remove('selected');
     }
+  });
+}
+
+function clearSelections() {
+  const selectedNotes = document.querySelectorAll('.note.selected');
+  selectedNotes.forEach((note) => {
+    note.classList.remove('selected');
   });
 }
 

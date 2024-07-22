@@ -50,15 +50,13 @@ export function createNoteAtPosition(canvas, event) {
 export function addNoteEventListeners(note, canvas) {
   note.addEventListener('mousedown', (event) => {
     if (!event.target.classList.contains('connection-handle')) {
-      moveNoteStart(note, event, canvas);
       if (!event.shiftKey) {
         if (!note.classList.contains('selected')) {
           clearSelections();
           selectNote(note);
         }
-      } else {
-        toggleNoteSelection(note);
       }
+      moveNoteStart(note, event, canvas);
     }
   });
 
@@ -74,11 +72,13 @@ export function addNoteEventListeners(note, canvas) {
   });
 
   note.addEventListener('click', (event) => {
-    if (!event.shiftKey && !note.classList.contains('selected')) {
-      clearSelections();
-      selectNote(note);
-    } else if (event.shiftKey) {
+    if (event.shiftKey) {
       toggleNoteSelection(note);
+    } else {
+      if (!note.classList.contains('selected')) {
+        clearSelections();
+        selectNote(note);
+      }
     }
     event.stopPropagation();
   });

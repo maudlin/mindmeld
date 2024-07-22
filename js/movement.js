@@ -4,12 +4,24 @@ import { updateConnections } from './connections.js';
 let activeNote = null;
 let shiftX, shiftY;
 let selectedNotes = [];
+let offsets = [];
 
 export function moveNoteStart(note, event) {
   activeNote = note;
   selectedNotes = Array.from(document.querySelectorAll('.note.selected'));
   shiftX = event.clientX - note.getBoundingClientRect().left;
   shiftY = event.clientY - note.getBoundingClientRect().top;
+
+  // Calculate offsets for each selected note relative to the active note
+  offsets = selectedNotes.map((selectedNote) => ({
+    note: selectedNote,
+    offsetX:
+      selectedNote.getBoundingClientRect().left -
+      note.getBoundingClientRect().left,
+    offsetY:
+      selectedNote.getBoundingClientRect().top -
+      note.getBoundingClientRect().top,
+  }));
 
   document.addEventListener('mousemove', onMouseMove);
   document.addEventListener('mouseup', onMouseUp);
@@ -25,22 +37,16 @@ function moveAt(pageX, pageY, canvas) {
   const offsetX = pageX - shiftX;
   const offsetY = pageY - shiftY;
 
-  selectedNotes.forEach((selectedNote) => {
-    const noteShiftX =
-      offsetX +
-      (selectedNote.getBoundingClientRect().left -
-        activeNote.getBoundingClientRect().left);
-    const noteShiftY =
-      offsetY +
-      (selectedNote.getBoundingClientRect().top -
-        activeNote.getBoundingClientRect().top);
-    selectedNote.style.left = `${noteShiftX}px`;
-    selectedNote.style.top = `${noteShiftY}px`;
-    updateNote(selectedNote.id, {
-      left: selectedNote.style.left,
-      top: selectedNote.style.top,
+  offsets.forEach(({ note, offsetX: relativeX, offsetY: relativeY }) => {
+    const noteShiftX = offsetX + relativeX;
+    const noteShiftY = offsetY + relativeY;
+    note.style.left = `${noteShiftX}px`;
+    note.style.top = `${noteShiftY}px`;
+    updateNote(note.id, {
+      left: note.style.left,
+      top: note.style.top,
     });
-    updateConnections(selectedNote, canvas);
+    updateConnections(note, canvas);
   });
 }
 
