@@ -3,34 +3,56 @@ import { updateConnections } from './connections.js';
 
 let activeNote = null;
 let shiftX, shiftY;
+let selectedNotes = [];
 
-export function moveNote(note, event, canvas) {
+export function moveNoteStart(note, event) {
   activeNote = note;
+  selectedNotes = Array.from(document.querySelectorAll('.note.selected'));
   shiftX = event.clientX - note.getBoundingClientRect().left;
   shiftY = event.clientY - note.getBoundingClientRect().top;
 
-  document.addEventListener('mousemove', (e) => onMouseMove(e, canvas));
+  document.addEventListener('mousemove', onMouseMove);
   document.addEventListener('mouseup', onMouseUp);
 }
 
-function moveAt(note, pageX, pageY, canvas) {
-  note.style.left = pageX - shiftX + 'px';
-  note.style.top = pageY - shiftY + 'px';
-  updateNote(note.id, { left: note.style.left, top: note.style.top });
-  updateConnections(note, canvas); // Update connection positions
+export function moveNoteEnd() {
+  activeNote = null;
+  document.removeEventListener('mousemove', onMouseMove);
+  document.removeEventListener('mouseup', onMouseUp);
 }
 
-function onMouseMove(event, canvas) {
+function moveAt(pageX, pageY, canvas) {
+  const offsetX = pageX - shiftX;
+  const offsetY = pageY - shiftY;
+
+  selectedNotes.forEach((selectedNote) => {
+    const noteShiftX =
+      offsetX +
+      (selectedNote.getBoundingClientRect().left -
+        activeNote.getBoundingClientRect().left);
+    const noteShiftY =
+      offsetY +
+      (selectedNote.getBoundingClientRect().top -
+        activeNote.getBoundingClientRect().top);
+    selectedNote.style.left = `${noteShiftX}px`;
+    selectedNote.style.top = `${noteShiftY}px`;
+    updateNote(selectedNote.id, {
+      left: selectedNote.style.left,
+      top: selectedNote.style.top,
+    });
+    updateConnections(selectedNote, canvas);
+  });
+}
+
+function onMouseMove(event) {
   if (activeNote) {
-    moveAt(activeNote, event.pageX, event.pageY, canvas);
+    moveAt(event.pageX, event.pageY, activeNote.closest('#canvas'));
   }
 }
 
 function onMouseUp() {
   if (activeNote) {
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-    activeNote = null;
+    moveNoteEnd();
   }
 }
 

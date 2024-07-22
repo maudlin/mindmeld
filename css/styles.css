@@ -141,3 +141,10 @@ html {
 line.connection-line {
   pointer-events: none; /* Ensure lines do not interfere with interactions */
 }
+
+#selection-box {
+  position: absolute;
+  border: 1px dashed #000;
+  background-color: rgba(0, 0, 255, 0.1);
+  pointer-events: none; /* Ensure selection box does not interfere with interactions */
+}
