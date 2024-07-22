@@ -3,34 +3,62 @@ import { updateConnections } from './connections.js';
 
 let activeNote = null;
 let shiftX, shiftY;
+let selectedNotes = [];
+let offsets = [];
 
-export function moveNote(note, event, canvas) {
+export function moveNoteStart(note, event) {
   activeNote = note;
+  selectedNotes = Array.from(document.querySelectorAll('.note.selected'));
   shiftX = event.clientX - note.getBoundingClientRect().left;
   shiftY = event.clientY - note.getBoundingClientRect().top;
 
-  document.addEventListener('mousemove', (e) => onMouseMove(e, canvas));
+  // Calculate offsets for each selected note relative to the active note
+  offsets = selectedNotes.map((selectedNote) => ({
+    note: selectedNote,
+    offsetX:
+      selectedNote.getBoundingClientRect().left -
+      note.getBoundingClientRect().left,
+    offsetY:
+      selectedNote.getBoundingClientRect().top -
+      note.getBoundingClientRect().top,
+  }));
+
+  document.addEventListener('mousemove', onMouseMove);
   document.addEventListener('mouseup', onMouseUp);
 }
 
-function moveAt(note, pageX, pageY, canvas) {
-  note.style.left = pageX - shiftX + 'px';
-  note.style.top = pageY - shiftY + 'px';
-  updateNote(note.id, { left: note.style.left, top: note.style.top });
-  updateConnections(note, canvas); // Update connection positions
+export function moveNoteEnd() {
+  activeNote = null;
+  document.removeEventListener('mousemove', onMouseMove);
+  document.removeEventListener('mouseup', onMouseUp);
 }
 
-function onMouseMove(event, canvas) {
+function moveAt(pageX, pageY, canvas) {
+  const offsetX = pageX - shiftX;
+  const offsetY = pageY - shiftY;
+
+  offsets.forEach(({ note, offsetX: relativeX, offsetY: relativeY }) => {
+    const noteShiftX = offsetX + relativeX;
+    const noteShiftY = offsetY + relativeY;
+    note.style.left = `${noteShiftX}px`;
+    note.style.top = `${noteShiftY}px`;
+    updateNote(note.id, {
+      left: note.style.left,
+      top: note.style.top,
+    });
+    updateConnections(note, canvas);
+  });
+}
+
+function onMouseMove(event) {
   if (activeNote) {
-    moveAt(activeNote, event.pageX, event.pageY, canvas);
+    moveAt(event.pageX, event.pageY, activeNote.closest('#canvas'));
   }
 }
 
 function onMouseUp() {
   if (activeNote) {
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-    activeNote = null;
+    moveNoteEnd();
   }
 }
 

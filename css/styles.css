@@ -141,3 +141,20 @@ html {
 line.connection-line {
   pointer-events: none; /* Ensure lines do not interfere with interactions */
 }
+
+#selection-box {
+  position: absolute;
+  border: 1px dashed #000;
+  background-color: rgba(0, 0, 255, 0.1);
+  pointer-events: none; /* Ensure selection box does not interfere with interactions */
+}
+
+#help-text {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  color: rgba(128, 128, 128, 0.5); /* 50% gray */
+  font-family: 'Poppins', sans-serif;
+  font-size: 10pt;
+  line-height: 1.5;
+}
