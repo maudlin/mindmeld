@@ -1,4 +1,4 @@
-import { createNoteAtPosition, deleteNote } from './note.js';
+import { createNoteAtPosition, deleteNoteWithConnections } from './note.js';
 import { initializeConnectionDrawing } from './connections.js';
 import { moveNoteStart, moveNoteEnd } from './movement.js';
 
@@ -138,7 +138,11 @@ function clearSelections() {
 export function setupDocumentEvents() {
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Delete') {
-      deleteNote();
+      const selectedNotes = document.querySelectorAll('.note.selected');
+      selectedNotes.forEach((note) => {
+        const canvas = document.getElementById('canvas');
+        deleteNoteWithConnections(note, canvas);
+      });
     }
   });
 }

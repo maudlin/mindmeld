@@ -14,14 +14,6 @@ export function createNoteAtPosition(canvas, event) {
   noteContent.className = 'note-content';
   noteContent.contentEditable = true;
 
-  const deleteBtn = document.createElement('button');
-  deleteBtn.className = 'delete-btn';
-  deleteBtn.innerHTML = 'x';
-  deleteBtn.addEventListener('click', () => {
-    deleteNoteWithConnections(note, canvas);
-  });
-
-  note.appendChild(deleteBtn);
   note.appendChild(noteContent);
   createConnectionHandle(note);
   canvas.appendChild(note);
