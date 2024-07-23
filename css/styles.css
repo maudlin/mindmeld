@@ -158,3 +158,42 @@ line.connection-line {
   font-size: 10pt;
   line-height: 1.5;
 }
+
+/* Ghost Connecting Points */
+.note .ghost-connector {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: rgba(0, 123, 255, 0.5); /* Semi-transparent blue */
+  border-radius: 50%;
+  display: none; /* Hidden by default */
+  cursor: crosshair;
+}
+
+.note:hover .ghost-connector {
+  display: block; /* Show on hover */
+}
+
+.ghost-connector.top {
+  top: -5px; /* Adjust for circle size */
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ghost-connector.bottom {
+  bottom: -5px; /* Adjust for circle size */
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ghost-connector.left {
+  left: -5px; /* Adjust for circle size */
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.ghost-connector.right {
+  right: -5px; /* Adjust for circle size */
+  top: 50%;
+  transform: translateY(-50%);
+}
