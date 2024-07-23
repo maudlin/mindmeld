@@ -22,8 +22,6 @@ export function createNoteAtPosition(canvas, event) {
   const noteWidth = note.offsetWidth;
   const noteHeight = note.offsetHeight;
 
-  console.log(`Note dimensions: width: ${noteWidth}, height: ${noteHeight}`);
-
   // Get the canvas position relative to the viewport
   const canvasRect = canvas.getBoundingClientRect();
 
@@ -33,11 +31,6 @@ export function createNoteAtPosition(canvas, event) {
 
   note.style.left = `${leftPosition}px`;
   note.style.top = `${topPosition}px`;
-
-  console.log(
-    `Cursor location at note creation: (${event.clientX}, ${event.clientY})`,
-  );
-  console.log(`Note created at: (left: ${leftPosition}, top: ${topPosition})`);
 
   note.id = `note-${Date.now()}`;
   addNote({
@@ -63,13 +56,6 @@ export function addNoteEventListeners(note, canvas) {
           selectNote(note);
         }
       }
-      const noteRect = note.getBoundingClientRect();
-      console.log(
-        `Cursor location at mousedown: (${event.clientX}, ${event.clientY})`,
-      );
-      console.log(
-        `Note top left at mousedown: (${noteRect.left}, ${noteRect.top})`,
-      );
       moveNoteStart(note, event, canvas);
     }
   });

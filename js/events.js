@@ -34,7 +34,12 @@ export function setupCanvasEvents(canvas) {
     if (event.button === 0) {
       // Left mouse button
       const target = event.target;
-      if (target.classList.contains('note') || target.closest('.note')) {
+      if (target.classList.contains('connection-handle')) {
+        // If clicking on a connection handle, start drawing a connection
+        isDraggingNote = false;
+        isDrawingSelectionBox = false;
+        // The connection drawing logic will handle the rest
+      } else if (target.classList.contains('note') || target.closest('.note')) {
         // If clicking on a note, start dragging the note
         isDraggingNote = true;
         isDrawingSelectionBox = false;
