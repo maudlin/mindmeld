@@ -4,21 +4,6 @@ import { calculateOffsetPosition } from './utils.js';
 
 export let isConnecting = false;
 
-export function createConnectionHandle(note) {
-  const handle = document.createElement('div');
-  handle.className = 'connection-handle';
-  handle.style.position = 'absolute';
-  handle.style.right = '-10px';
-  handle.style.top = '50%';
-  handle.style.transform = 'translateY(-50%)';
-  handle.style.width = '10px';
-  handle.style.height = '10px';
-  handle.style.backgroundColor = '#007bff';
-  handle.style.borderRadius = '50%';
-  handle.style.cursor = 'pointer';
-  note.appendChild(handle);
-}
-
 export function updateConnections(note, canvas) {
   const connections = document.querySelectorAll(
     `line[data-start="${note.id}"], line[data-end="${note.id}"]`,
@@ -26,36 +11,11 @@ export function updateConnections(note, canvas) {
   connections.forEach((connection) => {
     const startNote = document.getElementById(connection.dataset.start);
     const endNote = document.getElementById(connection.dataset.end);
-    if (connection.dataset.start === note.id) {
-      const startHandle = startNote.querySelector('.connection-handle');
-      connection.setAttribute(
-        'x1',
-        startHandle.getBoundingClientRect().left +
-          startHandle.offsetWidth / 2 -
-          canvas.getBoundingClientRect().left,
-      );
-      connection.setAttribute(
-        'y1',
-        startHandle.getBoundingClientRect().top +
-          startHandle.offsetHeight / 2 -
-          canvas.getBoundingClientRect().top,
-      );
-    }
-    if (connection.dataset.end === note.id) {
-      const endHandle = endNote.querySelector('.connection-handle');
-      connection.setAttribute(
-        'x2',
-        endHandle.getBoundingClientRect().left +
-          endHandle.offsetWidth / 2 -
-          canvas.getBoundingClientRect().left,
-      );
-      connection.setAttribute(
-        'y2',
-        endHandle.getBoundingClientRect().top +
-          endHandle.offsetHeight / 2 -
-          canvas.getBoundingClientRect().top,
-      );
-    }
+    const { x1, y1, x2, y2 } = getClosestPoints(startNote, endNote, canvas);
+    connection.setAttribute('x1', x1);
+    connection.setAttribute('y1', y1);
+    connection.setAttribute('x2', x2);
+    connection.setAttribute('y2', y2);
   });
 }
 
@@ -79,7 +39,7 @@ export function initializeConnectionDrawing(canvas) {
   }
 
   canvas.addEventListener('mousedown', (event) => {
-    if (event.target.classList.contains('connection-handle')) {
+    if (event.target.classList.contains('ghost-connector')) {
       isConnecting = true;
       startNote = event.target.closest('.note');
       const handle = event.target;
@@ -141,17 +101,17 @@ export function initializeConnectionDrawing(canvas) {
           upEvent.target !== event.target
         ) {
           const endNote = upEvent.target.closest('.note');
-          const endHandle = endNote.querySelector('.connection-handle');
-          const { left: endX, top: endY } = calculateOffsetPosition(
+          const { x1, y1, x2, y2 } = getClosestPoints(
+            startNote,
+            endNote,
             canvas,
-            upEvent,
-            endHandle,
           );
 
-          line.setAttribute('x2', endX);
-          line.setAttribute('y2', endY);
+          line.setAttribute('x1', x1);
+          line.setAttribute('y1', y1);
+          line.setAttribute('x2', x2);
+          line.setAttribute('y2', y2);
 
-          // Ensure the line remains dashed even after connecting
           line.setAttribute('stroke-dasharray', '5,5');
 
           currentLine.dataset.start = startNote.id;
@@ -193,6 +153,45 @@ export function initializeConnectionDrawing(canvas) {
       }
     }
   });
+}
+
+function getClosestPoints(note1, note2, canvas) {
+  const rect1 = note1.getBoundingClientRect();
+  const rect2 = note2.getBoundingClientRect();
+  const canvasRect = canvas.getBoundingClientRect();
+
+  const center1 = {
+    x: rect1.left + rect1.width / 2,
+    y: rect1.top + rect1.height / 2,
+  };
+
+  const center2 = {
+    x: rect2.left + rect2.width / 2,
+    y: rect2.top + rect2.height / 2,
+  };
+
+  let x1, y1, x2, y2;
+
+  if (Math.abs(center1.x - center2.x) > Math.abs(center1.y - center2.y)) {
+    // Connect horizontally
+    x1 = center1.x > center2.x ? rect1.left : rect1.right;
+    y1 = center1.y;
+    x2 = center1.x > center2.x ? rect2.right : rect2.left;
+    y2 = center2.y;
+  } else {
+    // Connect vertically
+    x1 = center1.x;
+    y1 = center1.y > center2.y ? rect1.top : rect1.bottom;
+    x2 = center2.x;
+    y2 = center1.y > center2.y ? rect2.bottom : rect2.top;
+  }
+
+  return {
+    x1: x1 - canvasRect.left,
+    y1: y1 - canvasRect.top,
+    x2: x2 - canvasRect.left,
+    y2: y2 - canvasRect.top,
+  };
 }
 
 export function deleteConnectionsByNote(note) {

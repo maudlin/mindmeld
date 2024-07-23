@@ -1,19 +1,21 @@
 // utils.js
 
 /**
- * Calculates the offset position of the note relative to the canvas.
+ * Calculates the offset position of the note or connector handle relative to the canvas.
  * @param {HTMLElement} canvas - The canvas element.
  * @param {MouseEvent} event - The mouse event.
- * @param {HTMLElement} note - The note element (optional).
+ * @param {HTMLElement} element - The note or connector handle element (optional).
  * @returns {Object} - An object containing the left and top positions.
  */
-export function calculateOffsetPosition(canvas, event, note = null) {
+export function calculateOffsetPosition(canvas, event, element = null) {
   const canvasRect = canvas.getBoundingClientRect();
-  const noteWidth = note ? note.offsetWidth : 0;
-  const noteHeight = note ? note.offsetHeight : 0;
+  const elementWidth = element ? element.offsetWidth : 0;
+  const elementHeight = element ? element.offsetHeight : 0;
 
-  const leftPosition = event.clientX - noteWidth / 2;
-  const topPosition = event.clientY - noteHeight / 2 - canvasRect.y;
+  const leftPosition =
+    event.clientX - canvasRect.left + (element ? elementWidth / 2 : 0);
+  const topPosition =
+    event.clientY - canvasRect.top + (element ? elementHeight / 2 : 0);
 
   return {
     left: leftPosition,

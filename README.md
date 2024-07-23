@@ -10,7 +10,10 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 - **Delete Notes**: Delete notes by pressing the delete key.
 - **Multiple Select and Group Move**: Select multiple notes using a selection box and move them as a group.
 - **Group Delete**: Delete multiple selected notes by pressing the delete key.
-- **Draw Connections**: Draw lines between notes to indicate relationships, with dynamic updates and deletion capabilities.
+- **Dynamic Connectors**: Connections are drawn from the closest proximity points on the notes, ensuring clean and optimal connections.
+- **Ghost Connectors**: Four ghost connecting points appear at the center of each side of a note when hovering, allowing intuitive connection creation.
+- **Directional Arrows**: Connections feature directional arrows to indicate the flow of connections.
+- **Real-Time Updates**: Connections dynamically update as notes are moved around the canvas, maintaining the shortest path between connected notes.
 - **Style Notes and Canvas**: Notes have a pleasing background color, border, and text style. The canvas has a neutral background with styled hover and focus states for notes.
 - **Debounce Mechanism**: Prevents accidental multiple note creations by handling double-click events effectively.
 - **Data Store and Export**: Modular data store handler that manages the state of the notes and allows exporting the current state to JSON format. A button is provided to copy the JSON data to the clipboard.
@@ -18,40 +21,26 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 
 ## Recent Enhancements
 
-### Multiple Note Selection and Movement
+### Dynamic Connectors
 
-- Users can select multiple notes by clicking and dragging a selection box over them.
-- Multiple selected notes can be moved together as a group by dragging any of the selected notes.
+- **Proximity-Based Connections**: Connections are drawn from the closest proximity points on the notes.
+- **Two-Way Dynamic Connection Points**: Both the source and target notes dynamically adjust to connect from their nearest edges.
 
-### Group Delete Functionality
+### Ghost Connectors
 
-- Users can delete multiple selected notes by pressing the delete key.
+- **Hover Indicators**: Four ghost connecting points appear at the center of each side of a note when hovering, serving as visual indicators for initiating connections.
+- **Connector Interaction**: Connections can be created by clicking and dragging from any ghost connector to another note.
 
-### Improved Note Interaction
+### Connection Handling
 
-- Single left-click on a note selects it, and the note can be moved by holding down the mouse button and dragging.
-- Left-clicking on a selected note within a group does not deselect the group.
-- Single left-click on the canvas (outside any note) will deselect all selected notes.
+- **Real-Time Updates**: Connections dynamically update as notes are moved around the canvas, maintaining the shortest path between connected notes.
+- **Directional Arrows**: Connections feature directional arrows to indicate the flow of connections.
 
-### Help Text Added
+## Key Improvements
 
-- Added a help text section at the bottom left of the canvas to guide users on how to use key functionalities.
-- Styled the help text in 50% gray, 10pt Poppins font for a consistent and user-friendly appearance.
-
-### Miscellaneous Improvements
-
-- Removed the red cross delete button from each note.
-- Disabled the browser’s default right-click menu to prevent unintended interactions within the MindMeld application.
-
-### Help Text Content
-
-The help text displayed on the canvas provides the following instructions:
-
-- Create a note: Double-click
-- Delete a note: Select a note and press delete
-- Connect two notes: Drag a line from one blue connector to another
-- Select multiple notes: Click on the canvas and drag to select multiple notes
-- Delete multiple notes: With multiple notes selected, press delete
+- **Enhanced User Experience**: Users can create connections more intuitively with dynamic and visually guided connecting points.
+- **Improved Accuracy**: The application automatically selects the optimal connection points, ensuring connections are drawn cleanly and efficiently.
+- **Bug Fixes**: Addressed and fixed various bugs related to note movement and connection handling, ensuring smoother interactions and more reliable functionality.
 
 ## Installation
 
@@ -109,9 +98,11 @@ The help text displayed on the canvas provides the following instructions:
 
 5. **Draw Connections**:
 
-   - Click on a connection handle on a note to start a connection.
-   - Drag the line to another note to create the connection.
-   - Click on the connection line and press the delete key to remove it.
+   - Hover over a note to reveal ghost connecting points.
+   - Click and drag from a ghost connecting point to another note to create a connection.
+   - Hover over a connection line to reveal the context menu and toggle connection types.
+   - Click within 2px of a connection line to select it.
+   - Press the delete key to remove the selected connection line.
 
 6. **Multiple Select and Group Move**:
 
