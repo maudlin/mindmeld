@@ -1,3 +1,7 @@
+// connections.js
+
+import { calculateOffsetPosition } from './utils.js';
+
 export let isConnecting = false;
 
 export function createConnectionHandle(note) {
@@ -79,14 +83,11 @@ export function initializeConnectionDrawing(canvas) {
       isConnecting = true;
       startNote = event.target.closest('.note');
       const handle = event.target;
-      const startX =
-        handle.getBoundingClientRect().left +
-        handle.offsetWidth / 2 -
-        canvas.getBoundingClientRect().left;
-      const startY =
-        handle.getBoundingClientRect().top +
-        handle.offsetHeight / 2 -
-        canvas.getBoundingClientRect().top;
+      const { left: startX, top: startY } = calculateOffsetPosition(
+        canvas,
+        event,
+        handle,
+      );
 
       const line = document.createElementNS(
         'http://www.w3.org/2000/svg',
@@ -121,14 +122,12 @@ export function initializeConnectionDrawing(canvas) {
 
       const moveHandler = (moveEvent) => {
         if (isConnecting) {
-          line.setAttribute(
-            'x2',
-            moveEvent.clientX - canvas.getBoundingClientRect().left,
+          const { left: currentX, top: currentY } = calculateOffsetPosition(
+            canvas,
+            moveEvent,
           );
-          line.setAttribute(
-            'y2',
-            moveEvent.clientY - canvas.getBoundingClientRect().top,
-          );
+          line.setAttribute('x2', currentX);
+          line.setAttribute('y2', currentY);
         }
       };
 
@@ -143,14 +142,11 @@ export function initializeConnectionDrawing(canvas) {
         ) {
           const endNote = upEvent.target.closest('.note');
           const endHandle = endNote.querySelector('.connection-handle');
-          const endX =
-            endHandle.getBoundingClientRect().left +
-            endHandle.offsetWidth / 2 -
-            canvas.getBoundingClientRect().left;
-          const endY =
-            endHandle.getBoundingClientRect().top +
-            endHandle.offsetHeight / 2 -
-            canvas.getBoundingClientRect().top;
+          const { left: endX, top: endY } = calculateOffsetPosition(
+            canvas,
+            upEvent,
+            endHandle,
+          );
 
           line.setAttribute('x2', endX);
           line.setAttribute('y2', endY);

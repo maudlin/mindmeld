@@ -18,11 +18,26 @@ export function createNoteAtPosition(canvas, event) {
   createConnectionHandle(note);
   canvas.appendChild(note);
 
+  // Ensure the note dimensions are calculated after adding to the DOM
   const noteWidth = note.offsetWidth;
   const noteHeight = note.offsetHeight;
 
-  note.style.left = `${event.clientX - noteWidth / 2}px`;
-  note.style.top = `${event.clientY - noteHeight / 2}px`;
+  console.log(`Note dimensions: width: ${noteWidth}, height: ${noteHeight}`);
+
+  // Get the canvas position relative to the viewport
+  const canvasRect = canvas.getBoundingClientRect();
+
+  // Calculate the note's position relative to the canvas
+  const leftPosition = event.clientX - noteWidth / 2;
+  const topPosition = event.clientY - noteHeight / 2 - canvasRect.y;
+
+  note.style.left = `${leftPosition}px`;
+  note.style.top = `${topPosition}px`;
+
+  console.log(
+    `Cursor location at note creation: (${event.clientX}, ${event.clientY})`,
+  );
+  console.log(`Note created at: (left: ${leftPosition}, top: ${topPosition})`);
 
   note.id = `note-${Date.now()}`;
   addNote({
@@ -48,6 +63,13 @@ export function addNoteEventListeners(note, canvas) {
           selectNote(note);
         }
       }
+      const noteRect = note.getBoundingClientRect();
+      console.log(
+        `Cursor location at mousedown: (${event.clientX}, ${event.clientY})`,
+      );
+      console.log(
+        `Note top left at mousedown: (${noteRect.left}, ${noteRect.top})`,
+      );
       moveNoteStart(note, event, canvas);
     }
   });

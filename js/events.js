@@ -1,6 +1,7 @@
 import { createNoteAtPosition, deleteNoteWithConnections } from './note.js';
 import { initializeConnectionDrawing } from './connections.js';
 import { moveNoteStart, moveNoteEnd } from './movement.js';
+import { calculateOffsetPosition } from './utils.js';
 
 let isDebouncing = false;
 let selectionBox = null;
@@ -44,8 +45,12 @@ export function setupCanvasEvents(canvas) {
         isDrawingSelectionBox = true;
         isDraggingNote = false;
         clearSelections();
-        startX = event.clientX - canvas.getBoundingClientRect().left;
-        startY = event.clientY - canvas.getBoundingClientRect().top;
+
+        const { left: startXOffset, top: startYOffset } =
+          calculateOffsetPosition(canvas, event);
+
+        startX = startXOffset;
+        startY = startYOffset;
         selectionBox = document.createElement('div');
         selectionBox.id = 'selection-box';
         selectionBox.style.position = 'absolute';
@@ -73,10 +78,12 @@ function onMouseMove(event) {
   }
 
   if (isDrawingSelectionBox && selectionBox) {
-    const currentX =
-      event.clientX - selectionBox.parentElement.getBoundingClientRect().left;
-    const currentY =
-      event.clientY - selectionBox.parentElement.getBoundingClientRect().top;
+    const canvas = document.getElementById('canvas');
+    const { left: currentX, top: currentY } = calculateOffsetPosition(
+      canvas,
+      event,
+    );
+
     const width = currentX - startX;
     const height = currentY - startY;
 
