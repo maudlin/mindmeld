@@ -1,9 +1,5 @@
 import { addNote, updateNote, deleteNoteById } from './dataStore.js';
-import {
-  createConnectionHandle,
-  updateConnections,
-  deleteConnectionsByNote,
-} from './connections.js';
+import { updateConnections, deleteConnectionsByNote } from './connections.js';
 import { moveNoteStart } from './movement.js';
 
 export function createNoteAtPosition(canvas, event) {
@@ -15,14 +11,12 @@ export function createNoteAtPosition(canvas, event) {
   noteContent.contentEditable = true;
 
   note.appendChild(noteContent);
-  createConnectionHandle(note);
+  createGhostConnectors(note);
   canvas.appendChild(note);
 
   // Ensure the note dimensions are calculated after adding to the DOM
   const noteWidth = note.offsetWidth;
   const noteHeight = note.offsetHeight;
-
-  console.log(`Note dimensions: width: ${noteWidth}, height: ${noteHeight}`);
 
   // Get the canvas position relative to the viewport
   const canvasRect = canvas.getBoundingClientRect();
@@ -33,11 +27,6 @@ export function createNoteAtPosition(canvas, event) {
 
   note.style.left = `${leftPosition}px`;
   note.style.top = `${topPosition}px`;
-
-  console.log(
-    `Cursor location at note creation: (${event.clientX}, ${event.clientY})`,
-  );
-  console.log(`Note created at: (left: ${leftPosition}, top: ${topPosition})`);
 
   note.id = `note-${Date.now()}`;
   addNote({
@@ -54,22 +43,24 @@ export function createNoteAtPosition(canvas, event) {
   addNoteEventListeners(note, canvas);
 }
 
+function createGhostConnectors(note) {
+  const positions = ['top', 'bottom', 'left', 'right'];
+  positions.forEach((position) => {
+    const connector = document.createElement('div');
+    connector.className = `ghost-connector ${position}`;
+    note.appendChild(connector);
+  });
+}
+
 export function addNoteEventListeners(note, canvas) {
   note.addEventListener('mousedown', (event) => {
-    if (!event.target.classList.contains('connection-handle')) {
+    if (!event.target.classList.contains('ghost-connector')) {
       if (!event.shiftKey) {
         if (!note.classList.contains('selected')) {
           clearSelections();
           selectNote(note);
         }
       }
-      const noteRect = note.getBoundingClientRect();
-      console.log(
-        `Cursor location at mousedown: (${event.clientX}, ${event.clientY})`,
-      );
-      console.log(
-        `Note top left at mousedown: (${noteRect.left}, ${noteRect.top})`,
-      );
       moveNoteStart(note, event, canvas);
     }
   });
@@ -95,6 +86,10 @@ export function addNoteEventListeners(note, canvas) {
       }
     }
     event.stopPropagation();
+  });
+
+  note.addEventListener('mousemove', () => {
+    updateConnections(note, canvas);
   });
 }
 
