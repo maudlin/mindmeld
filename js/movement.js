@@ -1,3 +1,4 @@
+//movement.js
 import { updateNote } from './dataStore.js';
 import { updateConnections } from './connections.js';
 
@@ -20,6 +21,11 @@ function onMouseUp() {
 }
 
 export function moveNoteStart(note, event) {
+  // Check if the event target is a ghost-connector
+  if (event.target.classList.contains('ghost-connector')) {
+    return; // Do not start the note movement if drawing a connector
+  }
+
   activeNote = note;
   selectedNotes = Array.from(document.querySelectorAll('.note.selected'));
 

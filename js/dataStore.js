@@ -1,3 +1,4 @@
+//datastore.js
 const notes = [];
 
 export function addNote(note) {
