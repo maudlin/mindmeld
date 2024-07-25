@@ -9,17 +9,6 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap"
       rel="stylesheet"
     />
-    <style>
-      #help-text {
-        position: absolute;
-        bottom: 10px;
-        left: 10px;
-        color: rgba(128, 128, 128, 0.5); /* 50% gray */
-        font-family: 'Poppins', sans-serif;
-        font-size: 10pt;
-        line-height: 1.5;
-      }
-    </style>
   </head>
   <body>
     <div id="navbar">
@@ -32,17 +21,17 @@
       <div id="canvas">
         <div id="watermark">mindmeld</div>
       </div>
-      <div id="help-text">
-        <strong>Create a note:</strong> double click<br />
-        <strong>Delete a note:</strong> select a note and press delete<br />
-        <strong>Connect two notes:</strong> drag a line from one blue connector
-        to another<br />
-        <strong>Select multiple notes:</strong> click on the canvas and select
-        multiple notes<br />
-        <strong>Delete multiple notes:</strong> with multiple notes, press
-        delete
-      </div>
     </div>
+    <div id="help-text">
+      <strong>Create a note:</strong> double click<br />
+      <strong>Delete a note:</strong> select a note and press delete<br />
+      <strong>Connect two notes:</strong> drag a line from one blue connector to
+      another<br />
+      <strong>Select multiple notes:</strong> click on the canvas and select
+      multiple notes<br />
+      <strong>Delete multiple notes:</strong> with multiple notes, press delete
+    </div>
+    <div id="zoom-display">5x</div>
     <script type="module" src="js/app.js"></script>
   </body>
 </html>

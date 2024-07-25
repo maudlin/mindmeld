@@ -1,5 +1,6 @@
 import { updateNote } from './dataStore.js';
 import { updateConnections } from './connections.js';
+import { getZoomLevel } from './zoomManager.js';
 
 let activeNote = null;
 let shiftX = 0,
@@ -23,18 +24,28 @@ export function moveNoteStart(note, event) {
   activeNote = note;
   selectedNotes = Array.from(document.querySelectorAll('.note.selected'));
 
-  // Capture the initial offset between the cursor and the note
+  const zoomLevel = getZoomLevel();
+  const scale = zoomLevel / 5;
+
+  const canvas = note.closest('#canvas');
+  const canvasRect = canvas.getBoundingClientRect();
   const noteRect = note.getBoundingClientRect();
-  shiftX = event.clientX - noteRect.left;
-  shiftY = event.clientY - noteRect.top;
+
+  // Calculate the shift relative to the canvas, accounting for zoom
+  shiftX =
+    (event.clientX - canvasRect.left) / scale -
+    (noteRect.left - canvasRect.left) / scale;
+  shiftY =
+    (event.clientY - canvasRect.top) / scale -
+    (noteRect.top - canvasRect.top) / scale;
 
   // Calculate offsets for each selected note relative to the active note
   offsets = selectedNotes.map((selectedNote) => {
     const rect = selectedNote.getBoundingClientRect();
     return {
       note: selectedNote,
-      offsetX: rect.left - noteRect.left,
-      offsetY: rect.top - noteRect.top,
+      offsetX: (rect.left - noteRect.left) / scale,
+      offsetY: (rect.top - noteRect.top) / scale,
     };
   });
 
@@ -49,9 +60,18 @@ export function moveNoteEnd() {
 }
 
 function moveAt(pageX, pageY, canvas) {
+  const zoomLevel = getZoomLevel();
+  const scale = zoomLevel / 5;
+
   const canvasRect = canvas.getBoundingClientRect();
-  const offsetX = pageX - shiftX;
-  const offsetY = pageY - shiftY - canvasRect.y;
+
+  // Calculate the position relative to the canvas, accounting for zoom
+  const canvasX = (pageX - canvasRect.left) / scale;
+  const canvasY = (pageY - canvasRect.top) / scale;
+
+  // Adjust for the initial click offset within the note
+  const offsetX = canvasX - shiftX;
+  const offsetY = canvasY - shiftY;
 
   offsets.forEach(({ note, offsetX: relativeX, offsetY: relativeY }) => {
     const noteShiftX = offsetX + relativeX;

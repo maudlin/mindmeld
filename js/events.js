@@ -44,7 +44,7 @@ export function setupCanvasEvents(canvas) {
         isDraggingNote = true;
         isDrawingSelectionBox = false;
         const note = target.closest('.note');
-        moveNoteStart(note, event, canvas);
+        moveNoteStart(note, event);
       } else {
         // Otherwise, start drawing the selection box
         isDrawingSelectionBox = true;

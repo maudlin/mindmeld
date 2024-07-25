@@ -39,13 +39,45 @@ html {
 
 /* Canvas Styles */
 #canvas {
-  width: 100%;
-  height: calc(100vh - 40px);
-  position: relative;
+  width: 3840px; /* Fixed width for the canvas */
+  height: 2160px; /* Fixed height for the canvas */
+  position: absolute;
   background-color: #f9f9f9; /* Neutral background color */
   margin: 0;
   padding: 10px;
   box-sizing: border-box;
+  transform-origin: top left; /* Ensure scaling starts from the top left */
+  transition: transform 0.2s ease-in-out; /* Smooth zoom transition */
+}
+
+#canvas-container {
+  width: 100%;
+  height: calc(100vh - 40px);
+  overflow: hidden; /* Remove scrollbars */
+  background-color: #ccc; /* Grey background */
+  position: relative;
+}
+
+/* Help Text Styles */
+#help-text {
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  color: rgba(128, 128, 128, 0.5); /* 50% gray */
+  font-family: 'Poppins', sans-serif;
+  font-size: 10pt;
+  line-height: 1.5;
+}
+
+/* Zoom Display Styles */
+#zoom-display {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 36px;
+  font-weight: 900;
+  color: #ddd;
 }
 
 #watermark {

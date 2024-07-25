@@ -1,6 +1,5 @@
-// connections.js
-
 import { calculateOffsetPosition } from './utils.js';
+import { getZoomLevel } from './zoomManager.js';
 
 export let isConnecting = false;
 
@@ -8,10 +7,18 @@ export function updateConnections(note, canvas) {
   const connections = document.querySelectorAll(
     `line[data-start="${note.id}"], line[data-end="${note.id}"]`,
   );
+  const zoomLevel = getZoomLevel();
+  const scale = zoomLevel / 5;
+
   connections.forEach((connection) => {
     const startNote = document.getElementById(connection.dataset.start);
     const endNote = document.getElementById(connection.dataset.end);
-    const { x1, y1, x2, y2 } = getClosestPoints(startNote, endNote, canvas);
+    const { x1, y1, x2, y2 } = getClosestPoints(
+      startNote,
+      endNote,
+      canvas,
+      scale,
+    );
     connection.setAttribute('x1', x1);
     connection.setAttribute('y1', y1);
     connection.setAttribute('x2', x2);
@@ -42,21 +49,22 @@ export function initializeConnectionDrawing(canvas) {
     if (event.target.classList.contains('ghost-connector')) {
       isConnecting = true;
       startNote = event.target.closest('.note');
-      const handle = event.target;
+      const zoomLevel = getZoomLevel();
+      const scale = zoomLevel / 5;
       const { left: startX, top: startY } = calculateOffsetPosition(
         canvas,
         event,
-        handle,
+        event.target,
       );
 
       const line = document.createElementNS(
         'http://www.w3.org/2000/svg',
         'line',
       );
-      line.setAttribute('x1', startX);
-      line.setAttribute('y1', startY);
-      line.setAttribute('x2', startX);
-      line.setAttribute('y2', startY);
+      line.setAttribute('x1', startX * scale);
+      line.setAttribute('y1', startY * scale);
+      line.setAttribute('x2', startX * scale);
+      line.setAttribute('y2', startY * scale);
       line.setAttribute('stroke', '#888'); // Mid grey color
       line.setAttribute('stroke-dasharray', '5,5'); // Dashed line
       line.setAttribute('stroke-width', '2');
@@ -82,12 +90,14 @@ export function initializeConnectionDrawing(canvas) {
 
       const moveHandler = (moveEvent) => {
         if (isConnecting) {
+          const zoomLevel = getZoomLevel();
+          const scale = zoomLevel / 5;
           const { left: currentX, top: currentY } = calculateOffsetPosition(
             canvas,
             moveEvent,
           );
-          line.setAttribute('x2', currentX);
-          line.setAttribute('y2', currentY);
+          line.setAttribute('x2', currentX * scale);
+          line.setAttribute('y2', currentY * scale);
         }
       };
 
@@ -101,10 +111,13 @@ export function initializeConnectionDrawing(canvas) {
           upEvent.target !== event.target
         ) {
           const endNote = upEvent.target.closest('.note');
+          const zoomLevel = getZoomLevel();
+          const scale = zoomLevel / 5;
           const { x1, y1, x2, y2 } = getClosestPoints(
             startNote,
             endNote,
             canvas,
+            scale,
           );
 
           line.setAttribute('x1', x1);
@@ -155,43 +168,57 @@ export function initializeConnectionDrawing(canvas) {
   });
 }
 
-function getClosestPoints(note1, note2, canvas) {
+function getClosestPoints(note1, note2, canvas, scale) {
   const rect1 = note1.getBoundingClientRect();
   const rect2 = note2.getBoundingClientRect();
   const canvasRect = canvas.getBoundingClientRect();
 
+  // Adjust rectangles for zoom
+  const adjustedRect1 = {
+    left: (rect1.left - canvasRect.left) / scale,
+    top: (rect1.top - canvasRect.top) / scale,
+    width: rect1.width / scale,
+    height: rect1.height / scale,
+    right: (rect1.right - canvasRect.left) / scale,
+    bottom: (rect1.bottom - canvasRect.top) / scale,
+  };
+
+  const adjustedRect2 = {
+    left: (rect2.left - canvasRect.left) / scale,
+    top: (rect2.top - canvasRect.top) / scale,
+    width: rect2.width / scale,
+    height: rect2.height / scale,
+    right: (rect2.right - canvasRect.left) / scale,
+    bottom: (rect2.bottom - canvasRect.top) / scale,
+  };
+
   const center1 = {
-    x: rect1.left + rect1.width / 2,
-    y: rect1.top + rect1.height / 2,
+    x: adjustedRect1.left + adjustedRect1.width / 2,
+    y: adjustedRect1.top + adjustedRect1.height / 2,
   };
 
   const center2 = {
-    x: rect2.left + rect2.width / 2,
-    y: rect2.top + rect2.height / 2,
+    x: adjustedRect2.left + adjustedRect2.width / 2,
+    y: adjustedRect2.top + adjustedRect2.height / 2,
   };
 
   let x1, y1, x2, y2;
 
   if (Math.abs(center1.x - center2.x) > Math.abs(center1.y - center2.y)) {
     // Connect horizontally
-    x1 = center1.x > center2.x ? rect1.left : rect1.right;
+    x1 = center1.x > center2.x ? adjustedRect1.left : adjustedRect1.right;
     y1 = center1.y;
-    x2 = center1.x > center2.x ? rect2.right : rect2.left;
+    x2 = center1.x > center2.x ? adjustedRect2.right : adjustedRect2.left;
     y2 = center2.y;
   } else {
     // Connect vertically
     x1 = center1.x;
-    y1 = center1.y > center2.y ? rect1.top : rect1.bottom;
+    y1 = center1.y > center2.y ? adjustedRect1.top : adjustedRect1.bottom;
     x2 = center2.x;
-    y2 = center1.y > center2.y ? rect2.bottom : rect2.top;
+    y2 = center1.y > center2.y ? adjustedRect2.bottom : adjustedRect2.top;
   }
 
-  return {
-    x1: x1 - canvasRect.left,
-    y1: y1 - canvasRect.top,
-    x2: x2 - canvasRect.left,
-    y2: y2 - canvasRect.top,
-  };
+  return { x1, y1, x2, y2 };
 }
 
 export function deleteConnectionsByNote(note) {

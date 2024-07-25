@@ -1,8 +1,11 @@
 import { addNote, updateNote, deleteNoteById } from './dataStore.js';
 import { updateConnections, deleteConnectionsByNote } from './connections.js';
 import { moveNoteStart } from './movement.js';
+import { calculateOffsetPosition } from './utils.js';
 
 export function createNoteAtPosition(canvas, event) {
+  const { left: x, top: y } = calculateOffsetPosition(canvas, event);
+
   const note = document.createElement('div');
   note.className = 'note';
 
@@ -14,16 +17,8 @@ export function createNoteAtPosition(canvas, event) {
   createGhostConnectors(note);
   canvas.appendChild(note);
 
-  // Ensure the note dimensions are calculated after adding to the DOM
-  const noteWidth = note.offsetWidth;
-  const noteHeight = note.offsetHeight;
-
-  // Get the canvas position relative to the viewport
-  const canvasRect = canvas.getBoundingClientRect();
-
-  // Calculate the note's position relative to the canvas
-  const leftPosition = event.clientX - noteWidth / 2;
-  const topPosition = event.clientY - noteHeight / 2 - canvasRect.y;
+  const leftPosition = x;
+  const topPosition = y;
 
   note.style.left = `${leftPosition}px`;
   note.style.top = `${topPosition}px`;
