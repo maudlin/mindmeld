@@ -34,39 +34,21 @@ export function setupCanvasEvents(canvas) {
     if (event.button === 0) {
       // Left mouse button
       const target = event.target;
-      if (target.classList.contains('connection-handle')) {
+      if (target.classList.contains('ghost-connector')) {
         // If clicking on a connection handle, start drawing a connection
-        isDraggingNote = false;
-        isDrawingSelectionBox = false;
         // The connection drawing logic will handle the rest
+        return; // Exit early to prevent note movement
       } else if (target.classList.contains('note') || target.closest('.note')) {
         // If clicking on a note, start dragging the note
-        isDraggingNote = true;
-        isDrawingSelectionBox = false;
         const note = target.closest('.note');
+        if (!event.shiftKey && !note.classList.contains('selected')) {
+          clearSelections();
+          selectNote(note);
+        }
         moveNoteStart(note, event);
       } else {
         // Otherwise, start drawing the selection box
-        isDrawingSelectionBox = true;
-        isDraggingNote = false;
-        clearSelections();
-
-        const { left: startXOffset, top: startYOffset } =
-          calculateOffsetPosition(canvas, event);
-
-        startX = startXOffset;
-        startY = startYOffset;
-        selectionBox = document.createElement('div');
-        selectionBox.id = 'selection-box';
-        selectionBox.style.position = 'absolute';
-        selectionBox.style.border = '1px dashed #000';
-        selectionBox.style.backgroundColor = 'rgba(0, 0, 255, 0.1)';
-        selectionBox.style.left = `${startX}px`;
-        selectionBox.style.top = `${startY}px`;
-        canvas.appendChild(selectionBox);
-
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
+        startSelectionBox(event, canvas);
       }
     }
   });
@@ -75,6 +57,41 @@ export function setupCanvasEvents(canvas) {
   document.addEventListener('contextmenu', (event) => {
     event.preventDefault();
   });
+}
+
+export function selectNote(note) {
+  note.classList.add('selected');
+}
+
+export function clearSelections() {
+  const selectedNotes = document.querySelectorAll('.note.selected');
+  selectedNotes.forEach((note) => {
+    note.classList.remove('selected');
+  });
+}
+
+function startSelectionBox(event, canvas) {
+  clearSelections();
+
+  const { left: startXOffset, top: startYOffset } = calculateOffsetPosition(
+    canvas,
+    event,
+  );
+
+  startX = startXOffset;
+  startY = startYOffset;
+  selectionBox = document.createElement('div');
+  selectionBox.id = 'selection-box';
+  selectionBox.style.position = 'absolute';
+  selectionBox.style.border = '1px dashed #000';
+  selectionBox.style.backgroundColor = 'rgba(0, 0, 255, 0.1)';
+  selectionBox.style.left = `${startX}px`;
+  selectionBox.style.top = `${startY}px`;
+  canvas.appendChild(selectionBox);
+
+  isDrawingSelectionBox = true;
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
 }
 
 function onMouseMove(event) {
@@ -137,13 +154,6 @@ function selectNotesWithinBox() {
     } else {
       note.classList.remove('selected');
     }
-  });
-}
-
-function clearSelections() {
-  const selectedNotes = document.querySelectorAll('.note.selected');
-  selectedNotes.forEach((note) => {
-    note.classList.remove('selected');
   });
 }
 

@@ -16,25 +16,46 @@ export function calculateOffsetPosition(canvas, event, element = null) {
   const elementWidth = element ? element.offsetWidth : 0;
   const elementHeight = element ? element.offsetHeight : 0;
 
-  // Apply scaling to the cursor position relative to the canvas
   const leftPosition =
     (event.clientX - canvasRect.left) / scale - elementWidth / 2;
   const topPosition =
     (event.clientY - canvasRect.top) / scale - elementHeight / 2;
 
-  console.log({
-    eventClientX: event.clientX,
-    eventClientY: event.clientY,
-    canvasRectLeft: canvasRect.left,
-    canvasRectTop: canvasRect.top,
-    zoomLevel,
-    scale,
-    leftPosition,
-    topPosition,
-  });
-
   return {
     left: leftPosition,
     top: topPosition,
+  };
+}
+
+/**
+ * Debounces a function call.
+ * @param {Function} func - The function to debounce.
+ * @param {number} delay - The delay in milliseconds.
+ * @returns {Function} - The debounced function.
+ */
+export function debounce(func, delay) {
+  let timeoutId;
+  return function (...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      func.apply(this, args);
+    }, delay);
+  };
+}
+
+/**
+ * Throttles a function call.
+ * @param {Function} func - The function to throttle.
+ * @param {number} limit - The time limit in milliseconds.
+ * @returns {Function} - The throttled function.
+ */
+export function throttle(func, limit) {
+  let inThrottle;
+  return function (...args) {
+    if (!inThrottle) {
+      func.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
   };
 }
