@@ -38,24 +38,46 @@ html {
 }
 
 /* Canvas Styles */
-#canvas {
-  width: 3840px; /* Fixed width for the canvas */
-  height: 2160px; /* Fixed height for the canvas */
-  position: absolute;
-  background-color: #f9f9f9; /* Neutral background color */
-  margin: 0;
-  padding: 10px;
-  box-sizing: border-box;
-  transform-origin: top left; /* Ensure scaling starts from the top left */
-  transition: transform 0.2s ease-in-out; /* Smooth zoom transition */
-}
+/* Update these styles in your existing CSS file */
 
 #canvas-container {
   width: 100%;
   height: calc(100vh - 40px);
-  overflow: hidden; /* Remove scrollbars */
-  background-color: #ccc; /* Grey background */
+  overflow: auto;
+  background-color: #ccc;
   position: relative;
+}
+
+#canvas {
+  width: 7680px;
+  height: 4320px;
+  background-color: #f9f9f9;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transform-origin: center;
+}
+
+/* Add this new style for the canvas wrapper */
+#canvas-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Update the watermark positioning */
+#watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 100px;
+  font-weight: 700;
+  color: rgba(211, 211, 211, 0.15);
+  pointer-events: none;
+  user-select: none;
 }
 
 /* Help Text Styles */
@@ -78,18 +100,6 @@ html {
   font-size: 36px;
   font-weight: 900;
   color: #ddd;
-}
-
-#watermark {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 100px;
-  font-weight: 700; /* Heavier bold version */
-  color: rgba(211, 211, 211, 0.15); /* 50% lighter */
-  pointer-events: none; /* Ensure watermark does not interfere with interactions */
-  user-select: none; /* Prevent text selection */
 }
 
 /* Note Styles */
