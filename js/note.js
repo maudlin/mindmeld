@@ -1,3 +1,4 @@
+//note.js
 import { addNote, updateNote, deleteNoteById } from './dataStore.js';
 import { updateConnections, deleteConnectionsByNote } from './connections.js';
 import { moveNoteStart } from './movement.js';

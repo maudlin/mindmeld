@@ -1,3 +1,4 @@
+//movement.js
 import { updateNote } from './dataStore.js';
 import { updateConnections } from './connections.js';
 import { getZoomLevel } from './zoomManager.js';
@@ -37,7 +38,6 @@ export function moveNoteStart(note, event) {
   if (!note.classList.contains('selected')) {
     clearSelections();
     selectNote(note);
-  }
 
   activeNote = note;
   selectedNotes = Array.from(document.querySelectorAll('.note.selected'));

@@ -1,3 +1,4 @@
+//app.js
 import { setupCanvasEvents, setupDocumentEvents } from './events.js';
 import { exportToJSON } from './dataStore.js';
 import './movement.js';

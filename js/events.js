@@ -1,3 +1,4 @@
+//event.js
 import { createNoteAtPosition, deleteNoteWithConnections } from './note.js';
 import { initializeConnectionDrawing } from './connections.js';
 import { moveNoteStart, moveNoteEnd } from './movement.js';
