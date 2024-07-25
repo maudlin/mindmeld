@@ -14,6 +14,8 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 - **Ghost Connectors**: Four ghost connecting points appear at the center of each side of a note when hovering, allowing intuitive connection creation.
 - **Directional Arrows**: Connections feature directional arrows to indicate the flow of connections.
 - **Real-Time Updates**: Connections dynamically update as notes are moved around the canvas, maintaining the shortest path between connected notes.
+- **Zoom**: The application starts zoomed in at 5x, and users can zoom out with the mouse scroll wheel.
+- **Pan**: Users can pan the canvas in the wider view by clicking and holding the right mouse button.
 - **Style Notes and Canvas**: Notes have a pleasing background color, border, and text style. The canvas has a neutral background with styled hover and focus states for notes.
 - **Debounce Mechanism**: Prevents accidental multiple note creations by handling double-click events effectively.
 - **Data Store and Export**: Modular data store handler that manages the state of the notes and allows exporting the current state to JSON format. A button is provided to copy the JSON data to the clipboard.
@@ -36,6 +38,11 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 - **Real-Time Updates**: Connections dynamically update as notes are moved around the canvas, maintaining the shortest path between connected notes.
 - **Directional Arrows**: Connections feature directional arrows to indicate the flow of connections.
 
+### Zoom and Pan
+
+- **Zoom Levels**: The application starts zoomed in at 5x, and users can zoom out with the mouse scroll wheel.
+- **Panning**: Users can pan the canvas in the wider view by clicking and holding the right mouse button.
+
 ## Key Improvements
 
 - **Enhanced User Experience**: Users can create connections more intuitively with dynamic and visually guided connecting points.
@@ -54,7 +61,7 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 1. **Clone the Repository**:
 
    ```bash
-   git clone https://github.com/YOUR_USERNAME/mindmeld.git
+   git clone https://github.com/maudline/mindmeld.git
    cd mindmeld
    ```
 
@@ -69,11 +76,7 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 
    - Open the command palette (`Ctrl + Shift + P`).
    - Type "Remote-Containers: Rebuild Container" and select the option to rebuild without cache.
-   - Run the local development server using live-server or a similar tool:
-     ```bash
-     cd frontend
-     live-server
-     ```
+   - Run the local development server using "npm start"
 
 2. **Access the Application**:
    - Open your browser and navigate to `http://localhost:8080`.
@@ -113,12 +116,49 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 
    - Delete multiple selected notes by pressing the delete key.
 
-8. **Help Text**:
+8. **Zoom and Pan**:
+
+   - Use the mouse scroll wheel to zoom in and out of the canvas.
+   - Click and hold the right mouse button to pan the canvas.
+
+9. **Help Text**:
 
    - Refer to the help text at the bottom left of the canvas for instructions on key functionalities.
 
-9. **Export State**:
-   - Click the "Export" button in the navigation bar to copy the current state of the mind map to JSON format and copy it to the clipboard.
+10. **Export State**:
+    - Click the "Export" button in the navigation bar to copy the current state of the mind map to JSON format and copy it to the clipboard.
+
+## File Manifest
+
+### .devcontainer
+
+- **devcontainer.json**: Configuration for the development container.
+- **Dockerfile**: Docker configuration for the development container.
+
+### css
+
+- **styles.css**: Styles for the application.
+
+### js
+
+- **app.js**: Main application logic.
+- **connections.js**: Logic for handling connections between notes.
+- **dataStore.js**: Data storage handler for managing the state of notes.
+- **events.js**: Event handling for user interactions.
+- **movement.js**: Logic for handling note movement.
+- **note.js**: Logic for creating and managing notes.
+- **utils.js**: Utility functions used across the application.
+- **zoomManager.js**: Logic for handling zoom and pan functionality.
+
+### Root Files
+
+- **.eslintrc.json**: ESLint configuration file.
+- **.gitignore**: Git ignore file.
+- **.prettierrc**: Prettier configuration file.
+- **index.html**: Main HTML file for the application.
+- **package.json**: Project metadata and dependencies.
+- **package-lock.json**: Lockfile for project dependencies.
+- **README.md**: Project documentation.
 
 ## Contributing
 
