@@ -3,10 +3,11 @@ import { setupCanvasEvents, setupDocumentEvents } from './events.js';
 import { exportToJSON } from './dataStore.js';
 import './movement.js';
 import { setupZoomAndPan } from './zoomManager.js';
+import { DOM_SELECTORS } from './constants.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const canvasContainer = document.getElementById('canvas-container');
-  const canvas = document.getElementById('canvas');
+  const canvas = document.querySelector(DOM_SELECTORS.CANVAS);
   const exportButton = document.getElementById('export-json');
   const zoomDisplay = document.getElementById('zoom-display');
 

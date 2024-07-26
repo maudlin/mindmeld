@@ -59,3 +59,11 @@ export function throttle(func, limit) {
     }
   };
 }
+
+const logging = true;
+
+export function log(message) {
+  if (logging) {
+    console.log(`[${new Date().toISOString()}] ${message}`);
+  }
+}

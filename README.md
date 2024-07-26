@@ -43,11 +43,21 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 - **Zoom Levels**: The application starts zoomed in at 5x, and users can zoom out with the mouse scroll wheel.
 - **Panning**: Users can pan the canvas in the wider view by clicking and holding the right mouse button.
 
+### Canvas Positioning Improvements
+
+- **Enhanced Logging**: Implemented detailed logging throughout the zoom and positioning processes, which was crucial for diagnosing positioning issues.
+- **Refined Positioning Logic**: Developed a more accurate method for positioning the canvas, taking into account the actual rendered position relative to the container.
+- **Handling of Transform Properties**: Improved the way we interact with CSS transforms, ensuring more precise control over the canvas position and scale.
+- **Initial Positioning**: Revised the initial positioning logic to set the canvas in the correct centered position from the start.
+- **Continuous Monitoring**: Implemented a system to monitor the canvas position for a period after initial load, helping to catch any delayed positioning changes.
+
 ## Key Improvements
 
 - **Enhanced User Experience**: Users can create connections more intuitively with dynamic and visually guided connecting points.
 - **Improved Accuracy**: The application automatically selects the optimal connection points, ensuring connections are drawn cleanly and efficiently.
 - **Bug Fixes**: Addressed and fixed various bugs related to note movement and connection handling, ensuring smoother interactions and more reliable functionality.
+- **Enhanced Logging**: Improved logging for better debugging and issue tracking.
+- **Refined Handling of Transforms and Positioning**: Improved control over element positioning and scaling for better user experience.
 
 ## Installation
 
@@ -61,7 +71,7 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 1. **Clone the Repository**:
 
    ```bash
-   git clone https://github.com/maudline/mindmeld.git
+   git clone https://github.com/YOUR_USERNAME/mindmeld.git
    cd mindmeld
    ```
 

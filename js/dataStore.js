@@ -1,8 +1,11 @@
 //datastore.js
+import { appState } from './observableState.js';
+
 const notes = [];
 
 export function addNote(note) {
-  notes.push(note);
+  const currentNotes = appState.getState().notes;
+  appState.setState({ notes: [...currentNotes, note] });
 }
 
 export function updateNote(id, updatedNote) {
