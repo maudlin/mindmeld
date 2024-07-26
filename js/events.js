@@ -1,13 +1,11 @@
 //event.js
 import { createNoteAtPosition, deleteNoteWithConnections } from './note.js';
 import { initializeConnectionDrawing } from './connections.js';
-import { moveNoteStart, moveNoteEnd } from './movement.js';
 import { calculateOffsetPosition } from './utils.js';
 
 let isDebouncing = false;
 let selectionBox = null;
 let startX, startY;
-let isDraggingNote = false;
 let isDrawingSelectionBox = false;
 
 function debounce(func, delay) {
