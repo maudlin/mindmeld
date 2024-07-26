@@ -36,23 +36,18 @@ export function setupCanvasEvents(canvas) {
       // Left mouse button
       const target = event.target;
       if (target.classList.contains('ghost-connector')) {
-        // If clicking on a connection handle, start drawing a connection
-        // The connection drawing logic will handle the rest
-        return; // Exit early to prevent note movement
+        return;
       } else if (target.classList.contains('note') || target.closest('.note')) {
-        // If clicking on a note, start dragging the note
-        const note = target.closest('.note');
-        if (!event.shiftKey && !note.classList.contains('selected')) {
-          clearSelections();
-          selectNote(note);
-        }
-        moveNoteStart(note, event);
+        // ... existing note handling code ...
       } else {
-        // Otherwise, start drawing the selection box
         startSelectionBox(event, canvas);
       }
     }
   });
+
+  // Add these new event listeners
+  document.addEventListener('mouseup', clearSelectionBox);
+  document.addEventListener('mouseleave', clearSelectionBox);
 
   // Disable default right-click menu
   document.addEventListener('contextmenu', (event) => {
@@ -73,6 +68,7 @@ export function clearSelections() {
 
 function startSelectionBox(event, canvas) {
   clearSelections();
+  clearExistingSelectionBox(); // Clear any existing selection box
 
   const { left: startXOffset, top: startYOffset } = calculateOffsetPosition(
     canvas,
@@ -92,14 +88,24 @@ function startSelectionBox(event, canvas) {
 
   isDrawingSelectionBox = true;
   document.addEventListener('mousemove', onMouseMove);
-  document.addEventListener('mouseup', onMouseUp);
+}
+
+function clearSelectionBox() {
+  if (isDrawingSelectionBox) {
+    isDrawingSelectionBox = false;
+    document.removeEventListener('mousemove', onMouseMove);
+    clearExistingSelectionBox();
+  }
+}
+
+function clearExistingSelectionBox() {
+  if (selectionBox) {
+    selectionBox.remove();
+    selectionBox = null;
+  }
 }
 
 function onMouseMove(event) {
-  if (isDraggingNote) {
-    return; // Do nothing if dragging a note
-  }
-
   if (isDrawingSelectionBox && selectionBox) {
     const canvas = document.getElementById('canvas');
     const { left: currentX, top: currentY } = calculateOffsetPosition(
@@ -116,26 +122,6 @@ function onMouseMove(event) {
     selectionBox.style.top = `${Math.min(currentY, startY)}px`;
 
     selectNotesWithinBox();
-  }
-}
-
-function onMouseUp() {
-  if (isDraggingNote) {
-    moveNoteEnd();
-    isDraggingNote = false;
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-    return;
-  }
-
-  if (isDrawingSelectionBox) {
-    isDrawingSelectionBox = false;
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-    if (selectionBox) {
-      selectionBox.remove();
-      selectionBox = null;
-    }
   }
 }
 

@@ -1,7 +1,13 @@
 // zoomManager.js
-let zoomLevel = 5;
-const zoomMin = 1;
-const zoomMax = 5;
+import { debounce } from './utils.js';
+import { ZOOM_LEVELS } from './constants.js';
+
+const debouncedHandleZoom = debounce(handleZoom, 16);
+
+let zoomLevel = ZOOM_LEVELS.DEFAULT;
+const zoomMin = ZOOM_LEVELS.MIN;
+const zoomMax = ZOOM_LEVELS.MAX;
+
 let isPanning = false;
 let startX, startY;
 
@@ -75,7 +81,7 @@ function stopPanning() {
 
 export function setupZoomAndPan(canvasContainer, canvas, zoomDisplay) {
   canvasContainer.addEventListener('wheel', (event) => {
-    handleZoom(event, canvas, canvasContainer, zoomDisplay);
+    debouncedHandleZoom(event, canvas, canvasContainer, zoomDisplay);
   });
 
   canvasContainer.addEventListener('mousedown', startPanning);

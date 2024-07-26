@@ -2,6 +2,9 @@ import { updateNote } from './dataStore.js';
 import { updateConnections } from './connections.js';
 import { getZoomLevel } from './zoomManager.js';
 import { selectNote, clearSelections } from './events.js';
+import { throttle } from './utils.js';
+
+const throttledUpdateConnections = throttle(updateConnections, 16); // ~60fps
 
 let activeNote = null;
 let shiftX = 0,
@@ -25,6 +28,7 @@ export function moveNoteEnd() {
 function onMouseMove(event) {
   if (activeNote) {
     moveAt(event.clientX, event.clientY, activeNote.closest('#canvas'));
+    throttledUpdateConnections(activeNote);
   }
 }
 
