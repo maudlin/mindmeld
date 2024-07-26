@@ -7,7 +7,10 @@ import { NOTE_DIMENSIONS } from './constants.js';
 
 export function createNoteAtPosition(canvas, event) {
   const { left: x, top: y } = calculateOffsetPosition(canvas, event);
+  return createNote(x, y, canvas);
+}
 
+export function createNote(x, y, canvas) {
   const note = document.createElement('div');
   note.className = 'note';
 
@@ -19,11 +22,8 @@ export function createNoteAtPosition(canvas, event) {
   createGhostConnectors(note);
   canvas.appendChild(note);
 
-  const leftPosition = x;
-  const topPosition = y;
-
-  note.style.left = `${leftPosition}px`;
-  note.style.top = `${topPosition}px`;
+  note.style.left = `${x}px`;
+  note.style.top = `${y}px`;
   note.style.width = `${NOTE_DIMENSIONS.WIDTH}px`;
   note.style.padding = `${NOTE_DIMENSIONS.PADDING}px`;
 
@@ -40,6 +40,8 @@ export function createNoteAtPosition(canvas, event) {
   });
 
   addNoteEventListeners(note, canvas);
+
+  return note;
 }
 
 function createGhostConnectors(note) {

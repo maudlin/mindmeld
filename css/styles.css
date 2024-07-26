@@ -239,3 +239,50 @@ line.connection-line {
   top: 50%;
   transform: translateY(-50%);
 }
+
+/* Modern button styles */
+#menu button {
+  background-color: transparent;
+  border: 2px solid #d3d3d3;
+  color: #d3d3d3;
+  padding: 8px 16px;
+  margin-left: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#menu button:hover {
+  background-color: #d3d3d3;
+  color: #2f4f4f;
+}
+
+#menu button:active {
+  transform: translateY(1px);
+}
+
+#menu button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(211, 211, 211, 0.5);
+}
+
+/* Optional: Add a subtle animation on hover */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+#menu button:hover {
+  animation: pulse 0.5s ease-in-out;
+}
