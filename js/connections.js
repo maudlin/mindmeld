@@ -1,4 +1,4 @@
-import { calculateOffsetPosition } from './utils.js';
+import { calculateOffsetPosition, log } from './utils.js';
 import { getZoomLevel } from './zoomManager.js';
 
 // Constants
@@ -8,37 +8,72 @@ const STROKE_DASHARRAY = '5,5';
 
 export let isConnecting = false;
 
+let globalCanvas = null;
+
 /**
  * Updates the position of connections for a given note.
  * @param {HTMLElement} note - The note element.
  * @param {HTMLElement} canvas - The canvas element.
  */
-export function updateConnections(note, canvas) {
+// Update this function to position the hotspot
+export function updateConnections(note) {
+  if (!globalCanvas) {
+    log('Global canvas is not initialized');
+    return;
+  }
+
   requestAnimationFrame(() => {
     try {
       const connections = document.querySelectorAll(
-        `line[data-start="${note.id}"], line[data-end="${note.id}"]`,
+        `g[data-start="${note.id}"], g[data-end="${note.id}"]`,
       );
 
-      connections.forEach((connection) => {
-        const startNote = document.getElementById(connection.dataset.start);
-        const endNote = document.getElementById(connection.dataset.end);
+      connections.forEach((group) => {
+        const line = group.querySelector('line');
+        const hotspot = group.querySelector('circle');
+        const startNoteId = group.dataset.start;
+        const endNoteId = group.dataset.end;
+        const startNote = document.getElementById(startNoteId);
+        const endNote = document.getElementById(endNoteId);
+
         if (startNote && endNote) {
-          const { x1, y1, x2, y2 } = getClosestPoints(
-            startNote,
-            endNote,
-            canvas,
+          updateConnectionPositions(startNote, endNote, line, hotspot);
+        } else {
+          log(
+            `Missing note(s) for connection: start=${startNoteId}, end=${endNoteId}`,
           );
-          connection.setAttribute('x1', x1);
-          connection.setAttribute('y1', y1);
-          connection.setAttribute('x2', x2);
-          connection.setAttribute('y2', y2);
+          group.dataset.toRemove = 'true';
         }
       });
+
+      // Remove marked connections after the loop
+      document.querySelectorAll('g[data-to-remove="true"]').forEach((group) => {
+        group.remove();
+        log('Removed a connection with missing note(s)');
+      });
     } catch (error) {
-      console.error('Error updating connections:', error);
+      log('Error updating connections:', error);
     }
   });
+}
+
+function updateConnectionPositions(startNote, endNote, line, hotspot) {
+  const result = getClosestPoints(startNote, endNote);
+  if (result.error) {
+    log(result.error);
+    return;
+  }
+  const { x1, y1, x2, y2 } = result;
+  line.setAttribute('x1', x1);
+  line.setAttribute('y1', y1);
+  line.setAttribute('x2', x2);
+  line.setAttribute('y2', y2);
+
+  // Position hotspot at the middle of the line
+  const hotspotX = (parseFloat(x1) + parseFloat(x2)) / 2;
+  const hotspotY = (parseFloat(y1) + parseFloat(y2)) / 2;
+  hotspot.setAttribute('cx', hotspotX);
+  hotspot.setAttribute('cy', hotspotY);
 }
 
 /**
@@ -46,6 +81,7 @@ export function updateConnections(note, canvas) {
  * @param {HTMLElement} canvas - The canvas element.
  */
 export function initializeConnectionDrawing(canvas) {
+  globalCanvas = canvas;
   const svgContainer = createSVGContainer(canvas);
   const marker = createArrowMarker();
   svgContainer.appendChild(marker);
@@ -55,6 +91,7 @@ export function initializeConnectionDrawing(canvas) {
   );
   document.addEventListener('click', handleLineSelection);
   document.addEventListener('keydown', handleLineDeletion);
+  document.addEventListener('click', handleHotspotClick);
 }
 
 /**
@@ -101,16 +138,16 @@ function createArrowMarker() {
 function handleMouseDown(event, canvas, svgContainer) {
   if (!event.target.classList.contains('ghost-connector')) return;
 
-  event.stopPropagation(); // Stop the event from bubbling up
-  event.preventDefault(); // Prevent default behavior
+  event.stopPropagation();
+  event.preventDefault();
 
   isConnecting = true;
   const startNote = event.target.closest('.note');
-  const line = createConnectionLine(event, canvas, svgContainer);
+  const lineGroup = createConnectionLine(event, canvas, svgContainer);
 
   const { moveHandler, upHandler } = createConnectionHandlers(
     startNote,
-    line,
+    lineGroup,
     canvas,
     svgContainer,
   );
@@ -132,6 +169,7 @@ function createConnectionLine(event, canvas, svgContainer) {
     event,
     event.target,
   );
+  const group = createSVGElement('g');
 
   const line = createSVGElement('line', {
     x1: startX,
@@ -144,8 +182,19 @@ function createConnectionLine(event, canvas, svgContainer) {
     'marker-end': 'url(#arrow)',
   });
 
-  svgContainer.appendChild(line);
-  return line;
+  const hotspot = createSVGElement('circle', {
+    r: '5',
+    fill: '#fff',
+    stroke: STROKE_COLOR,
+    'stroke-width': STROKE_WIDTH,
+    class: 'connector-hotspot',
+  });
+
+  group.appendChild(line);
+  group.appendChild(hotspot);
+  svgContainer.appendChild(group);
+
+  return { line, hotspot, group };
 }
 
 /**
@@ -156,15 +205,15 @@ function createConnectionLine(event, canvas, svgContainer) {
  * @param {SVGElement} svgContainer - The SVG container.
  * @returns {Object} An object containing the move and up handlers.
  */
-function createConnectionHandlers(startNote, line, canvas, svgContainer) {
+function createConnectionHandlers(startNote, lineGroup, svgContainer) {
   const moveHandler = (moveEvent) => {
     if (isConnecting) {
       const { left: currentX, top: currentY } = calculateOffsetPosition(
-        canvas,
+        globalCanvas,
         moveEvent,
       );
-      line.setAttribute('x2', currentX);
-      line.setAttribute('y2', currentY);
+      lineGroup.line.setAttribute('x2', currentX);
+      lineGroup.line.setAttribute('y2', currentY);
     }
   };
 
@@ -175,12 +224,12 @@ function createConnectionHandlers(startNote, line, canvas, svgContainer) {
     if (
       isConnecting &&
       upEvent.target.closest('.note') &&
-      upEvent.target !== startNote
+      upEvent.target.closest('.note') !== startNote
     ) {
       const endNote = upEvent.target.closest('.note');
-      finalizeConnection(startNote, endNote, line, canvas);
+      finalizeConnection(startNote, endNote, lineGroup);
     } else {
-      svgContainer.removeChild(line);
+      svgContainer.removeChild(lineGroup.group);
     }
 
     isConnecting = false;
@@ -196,18 +245,40 @@ function createConnectionHandlers(startNote, line, canvas, svgContainer) {
  * @param {SVGLineElement} line - The line element.
  * @param {HTMLElement} canvas - The canvas element.
  */
-function finalizeConnection(startNote, endNote, line, canvas) {
-  const { x1, y1, x2, y2 } = getClosestPoints(startNote, endNote, canvas);
+function finalizeConnection(startNote, endNote, lineGroup) {
+  // Check if a connection already exists between these notes
+  if (connectionExists(startNote.id, endNote.id)) {
+    log('Connection already exists between these notes');
+    lineGroup.group.remove(); // Remove the temporary line
+    return;
+  }
 
-  line.setAttribute('x1', x1);
-  line.setAttribute('y1', y1);
-  line.setAttribute('x2', x2);
-  line.setAttribute('y2', y2);
+  const { x1, y1, x2, y2 } = getClosestPoints(startNote, endNote);
 
-  line.dataset.start = startNote.id;
-  line.dataset.end = endNote.id;
-  updateConnections(startNote, canvas);
-  updateConnections(endNote, canvas);
+  lineGroup.line.setAttribute('x1', x1);
+  lineGroup.line.setAttribute('y1', y1);
+  lineGroup.line.setAttribute('x2', x2);
+  lineGroup.line.setAttribute('y2', y2);
+
+  lineGroup.group.dataset.start = startNote.id;
+  lineGroup.group.dataset.end = endNote.id;
+
+  // Position hotspot at the middle of the line
+  const hotspotX = (parseFloat(x1) + parseFloat(x2)) / 2;
+  const hotspotY = (parseFloat(y1) + parseFloat(y2)) / 2;
+  lineGroup.hotspot.setAttribute('cx', hotspotX);
+  lineGroup.hotspot.setAttribute('cy', hotspotY);
+
+  updateConnections(startNote);
+  updateConnections(endNote);
+}
+
+function connectionExists(id1, id2) {
+  return (
+    document.querySelector(
+      `g[data-start="${id1}"][data-end="${id2}"], g[data-start="${id2}"][data-end="${id1}"]`,
+    ) !== null
+  );
 }
 
 /**
@@ -247,37 +318,90 @@ function handleLineDeletion(event) {
  * @param {HTMLElement} canvas - The canvas element.
  * @returns {Object} An object containing the x1, y1, x2, and y2 coordinates.
  */
-function getClosestPoints(note1, note2, canvas) {
+function getClosestPoints(note1, note2) {
+  if (!note1 || !note2 || !globalCanvas) {
+    return {
+      error: `Invalid input: note1=${!!note1}, note2=${!!note2}, globalCanvas=${!!globalCanvas}`,
+      x1: 0,
+      y1: 0,
+      x2: 0,
+      y2: 0,
+    };
+  }
+
   const zoomLevel = getZoomLevel();
   const scale = zoomLevel / 5;
 
-  const rect1 = note1.getBoundingClientRect();
-  const rect2 = note2.getBoundingClientRect();
-  const canvasRect = canvas.getBoundingClientRect();
+  try {
+    const rect1 = note1.getBoundingClientRect();
+    const rect2 = note2.getBoundingClientRect();
+    const canvasRect = globalCanvas.getBoundingClientRect();
 
-  const adjustedRect1 = adjustRectForZoom(rect1, canvasRect, scale);
-  const adjustedRect2 = adjustRectForZoom(rect2, canvasRect, scale);
+    if (
+      !isValidRect(rect1) ||
+      !isValidRect(rect2) ||
+      !isValidRect(canvasRect)
+    ) {
+      return {
+        error: `Invalid rectangle: rect1=${JSON.stringify(
+          rect1,
+        )}, rect2=${JSON.stringify(rect2)}, canvasRect=${JSON.stringify(
+          canvasRect,
+        )}`,
+        x1: 0,
+        y1: 0,
+        x2: 0,
+        y2: 0,
+      };
+    }
 
-  const center1 = getCenter(adjustedRect1);
-  const center2 = getCenter(adjustedRect2);
+    const adjustedRect1 = adjustRectForZoom(rect1, canvasRect, scale);
+    const adjustedRect2 = adjustRectForZoom(rect2, canvasRect, scale);
 
-  if (Math.abs(center1.x - center2.x) > Math.abs(center1.y - center2.y)) {
-    // Connect horizontally
+    const center1 = getCenter(adjustedRect1);
+    const center2 = getCenter(adjustedRect2);
+
+    if (Math.abs(center1.x - center2.x) > Math.abs(center1.y - center2.y)) {
+      // Connect horizontally
+      return {
+        x1: center1.x > center2.x ? adjustedRect1.left : adjustedRect1.right,
+        y1: center1.y,
+        x2: center1.x > center2.x ? adjustedRect2.right : adjustedRect2.left,
+        y2: center2.y,
+      };
+    } else {
+      // Connect vertically
+      return {
+        x1: center1.x,
+        y1: center1.y > center2.y ? adjustedRect1.top : adjustedRect1.bottom,
+        x2: center2.x,
+        y2: center1.y > center2.y ? adjustedRect2.bottom : adjustedRect2.top,
+      };
+    }
+  } catch (error) {
+    log('Error in getClosestPoints:', error);
     return {
-      x1: center1.x > center2.x ? adjustedRect1.left : adjustedRect1.right,
-      y1: center1.y,
-      x2: center1.x > center2.x ? adjustedRect2.right : adjustedRect2.left,
-      y2: center2.y,
-    };
-  } else {
-    // Connect vertically
-    return {
-      x1: center1.x,
-      y1: center1.y > center2.y ? adjustedRect1.top : adjustedRect1.bottom,
-      x2: center2.x,
-      y2: center1.y > center2.y ? adjustedRect2.bottom : adjustedRect2.top,
+      error: 'Exception in getClosestPoints',
+      x1: 0,
+      y1: 0,
+      x2: 0,
+      y2: 0,
     };
   }
+}
+
+function isValidRect(rect) {
+  return (
+    rect &&
+    typeof rect.left === 'number' &&
+    !isNaN(rect.left) &&
+    typeof rect.top === 'number' &&
+    !isNaN(rect.top) &&
+    typeof rect.right === 'number' &&
+    !isNaN(rect.right) &&
+    typeof rect.bottom === 'number' &&
+    !isNaN(rect.bottom)
+  );
 }
 
 /**
@@ -330,7 +454,14 @@ function createSVGElement(type, attributes = {}) {
  */
 export function deleteConnectionsByNote(note) {
   const connections = document.querySelectorAll(
-    `line[data-start="${note.id}"], line[data-end="${note.id}"]`,
+    `g[data-start="${note.id}"], g[data-end="${note.id}"]`,
   );
   connections.forEach((connection) => connection.remove());
+}
+
+function handleHotspotClick(event) {
+  if (event.target.classList.contains('connector-hotspot')) {
+    log('Hotspot clicked - implement context menu here');
+    // Implement your context menu logic here
+  }
 }

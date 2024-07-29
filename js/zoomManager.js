@@ -17,11 +17,11 @@ export function getZoomLevel() {
 
 export function setZoomLevel(newZoomLevel) {
   zoomLevel = Math.max(zoomMin, Math.min(zoomMax, newZoomLevel));
-  log(`Zoom level set to ${zoomLevel}`);
+  //log(`Zoom level set to ${zoomLevel}`);
 }
 
 function setInitialCanvasPosition(canvasContainer, canvas) {
-  log('Setting initial canvas position');
+  //log('Setting initial canvas position');
   const containerRect = canvasContainer.getBoundingClientRect();
   const canvasRect = canvas.getBoundingClientRect();
   const scale = ZOOM_LEVELS.DEFAULT / ZOOM_LEVELS.DEFAULT;
@@ -33,20 +33,18 @@ function setInitialCanvasPosition(canvasContainer, canvas) {
   // Apply the initial transform
   canvas.style.transform = `translate(${desiredCenterX}px, ${desiredCenterY}px) scale(${scale})`;
 
-  log(
-    `Initial position set: translateX=${desiredCenterX}, translateY=${desiredCenterY}, scale=${scale}`,
-  );
+  //log(
+  //  `Initial position set: translateX=${desiredCenterX}, translateY=${desiredCenterY}, scale=${scale}`,
+  //);
 
   isInitialPositionSet = true;
-  log('Initial position set complete');
-
-  logCanvasPosition(canvas);
+  //log('Initial position set complete');
 }
 
 function positionCanvas(canvasContainer, canvas) {
-  log('Positioning canvas');
+  //log('Positioning canvas');
   if (!isInitialPositionSet) {
-    log('Initial position not set, calling setInitialCanvasPosition');
+    //log('Initial position not set, calling setInitialCanvasPosition');
     setInitialCanvasPosition(canvasContainer, canvas);
     return;
   }
@@ -96,8 +94,7 @@ function positionCanvas(canvasContainer, canvas) {
   // Apply the final transform
   canvas.style.transform = `translate(${left}px, ${top}px) scale(${scale})`;
 
-  log(`Adjusted canvas position: left=${left}, top=${top}, scale=${scale}`);
-  logCanvasPosition(canvas);
+  //log(`Adjusted canvas position: left=${left}, top=${top}, scale=${scale}`);
 }
 
 function handleZoom(event, canvas, canvasContainer, zoomDisplay) {
@@ -111,7 +108,7 @@ function handleZoom(event, canvas, canvasContainer, zoomDisplay) {
 
   // Calculate new zoom level
   if (event.deltaY < 0 && zoomLevel < zoomMax) {
-    log('Zoom level unchanged, returning');
+    //log('Zoom level unchanged, returning');
     zoomLevel++;
   } else if (event.deltaY > 0 && zoomLevel > zoomMin) {
     zoomLevel--;
@@ -119,7 +116,7 @@ function handleZoom(event, canvas, canvasContainer, zoomDisplay) {
 
   // If zoom level didn't change, don't proceed
   if (oldZoom === zoomLevel) {
-    log(`Zoom level changed from ${oldZoom} to ${zoomLevel}`);
+    //log(`Zoom level changed from ${oldZoom} to ${zoomLevel}`);
     return;
   }
 
@@ -157,7 +154,7 @@ function updateZoomDisplay(zoomDisplay) {
 function startPanning(event) {
   if (event.button === 2) {
     // Right-click
-    log('Starting panning');
+    //log('Starting panning');
     event.preventDefault();
     isPanning = true;
     startX = event.clientX - event.currentTarget.offsetLeft;
@@ -167,7 +164,7 @@ function startPanning(event) {
 
 function pan(event) {
   if (isPanning) {
-    log('Panning');
+    //log('Panning');
     event.preventDefault();
     const canvas = event.currentTarget.querySelector('#canvas');
     const x = event.clientX - event.currentTarget.offsetLeft;
@@ -179,7 +176,7 @@ function pan(event) {
     canvas.style.transform = `translate(${transform.e + dx}px, ${
       transform.f + dy
     }px) scale(${transform.a})`;
-    log(`Panned: dx=${dx}, dy=${dy}`);
+    //log(`Panned: dx=${dx}, dy=${dy}`);
 
     startX = x;
     startY = y;
@@ -188,24 +185,24 @@ function pan(event) {
 
 function stopPanning() {
   if (isPanning) {
-    log('Stopping panning');
+    //log('Stopping panning');
     isPanning = false;
   }
 }
 
-function logResizeDetails(canvasContainer, canvas) {
-  log(`Window inner dimensions: ${window.innerWidth}x${window.innerHeight}`);
-  log(
-    `Document dimensions: ${document.documentElement.clientWidth}x${document.documentElement.clientHeight}`,
-  );
-  log(
-    `Body dimensions: ${document.body.clientWidth}x${document.body.clientHeight}`,
-  );
-  log(
-    `Canvas container dimensions: ${canvasContainer.clientWidth}x${canvasContainer.clientHeight}`,
-  );
-  log(`Canvas dimensions: ${canvas.clientWidth}x${canvas.clientHeight}`);
-}
+// function logResizeDetails(canvasContainer, canvas) {
+//   log(`Window inner dimensions: ${window.innerWidth}x${window.innerHeight}`);
+//   log(
+//     `Document dimensions: ${document.documentElement.clientWidth}x${document.documentElement.clientHeight}`,
+//   );
+//   log(
+//     `Body dimensions: ${document.body.clientWidth}x${document.body.clientHeight}`,
+//   );
+//   log(
+//     `Canvas container dimensions: ${canvasContainer.clientWidth}x${canvasContainer.clientHeight}`,
+//   );
+//   log(`Canvas dimensions: ${canvas.clientWidth}x${canvas.clientHeight}`);
+// }
 
 function monitorCanvasPosition(canvas) {
   // MutationObserver to watch for style changes
@@ -215,8 +212,8 @@ function monitorCanvasPosition(canvas) {
         mutation.type === 'attributes' &&
         mutation.attributeName === 'style'
       ) {
-        log(`Canvas style changed: ${canvas.style.cssText}`);
-        logCanvasPosition(canvas);
+        //log(`Canvas style changed: ${canvas.style.cssText}`);
+        //
       }
     });
   });
@@ -227,34 +224,34 @@ function monitorCanvasPosition(canvas) {
   let checkCount = 0;
   const maxChecks = 50; // Check for 5 seconds (50 * 100ms)
   const intervalId = setInterval(() => {
-    logCanvasPosition(canvas);
+    //
     checkCount++;
     if (checkCount >= maxChecks) {
       clearInterval(intervalId);
       observer.disconnect();
-      log('Extended canvas monitoring complete');
+      //log('Extended canvas monitoring complete');
     }
   }, 100);
 }
 
-function logCanvasPosition(canvas) {
-  const rect = canvas.getBoundingClientRect();
-  const style = window.getComputedStyle(canvas);
-  log(
-    `Canvas position: left=${rect.left}, top=${rect.top}, transform=${style.transform}`,
-  );
-}
+//function logCanvasPosition(canvas) {
+//const rect = canvas.getBoundingClientRect();
+//const style = window.getComputedStyle(canvas);
+//log(
+// `Canvas position: left=${rect.left}, top=${rect.top}, transform=${style.transform}`,
+//);
+//}
 
 export function setupZoomAndPan(canvasContainer, canvas, zoomDisplay) {
   window.addEventListener('resize', () => {
-    log('Window resize event triggered');
-    logResizeDetails(canvasContainer, canvas);
+    //log('Window resize event triggered');
+    //logResizeDetails(canvasContainer, canvas);
     positionCanvas(canvasContainer, canvas);
   });
 
   // Log initial dimensions
-  log('Initial dimensions:');
-  logResizeDetails(canvasContainer, canvas);
+  //log('Initial dimensions:');
+  //logResizeDetails(canvasContainer, canvas);
 
   log('Setting up zoom and pan');
   const debouncedHandleZoom = debounce((event) => {
@@ -279,7 +276,7 @@ export function setupZoomAndPan(canvasContainer, canvas, zoomDisplay) {
         event.target === canvasContainer ||
         canvasContainer.contains(event.target)
       ) {
-        log('Preventing scroll on document body');
+        //log('Preventing scroll on document body');
         event.preventDefault();
       }
     },
@@ -294,20 +291,20 @@ export function setupZoomAndPan(canvasContainer, canvas, zoomDisplay) {
 
   // Prevent default context menu
   canvasContainer.addEventListener('contextmenu', (event) => {
-    log('Preventing context menu');
+    //log('Preventing context menu');
     event.preventDefault();
   });
 
   // Set initial position immediately
-  log('Setting initial canvas position');
+  //log('Setting initial canvas position');
   setInitialCanvasPosition(canvasContainer, canvas);
 
   // Update zoom display
-  log('Updating initial zoom display');
+  //log('Updating initial zoom display');
   updateZoomDisplay(zoomDisplay);
 
   // Reposition on window resize
-  log('Window resized, repositioning canvas');
+  //log('Window resized, repositioning canvas');
   window.addEventListener('resize', () => {
     positionCanvas(canvasContainer, canvas);
   });
@@ -317,8 +314,8 @@ export function setupZoomAndPan(canvasContainer, canvas, zoomDisplay) {
     log('Window loaded, ensuring correct positioning');
     positionCanvas(canvasContainer, canvas);
   });
-  log('Setting up extended canvas monitoring');
+  //log('Setting up extended canvas monitoring');
   monitorCanvasPosition(canvas, canvasContainer);
 
-  log('Zoom and pan setup complete');
+  //log('Zoom and pan setup complete');
 }
