@@ -24,35 +24,45 @@ export function updateConnections(note, canvas) {
       connections.forEach((group) => {
         const line = group.querySelector('line');
         const hotspot = group.querySelector('circle');
-        const startNote = document.getElementById(group.dataset.start);
-        const endNote = document.getElementById(group.dataset.end);
+        const startNoteId = group.dataset.start;
+        const endNoteId = group.dataset.end;
+        const startNote = document.getElementById(startNoteId);
+        const endNote = document.getElementById(endNoteId);
 
         if (startNote && endNote) {
-          const { x1, y1, x2, y2 } = getClosestPoints(
-            startNote,
-            endNote,
-            canvas,
-          );
-          line.setAttribute('x1', x1);
-          line.setAttribute('y1', y1);
-          line.setAttribute('x2', x2);
-          line.setAttribute('y2', y2);
-
-          // Position hotspot at the middle of the line
-          const hotspotX = (parseFloat(x1) + parseFloat(x2)) / 2;
-          const hotspotY = (parseFloat(y1) + parseFloat(y2)) / 2;
-          hotspot.setAttribute('cx', hotspotX);
-          hotspot.setAttribute('cy', hotspotY);
+          updateConnectionPositions(startNote, endNote, line, hotspot, canvas);
         } else {
-          // If either start or end note is missing, remove the connection
-          group.remove();
-          console.log('Removed a connection with missing note(s)');
+          // If either start or end note is missing, mark the connection for removal
+          group.dataset.toRemove = 'true';
+          log(
+            `Marked connection for removal: start=${startNoteId}, end=${endNoteId}`,
+          );
         }
       });
+
+      // Remove marked connections after the loop
+      document.querySelectorAll('g[data-to-remove="true"]').forEach((group) => {
+        group.remove();
+        log('Removed a connection with missing note(s)');
+      });
     } catch (error) {
-      console.error('Error updating connections:', error);
+      log('Error updating connections:', error);
     }
   });
+}
+
+function updateConnectionPositions(startNote, endNote, line, hotspot, canvas) {
+  const { x1, y1, x2, y2 } = getClosestPoints(startNote, endNote, canvas);
+  line.setAttribute('x1', x1);
+  line.setAttribute('y1', y1);
+  line.setAttribute('x2', x2);
+  line.setAttribute('y2', y2);
+
+  // Position hotspot at the middle of the line
+  const hotspotX = (parseFloat(x1) + parseFloat(x2)) / 2;
+  const hotspotY = (parseFloat(y1) + parseFloat(y2)) / 2;
+  hotspot.setAttribute('cx', hotspotX);
+  hotspot.setAttribute('cy', hotspotY);
 }
 
 /**
@@ -282,8 +292,8 @@ function handleLineDeletion(event) {
  * @returns {Object} An object containing the x1, y1, x2, and y2 coordinates.
  */
 function getClosestPoints(note1, note2, canvas) {
-  if (!note1 || !note2) {
-    log('Invalid notes provided to getClosestPoints');
+  if (!note1 || !note2 || !canvas) {
+    log('Invalid notes or canvas provided to getClosestPoints');
     return { x1: 0, y1: 0, x2: 0, y2: 0 };
   }
 
@@ -293,6 +303,11 @@ function getClosestPoints(note1, note2, canvas) {
   const rect1 = note1.getBoundingClientRect();
   const rect2 = note2.getBoundingClientRect();
   const canvasRect = canvas.getBoundingClientRect();
+
+  if (!isValidRect(rect1) || !isValidRect(rect2) || !isValidRect(canvasRect)) {
+    log('Invalid bounding rectangle(s) in getClosestPoints');
+    return { x1: 0, y1: 0, x2: 0, y2: 0 };
+  }
 
   const adjustedRect1 = adjustRectForZoom(rect1, canvasRect, scale);
   const adjustedRect2 = adjustRectForZoom(rect2, canvasRect, scale);
@@ -317,6 +332,16 @@ function getClosestPoints(note1, note2, canvas) {
       y2: center1.y > center2.y ? adjustedRect2.bottom : adjustedRect2.top,
     };
   }
+}
+
+function isValidRect(rect) {
+  return (
+    rect &&
+    typeof rect.left === 'number' &&
+    typeof rect.top === 'number' &&
+    typeof rect.right === 'number' &&
+    typeof rect.bottom === 'number'
+  );
 }
 
 /**
@@ -376,7 +401,7 @@ export function deleteConnectionsByNote(note) {
 
 function handleHotspotClick(event) {
   if (event.target.classList.contains('connector-hotspot')) {
-    console.log('Hotspot clicked - implement context menu here');
+    log('Hotspot clicked - implement context menu here');
     // Implement your context menu logic here
   }
 }
