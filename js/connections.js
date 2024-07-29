@@ -8,13 +8,20 @@ const STROKE_DASHARRAY = '5,5';
 
 export let isConnecting = false;
 
+let globalCanvas = null;
+
 /**
  * Updates the position of connections for a given note.
  * @param {HTMLElement} note - The note element.
  * @param {HTMLElement} canvas - The canvas element.
  */
 // Update this function to position the hotspot
-export function updateConnections(note, canvas) {
+export function updateConnections(note) {
+  if (!globalCanvas) {
+    log('Global canvas is not initialized');
+    return;
+  }
+
   requestAnimationFrame(() => {
     try {
       const connections = document.querySelectorAll(
@@ -30,13 +37,12 @@ export function updateConnections(note, canvas) {
         const endNote = document.getElementById(endNoteId);
 
         if (startNote && endNote) {
-          updateConnectionPositions(startNote, endNote, line, hotspot, canvas);
+          updateConnectionPositions(startNote, endNote, line, hotspot);
         } else {
-          // If either start or end note is missing, mark the connection for removal
-          group.dataset.toRemove = 'true';
           log(
-            `Marked connection for removal: start=${startNoteId}, end=${endNoteId}`,
+            `Missing note(s) for connection: start=${startNoteId}, end=${endNoteId}`,
           );
+          group.dataset.toRemove = 'true';
         }
       });
 
@@ -51,8 +57,13 @@ export function updateConnections(note, canvas) {
   });
 }
 
-function updateConnectionPositions(startNote, endNote, line, hotspot, canvas) {
-  const { x1, y1, x2, y2 } = getClosestPoints(startNote, endNote, canvas);
+function updateConnectionPositions(startNote, endNote, line, hotspot) {
+  const result = getClosestPoints(startNote, endNote);
+  if (result.error) {
+    log(result.error);
+    return;
+  }
+  const { x1, y1, x2, y2 } = result;
   line.setAttribute('x1', x1);
   line.setAttribute('y1', y1);
   line.setAttribute('x2', x2);
@@ -70,6 +81,7 @@ function updateConnectionPositions(startNote, endNote, line, hotspot, canvas) {
  * @param {HTMLElement} canvas - The canvas element.
  */
 export function initializeConnectionDrawing(canvas) {
+  globalCanvas = canvas;
   const svgContainer = createSVGContainer(canvas);
   const marker = createArrowMarker();
   svgContainer.appendChild(marker);
@@ -193,11 +205,11 @@ function createConnectionLine(event, canvas, svgContainer) {
  * @param {SVGElement} svgContainer - The SVG container.
  * @returns {Object} An object containing the move and up handlers.
  */
-function createConnectionHandlers(startNote, lineGroup, canvas, svgContainer) {
+function createConnectionHandlers(startNote, lineGroup, svgContainer) {
   const moveHandler = (moveEvent) => {
     if (isConnecting) {
       const { left: currentX, top: currentY } = calculateOffsetPosition(
-        canvas,
+        globalCanvas,
         moveEvent,
       );
       lineGroup.line.setAttribute('x2', currentX);
@@ -212,10 +224,10 @@ function createConnectionHandlers(startNote, lineGroup, canvas, svgContainer) {
     if (
       isConnecting &&
       upEvent.target.closest('.note') &&
-      upEvent.target !== startNote
+      upEvent.target.closest('.note') !== startNote
     ) {
       const endNote = upEvent.target.closest('.note');
-      finalizeConnection(startNote, endNote, lineGroup, canvas);
+      finalizeConnection(startNote, endNote, lineGroup);
     } else {
       svgContainer.removeChild(lineGroup.group);
     }
@@ -233,8 +245,15 @@ function createConnectionHandlers(startNote, lineGroup, canvas, svgContainer) {
  * @param {SVGLineElement} line - The line element.
  * @param {HTMLElement} canvas - The canvas element.
  */
-function finalizeConnection(startNote, endNote, lineGroup, canvas) {
-  const { x1, y1, x2, y2 } = getClosestPoints(startNote, endNote, canvas);
+function finalizeConnection(startNote, endNote, lineGroup) {
+  // Check if a connection already exists between these notes
+  if (connectionExists(startNote.id, endNote.id)) {
+    log('Connection already exists between these notes');
+    lineGroup.group.remove(); // Remove the temporary line
+    return;
+  }
+
+  const { x1, y1, x2, y2 } = getClosestPoints(startNote, endNote);
 
   lineGroup.line.setAttribute('x1', x1);
   lineGroup.line.setAttribute('y1', y1);
@@ -250,8 +269,16 @@ function finalizeConnection(startNote, endNote, lineGroup, canvas) {
   lineGroup.hotspot.setAttribute('cx', hotspotX);
   lineGroup.hotspot.setAttribute('cy', hotspotY);
 
-  updateConnections(startNote, canvas);
-  updateConnections(endNote, canvas);
+  updateConnections(startNote);
+  updateConnections(endNote);
+}
+
+function connectionExists(id1, id2) {
+  return (
+    document.querySelector(
+      `g[data-start="${id1}"][data-end="${id2}"], g[data-start="${id2}"][data-end="${id1}"]`,
+    ) !== null
+  );
 }
 
 /**
@@ -291,45 +318,74 @@ function handleLineDeletion(event) {
  * @param {HTMLElement} canvas - The canvas element.
  * @returns {Object} An object containing the x1, y1, x2, and y2 coordinates.
  */
-function getClosestPoints(note1, note2, canvas) {
-  if (!note1 || !note2 || !canvas) {
-    log('Invalid notes or canvas provided to getClosestPoints');
-    return { x1: 0, y1: 0, x2: 0, y2: 0 };
+function getClosestPoints(note1, note2) {
+  if (!note1 || !note2 || !globalCanvas) {
+    return {
+      error: `Invalid input: note1=${!!note1}, note2=${!!note2}, globalCanvas=${!!globalCanvas}`,
+      x1: 0,
+      y1: 0,
+      x2: 0,
+      y2: 0,
+    };
   }
 
   const zoomLevel = getZoomLevel();
   const scale = zoomLevel / 5;
 
-  const rect1 = note1.getBoundingClientRect();
-  const rect2 = note2.getBoundingClientRect();
-  const canvasRect = canvas.getBoundingClientRect();
+  try {
+    const rect1 = note1.getBoundingClientRect();
+    const rect2 = note2.getBoundingClientRect();
+    const canvasRect = globalCanvas.getBoundingClientRect();
 
-  if (!isValidRect(rect1) || !isValidRect(rect2) || !isValidRect(canvasRect)) {
-    log('Invalid bounding rectangle(s) in getClosestPoints');
-    return { x1: 0, y1: 0, x2: 0, y2: 0 };
-  }
+    if (
+      !isValidRect(rect1) ||
+      !isValidRect(rect2) ||
+      !isValidRect(canvasRect)
+    ) {
+      return {
+        error: `Invalid rectangle: rect1=${JSON.stringify(
+          rect1,
+        )}, rect2=${JSON.stringify(rect2)}, canvasRect=${JSON.stringify(
+          canvasRect,
+        )}`,
+        x1: 0,
+        y1: 0,
+        x2: 0,
+        y2: 0,
+      };
+    }
 
-  const adjustedRect1 = adjustRectForZoom(rect1, canvasRect, scale);
-  const adjustedRect2 = adjustRectForZoom(rect2, canvasRect, scale);
+    const adjustedRect1 = adjustRectForZoom(rect1, canvasRect, scale);
+    const adjustedRect2 = adjustRectForZoom(rect2, canvasRect, scale);
 
-  const center1 = getCenter(adjustedRect1);
-  const center2 = getCenter(adjustedRect2);
+    const center1 = getCenter(adjustedRect1);
+    const center2 = getCenter(adjustedRect2);
 
-  if (Math.abs(center1.x - center2.x) > Math.abs(center1.y - center2.y)) {
-    // Connect horizontally
+    if (Math.abs(center1.x - center2.x) > Math.abs(center1.y - center2.y)) {
+      // Connect horizontally
+      return {
+        x1: center1.x > center2.x ? adjustedRect1.left : adjustedRect1.right,
+        y1: center1.y,
+        x2: center1.x > center2.x ? adjustedRect2.right : adjustedRect2.left,
+        y2: center2.y,
+      };
+    } else {
+      // Connect vertically
+      return {
+        x1: center1.x,
+        y1: center1.y > center2.y ? adjustedRect1.top : adjustedRect1.bottom,
+        x2: center2.x,
+        y2: center1.y > center2.y ? adjustedRect2.bottom : adjustedRect2.top,
+      };
+    }
+  } catch (error) {
+    log('Error in getClosestPoints:', error);
     return {
-      x1: center1.x > center2.x ? adjustedRect1.left : adjustedRect1.right,
-      y1: center1.y,
-      x2: center1.x > center2.x ? adjustedRect2.right : adjustedRect2.left,
-      y2: center2.y,
-    };
-  } else {
-    // Connect vertically
-    return {
-      x1: center1.x,
-      y1: center1.y > center2.y ? adjustedRect1.top : adjustedRect1.bottom,
-      x2: center2.x,
-      y2: center1.y > center2.y ? adjustedRect2.bottom : adjustedRect2.top,
+      error: 'Exception in getClosestPoints',
+      x1: 0,
+      y1: 0,
+      x2: 0,
+      y2: 0,
     };
   }
 }
@@ -338,9 +394,13 @@ function isValidRect(rect) {
   return (
     rect &&
     typeof rect.left === 'number' &&
+    !isNaN(rect.left) &&
     typeof rect.top === 'number' &&
+    !isNaN(rect.top) &&
     typeof rect.right === 'number' &&
-    typeof rect.bottom === 'number'
+    !isNaN(rect.right) &&
+    typeof rect.bottom === 'number' &&
+    !isNaN(rect.bottom)
   );
 }
 
