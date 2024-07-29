@@ -1,4 +1,4 @@
-import { calculateOffsetPosition } from './utils.js';
+import { calculateOffsetPosition, log } from './utils.js';
 import { getZoomLevel } from './zoomManager.js';
 
 // Constants
@@ -13,26 +13,40 @@ export let isConnecting = false;
  * @param {HTMLElement} note - The note element.
  * @param {HTMLElement} canvas - The canvas element.
  */
+// Update this function to position the hotspot
 export function updateConnections(note, canvas) {
   requestAnimationFrame(() => {
     try {
       const connections = document.querySelectorAll(
-        `line[data-start="${note.id}"], line[data-end="${note.id}"]`,
+        `g[data-start="${note.id}"], g[data-end="${note.id}"]`,
       );
 
-      connections.forEach((connection) => {
-        const startNote = document.getElementById(connection.dataset.start);
-        const endNote = document.getElementById(connection.dataset.end);
+      connections.forEach((group) => {
+        const line = group.querySelector('line');
+        const hotspot = group.querySelector('circle');
+        const startNote = document.getElementById(group.dataset.start);
+        const endNote = document.getElementById(group.dataset.end);
+
         if (startNote && endNote) {
           const { x1, y1, x2, y2 } = getClosestPoints(
             startNote,
             endNote,
             canvas,
           );
-          connection.setAttribute('x1', x1);
-          connection.setAttribute('y1', y1);
-          connection.setAttribute('x2', x2);
-          connection.setAttribute('y2', y2);
+          line.setAttribute('x1', x1);
+          line.setAttribute('y1', y1);
+          line.setAttribute('x2', x2);
+          line.setAttribute('y2', y2);
+
+          // Position hotspot at the middle of the line
+          const hotspotX = (parseFloat(x1) + parseFloat(x2)) / 2;
+          const hotspotY = (parseFloat(y1) + parseFloat(y2)) / 2;
+          hotspot.setAttribute('cx', hotspotX);
+          hotspot.setAttribute('cy', hotspotY);
+        } else {
+          // If either start or end note is missing, remove the connection
+          group.remove();
+          console.log('Removed a connection with missing note(s)');
         }
       });
     } catch (error) {
@@ -55,6 +69,7 @@ export function initializeConnectionDrawing(canvas) {
   );
   document.addEventListener('click', handleLineSelection);
   document.addEventListener('keydown', handleLineDeletion);
+  document.addEventListener('click', handleHotspotClick);
 }
 
 /**
@@ -101,16 +116,16 @@ function createArrowMarker() {
 function handleMouseDown(event, canvas, svgContainer) {
   if (!event.target.classList.contains('ghost-connector')) return;
 
-  event.stopPropagation(); // Stop the event from bubbling up
-  event.preventDefault(); // Prevent default behavior
+  event.stopPropagation();
+  event.preventDefault();
 
   isConnecting = true;
   const startNote = event.target.closest('.note');
-  const line = createConnectionLine(event, canvas, svgContainer);
+  const lineGroup = createConnectionLine(event, canvas, svgContainer);
 
   const { moveHandler, upHandler } = createConnectionHandlers(
     startNote,
-    line,
+    lineGroup,
     canvas,
     svgContainer,
   );
@@ -132,6 +147,7 @@ function createConnectionLine(event, canvas, svgContainer) {
     event,
     event.target,
   );
+  const group = createSVGElement('g');
 
   const line = createSVGElement('line', {
     x1: startX,
@@ -144,8 +160,19 @@ function createConnectionLine(event, canvas, svgContainer) {
     'marker-end': 'url(#arrow)',
   });
 
-  svgContainer.appendChild(line);
-  return line;
+  const hotspot = createSVGElement('circle', {
+    r: '5',
+    fill: '#fff',
+    stroke: STROKE_COLOR,
+    'stroke-width': STROKE_WIDTH,
+    class: 'connector-hotspot',
+  });
+
+  group.appendChild(line);
+  group.appendChild(hotspot);
+  svgContainer.appendChild(group);
+
+  return { line, hotspot, group };
 }
 
 /**
@@ -156,15 +183,15 @@ function createConnectionLine(event, canvas, svgContainer) {
  * @param {SVGElement} svgContainer - The SVG container.
  * @returns {Object} An object containing the move and up handlers.
  */
-function createConnectionHandlers(startNote, line, canvas, svgContainer) {
+function createConnectionHandlers(startNote, lineGroup, canvas, svgContainer) {
   const moveHandler = (moveEvent) => {
     if (isConnecting) {
       const { left: currentX, top: currentY } = calculateOffsetPosition(
         canvas,
         moveEvent,
       );
-      line.setAttribute('x2', currentX);
-      line.setAttribute('y2', currentY);
+      lineGroup.line.setAttribute('x2', currentX);
+      lineGroup.line.setAttribute('y2', currentY);
     }
   };
 
@@ -178,9 +205,9 @@ function createConnectionHandlers(startNote, line, canvas, svgContainer) {
       upEvent.target !== startNote
     ) {
       const endNote = upEvent.target.closest('.note');
-      finalizeConnection(startNote, endNote, line, canvas);
+      finalizeConnection(startNote, endNote, lineGroup, canvas);
     } else {
-      svgContainer.removeChild(line);
+      svgContainer.removeChild(lineGroup.group);
     }
 
     isConnecting = false;
@@ -196,16 +223,23 @@ function createConnectionHandlers(startNote, line, canvas, svgContainer) {
  * @param {SVGLineElement} line - The line element.
  * @param {HTMLElement} canvas - The canvas element.
  */
-function finalizeConnection(startNote, endNote, line, canvas) {
+function finalizeConnection(startNote, endNote, lineGroup, canvas) {
   const { x1, y1, x2, y2 } = getClosestPoints(startNote, endNote, canvas);
 
-  line.setAttribute('x1', x1);
-  line.setAttribute('y1', y1);
-  line.setAttribute('x2', x2);
-  line.setAttribute('y2', y2);
+  lineGroup.line.setAttribute('x1', x1);
+  lineGroup.line.setAttribute('y1', y1);
+  lineGroup.line.setAttribute('x2', x2);
+  lineGroup.line.setAttribute('y2', y2);
 
-  line.dataset.start = startNote.id;
-  line.dataset.end = endNote.id;
+  lineGroup.group.dataset.start = startNote.id;
+  lineGroup.group.dataset.end = endNote.id;
+
+  // Position hotspot at the middle of the line
+  const hotspotX = (parseFloat(x1) + parseFloat(x2)) / 2;
+  const hotspotY = (parseFloat(y1) + parseFloat(y2)) / 2;
+  lineGroup.hotspot.setAttribute('cx', hotspotX);
+  lineGroup.hotspot.setAttribute('cy', hotspotY);
+
   updateConnections(startNote, canvas);
   updateConnections(endNote, canvas);
 }
@@ -248,6 +282,11 @@ function handleLineDeletion(event) {
  * @returns {Object} An object containing the x1, y1, x2, and y2 coordinates.
  */
 function getClosestPoints(note1, note2, canvas) {
+  if (!note1 || !note2) {
+    log('Invalid notes provided to getClosestPoints');
+    return { x1: 0, y1: 0, x2: 0, y2: 0 };
+  }
+
   const zoomLevel = getZoomLevel();
   const scale = zoomLevel / 5;
 
@@ -330,7 +369,14 @@ function createSVGElement(type, attributes = {}) {
  */
 export function deleteConnectionsByNote(note) {
   const connections = document.querySelectorAll(
-    `line[data-start="${note.id}"], line[data-end="${note.id}"]`,
+    `g[data-start="${note.id}"], g[data-end="${note.id}"]`,
   );
   connections.forEach((connection) => connection.remove());
+}
+
+function handleHotspotClick(event) {
+  if (event.target.classList.contains('connector-hotspot')) {
+    console.log('Hotspot clicked - implement context menu here');
+    // Implement your context menu logic here
+  }
 }
