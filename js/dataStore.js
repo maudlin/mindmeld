@@ -1,11 +1,13 @@
 // dataStore.js
-import { appState } from './observableState.js';
+
 import { createNote, addNoteEventListeners } from './note.js';
 import {
-  initializeConnectionDrawing,
+  createConnection,
   updateConnections,
-  CONNECTION_TYPES,
+  initializeConnectionDrawing,
 } from './connections.js';
+
+import { appState } from './observableState.js';
 
 export function addNote(note) {
   const currentNotes = appState.getState().notes;
@@ -91,37 +93,8 @@ export function importFromJSON(jsonData, canvas) {
     });
 
     // Create connections
-    const svgContainer = document.getElementById('svg-container');
     connections.forEach((conn) => {
-      const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      group.setAttribute('data-start', conn.from);
-      group.setAttribute('data-end', conn.to);
-      group.setAttribute('data-type', conn.type);
-
-      const path = document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        'path',
-      );
-      path.setAttribute('stroke', '#888');
-      path.setAttribute('stroke-width', '2');
-      path.setAttribute('fill', 'none');
-
-      // Set markers based on connection type
-      switch (conn.type) {
-        case CONNECTION_TYPES.UNI_FORWARD:
-          path.setAttribute('marker-end', 'url(#arrow)');
-          break;
-        case CONNECTION_TYPES.UNI_BACKWARD:
-          path.setAttribute('marker-start', 'url(#arrow)');
-          break;
-        case CONNECTION_TYPES.BI:
-          path.setAttribute('marker-start', 'url(#arrow)');
-          path.setAttribute('marker-end', 'url(#arrow)');
-          break;
-      }
-
-      group.appendChild(path);
-      svgContainer.appendChild(group);
+      createConnection(conn.from, conn.to, conn.type);
     });
 
     // Update appState
@@ -130,13 +103,8 @@ export function importFromJSON(jsonData, canvas) {
     // Reinitialize connection drawing
     initializeConnectionDrawing(canvas);
 
-    // Update connections
-    notes.forEach((noteData) => {
-      const note = document.getElementById(noteData.id);
-      if (note) {
-        updateConnections(note);
-      }
-    });
+    // Update all connections
+    updateConnections();
   } catch (error) {
     console.error('Error importing data:', error);
     throw new Error('Invalid JSON data');

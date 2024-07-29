@@ -15,62 +15,67 @@ export const CONNECTION_TYPES = {
 
 export let isConnecting = false;
 
-export function updateConnections(note) {
-  requestAnimationFrame(() => {
-    try {
-      const connections = document.querySelectorAll(
-        `g[data-start="${note.id}"], g[data-end="${note.id}"]`,
+export function updateConnections(noteOrGroup) {
+  const updateSingle = (group) => {
+    const path = group.querySelector('path');
+    const hotspot = group.querySelector('circle');
+    const contextMenu = group.querySelector('.context-menu');
+    const startNote = document.getElementById(group.dataset.start);
+    const endNote = document.getElementById(group.dataset.end);
+
+    if (startNote && endNote && path && hotspot && contextMenu) {
+      const points = getClosestPoints(startNote, endNote);
+      updateConnectionPath(
+        path,
+        points.x1,
+        points.y1,
+        points.x2,
+        points.y2,
+        group.dataset.type || CONNECTION_TYPES.NONE,
       );
 
-      connections.forEach((group) => {
-        const path = group.querySelector('path');
-        const hotspot = group.querySelector('circle');
-        const contextMenu = group.querySelector('.context-menu');
-        const startNote = document.getElementById(group.dataset.start);
-        const endNote = document.getElementById(group.dataset.end);
-
-        if (startNote && endNote) {
-          const points = getClosestPoints(startNote, endNote);
-
-          if (
-            points &&
-            typeof points.x1 === 'number' &&
-            typeof points.y1 === 'number' &&
-            typeof points.x2 === 'number' &&
-            typeof points.y2 === 'number'
-          ) {
-            updateConnectionPath(
-              path,
-              points.x1,
-              points.y1,
-              points.x2,
-              points.y2,
-              group.dataset.type || CONNECTION_TYPES.NONE,
-            );
-
-            const hotspotX = (points.x1 + points.x2) / 2;
-            const hotspotY = (points.y1 + points.y2) / 2;
-            hotspot.setAttribute('cx', hotspotX);
-            hotspot.setAttribute('cy', hotspotY);
-            contextMenu.setAttribute(
-              'transform',
-              `translate(${hotspotX}, ${hotspotY})`,
-            );
-          } else {
-            console.error(
-              'Invalid points returned from getClosestPoints:',
-              points,
-            );
-          }
-        } else {
-          console.warn('Missing start or end note:', { startNote, endNote });
-          group.remove();
-        }
+      const hotspotX = (points.x1 + points.x2) / 2;
+      const hotspotY = (points.y1 + points.y2) / 2;
+      hotspot.setAttribute('cx', hotspotX);
+      hotspot.setAttribute('cy', hotspotY);
+      contextMenu.setAttribute(
+        'transform',
+        `translate(${hotspotX}, ${hotspotY})`,
+      );
+    } else {
+      console.warn('Missing elements for connection:', {
+        startNote: !!startNote,
+        endNote: !!endNote,
+        path: !!path,
+        hotspot: !!hotspot,
+        contextMenu: !!contextMenu,
       });
-    } catch (error) {
-      console.error('Error updating connections:', error);
+      if (group.parentNode) {
+        group.remove();
+      }
     }
-  });
+  };
+
+  if (
+    noteOrGroup instanceof Element &&
+    noteOrGroup.classList.contains('note')
+  ) {
+    // If it's a note, update all connections related to this note
+    const connections = document.querySelectorAll(
+      `g[data-start="${noteOrGroup.id}"], g[data-end="${noteOrGroup.id}"]`,
+    );
+    connections.forEach(updateSingle);
+  } else if (
+    noteOrGroup instanceof Element &&
+    noteOrGroup.tagName.toLowerCase() === 'g'
+  ) {
+    // If it's a group, update just this connection
+    updateSingle(noteOrGroup);
+  } else {
+    // If no argument, update all connections
+    const connections = document.querySelectorAll('g[data-start]');
+    connections.forEach(updateSingle);
+  }
 }
 
 export function initializeConnectionDrawing(canvas) {
@@ -149,6 +154,40 @@ function createSVGContainer(canvas) {
     canvas.appendChild(svgContainer);
   }
   return svgContainer;
+}
+
+export function createConnection(fromId, toId, type) {
+  const svgContainer = document.getElementById('svg-container');
+  const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  group.setAttribute('data-start', fromId);
+  group.setAttribute('data-end', toId);
+  group.setAttribute('data-type', type);
+
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('stroke', STROKE_COLOR);
+  path.setAttribute('stroke-width', STROKE_WIDTH);
+  path.setAttribute('stroke-dasharray', STROKE_DASHARRAY);
+  path.setAttribute('fill', 'none');
+
+  const hotspot = document.createElementNS(
+    'http://www.w3.org/2000/svg',
+    'circle',
+  );
+  hotspot.setAttribute('r', '5');
+  hotspot.setAttribute('fill', '#fff');
+  hotspot.setAttribute('stroke', STROKE_COLOR);
+  hotspot.setAttribute('stroke-width', STROKE_WIDTH);
+  hotspot.classList.add('connector-hotspot');
+
+  const contextMenu = createContextMenu();
+  contextMenu.style.display = 'none';
+
+  group.appendChild(path);
+  group.appendChild(hotspot);
+  group.appendChild(contextMenu);
+  svgContainer.appendChild(group);
+
+  updateConnections(group);
 }
 
 function createArrowMarker() {
@@ -473,28 +512,11 @@ function finalizeConnection(startNote, endNote, connectionGroup) {
     return;
   }
 
-  const points = getClosestPoints(startNote, endNote);
-  updateConnectionPath(
-    connectionGroup.path,
-    points.x1,
-    points.y1,
-    points.x2,
-    points.y2,
-    CONNECTION_TYPES.NONE,
-  );
-
   connectionGroup.group.dataset.start = startNote.id;
   connectionGroup.group.dataset.end = endNote.id;
   connectionGroup.group.dataset.type = CONNECTION_TYPES.NONE;
 
-  const hotspotX = (points.x1 + points.x2) / 2;
-  const hotspotY = (points.y1 + points.y2) / 2;
-  connectionGroup.hotspot.setAttribute('cx', hotspotX);
-  connectionGroup.hotspot.setAttribute('cy', hotspotY);
-  connectionGroup.contextMenu.setAttribute(
-    'transform',
-    `translate(${hotspotX}, ${hotspotY})`,
-  );
+  updateConnections(connectionGroup.group);
 
   updateConnectionInDataStore(startNote.id, endNote.id, CONNECTION_TYPES.NONE);
 }
