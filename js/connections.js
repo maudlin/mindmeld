@@ -1,4 +1,4 @@
-import { calculateOffsetPosition, log } from './utils.js';
+import { calculateOffsetPosition } from './utils.js';
 import { getZoomLevel } from './zoomManager.js';
 import { updateConnectionInDataStore } from './dataStore.js';
 
@@ -14,8 +14,6 @@ export const CONNECTION_TYPES = {
 };
 
 export let isConnecting = false;
-
-let globalCanvas = null;
 
 export function updateConnections(noteOrGroup) {
   const updateSingle = (group) => {
@@ -81,7 +79,6 @@ export function updateConnections(noteOrGroup) {
 }
 
 export function initializeConnectionDrawing(canvas) {
-  globalCanvas = canvas;
   const svgContainer = createSVGContainer(canvas);
   const marker = createArrowMarker();
   svgContainer.appendChild(marker);
