@@ -8,7 +8,6 @@ html {
   font-family: 'Poppins', sans-serif;
   overflow: hidden; /* Hide overflow */
 }
-
 /* Navbar styles */
 #navbar {
   background-color: #1f2937; /* Tailwind gray-800 */
@@ -172,11 +171,6 @@ html {
   outline: none; /* Remove default outline */
 }
 
-/* Ensure note text does not collide with delete button */
-.note-content {
-  outline: none; /* Remove default outline when focused */
-}
-
 /* Connector Styles */
 line.connection-line {
   stroke: #888;
@@ -270,4 +264,70 @@ line.connection-line {
   right: -5px; /* Adjust for circle size */
   top: 50%;
   transform: translateY(-50%);
+}
+
+/* Overlay Styles */
+#overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+#overlay-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+  max-width: 500px;
+}
+
+#overlay h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+#overlay h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+#overlay p {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+#overlay h3 {
+  font-size: 1.25rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+#dismiss-button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 1rem;
+  margin-top: 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+#dismiss-button:hover {
+  background-color: #45a049;
+}
+
+.hidden {
+  display: none !important;
 }
