@@ -6,6 +6,7 @@ html {
   width: 100%;
   height: 100%;
   font-family: 'Poppins', sans-serif;
+  overflow: hidden; /* Hide overflow */
 }
 
 /* Navbar styles */
@@ -18,9 +19,17 @@ html {
 }
 
 #logo {
+  display: flex;
+  align-items: center;
   color: #eee; /* Tailwind gray-100 */
   font-size: 1.25rem;
   font-weight: bold;
+}
+
+#logo-icon {
+  width: 32px; /* Adjust the size as needed */
+  height: 32px; /* Adjust the size as needed */
+  margin-right: 0.5rem; /* Space between the icon and the text */
 }
 
 /* Menu and button styles */
@@ -30,11 +39,10 @@ html {
 }
 
 #menu button {
-  background-color: transparent; /* Remove background */
+  background-color: transparent;
   border: none;
-  color: #d1d5db; /* Tailwind gray-300 */
+  color: #d1d5db;
   padding: 0.5rem;
-
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -43,12 +51,7 @@ html {
 }
 
 #menu button:hover {
-  background-color: rgba(84, 151, 233, 0.5); /* Slightly lighter with opacity */
-}
-
-#menu button:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(84, 151, 233, 0.5); /* Subtle focus ring */
+  background-color: rgba(30, 65, 107, 0.5); /* Slightly lighter with opacity */
 }
 
 #menu button img {
@@ -58,28 +61,11 @@ html {
 }
 
 #menu button span {
+  font-family: 'Poppins', sans-serif;
+  font-weight: bold;
   font-size: 6pt;
   text-transform: uppercase;
   margin-top: 0.25rem;
-}
-
-#menu button::after {
-  content: attr(aria-label);
-  position: absolute;
-  top: 110%;
-  left: 50%;
-
-  color: #d1d5db; /* Tailwind gray-300 */
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 10;
-}
-
-#menu button:hover::after {
-  opacity: 1;
 }
 
 /* Canvas Styles */
@@ -95,12 +81,14 @@ html {
 #canvas {
   width: 7680px;
   height: 4320px;
-  background-color: #f9f9f9;
+  background-color: #fffcf8;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   transform-origin: top left;
+  background-image: radial-gradient(#eee 2px, transparent 2px);
+  background-size: 20px 20px; /* Adjust the grid size */
 }
 
 #canvas-wrapper {
@@ -148,7 +136,7 @@ html {
 .note {
   position: absolute;
   width: 150px;
-  padding: 10px;
+  padding: 8px;
   background-color: #fff3cd; /* Light yellow for deselected notes */
   border: 1px solid #ffd588; /* Transparent border for deselected notes */
   border-radius: 8px;
@@ -184,44 +172,8 @@ html {
   outline: none; /* Remove default outline */
 }
 
-/* Delete Button Styles */
-.note .delete-btn {
-  position: absolute;
-  top: -10px; /* Adjust to be outside the note */
-  right: -10px; /* Adjust to be outside the note */
-  background: #ff5c5c;
-  color: #fff;
-  border: none;
-  border-radius: 50%;
-  width: 16px; /* Smaller size */
-  height: 16px; /* Smaller size */
-  font-size: 10px; /* Smaller size */
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  line-height: 1;
-  box-shadow: 0 0 3px rgba(0, 0, 0, 0.2); /* Subtle shadow */
-  user-select: none; /* Prevent text selection */
-}
-
-/* Connection Handle Styles */
-.connection-handle {
-  position: absolute;
-  right: -10px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 10px;
-  height: 10px;
-  background-color: #007bff; /* Blue color for handle */
-  border-radius: 50%;
-  cursor: pointer;
-}
-
 /* Ensure note text does not collide with delete button */
 .note-content {
-  padding-right: 30px; /* Add padding to avoid text collision with delete button */
   outline: none; /* Remove default outline when focused */
 }
 
@@ -286,7 +238,7 @@ line.connection-line {
   position: absolute;
   width: 10px;
   height: 10px;
-  background-color: rgba(0, 123, 255, 0.5); /* Semi-transparent blue */
+  background-color: rgba(112, 181, 255, 0.5); /* Semi-transparent blue */
   border-radius: 50%;
   display: none; /* Hidden by default */
   cursor: crosshair;
