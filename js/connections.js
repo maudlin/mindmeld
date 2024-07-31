@@ -17,7 +17,11 @@ export const CONNECTION_TYPES = {
 
 export let isConnecting = false;
 
-const contextMenu = new ContextMenu(CONNECTION_TYPES, STROKE_COLOR);
+const contextMenu = new ContextMenu(
+  CONNECTION_TYPES,
+  STROKE_COLOR,
+  STROKE_WIDTH,
+);
 
 // Set up callbacks
 contextMenu.setDeleteCallback((startId, endId, connectionGroup) => {
@@ -28,25 +32,25 @@ contextMenu.setDeleteCallback((startId, endId, connectionGroup) => {
     connectionGroup.remove();
     updateConnectionInDataStore(startId, endId, null);
   } else {
-    console.warn('Connection group not found for deletion');
+    log('Connection group not found for deletion');
   }
 });
 
 contextMenu.setTypeChangeCallback((startId, endId, newType) => {
-  console.log('Type change callback called with:', startId, endId, newType);
+  log('Type change callback called with:', startId, endId, newType);
   const query = `g[data-start="${startId}"][data-end="${endId}"]`;
-  console.log('Searching for connection group with query:', query);
+  log('Searching for connection group with query:', query);
   const connectionGroup = document.querySelector(query);
   if (connectionGroup) {
-    console.log('Connection group found, updating type');
+    log('Connection group found, updating type');
     const path = connectionGroup.querySelector('path');
     const startNote = document.getElementById(startId);
     const endNote = document.getElementById(endId);
 
     if (startNote && endNote && path) {
-      console.log('Start and end notes found, updating connection');
+      log('Start and end notes found, updating connection');
       const points = getClosestPoints(startNote, endNote);
-      console.log('Closest points:', points);
+      log('Closest points:', points);
 
       // Immediately update the visual representation
       updateConnectionPath(
@@ -63,19 +67,19 @@ contextMenu.setTypeChangeCallback((startId, endId, newType) => {
       updateConnectionInDataStore(startId, endId, newType);
 
       // Force a re-render of the connection
-      console.log('Forcing re-render of connection');
+      log('Forcing re-render of connection');
       requestAnimationFrame(() => {
         updateConnections(connectionGroup);
       });
     } else {
-      console.error('Missing elements for update:', {
+      log('Missing elements for update:', {
         startNote: !!startNote,
         endNote: !!endNote,
         path: !!path,
       });
     }
   } else {
-    console.warn('Connection group not found for type change');
+    log('Connection group not found for type change');
   }
 });
 
@@ -130,6 +134,15 @@ export function updateConnections(noteOrGroup) {
         'transform',
         `translate(${hotspotX}, ${hotspotY})`,
       );
+
+      // Update the background line
+      const backgroundLine = group.querySelector('.connector-background-line');
+      if (backgroundLine) {
+        backgroundLine.setAttribute('x1', hotspotX);
+        backgroundLine.setAttribute('y1', hotspotY - 10);
+        backgroundLine.setAttribute('x2', hotspotX);
+        backgroundLine.setAttribute('y2', hotspotY + 10);
+      }
 
       group.appendChild(contextMenuElement);
     } else {
@@ -235,6 +248,17 @@ function createConnectionGroup(event, canvas, svgContainer) {
   );
   const group = createSVGElement('g');
 
+  // Add the background line
+  const backgroundLine = createSVGElement('line', {
+    x1: startX,
+    y1: startY - 10, // Extend 10px above
+    x2: startX,
+    y2: startY + 10, // Extend 10px below
+    stroke: '#ccc',
+    'stroke-width': '1', // Fine line
+    class: 'connector-background-line',
+  });
+
   const path = createSVGElement('path', {
     stroke: STROKE_COLOR,
     'stroke-width': STROKE_WIDTH,
@@ -246,7 +270,7 @@ function createConnectionGroup(event, canvas, svgContainer) {
   const hotspot = createSVGElement('circle', {
     cx: startX,
     cy: startY,
-    r: '5',
+    r: '4',
     fill: '#fff',
     stroke: STROKE_COLOR,
     'stroke-width': STROKE_WIDTH,
@@ -260,6 +284,7 @@ function createConnectionGroup(event, canvas, svgContainer) {
     `translate(${startX}, ${startY})`,
   );
 
+  group.appendChild(backgroundLine); // Add the background line first
   group.appendChild(path);
   group.appendChild(hotspot);
   group.appendChild(contextMenuElement);
@@ -272,11 +297,12 @@ function createConnectionGroup(event, canvas, svgContainer) {
     group,
     startX,
     startY,
+    backgroundLine,
   };
 }
 
 function updateConnectionPath(path, x1, y1, x2, y2, type) {
-  //console.log('Updating connection path:', { x1, y1, x2, y2, type });
+  //log('Updating connection path:', { x1, y1, x2, y2, type });
 
   if (
     typeof x1 !== 'number' ||
@@ -284,7 +310,7 @@ function updateConnectionPath(path, x1, y1, x2, y2, type) {
     typeof x2 !== 'number' ||
     typeof y2 !== 'number'
   ) {
-    console.error('Invalid coordinates for path:', { x1, y1, x2, y2 });
+    log('Invalid coordinates for path:', { x1, y1, x2, y2 });
     return;
   }
 
@@ -293,7 +319,7 @@ function updateConnectionPath(path, x1, y1, x2, y2, type) {
 
   const dAttr = `M${x1},${y1} Q${midX},${midY} ${x2},${y2}`;
   path.setAttribute('d', dAttr);
-  //console.log('Path d attribute set to:', dAttr);
+  //log('Path d attribute set to:', dAttr);
 
   let markerStart = '';
   let markerEnd = '';
@@ -316,7 +342,7 @@ function updateConnectionPath(path, x1, y1, x2, y2, type) {
 
   path.setAttribute('marker-start', markerStart);
   path.setAttribute('marker-end', markerEnd);
-  //console.log('Markers set:', { markerStart, markerEnd });
+  //log('Markers set:', { markerStart, markerEnd });
 }
 
 function handleSvgClick(event) {

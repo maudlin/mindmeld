@@ -6,7 +6,7 @@ import {
   updateConnections,
   initializeConnectionDrawing,
 } from './connections.js';
-import { debounce } from './utils.js';
+import { debounce, log } from './utils.js';
 import { appState } from './observableState.js';
 
 export function addNote(note) {
@@ -48,9 +48,9 @@ const debouncedUpdateConnection = debounce((startId, endId, type) => {
     // Remove connection
     if (existingConnectionIndex !== -1) {
       updatedConnections.splice(existingConnectionIndex, 1);
-      console.log(`Removed connection: ${startId} - ${endId}`);
+      log(`Removed connection: ${startId} - ${endId}`);
     } else {
-      console.warn(`No connection found to remove: ${startId} - ${endId}`);
+      log(`No connection found to remove: ${startId} - ${endId}`);
     }
   } else {
     // Update or add connection
@@ -63,12 +63,12 @@ const debouncedUpdateConnection = debounce((startId, endId, type) => {
   }
 
   appState.setState({ connections: updatedConnections });
-  console.log('Updated connections:', updatedConnections);
+  log('Updated connections:', updatedConnections);
 }, 300); // 300ms debounce time
 
 // Export the debounced function
 export function updateConnectionInDataStore(startId, endId, type) {
-  console.log('Queueing connection update:', { startId, endId, type });
+  log('Queueing connection update:', { startId, endId, type });
   debouncedUpdateConnection(startId, endId, type);
 }
 
