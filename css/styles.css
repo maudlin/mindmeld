@@ -249,14 +249,22 @@ line.connection-line {
   cursor: pointer;
 }
 
-#selection-box {
-  position: absolute;
-  border: 1px dashed #000;
-  background-color: rgba(0, 0, 255, 0.1);
-  pointer-events: none; /* Ensure selection box does not interfere with interactions */
+/* Add this to your CSS file */
+.context-menu-item text {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  font-family: 'Poppins', sans-serif;
+  font-weight: bold;
 }
 
-#help-text {
+/* For the help-text div */
+.help-text {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
   position: absolute;
   bottom: 10px;
   left: 10px;
@@ -264,6 +272,13 @@ line.connection-line {
   font-family: 'Poppins', sans-serif;
   font-size: 10pt;
   line-height: 1.5;
+}
+
+#selection-box {
+  position: absolute;
+  border: 1px dashed #000;
+  background-color: rgba(0, 0, 255, 0.1);
+  pointer-events: none; /* Ensure selection box does not interfere with interactions */
 }
 
 /* Ghost Connecting Points */

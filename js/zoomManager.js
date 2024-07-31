@@ -212,8 +212,7 @@ function monitorCanvasPosition(canvas) {
         mutation.type === 'attributes' &&
         mutation.attributeName === 'style'
       ) {
-        //log(`Canvas style changed: ${canvas.style.cssText}`);
-        //
+        // log(`Canvas style changed: ${canvas.style.cssText}`);
       }
     });
   });
@@ -224,7 +223,6 @@ function monitorCanvasPosition(canvas) {
   let checkCount = 0;
   const maxChecks = 50; // Check for 5 seconds (50 * 100ms)
   const intervalId = setInterval(() => {
-    //
     checkCount++;
     if (checkCount >= maxChecks) {
       clearInterval(intervalId);
@@ -233,14 +231,6 @@ function monitorCanvasPosition(canvas) {
     }
   }, 100);
 }
-
-//function logCanvasPosition(canvas) {
-//const rect = canvas.getBoundingClientRect();
-//const style = window.getComputedStyle(canvas);
-//log(
-// `Canvas position: left=${rect.left}, top=${rect.top}, transform=${style.transform}`,
-//);
-//}
 
 export function setupZoomAndPan(canvasContainer, canvas, zoomDisplay) {
   window.addEventListener('resize', () => {

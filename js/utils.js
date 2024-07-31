@@ -60,7 +60,7 @@ export function throttle(func, limit) {
   };
 }
 
-const logging = false;
+const logging = true;
 
 export function log(message) {
   if (logging) {

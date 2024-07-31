@@ -1,104 +1,219 @@
+// connections.js
 import { calculateOffsetPosition, log } from './utils.js';
 import { getZoomLevel } from './zoomManager.js';
+import { updateConnectionInDataStore } from './dataStore.js';
+import { ContextMenu } from './contextMenu.js';
 
-// Constants
 const STROKE_COLOR = '#888';
 const STROKE_WIDTH = '2';
 const STROKE_DASHARRAY = '5,5';
 
+export const CONNECTION_TYPES = {
+  NONE: 'none',
+  UNI_FORWARD: 'uni-forward',
+  UNI_BACKWARD: 'uni-backward',
+  BI: 'bi',
+};
+
 export let isConnecting = false;
 
-let globalCanvas = null;
+const contextMenu = new ContextMenu(CONNECTION_TYPES, STROKE_COLOR);
 
-/**
- * Updates the position of connections for a given note.
- * @param {HTMLElement} note - The note element.
- * @param {HTMLElement} canvas - The canvas element.
- */
-// Update this function to position the hotspot
-export function updateConnections(note) {
-  if (!globalCanvas) {
-    log('Global canvas is not initialized');
-    return;
+// Set up callbacks
+contextMenu.setDeleteCallback((startId, endId, connectionGroup) => {
+  log('Delete callback triggered', { startId, endId });
+
+  if (connectionGroup) {
+    log('Connection group found, removing');
+    connectionGroup.remove();
+    updateConnectionInDataStore(startId, endId, null);
+  } else {
+    console.warn('Connection group not found for deletion');
   }
+});
 
-  requestAnimationFrame(() => {
-    try {
-      const connections = document.querySelectorAll(
-        `g[data-start="${note.id}"], g[data-end="${note.id}"]`,
+contextMenu.setTypeChangeCallback((startId, endId, newType) => {
+  console.log('Type change callback called with:', startId, endId, newType);
+  const query = `g[data-start="${startId}"][data-end="${endId}"]`;
+  console.log('Searching for connection group with query:', query);
+  const connectionGroup = document.querySelector(query);
+  if (connectionGroup) {
+    console.log('Connection group found, updating type');
+    const path = connectionGroup.querySelector('path');
+    const startNote = document.getElementById(startId);
+    const endNote = document.getElementById(endId);
+
+    if (startNote && endNote && path) {
+      console.log('Start and end notes found, updating connection');
+      const points = getClosestPoints(startNote, endNote);
+      console.log('Closest points:', points);
+
+      // Immediately update the visual representation
+      updateConnectionPath(
+        path,
+        points.x1,
+        points.y1,
+        points.x2,
+        points.y2,
+        newType,
+      );
+      connectionGroup.dataset.type = newType;
+
+      // Queue the data store update (this call is now debounced)
+      updateConnectionInDataStore(startId, endId, newType);
+
+      // Force a re-render of the connection
+      console.log('Forcing re-render of connection');
+      requestAnimationFrame(() => {
+        updateConnections(connectionGroup);
+      });
+    } else {
+      console.error('Missing elements for update:', {
+        startNote: !!startNote,
+        endNote: !!endNote,
+        path: !!path,
+      });
+    }
+  } else {
+    console.warn('Connection group not found for type change');
+  }
+});
+
+export function initializeConnectionDrawing(canvas) {
+  const svgContainer = createSVGContainer(canvas);
+  const [startMarker, endMarker] = createArrowMarkers();
+  svgContainer.appendChild(startMarker);
+  svgContainer.appendChild(endMarker);
+
+  canvas.addEventListener('mousedown', (event) => {
+    if (event.target.classList.contains('ghost-connector')) {
+      handleMouseDown(event, canvas, svgContainer);
+    }
+  });
+
+  svgContainer.addEventListener('click', handleSvgClick);
+  svgContainer.addEventListener('mousemove', handleSvgMouseMove);
+  svgContainer.addEventListener('mouseleave', handleSvgMouseLeave);
+
+  document.addEventListener('keydown', handleKeyDown);
+
+  contextMenu.attachClickHandler(svgContainer);
+
+  return svgContainer;
+}
+
+export function updateConnections(noteOrGroup) {
+  // log('updateConnections called with:', noteOrGroup);
+  const updateSingle = (group) => {
+    const path = group.querySelector('path');
+    const hotspot = group.querySelector('circle');
+    const contextMenuElement = group.querySelector('.context-menu');
+    const startNote = document.getElementById(group.dataset.start);
+    const endNote = document.getElementById(group.dataset.end);
+
+    if (startNote && endNote && path && hotspot && contextMenuElement) {
+      const points = getClosestPoints(startNote, endNote);
+      updateConnectionPath(
+        path,
+        points.x1,
+        points.y1,
+        points.x2,
+        points.y2,
+        group.dataset.type || CONNECTION_TYPES.NONE,
       );
 
-      connections.forEach((group) => {
-        const line = group.querySelector('line');
-        const hotspot = group.querySelector('circle');
-        const startNoteId = group.dataset.start;
-        const endNoteId = group.dataset.end;
-        const startNote = document.getElementById(startNoteId);
-        const endNote = document.getElementById(endNoteId);
+      const hotspotX = (points.x1 + points.x2) / 2;
+      const hotspotY = (points.y1 + points.y2) / 2;
+      hotspot.setAttribute('cx', hotspotX);
+      hotspot.setAttribute('cy', hotspotY);
+      contextMenuElement.setAttribute(
+        'transform',
+        `translate(${hotspotX}, ${hotspotY})`,
+      );
 
-        if (startNote && endNote) {
-          updateConnectionPositions(startNote, endNote, line, hotspot);
-        } else {
-          log(
-            `Missing note(s) for connection: start=${startNoteId}, end=${endNoteId}`,
-          );
-          group.dataset.toRemove = 'true';
-        }
+      group.appendChild(contextMenuElement);
+    } else {
+      log('Missing elements for connection:', {
+        startNote: !!startNote,
+        endNote: !!endNote,
+        path: !!path,
+        hotspot: !!hotspot,
+        contextMenuElement: !!contextMenuElement,
       });
-
-      // Remove marked connections after the loop
-      document.querySelectorAll('g[data-to-remove="true"]').forEach((group) => {
+      if (group.parentNode) {
         group.remove();
-        log('Removed a connection with missing note(s)');
-      });
-    } catch (error) {
-      log('Error updating connections:', error);
+      }
     }
+  };
+
+  if (
+    noteOrGroup instanceof Element &&
+    noteOrGroup.classList.contains('note')
+  ) {
+    const connections = document.querySelectorAll(
+      `g[data-start="${noteOrGroup.id}"], g[data-end="${noteOrGroup.id}"]`,
+    );
+    connections.forEach(updateSingle);
+  } else if (
+    noteOrGroup instanceof Element &&
+    noteOrGroup.tagName.toLowerCase() === 'g'
+  ) {
+    updateSingle(noteOrGroup);
+  } else {
+    const connections = document.querySelectorAll('g[data-start]');
+    connections.forEach(updateSingle);
+  }
+}
+
+export function createConnection(fromId, toId, type) {
+  const svgContainer = document.getElementById('svg-container');
+  const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  group.setAttribute('data-start', fromId);
+  group.setAttribute('data-end', toId);
+  group.setAttribute('data-type', type);
+
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('stroke', STROKE_COLOR);
+  path.setAttribute('stroke-width', STROKE_WIDTH);
+  path.setAttribute('stroke-dasharray', STROKE_DASHARRAY);
+  path.setAttribute('fill', 'none');
+
+  const hotspot = document.createElementNS(
+    'http://www.w3.org/2000/svg',
+    'circle',
+  );
+  hotspot.setAttribute('r', '5');
+  hotspot.setAttribute('fill', '#fff');
+  hotspot.setAttribute('stroke', STROKE_COLOR);
+  hotspot.setAttribute('stroke-width', STROKE_WIDTH);
+  hotspot.classList.add('connector-hotspot');
+
+  const contextMenuElement = contextMenu.createMenu();
+  contextMenuElement.style.display = 'none';
+
+  group.appendChild(path);
+  group.appendChild(hotspot);
+  group.appendChild(contextMenuElement);
+  svgContainer.appendChild(group);
+
+  updateConnections(group);
+  log('Connection created:', { fromId, toId, type });
+}
+
+export function deleteConnectionsByNote(note) {
+  const connections = document.querySelectorAll(
+    `g[data-start="${note.id}"], g[data-end="${note.id}"]`,
+  );
+  connections.forEach((connection) => {
+    connection.remove();
+    updateConnectionInDataStore(
+      connection.dataset.start,
+      connection.dataset.end,
+      null,
+    );
   });
 }
 
-function updateConnectionPositions(startNote, endNote, line, hotspot) {
-  const result = getClosestPoints(startNote, endNote);
-  if (result.error) {
-    log(result.error);
-    return;
-  }
-  const { x1, y1, x2, y2 } = result;
-  line.setAttribute('x1', x1);
-  line.setAttribute('y1', y1);
-  line.setAttribute('x2', x2);
-  line.setAttribute('y2', y2);
-
-  // Position hotspot at the middle of the line
-  const hotspotX = (parseFloat(x1) + parseFloat(x2)) / 2;
-  const hotspotY = (parseFloat(y1) + parseFloat(y2)) / 2;
-  hotspot.setAttribute('cx', hotspotX);
-  hotspot.setAttribute('cy', hotspotY);
-}
-
-/**
- * Initializes the connection drawing functionality.
- * @param {HTMLElement} canvas - The canvas element.
- */
-export function initializeConnectionDrawing(canvas) {
-  globalCanvas = canvas;
-  const svgContainer = createSVGContainer(canvas);
-  const marker = createArrowMarker();
-  svgContainer.appendChild(marker);
-
-  canvas.addEventListener('mousedown', (event) =>
-    handleMouseDown(event, canvas, svgContainer),
-  );
-  document.addEventListener('click', handleLineSelection);
-  document.addEventListener('keydown', handleLineDeletion);
-  document.addEventListener('click', handleHotspotClick);
-}
-
-/**
- * Creates an SVG container if it doesn't exist.
- * @param {HTMLElement} canvas - The canvas element.
- * @returns {SVGElement} The SVG container.
- */
 function createSVGContainer(canvas) {
   let svgContainer = document.getElementById('svg-container');
   if (!svgContainer) {
@@ -112,58 +227,7 @@ function createSVGContainer(canvas) {
   return svgContainer;
 }
 
-/**
- * Creates an arrow marker for the SVG.
- * @returns {SVGMarkerElement} The arrow marker.
- */
-function createArrowMarker() {
-  const marker = createSVGElement('marker', {
-    id: 'arrow',
-    markerWidth: '10',
-    markerHeight: '7',
-    refX: '10',
-    refY: '3.5',
-    orient: 'auto',
-  });
-  marker.innerHTML = '<path d="M0,0 L10,3.5 L0,7" style="fill: #888;" />';
-  return marker;
-}
-
-/**
- * Handles the mousedown event for connection drawing.
- * @param {MouseEvent} event - The mousedown event.
- * @param {HTMLElement} canvas - The canvas element.
- * @param {SVGElement} svgContainer - The SVG container.
- */
-function handleMouseDown(event, canvas, svgContainer) {
-  if (!event.target.classList.contains('ghost-connector')) return;
-
-  event.stopPropagation();
-  event.preventDefault();
-
-  isConnecting = true;
-  const startNote = event.target.closest('.note');
-  const lineGroup = createConnectionLine(event, canvas, svgContainer);
-
-  const { moveHandler, upHandler } = createConnectionHandlers(
-    startNote,
-    lineGroup,
-    canvas,
-    svgContainer,
-  );
-
-  document.addEventListener('mousemove', moveHandler);
-  document.addEventListener('mouseup', upHandler);
-}
-
-/**
- * Creates a connection line.
- * @param {MouseEvent} event - The mousedown event.
- * @param {HTMLElement} canvas - The canvas element.
- * @param {SVGElement} svgContainer - The SVG container.
- * @returns {SVGLineElement} The created line element.
- */
-function createConnectionLine(event, canvas, svgContainer) {
+function createConnectionGroup(event, canvas, svgContainer) {
   const { left: startX, top: startY } = calculateOffsetPosition(
     canvas,
     event,
@@ -171,18 +235,17 @@ function createConnectionLine(event, canvas, svgContainer) {
   );
   const group = createSVGElement('g');
 
-  const line = createSVGElement('line', {
-    x1: startX,
-    y1: startY,
-    x2: startX,
-    y2: startY,
+  const path = createSVGElement('path', {
     stroke: STROKE_COLOR,
-    'stroke-dasharray': STROKE_DASHARRAY,
     'stroke-width': STROKE_WIDTH,
-    'marker-end': 'url(#arrow)',
+    'stroke-dasharray': STROKE_DASHARRAY,
+    fill: 'none',
+    d: `M${startX},${startY} L${startX},${startY}`,
   });
 
   const hotspot = createSVGElement('circle', {
+    cx: startX,
+    cy: startY,
     r: '5',
     fill: '#fff',
     stroke: STROKE_COLOR,
@@ -190,30 +253,237 @@ function createConnectionLine(event, canvas, svgContainer) {
     class: 'connector-hotspot',
   });
 
-  group.appendChild(line);
+  const contextMenuElement = contextMenu.createMenu(group); // Pass the group to createMenu
+  contextMenuElement.style.display = 'none';
+  contextMenuElement.setAttribute(
+    'transform',
+    `translate(${startX}, ${startY})`,
+  );
+
+  group.appendChild(path);
   group.appendChild(hotspot);
+  group.appendChild(contextMenuElement);
   svgContainer.appendChild(group);
 
-  return { line, hotspot, group };
+  return {
+    path,
+    hotspot,
+    contextMenu: contextMenuElement,
+    group,
+    startX,
+    startY,
+  };
 }
 
-/**
- * Creates handlers for the connection drawing process.
- * @param {HTMLElement} startNote - The starting note element.
- * @param {SVGLineElement} line - The line element being drawn.
- * @param {HTMLElement} canvas - The canvas element.
- * @param {SVGElement} svgContainer - The SVG container.
- * @returns {Object} An object containing the move and up handlers.
- */
-function createConnectionHandlers(startNote, lineGroup, svgContainer) {
+function updateConnectionPath(path, x1, y1, x2, y2, type) {
+  //console.log('Updating connection path:', { x1, y1, x2, y2, type });
+
+  if (
+    typeof x1 !== 'number' ||
+    typeof y1 !== 'number' ||
+    typeof x2 !== 'number' ||
+    typeof y2 !== 'number'
+  ) {
+    console.error('Invalid coordinates for path:', { x1, y1, x2, y2 });
+    return;
+  }
+
+  const midX = (x1 + x2) / 2;
+  const midY = (y1 + y2) / 2;
+
+  const dAttr = `M${x1},${y1} Q${midX},${midY} ${x2},${y2}`;
+  path.setAttribute('d', dAttr);
+  //console.log('Path d attribute set to:', dAttr);
+
+  let markerStart = '';
+  let markerEnd = '';
+
+  switch (type) {
+    case CONNECTION_TYPES.UNI_FORWARD:
+      markerEnd = 'url(#arrow-end)';
+      break;
+    case CONNECTION_TYPES.UNI_BACKWARD:
+      markerStart = 'url(#arrow-start)';
+      break;
+    case CONNECTION_TYPES.BI:
+      markerStart = 'url(#arrow-start)';
+      markerEnd = 'url(#arrow-end)';
+      break;
+    case CONNECTION_TYPES.NONE:
+      // No markers for non-directional
+      break;
+  }
+
+  path.setAttribute('marker-start', markerStart);
+  path.setAttribute('marker-end', markerEnd);
+  //console.log('Markers set:', { markerStart, markerEnd });
+}
+
+function handleSvgClick(event) {
+  handleLineSelection(event);
+}
+
+function handleSvgMouseMove(event) {
+  const hotspot = event.target.closest('.connector-hotspot');
+  const contextMenuElement = event.target.closest('.context-menu');
+
+  if (hotspot) {
+    contextMenu.show(hotspot);
+  } else if (!contextMenuElement && !contextMenu.isMouseOver) {
+    contextMenu.hide();
+  }
+}
+
+function handleSvgMouseLeave() {
+  if (!contextMenu.isMouseOver) {
+    contextMenu.hide();
+  }
+}
+
+function handleKeyDown(event) {
+  if (event.key === 'Delete') {
+    handleLineDeletion(event);
+  }
+}
+
+function handleLineSelection(event) {
+  if (event.target.tagName === 'path') {
+    document
+      .querySelectorAll('path')
+      .forEach((path) => path.classList.remove('line-selected'));
+    event.target.classList.add('line-selected');
+  } else {
+    document
+      .querySelectorAll('path')
+      .forEach((path) => path.classList.remove('line-selected'));
+  }
+}
+
+function handleLineDeletion(event) {
+  if (event.key === 'Delete') {
+    const selectedLine = document.querySelector('.line-selected');
+    if (selectedLine) {
+      const connectionGroup = selectedLine.closest('g');
+      connectionGroup.remove();
+      updateConnectionInDataStore(
+        connectionGroup.dataset.start,
+        connectionGroup.dataset.end,
+        null,
+      );
+    }
+  }
+}
+
+function getClosestPoints(note1, note2) {
+  if (!note1 || !note2) {
+    log('Invalid notes provided to getClosestPoints');
+    return { x1: 0, y1: 0, x2: 0, y2: 0 };
+  }
+
+  const zoomLevel = getZoomLevel();
+  const scale = zoomLevel / 5;
+
+  const rect1 = note1.getBoundingClientRect();
+  const rect2 = note2.getBoundingClientRect();
+  const canvasRect = document.getElementById('canvas').getBoundingClientRect();
+
+  const adjustedRect1 = adjustRectForZoom(rect1, canvasRect, scale);
+  const adjustedRect2 = adjustRectForZoom(rect2, canvasRect, scale);
+
+  const center1 = getCenter(adjustedRect1);
+  const center2 = getCenter(adjustedRect2);
+
+  if (Math.abs(center1.x - center2.x) > Math.abs(center1.y - center2.y)) {
+    return {
+      x1: center1.x > center2.x ? adjustedRect1.left : adjustedRect1.right,
+      y1: center1.y,
+      x2: center1.x > center2.x ? adjustedRect2.right : adjustedRect2.left,
+      y2: center2.y,
+    };
+  } else {
+    return {
+      x1: center1.x,
+      y1: center1.y > center2.y ? adjustedRect1.top : adjustedRect1.bottom,
+      x2: center2.x,
+      y2: center1.y > center2.y ? adjustedRect2.bottom : adjustedRect2.top,
+    };
+  }
+}
+
+function adjustRectForZoom(rect, canvasRect, scale) {
+  return {
+    left: (rect.left - canvasRect.left) / scale,
+    top: (rect.top - canvasRect.top) / scale,
+    width: rect.width / scale,
+    height: rect.height / scale,
+    right: (rect.right - canvasRect.left) / scale,
+    bottom: (rect.bottom - canvasRect.top) / scale,
+  };
+}
+
+function getCenter(rect) {
+  return {
+    x: rect.left + rect.width / 2,
+    y: rect.top + rect.height / 2,
+  };
+}
+
+function createSVGElement(type, attributes = {}) {
+  const element = document.createElementNS('http://www.w3.org/2000/svg', type);
+  Object.entries(attributes).forEach(([key, value]) =>
+    element.setAttribute(key, value),
+  );
+  return element;
+}
+
+function createArrowMarkers() {
+  const startMarker = createSVGElement('marker', {
+    id: 'arrow-start',
+    markerWidth: '10',
+    markerHeight: '7',
+    refX: '0',
+    refY: '3.5',
+    orient: 'auto',
+  });
+  startMarker.innerHTML = '<path d="M10,0 L0,3.5 L10,7" fill="#888" />';
+
+  const endMarker = createSVGElement('marker', {
+    id: 'arrow-end',
+    markerWidth: '10',
+    markerHeight: '7',
+    refX: '10',
+    refY: '3.5',
+    orient: 'auto',
+  });
+  endMarker.innerHTML = '<path d="M0,0 L10,3.5 L0,7" fill="#888" />';
+
+  return [startMarker, endMarker];
+}
+
+function handleMouseDown(event, canvas, svgContainer) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  const startNote = event.target.closest('.note');
+  if (!startNote) return;
+
+  isConnecting = true;
+  const connectionGroup = createConnectionGroup(event, canvas, svgContainer);
+
   const moveHandler = (moveEvent) => {
     if (isConnecting) {
       const { left: currentX, top: currentY } = calculateOffsetPosition(
-        globalCanvas,
+        canvas,
         moveEvent,
       );
-      lineGroup.line.setAttribute('x2', currentX);
-      lineGroup.line.setAttribute('y2', currentY);
+      updateConnectionPath(
+        connectionGroup.path,
+        connectionGroup.startX,
+        connectionGroup.startY,
+        currentX,
+        currentY,
+        CONNECTION_TYPES.NONE,
+      );
     }
   };
 
@@ -227,50 +497,34 @@ function createConnectionHandlers(startNote, lineGroup, svgContainer) {
       upEvent.target.closest('.note') !== startNote
     ) {
       const endNote = upEvent.target.closest('.note');
-      finalizeConnection(startNote, endNote, lineGroup);
+      finalizeConnection(startNote, endNote, connectionGroup);
     } else {
-      svgContainer.removeChild(lineGroup.group);
+      svgContainer.removeChild(connectionGroup.group);
     }
 
     isConnecting = false;
   };
 
-  return { moveHandler, upHandler };
+  document.addEventListener('mousemove', moveHandler);
+  document.addEventListener('mouseup', upHandler);
 }
 
-/**
- * Finalizes the connection between two notes.
- * @param {HTMLElement} startNote - The starting note element.
- * @param {HTMLElement} endNote - The ending note element.
- * @param {SVGLineElement} line - The line element.
- * @param {HTMLElement} canvas - The canvas element.
- */
-function finalizeConnection(startNote, endNote, lineGroup) {
-  // Check if a connection already exists between these notes
+function finalizeConnection(startNote, endNote, connectionGroup) {
   if (connectionExists(startNote.id, endNote.id)) {
     log('Connection already exists between these notes');
-    lineGroup.group.remove(); // Remove the temporary line
+    connectionGroup.group.remove();
     return;
   }
 
-  const { x1, y1, x2, y2 } = getClosestPoints(startNote, endNote);
+  connectionGroup.group.dataset.start = startNote.id;
+  connectionGroup.group.dataset.end = endNote.id;
+  connectionGroup.group.dataset.type = CONNECTION_TYPES.NONE;
 
-  lineGroup.line.setAttribute('x1', x1);
-  lineGroup.line.setAttribute('y1', y1);
-  lineGroup.line.setAttribute('x2', x2);
-  lineGroup.line.setAttribute('y2', y2);
+  connectionGroup.contextMenu.connectionGroup = connectionGroup.group;
 
-  lineGroup.group.dataset.start = startNote.id;
-  lineGroup.group.dataset.end = endNote.id;
+  updateConnections(connectionGroup.group);
 
-  // Position hotspot at the middle of the line
-  const hotspotX = (parseFloat(x1) + parseFloat(x2)) / 2;
-  const hotspotY = (parseFloat(y1) + parseFloat(y2)) / 2;
-  lineGroup.hotspot.setAttribute('cx', hotspotX);
-  lineGroup.hotspot.setAttribute('cy', hotspotY);
-
-  updateConnections(startNote);
-  updateConnections(endNote);
+  updateConnectionInDataStore(startNote.id, endNote.id, CONNECTION_TYPES.NONE);
 }
 
 function connectionExists(id1, id2) {
@@ -279,189 +533,4 @@ function connectionExists(id1, id2) {
       `g[data-start="${id1}"][data-end="${id2}"], g[data-start="${id2}"][data-end="${id1}"]`,
     ) !== null
   );
-}
-
-/**
- * Handles the line selection.
- * @param {MouseEvent} event - The click event.
- */
-function handleLineSelection(event) {
-  if (event.target.tagName === 'line') {
-    document
-      .querySelectorAll('line')
-      .forEach((line) => line.classList.remove('line-selected'));
-    event.target.classList.add('line-selected');
-  } else {
-    document
-      .querySelectorAll('line')
-      .forEach((line) => line.classList.remove('line-selected'));
-  }
-}
-
-/**
- * Handles the line deletion.
- * @param {KeyboardEvent} event - The keydown event.
- */
-function handleLineDeletion(event) {
-  if (event.key === 'Delete') {
-    const selectedLine = document.querySelector('.line-selected');
-    if (selectedLine) {
-      selectedLine.remove();
-    }
-  }
-}
-
-/**
- * Calculates the closest points between two notes for connection.
- * @param {HTMLElement} note1 - The first note element.
- * @param {HTMLElement} note2 - The second note element.
- * @param {HTMLElement} canvas - The canvas element.
- * @returns {Object} An object containing the x1, y1, x2, and y2 coordinates.
- */
-function getClosestPoints(note1, note2) {
-  if (!note1 || !note2 || !globalCanvas) {
-    return {
-      error: `Invalid input: note1=${!!note1}, note2=${!!note2}, globalCanvas=${!!globalCanvas}`,
-      x1: 0,
-      y1: 0,
-      x2: 0,
-      y2: 0,
-    };
-  }
-
-  const zoomLevel = getZoomLevel();
-  const scale = zoomLevel / 5;
-
-  try {
-    const rect1 = note1.getBoundingClientRect();
-    const rect2 = note2.getBoundingClientRect();
-    const canvasRect = globalCanvas.getBoundingClientRect();
-
-    if (
-      !isValidRect(rect1) ||
-      !isValidRect(rect2) ||
-      !isValidRect(canvasRect)
-    ) {
-      return {
-        error: `Invalid rectangle: rect1=${JSON.stringify(
-          rect1,
-        )}, rect2=${JSON.stringify(rect2)}, canvasRect=${JSON.stringify(
-          canvasRect,
-        )}`,
-        x1: 0,
-        y1: 0,
-        x2: 0,
-        y2: 0,
-      };
-    }
-
-    const adjustedRect1 = adjustRectForZoom(rect1, canvasRect, scale);
-    const adjustedRect2 = adjustRectForZoom(rect2, canvasRect, scale);
-
-    const center1 = getCenter(adjustedRect1);
-    const center2 = getCenter(adjustedRect2);
-
-    if (Math.abs(center1.x - center2.x) > Math.abs(center1.y - center2.y)) {
-      // Connect horizontally
-      return {
-        x1: center1.x > center2.x ? adjustedRect1.left : adjustedRect1.right,
-        y1: center1.y,
-        x2: center1.x > center2.x ? adjustedRect2.right : adjustedRect2.left,
-        y2: center2.y,
-      };
-    } else {
-      // Connect vertically
-      return {
-        x1: center1.x,
-        y1: center1.y > center2.y ? adjustedRect1.top : adjustedRect1.bottom,
-        x2: center2.x,
-        y2: center1.y > center2.y ? adjustedRect2.bottom : adjustedRect2.top,
-      };
-    }
-  } catch (error) {
-    log('Error in getClosestPoints:', error);
-    return {
-      error: 'Exception in getClosestPoints',
-      x1: 0,
-      y1: 0,
-      x2: 0,
-      y2: 0,
-    };
-  }
-}
-
-function isValidRect(rect) {
-  return (
-    rect &&
-    typeof rect.left === 'number' &&
-    !isNaN(rect.left) &&
-    typeof rect.top === 'number' &&
-    !isNaN(rect.top) &&
-    typeof rect.right === 'number' &&
-    !isNaN(rect.right) &&
-    typeof rect.bottom === 'number' &&
-    !isNaN(rect.bottom)
-  );
-}
-
-/**
- * Adjusts a rectangle for the current zoom level.
- * @param {DOMRect} rect - The original rectangle.
- * @param {DOMRect} canvasRect - The canvas rectangle.
- * @param {number} scale - The current zoom scale.
- * @returns {Object} The adjusted rectangle.
- */
-function adjustRectForZoom(rect, canvasRect, scale) {
-  return {
-    left: (rect.left - canvasRect.left) / scale,
-    top: (rect.top - canvasRect.top) / scale,
-    width: rect.width / scale,
-    height: rect.height / scale,
-    right: (rect.right - canvasRect.left) / scale,
-    bottom: (rect.bottom - canvasRect.top) / scale,
-  };
-}
-
-/**
- * Calculates the center of a rectangle.
- * @param {Object} rect - The rectangle object.
- * @returns {Object} An object containing the x and y coordinates of the center.
- */
-function getCenter(rect) {
-  return {
-    x: rect.left + rect.width / 2,
-    y: rect.top + rect.height / 2,
-  };
-}
-
-/**
- * Creates an SVG element with given attributes.
- * @param {string} type - The type of SVG element to create.
- * @param {Object} attributes - An object of attributes to set on the element.
- * @returns {SVGElement} The created SVG element.
- */
-function createSVGElement(type, attributes = {}) {
-  const element = document.createElementNS('http://www.w3.org/2000/svg', type);
-  Object.entries(attributes).forEach(([key, value]) =>
-    element.setAttribute(key, value),
-  );
-  return element;
-}
-
-/**
- * Deletes all connections associated with a note.
- * @param {HTMLElement} note - The note element.
- */
-export function deleteConnectionsByNote(note) {
-  const connections = document.querySelectorAll(
-    `g[data-start="${note.id}"], g[data-end="${note.id}"]`,
-  );
-  connections.forEach((connection) => connection.remove());
-}
-
-function handleHotspotClick(event) {
-  if (event.target.classList.contains('connector-hotspot')) {
-    log('Hotspot clicked - implement context menu here');
-    // Implement your context menu logic here
-  }
 }
