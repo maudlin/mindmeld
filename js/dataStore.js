@@ -6,7 +6,7 @@ import {
   updateConnections,
   initializeConnectionDrawing,
 } from './connections.js';
-
+import { debounce } from './utils.js';
 import { appState } from './observableState.js';
 
 export function addNote(note) {
@@ -34,7 +34,7 @@ export function getNotes() {
   return appState.getState().notes;
 }
 
-export function updateConnectionInDataStore(startId, endId, type) {
+const debouncedUpdateConnection = debounce((startId, endId, type) => {
   const { connections } = appState.getState();
   let updatedConnections = [...connections];
 
@@ -48,15 +48,13 @@ export function updateConnectionInDataStore(startId, endId, type) {
     // Remove connection
     if (existingConnectionIndex !== -1) {
       updatedConnections.splice(existingConnectionIndex, 1);
+      console.log(`Removed connection: ${startId} - ${endId}`);
+    } else {
+      console.warn(`No connection found to remove: ${startId} - ${endId}`);
     }
   } else {
     // Update or add connection
-    const connection = {
-      from: startId,
-      to: endId,
-      type: type,
-    };
-
+    const connection = { from: startId, to: endId, type };
     if (existingConnectionIndex !== -1) {
       updatedConnections[existingConnectionIndex] = connection;
     } else {
@@ -65,6 +63,13 @@ export function updateConnectionInDataStore(startId, endId, type) {
   }
 
   appState.setState({ connections: updatedConnections });
+  console.log('Updated connections:', updatedConnections);
+}, 300); // 300ms debounce time
+
+// Export the debounced function
+export function updateConnectionInDataStore(startId, endId, type) {
+  console.log('Queueing connection update:', { startId, endId, type });
+  debouncedUpdateConnection(startId, endId, type);
 }
 
 export function exportToJSON() {

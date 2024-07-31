@@ -10,12 +10,14 @@ export class ContextMenu {
     this.hideTimeout = null;
     this.onDelete = null;
     this.onTypeChange = null;
+    this.connectionGroup = null;
 
     // Bind the handleClick method to this instance
     this.handleClick = this.handleClick.bind(this);
   }
 
-  createMenu() {
+  createMenu(connectionGroup) {
+    this.connectionGroup = connectionGroup;
     const menu = this.createSVGElement('g', { class: 'context-menu' });
 
     const menuItems = [
@@ -126,10 +128,8 @@ export class ContextMenu {
     event.preventDefault();
     event.stopPropagation();
 
-    console.log('Menu item clicked:', menuItem.dataset.type);
-
     const connectionType = menuItem.dataset.type;
-    const connectionGroup = menuItem.closest('g');
+    const connectionGroup = menuItem.closest('g[data-start][data-end]');
 
     if (!connectionGroup) {
       console.error('Connection group not found');
@@ -140,26 +140,14 @@ export class ContextMenu {
     const endId = connectionGroup.dataset.end;
 
     console.log('Connection details:', { startId, endId, connectionType });
-    console.log(
-      'Connection group query:',
-      `g[data-start="${startId}"][data-end="${endId}"]`,
-    );
-
-    log('Connection details:', { startId, endId, connectionType });
 
     if (connectionType === 'delete') {
       if (this.onDelete) {
-        log('Executing delete callback');
-        this.onDelete(startId, endId);
-      } else {
-        console.warn('Delete callback not set');
+        this.onDelete(startId, endId, connectionGroup);
       }
     } else {
       if (this.onTypeChange) {
-        log('Executing type change callback');
         this.onTypeChange(startId, endId, connectionType);
-      } else {
-        console.warn('Type change callback not set');
       }
     }
 

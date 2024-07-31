@@ -20,39 +20,70 @@ export let isConnecting = false;
 const contextMenu = new ContextMenu(CONNECTION_TYPES, STROKE_COLOR);
 
 // Set up callbacks
-contextMenu.setDeleteCallback((startId, endId) => {
+contextMenu.setDeleteCallback((startId, endId, connectionGroup) => {
   log('Delete callback triggered', { startId, endId });
-  const query = `g[data-start="${startId}"][data-end="${endId}"]`;
-  log('Searching for connection group with query:', query);
-  const connectionGroup = document.querySelector(query);
+
   if (connectionGroup) {
     log('Connection group found, removing');
     connectionGroup.remove();
     updateConnectionInDataStore(startId, endId, null);
   } else {
     console.warn('Connection group not found for deletion');
-    log('All connection groups:', document.querySelectorAll('g[data-start]'));
   }
 });
 
 contextMenu.setTypeChangeCallback((startId, endId, newType) => {
-  log('Type change callback called with:', startId, endId, newType);
+  console.log('Type change callback called with:', startId, endId, newType);
   const query = `g[data-start="${startId}"][data-end="${endId}"]`;
-  log('Searching for connection group with query:', query);
+  console.log('Searching for connection group with query:', query);
   const connectionGroup = document.querySelector(query);
   if (connectionGroup) {
-    log('Connection group found, updating type');
-    // ... rest of the function ...
+    console.log('Connection group found, updating type');
+    const path = connectionGroup.querySelector('path');
+    const startNote = document.getElementById(startId);
+    const endNote = document.getElementById(endId);
+
+    if (startNote && endNote && path) {
+      console.log('Start and end notes found, updating connection');
+      const points = getClosestPoints(startNote, endNote);
+      console.log('Closest points:', points);
+
+      // Immediately update the visual representation
+      updateConnectionPath(
+        path,
+        points.x1,
+        points.y1,
+        points.x2,
+        points.y2,
+        newType,
+      );
+      connectionGroup.dataset.type = newType;
+
+      // Queue the data store update (this call is now debounced)
+      updateConnectionInDataStore(startId, endId, newType);
+
+      // Force a re-render of the connection
+      console.log('Forcing re-render of connection');
+      requestAnimationFrame(() => {
+        updateConnections(connectionGroup);
+      });
+    } else {
+      console.error('Missing elements for update:', {
+        startNote: !!startNote,
+        endNote: !!endNote,
+        path: !!path,
+      });
+    }
   } else {
     console.warn('Connection group not found for type change');
-    log('All connection groups:', document.querySelectorAll('g[data-start]'));
   }
 });
 
 export function initializeConnectionDrawing(canvas) {
   const svgContainer = createSVGContainer(canvas);
-  const marker = createArrowMarker();
-  svgContainer.appendChild(marker);
+  const [startMarker, endMarker] = createArrowMarkers();
+  svgContainer.appendChild(startMarker);
+  svgContainer.appendChild(endMarker);
 
   canvas.addEventListener('mousedown', (event) => {
     if (event.target.classList.contains('ghost-connector')) {
@@ -72,6 +103,7 @@ export function initializeConnectionDrawing(canvas) {
 }
 
 export function updateConnections(noteOrGroup) {
+  // log('updateConnections called with:', noteOrGroup);
   const updateSingle = (group) => {
     const path = group.querySelector('path');
     const hotspot = group.querySelector('circle');
@@ -221,7 +253,7 @@ function createConnectionGroup(event, canvas, svgContainer) {
     class: 'connector-hotspot',
   });
 
-  const contextMenuElement = contextMenu.createMenu();
+  const contextMenuElement = contextMenu.createMenu(group); // Pass the group to createMenu
   contextMenuElement.style.display = 'none';
   contextMenuElement.setAttribute(
     'transform',
@@ -244,13 +276,15 @@ function createConnectionGroup(event, canvas, svgContainer) {
 }
 
 function updateConnectionPath(path, x1, y1, x2, y2, type) {
+  //console.log('Updating connection path:', { x1, y1, x2, y2, type });
+
   if (
     typeof x1 !== 'number' ||
     typeof y1 !== 'number' ||
     typeof x2 !== 'number' ||
     typeof y2 !== 'number'
   ) {
-    log('Invalid coordinates for path:', { x1, y1, x2, y2 });
+    console.error('Invalid coordinates for path:', { x1, y1, x2, y2 });
     return;
   }
 
@@ -259,20 +293,21 @@ function updateConnectionPath(path, x1, y1, x2, y2, type) {
 
   const dAttr = `M${x1},${y1} Q${midX},${midY} ${x2},${y2}`;
   path.setAttribute('d', dAttr);
+  //console.log('Path d attribute set to:', dAttr);
 
   let markerStart = '';
   let markerEnd = '';
 
   switch (type) {
     case CONNECTION_TYPES.UNI_FORWARD:
-      markerEnd = 'url(#arrow)';
+      markerEnd = 'url(#arrow-end)';
       break;
     case CONNECTION_TYPES.UNI_BACKWARD:
-      markerStart = 'url(#arrow)';
+      markerStart = 'url(#arrow-start)';
       break;
     case CONNECTION_TYPES.BI:
-      markerStart = 'url(#arrow)';
-      markerEnd = 'url(#arrow)';
+      markerStart = 'url(#arrow-start)';
+      markerEnd = 'url(#arrow-end)';
       break;
     case CONNECTION_TYPES.NONE:
       // No markers for non-directional
@@ -281,6 +316,7 @@ function updateConnectionPath(path, x1, y1, x2, y2, type) {
 
   path.setAttribute('marker-start', markerStart);
   path.setAttribute('marker-end', markerEnd);
+  //console.log('Markers set:', { markerStart, markerEnd });
 }
 
 function handleSvgClick(event) {
@@ -400,17 +436,28 @@ function createSVGElement(type, attributes = {}) {
   return element;
 }
 
-function createArrowMarker() {
-  const marker = createSVGElement('marker', {
-    id: 'arrow',
+function createArrowMarkers() {
+  const startMarker = createSVGElement('marker', {
+    id: 'arrow-start',
+    markerWidth: '10',
+    markerHeight: '7',
+    refX: '0',
+    refY: '3.5',
+    orient: 'auto',
+  });
+  startMarker.innerHTML = '<path d="M10,0 L0,3.5 L10,7" fill="#888" />';
+
+  const endMarker = createSVGElement('marker', {
+    id: 'arrow-end',
     markerWidth: '10',
     markerHeight: '7',
     refX: '10',
     refY: '3.5',
     orient: 'auto',
   });
-  marker.innerHTML = '<path d="M0,0 L10,3.5 L0,7" style="fill: #888;" />';
-  return marker;
+  endMarker.innerHTML = '<path d="M0,0 L10,3.5 L0,7" fill="#888" />';
+
+  return [startMarker, endMarker];
 }
 
 function handleMouseDown(event, canvas, svgContainer) {
@@ -472,6 +519,8 @@ function finalizeConnection(startNote, endNote, connectionGroup) {
   connectionGroup.group.dataset.start = startNote.id;
   connectionGroup.group.dataset.end = endNote.id;
   connectionGroup.group.dataset.type = CONNECTION_TYPES.NONE;
+
+  connectionGroup.contextMenu.connectionGroup = connectionGroup.group;
 
   updateConnections(connectionGroup.group);
 
