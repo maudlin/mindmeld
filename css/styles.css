@@ -165,10 +165,15 @@ html {
 .note:hover {
   box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow on hover */
 }
-
 .note:focus,
 .note[contenteditable='true'] {
   outline: none; /* Remove default outline */
+}
+
+.note-content {
+  outline: none; /* Remove default outline when focused */
+  cursor: text; /* Ensure cursor is text when focused */
+  min-width: 50px;
 }
 
 /* Connector Styles */
@@ -354,6 +359,7 @@ line.connection-line {
   color: #10b981; /* Tailwind green-500 for checkmark */
 }
 
+/* !important is important to ensure overlay disappears */
 .hidden {
   display: none !important;
 }
