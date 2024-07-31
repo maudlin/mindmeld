@@ -1,6 +1,8 @@
-import { calculateOffsetPosition } from './utils.js';
+// connections.js
+import { calculateOffsetPosition, log } from './utils.js';
 import { getZoomLevel } from './zoomManager.js';
 import { updateConnectionInDataStore } from './dataStore.js';
+import { ContextMenu } from './contextMenu.js';
 
 const STROKE_COLOR = '#888';
 const STROKE_WIDTH = '2';
@@ -15,15 +17,69 @@ export const CONNECTION_TYPES = {
 
 export let isConnecting = false;
 
+const contextMenu = new ContextMenu(CONNECTION_TYPES, STROKE_COLOR);
+
+// Set up callbacks
+contextMenu.setDeleteCallback((startId, endId) => {
+  log('Delete callback triggered', { startId, endId });
+  const query = `g[data-start="${startId}"][data-end="${endId}"]`;
+  log('Searching for connection group with query:', query);
+  const connectionGroup = document.querySelector(query);
+  if (connectionGroup) {
+    log('Connection group found, removing');
+    connectionGroup.remove();
+    updateConnectionInDataStore(startId, endId, null);
+  } else {
+    console.warn('Connection group not found for deletion');
+    log('All connection groups:', document.querySelectorAll('g[data-start]'));
+  }
+});
+
+contextMenu.setTypeChangeCallback((startId, endId, newType) => {
+  log('Type change callback called with:', startId, endId, newType);
+  const query = `g[data-start="${startId}"][data-end="${endId}"]`;
+  log('Searching for connection group with query:', query);
+  const connectionGroup = document.querySelector(query);
+  if (connectionGroup) {
+    log('Connection group found, updating type');
+    // ... rest of the function ...
+  } else {
+    console.warn('Connection group not found for type change');
+    log('All connection groups:', document.querySelectorAll('g[data-start]'));
+  }
+});
+
+export function initializeConnectionDrawing(canvas) {
+  const svgContainer = createSVGContainer(canvas);
+  const marker = createArrowMarker();
+  svgContainer.appendChild(marker);
+
+  canvas.addEventListener('mousedown', (event) => {
+    if (event.target.classList.contains('ghost-connector')) {
+      handleMouseDown(event, canvas, svgContainer);
+    }
+  });
+
+  svgContainer.addEventListener('click', handleSvgClick);
+  svgContainer.addEventListener('mousemove', handleSvgMouseMove);
+  svgContainer.addEventListener('mouseleave', handleSvgMouseLeave);
+
+  document.addEventListener('keydown', handleKeyDown);
+
+  contextMenu.attachClickHandler(svgContainer);
+
+  return svgContainer;
+}
+
 export function updateConnections(noteOrGroup) {
   const updateSingle = (group) => {
     const path = group.querySelector('path');
     const hotspot = group.querySelector('circle');
-    const contextMenu = group.querySelector('.context-menu');
+    const contextMenuElement = group.querySelector('.context-menu');
     const startNote = document.getElementById(group.dataset.start);
     const endNote = document.getElementById(group.dataset.end);
 
-    if (startNote && endNote && path && hotspot && contextMenu) {
+    if (startNote && endNote && path && hotspot && contextMenuElement) {
       const points = getClosestPoints(startNote, endNote);
       updateConnectionPath(
         path,
@@ -38,17 +94,19 @@ export function updateConnections(noteOrGroup) {
       const hotspotY = (points.y1 + points.y2) / 2;
       hotspot.setAttribute('cx', hotspotX);
       hotspot.setAttribute('cy', hotspotY);
-      contextMenu.setAttribute(
+      contextMenuElement.setAttribute(
         'transform',
         `translate(${hotspotX}, ${hotspotY})`,
       );
+
+      group.appendChild(contextMenuElement);
     } else {
-      console.warn('Missing elements for connection:', {
+      log('Missing elements for connection:', {
         startNote: !!startNote,
         endNote: !!endNote,
         path: !!path,
         hotspot: !!hotspot,
-        contextMenu: !!contextMenu,
+        contextMenuElement: !!contextMenuElement,
       });
       if (group.parentNode) {
         group.remove();
@@ -60,7 +118,6 @@ export function updateConnections(noteOrGroup) {
     noteOrGroup instanceof Element &&
     noteOrGroup.classList.contains('note')
   ) {
-    // If it's a note, update all connections related to this note
     const connections = document.querySelectorAll(
       `g[data-start="${noteOrGroup.id}"], g[data-end="${noteOrGroup.id}"]`,
     );
@@ -69,91 +126,11 @@ export function updateConnections(noteOrGroup) {
     noteOrGroup instanceof Element &&
     noteOrGroup.tagName.toLowerCase() === 'g'
   ) {
-    // If it's a group, update just this connection
     updateSingle(noteOrGroup);
   } else {
-    // If no argument, update all connections
     const connections = document.querySelectorAll('g[data-start]');
     connections.forEach(updateSingle);
   }
-}
-
-export function initializeConnectionDrawing(canvas) {
-  const svgContainer = createSVGContainer(canvas);
-  const marker = createArrowMarker();
-  svgContainer.appendChild(marker);
-
-  canvas.addEventListener('mousedown', (event) =>
-    handleMouseDown(event, canvas, svgContainer),
-  );
-  document.addEventListener('click', handleLineSelection);
-  document.addEventListener('keydown', handleLineDeletion);
-  document.addEventListener('click', handleContextMenu);
-
-  canvas.addEventListener('mouseenter', handleHotspotHover, true);
-  canvas.addEventListener('mouseleave', handleHotspotHover, true);
-}
-
-function handleHotspotHover(event) {
-  const hotspot = event.target.closest('.connector-hotspot');
-  if (!hotspot) return;
-
-  const connectionGroup = hotspot.closest('g');
-  const contextMenu = connectionGroup.querySelector('.context-menu');
-
-  if (event.type === 'mouseenter') {
-    contextMenu.style.display = 'block';
-  } else if (event.type === 'mouseleave') {
-    setTimeout(() => {
-      if (!connectionGroup.querySelector('.context-menu:hover')) {
-        contextMenu.style.display = 'none';
-      }
-    }, 100);
-  }
-}
-
-function handleContextMenu(event) {
-  if (event.target.closest('.menu-item')) {
-    const menuItem = event.target.closest('.menu-item');
-    const connectionType = menuItem.dataset.type;
-    const connectionGroup = menuItem.closest('g');
-
-    if (connectionType === 'delete') {
-      connectionGroup.remove();
-      updateConnectionInDataStore(
-        connectionGroup.dataset.start,
-        connectionGroup.dataset.end,
-        null,
-      );
-    } else {
-      const path = connectionGroup.querySelector('path');
-      const startNote = document.getElementById(connectionGroup.dataset.start);
-      const endNote = document.getElementById(connectionGroup.dataset.end);
-      updateConnectionPath(path, startNote, endNote, connectionType);
-      connectionGroup.dataset.type = connectionType;
-      updateConnectionInDataStore(
-        connectionGroup.dataset.start,
-        connectionGroup.dataset.end,
-        connectionType,
-      );
-    }
-
-    const contextMenu = connectionGroup.querySelector('.context-menu');
-    contextMenu.style.display = 'none';
-  }
-}
-
-function createSVGContainer(canvas) {
-  let svgContainer = document.getElementById('svg-container');
-  if (!svgContainer) {
-    svgContainer = createSVGElement('svg', {
-      id: 'svg-container',
-      style:
-        'position:absolute; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none;',
-    });
-    canvas.appendChild(svgContainer);
-  }
-  return svgContainer;
 }
 
 export function createConnection(fromId, toId, type) {
@@ -179,49 +156,43 @@ export function createConnection(fromId, toId, type) {
   hotspot.setAttribute('stroke-width', STROKE_WIDTH);
   hotspot.classList.add('connector-hotspot');
 
-  const contextMenu = createContextMenu();
-  contextMenu.style.display = 'none';
+  const contextMenuElement = contextMenu.createMenu();
+  contextMenuElement.style.display = 'none';
 
   group.appendChild(path);
   group.appendChild(hotspot);
-  group.appendChild(contextMenu);
+  group.appendChild(contextMenuElement);
   svgContainer.appendChild(group);
 
   updateConnections(group);
+  log('Connection created:', { fromId, toId, type });
 }
 
-function createArrowMarker() {
-  const marker = createSVGElement('marker', {
-    id: 'arrow',
-    markerWidth: '10',
-    markerHeight: '7',
-    refX: '10',
-    refY: '3.5',
-    orient: 'auto',
-  });
-  marker.innerHTML = '<path d="M0,0 L10,3.5 L0,7" style="fill: #888;" />';
-  return marker;
-}
-
-function handleMouseDown(event, canvas, svgContainer) {
-  if (!event.target.classList.contains('ghost-connector')) return;
-
-  event.stopPropagation();
-  event.preventDefault();
-
-  isConnecting = true;
-  const startNote = event.target.closest('.note');
-  const connectionGroup = createConnectionGroup(event, canvas, svgContainer);
-
-  const { moveHandler, upHandler } = createConnectionHandlers(
-    startNote,
-    connectionGroup,
-    canvas,
-    svgContainer,
+export function deleteConnectionsByNote(note) {
+  const connections = document.querySelectorAll(
+    `g[data-start="${note.id}"], g[data-end="${note.id}"]`,
   );
+  connections.forEach((connection) => {
+    connection.remove();
+    updateConnectionInDataStore(
+      connection.dataset.start,
+      connection.dataset.end,
+      null,
+    );
+  });
+}
 
-  document.addEventListener('mousemove', moveHandler);
-  document.addEventListener('mouseup', upHandler);
+function createSVGContainer(canvas) {
+  let svgContainer = document.getElementById('svg-container');
+  if (!svgContainer) {
+    svgContainer = createSVGElement('svg', {
+      id: 'svg-container',
+      style:
+        'position:absolute; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none;',
+    });
+    canvas.appendChild(svgContainer);
+  }
+  return svgContainer;
 }
 
 function createConnectionGroup(event, canvas, svgContainer) {
@@ -250,76 +221,43 @@ function createConnectionGroup(event, canvas, svgContainer) {
     class: 'connector-hotspot',
   });
 
-  const contextMenu = createContextMenu();
-  contextMenu.style.display = 'none';
-  contextMenu.setAttribute('transform', `translate(${startX}, ${startY})`);
+  const contextMenuElement = contextMenu.createMenu();
+  contextMenuElement.style.display = 'none';
+  contextMenuElement.setAttribute(
+    'transform',
+    `translate(${startX}, ${startY})`,
+  );
 
   group.appendChild(path);
   group.appendChild(hotspot);
-  group.appendChild(contextMenu);
+  group.appendChild(contextMenuElement);
   svgContainer.appendChild(group);
 
-  return { path, hotspot, contextMenu, group, startX, startY };
-}
-
-function createContextMenu() {
-  const menu = createSVGElement('g', { class: 'context-menu' });
-
-  const menuItems = [
-    { type: 'delete', symbol: 'x', y: 0 },
-    { type: CONNECTION_TYPES.UNI_FORWARD, symbol: '>', y: 20 },
-    { type: CONNECTION_TYPES.NONE, symbol: '-', y: 40 },
-    { type: CONNECTION_TYPES.UNI_BACKWARD, symbol: '<', y: 60 },
-    { type: CONNECTION_TYPES.BI, symbol: '<>', y: 80 },
-  ];
-
-  menuItems.forEach((item) => {
-    const button = createSVGElement('g', {
-      class: 'menu-item',
-      'data-type': item.type,
-    });
-
-    const circle = createSVGElement('circle', {
-      r: '10',
-      cx: '0',
-      cy: item.y,
-      fill: item.type === 'delete' ? 'pink' : 'white',
-      stroke: STROKE_COLOR,
-    });
-
-    const text = createSVGElement('text', {
-      x: '0',
-      y: item.y,
-      'text-anchor': 'middle',
-      'dominant-baseline': 'central',
-      'font-size': '12',
-      fill: 'black',
-    });
-    text.textContent = item.symbol;
-
-    button.appendChild(circle);
-    button.appendChild(text);
-    menu.appendChild(button);
-  });
-
-  return menu;
+  return {
+    path,
+    hotspot,
+    contextMenu: contextMenuElement,
+    group,
+    startX,
+    startY,
+  };
 }
 
 function updateConnectionPath(path, x1, y1, x2, y2, type) {
-  const startX = parseFloat(x1);
-  const startY = parseFloat(y1);
-  const endX = parseFloat(x2);
-  const endY = parseFloat(y2);
-
-  if (isNaN(startX) || isNaN(startY) || isNaN(endX) || isNaN(endY)) {
-    console.error('Invalid coordinates for path:', { x1, y1, x2, y2 });
+  if (
+    typeof x1 !== 'number' ||
+    typeof y1 !== 'number' ||
+    typeof x2 !== 'number' ||
+    typeof y2 !== 'number'
+  ) {
+    log('Invalid coordinates for path:', { x1, y1, x2, y2 });
     return;
   }
 
-  const midX = (startX + endX) / 2;
-  const midY = (startY + endY) / 2;
+  const midX = (x1 + x2) / 2;
+  const midY = (y1 + y2) / 2;
 
-  const dAttr = `M${startX},${startY} Q${midX},${midY} ${endX},${endY}`;
+  const dAttr = `M${x1},${y1} Q${midX},${midY} ${x2},${y2}`;
   path.setAttribute('d', dAttr);
 
   let markerStart = '';
@@ -336,10 +274,40 @@ function updateConnectionPath(path, x1, y1, x2, y2, type) {
       markerStart = 'url(#arrow)';
       markerEnd = 'url(#arrow)';
       break;
+    case CONNECTION_TYPES.NONE:
+      // No markers for non-directional
+      break;
   }
 
   path.setAttribute('marker-start', markerStart);
   path.setAttribute('marker-end', markerEnd);
+}
+
+function handleSvgClick(event) {
+  handleLineSelection(event);
+}
+
+function handleSvgMouseMove(event) {
+  const hotspot = event.target.closest('.connector-hotspot');
+  const contextMenuElement = event.target.closest('.context-menu');
+
+  if (hotspot) {
+    contextMenu.show(hotspot);
+  } else if (!contextMenuElement && !contextMenu.isMouseOver) {
+    contextMenu.hide();
+  }
+}
+
+function handleSvgMouseLeave() {
+  if (!contextMenu.isMouseOver) {
+    contextMenu.hide();
+  }
+}
+
+function handleKeyDown(event) {
+  if (event.key === 'Delete') {
+    handleLineDeletion(event);
+  }
 }
 
 function handleLineSelection(event) {
@@ -372,7 +340,7 @@ function handleLineDeletion(event) {
 
 function getClosestPoints(note1, note2) {
   if (!note1 || !note2) {
-    console.error('Invalid notes provided to getClosestPoints');
+    log('Invalid notes provided to getClosestPoints');
     return { x1: 0, y1: 0, x2: 0, y2: 0 };
   }
 
@@ -389,24 +357,21 @@ function getClosestPoints(note1, note2) {
   const center1 = getCenter(adjustedRect1);
   const center2 = getCenter(adjustedRect2);
 
-  let result;
   if (Math.abs(center1.x - center2.x) > Math.abs(center1.y - center2.y)) {
-    result = {
+    return {
       x1: center1.x > center2.x ? adjustedRect1.left : adjustedRect1.right,
       y1: center1.y,
       x2: center1.x > center2.x ? adjustedRect2.right : adjustedRect2.left,
       y2: center2.y,
     };
   } else {
-    result = {
+    return {
       x1: center1.x,
       y1: center1.y > center2.y ? adjustedRect1.top : adjustedRect1.bottom,
       x2: center2.x,
       y2: center1.y > center2.y ? adjustedRect2.bottom : adjustedRect2.top,
     };
   }
-
-  return result;
 }
 
 function adjustRectForZoom(rect, canvasRect, scale) {
@@ -435,34 +400,29 @@ function createSVGElement(type, attributes = {}) {
   return element;
 }
 
-export function deleteConnectionsByNote(note) {
-  const connections = document.querySelectorAll(
-    `g[data-start="${note.id}"], g[data-end="${note.id}"]`,
-    `g[data-start="${note.id}"], g[data-end="${note.id}"]`,
-  );
-  connections.forEach((connection) => {
-    connection.remove();
-    updateConnectionInDataStore(
-      connection.dataset.start,
-      connection.dataset.end,
-      null,
-    );
+function createArrowMarker() {
+  const marker = createSVGElement('marker', {
+    id: 'arrow',
+    markerWidth: '10',
+    markerHeight: '7',
+    refX: '10',
+    refY: '3.5',
+    orient: 'auto',
   });
+  marker.innerHTML = '<path d="M0,0 L10,3.5 L0,7" style="fill: #888;" />';
+  return marker;
 }
-/**
- * Creates handlers for the connection drawing process.
- * @param {HTMLElement} startNote - The starting note element.
- * @param {Object} connectionGroup - The connection group object.
- * @param {HTMLElement} canvas - The canvas element.
- * @param {SVGElement} svgContainer - The SVG container.
- * @returns {Object} An object containing the move and up handlers.
- */
-function createConnectionHandlers(
-  startNote,
-  connectionGroup,
-  canvas,
-  svgContainer,
-) {
+
+function handleMouseDown(event, canvas, svgContainer) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  const startNote = event.target.closest('.note');
+  if (!startNote) return;
+
+  isConnecting = true;
+  const connectionGroup = createConnectionGroup(event, canvas, svgContainer);
+
   const moveHandler = (moveEvent) => {
     if (isConnecting) {
       const { left: currentX, top: currentY } = calculateOffsetPosition(
@@ -498,17 +458,13 @@ function createConnectionHandlers(
     isConnecting = false;
   };
 
-  return { moveHandler, upHandler };
+  document.addEventListener('mousemove', moveHandler);
+  document.addEventListener('mouseup', upHandler);
 }
-/**
- * Finalizes the connection between two notes.
- * @param {HTMLElement} startNote - The starting note element.
- * @param {HTMLElement} endNote - The ending note element.
- * @param {Object} connectionGroup - The connection group object.
- */
+
 function finalizeConnection(startNote, endNote, connectionGroup) {
   if (connectionExists(startNote.id, endNote.id)) {
-    console.log('Connection already exists between these notes');
+    log('Connection already exists between these notes');
     connectionGroup.group.remove();
     return;
   }
@@ -522,12 +478,6 @@ function finalizeConnection(startNote, endNote, connectionGroup) {
   updateConnectionInDataStore(startNote.id, endNote.id, CONNECTION_TYPES.NONE);
 }
 
-/**
- * Checks if a connection already exists between two notes.
- * @param {string} id1 - The ID of the first note.
- * @param {string} id2 - The ID of the second note.
- * @returns {boolean} True if a connection exists, false otherwise.
- */
 function connectionExists(id1, id2) {
   return (
     document.querySelector(
