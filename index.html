@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MindMeld</title>
-    <link rel="stylesheet" href="css/styles.css?v=0.3" />
+    <link rel="stylesheet" href="css/styles.css?v=0.4" />
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap"
       rel="stylesheet"
@@ -25,7 +25,7 @@
   <body>
     <div id="navbar">
       <div id="logo">
-        <img src="img/icon32.png" alt="MindMeld Logo" id="logo-icon" />
+        <img id="logo-icon" src="img/icon64.png" alt="MindMeld Logo" />
         mindmeld
       </div>
       <div id="menu">
@@ -53,9 +53,26 @@
       another<br />
       <strong>Select multiple notes:</strong> click on the canvas and select
       multiple notes<br />
-      <strong>v0.3</strong>
+      <strong>v0.4</strong>
     </div>
     <div id="zoom-display">5x</div>
-    <script type="module" src="js/app.js?v=0.3"></script>
+    <div id="overlay" class="hidden">
+      <div id="overlay-content">
+        <h1>Welcome to MindMeld!</h1>
+        <h2>Your Flexible, Freeform Mind Mapping Tool</h2>
+        <p><strong>Map out your manifesto</strong></p>
+        <p><strong>Plan your plot</strong></p>
+        <p><strong>Record your research</strong></p>
+        <h3>How to Use:</h3>
+        <p>Double click to create a note</p>
+        <p>Add some content</p>
+        <p>Create more notes and connect them together</p>
+        <p>
+          <em>Please note: this is not yet optimised for mobile devices</em>
+        </p>
+        <button id="dismiss-button">Get Started</button>
+      </div>
+    </div>
+    <script type="module" src="js/app.js?v=0.4"></script>
   </body>
 </html>

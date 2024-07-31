@@ -1,4 +1,3 @@
-// app.js
 import { setupCanvasEvents, setupDocumentEvents } from './events.js';
 import { exportToJSON, importFromJSON } from './dataStore.js';
 import './movement.js';
@@ -6,6 +5,38 @@ import { setupZoomAndPan } from './zoomManager.js';
 import { DOM_SELECTORS } from './constants.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+  const overlay = document.getElementById('overlay');
+  const dismissButton = document.getElementById('dismiss-button');
+
+  // Check if the user has seen the overlay before
+  if (!localStorage.getItem('overlayDismissed')) {
+    overlay.classList.remove('hidden');
+    console.log('Overlay shown');
+  } else {
+    overlay.classList.add('hidden');
+    console.log('Overlay already dismissed');
+  }
+
+  // Add event listener to the dismiss button
+  dismissButton.addEventListener('click', function () {
+    console.log('Dismiss button clicked');
+    overlay.classList.add('hidden');
+    console.log('Overlay should now be hidden');
+    localStorage.setItem('overlayDismissed', 'true');
+    console.log('LocalStorage set to true');
+  });
+
+  // Add event listener to hide overlay when clicking outside of it
+  overlay.addEventListener('click', function (event) {
+    if (event.target === overlay) {
+      console.log('Overlay clicked');
+      overlay.classList.add('hidden');
+      console.log('Overlay should now be hidden');
+      localStorage.setItem('overlayDismissed', 'true');
+      console.log('LocalStorage set to true');
+    }
+  });
+
   const canvasContainer = document.getElementById('canvas-container');
   const canvas = document.querySelector(DOM_SELECTORS.CANVAS);
   const exportButton = document.getElementById('export-json');

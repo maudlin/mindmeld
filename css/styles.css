@@ -8,7 +8,6 @@ html {
   font-family: 'Poppins', sans-serif;
   overflow: hidden; /* Hide overflow */
 }
-
 /* Navbar styles */
 #navbar {
   background-color: #1f2937; /* Tailwind gray-800 */
@@ -172,11 +171,6 @@ html {
   outline: none; /* Remove default outline */
 }
 
-/* Ensure note text does not collide with delete button */
-.note-content {
-  outline: none; /* Remove default outline when focused */
-}
-
 /* Connector Styles */
 line.connection-line {
   stroke: #888;
@@ -270,4 +264,96 @@ line.connection-line {
   right: -5px; /* Adjust for circle size */
   top: 50%;
   transform: translateY(-50%);
+}
+
+/* Overlay Styles */
+#overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8); /* Darker background for more contrast */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+#overlay-content {
+  background: #1f2937; /* Tailwind gray-800 for dark background */
+  padding: 2rem;
+  border-radius: 12px; /* Slightly larger border radius */
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+  max-width: 600px; /* Adjusted for more width */
+  color: white; /* White text color for contrast */
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.1); /* Box shadow for depth */
+}
+
+#overlay h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #fff; /* White color for heading */
+}
+
+#overlay h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #e5e7eb; /* Tailwind gray-300 for subtitle */
+}
+
+#overlay p {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: #9ca3af; /* Tailwind gray-400 for text */
+}
+
+#overlay h3 {
+  font-size: 1.25rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  color: #fff; /* White color for heading */
+}
+
+#dismiss-button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem; /* Larger padding for button */
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 1rem;
+  margin-top: 1rem;
+  cursor: pointer;
+  border-radius: 8px; /* Larger border radius for button */
+}
+
+#dismiss-button:hover {
+  background-color: #45a049;
+}
+
+/* List Styles */
+#overlay ul {
+  list-style: none; /* Remove default list style */
+  padding: 0;
+  margin: 0;
+  margin-bottom: 1rem; /* Add margin to separate from other content */
+}
+
+#overlay li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+#overlay li:before {
+  content: '✔️'; /* Checkmark icon */
+  margin-right: 0.5rem; /* Space between icon and text */
+  color: #10b981; /* Tailwind green-500 for checkmark */
+}
+
+.hidden {
+  display: none !important;
 }
