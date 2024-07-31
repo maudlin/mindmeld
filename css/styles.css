@@ -273,7 +273,7 @@ line.connection-line {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.8); /* Darker background for more contrast */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -281,51 +281,77 @@ line.connection-line {
 }
 
 #overlay-content {
-  background: white;
+  background: #1f2937; /* Tailwind gray-800 for dark background */
   padding: 2rem;
-  border-radius: 8px;
+  border-radius: 12px; /* Slightly larger border radius */
   text-align: center;
   font-family: 'Poppins', sans-serif;
-  max-width: 500px;
+  max-width: 600px; /* Adjusted for more width */
+  color: white; /* White text color for contrast */
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.1); /* Box shadow for depth */
 }
 
 #overlay h1 {
   font-size: 2rem;
   margin-bottom: 1rem;
+  color: #fff; /* White color for heading */
 }
 
 #overlay h2 {
   font-size: 1.5rem;
   margin-bottom: 1rem;
+  color: #e5e7eb; /* Tailwind gray-300 for subtitle */
 }
 
 #overlay p {
   font-size: 1rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
+  color: #9ca3af; /* Tailwind gray-400 for text */
 }
 
 #overlay h3 {
   font-size: 1.25rem;
   margin-top: 1.5rem;
   margin-bottom: 1rem;
+  color: #fff; /* White color for heading */
 }
 
 #dismiss-button {
   background-color: #4caf50;
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1.5rem; /* Larger padding for button */
   text-align: center;
   text-decoration: none;
   display: inline-block;
   font-size: 1rem;
   margin-top: 1rem;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 8px; /* Larger border radius for button */
 }
 
 #dismiss-button:hover {
   background-color: #45a049;
+}
+
+/* List Styles */
+#overlay ul {
+  list-style: none; /* Remove default list style */
+  padding: 0;
+  margin: 0;
+  margin-bottom: 1rem; /* Add margin to separate from other content */
+}
+
+#overlay li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+#overlay li:before {
+  content: '✔️'; /* Checkmark icon */
+  margin-right: 0.5rem; /* Space between icon and text */
+  color: #10b981; /* Tailwind green-500 for checkmark */
 }
 
 .hidden {
