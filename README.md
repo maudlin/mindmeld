@@ -51,14 +51,6 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 - **Initial Positioning**: Revised the initial positioning logic to set the canvas in the correct centered position from the start.
 - **Continuous Monitoring**: Implemented a system to monitor the canvas position for a period after initial load, helping to catch any delayed positioning changes.
 
-## Key Improvements
-
-- **Enhanced User Experience**: Users can create connections more intuitively with dynamic and visually guided connecting points.
-- **Improved Accuracy**: The application automatically selects the optimal connection points, ensuring connections are drawn cleanly and efficiently.
-- **Bug Fixes**: Addressed and fixed various bugs related to note movement and connection handling, ensuring smoother interactions and more reliable functionality.
-- **Enhanced Logging**: Improved logging for better debugging and issue tracking.
-- **Refined Handling of Transforms and Positioning**: Improved control over element positioning and scaling for better user experience.
-
 ## Installation
 
 ### Prerequisites
@@ -107,36 +99,35 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 
 4. **Delete Notes**:
 
-   - Delete notes by pressing the delete key.
+   - Delete notes by interacting with the delete icon in the hover menu
 
 5. **Draw Connections**:
 
    - Hover over a note to reveal ghost connecting points.
    - Click and drag from a ghost connecting point to another note to create a connection.
-   - Hover over a connection line to reveal the context menu and toggle connection types.
-   - Click within 2px of a connection line to select it.
-   - Press the delete key to remove the selected connection line.
+   - Hover over the connection line hotspot to reveal the context menu and toggle connection types.
+   - Click the delete menu button to delete a line, or other buttons to change the arrow directionality
 
 6. **Multiple Select and Group Move**:
 
-   - Use a selection box or a modifier key (e.g., Shift) to select multiple notes.
+   - Left click and box-select notes together
    - Move all selected notes together by dragging any of the selected notes.
 
-7. **Group Delete**:
-
-   - Delete multiple selected notes by pressing the delete key.
-
-8. **Zoom and Pan**:
+7. **Zoom and Pan**:
 
    - Use the mouse scroll wheel to zoom in and out of the canvas.
    - Click and hold the right mouse button to pan the canvas.
 
-9. **Help Text**:
+8. **Help Text**:
 
    - Refer to the help text at the bottom left of the canvas for instructions on key functionalities.
 
-10. **Export State**:
-    - Click the "Export" button in the navigation bar to copy the current state of the mind map to JSON format and copy it to the clipboard.
+9. **Export State**:
+
+   - Click the "Export" button in the navigation bar to copy the current state of the mind map to JSON format and copy it to the clipboard.
+
+10. **Import State**:
+    - Click the "Import" button in the navigation bar to load a previously saved mind map from a JSON file.
 
 ## File Manifest
 
@@ -153,10 +144,13 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 
 - **app.js**: Main application logic.
 - **connections.js**: Logic for handling connections between notes.
+- **constants.js**: Constants used across the application.
+- **contextMenu.js**: Logic for the context menu functionality for connections.
 - **dataStore.js**: Data storage handler for managing the state of notes.
 - **events.js**: Event handling for user interactions.
 - **movement.js**: Logic for handling note movement.
 - **note.js**: Logic for creating and managing notes.
+- **observableState.js**: State management with observables.
 - **utils.js**: Utility functions used across the application.
 - **zoomManager.js**: Logic for handling zoom and pan functionality.
 
