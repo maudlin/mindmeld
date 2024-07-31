@@ -2,9 +2,10 @@
 import { log } from './utils.js';
 
 export class ContextMenu {
-  constructor(CONNECTION_TYPES, STROKE_COLOR) {
+  constructor(CONNECTION_TYPES, STROKE_COLOR, STROKE_WIDTH) {
     this.CONNECTION_TYPES = CONNECTION_TYPES;
     this.STROKE_COLOR = STROKE_COLOR;
+    this.STROKE_WIDTH = STROKE_WIDTH;
     this.activeMenu = null;
     this.isMouseOver = false;
     this.hideTimeout = null;
@@ -19,6 +20,17 @@ export class ContextMenu {
   createMenu(connectionGroup) {
     this.connectionGroup = connectionGroup;
     const menu = this.createSVGElement('g', { class: 'context-menu' });
+
+    // Add background rectangle
+    const backgroundRect = this.createSVGElement('rect', {
+      x: -1, // Slightly wider than the menu items
+      y: -60, // Extend above the top menu item
+      width: 1, // Thin line
+      height: 120, // Extend below the bottom menu item
+      fill: '#ccc',
+      class: 'menu-background-line',
+    });
+    menu.appendChild(backgroundRect);
 
     const menuItems = [
       { type: 'delete', symbol: 'x', y: -40 },
@@ -40,6 +52,7 @@ export class ContextMenu {
         cy: item.y,
         fill: item.type === 'delete' ? 'pink' : 'white',
         stroke: this.STROKE_COLOR,
+        'stroke-width': this.STROKE_WIDTH,
       });
 
       const text = this.createSVGElement('text', {
@@ -132,14 +145,14 @@ export class ContextMenu {
     const connectionGroup = menuItem.closest('g[data-start][data-end]');
 
     if (!connectionGroup) {
-      console.error('Connection group not found');
+      log('Connection group not found');
       return;
     }
 
     const startId = connectionGroup.dataset.start;
     const endId = connectionGroup.dataset.end;
 
-    console.log('Connection details:', { startId, endId, connectionType });
+    log('Connection details:', { startId, endId, connectionType });
 
     if (connectionType === 'delete') {
       if (this.onDelete) {
