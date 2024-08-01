@@ -36,7 +36,8 @@ export function setupCanvasEvents(canvas) {
       if (target.classList.contains('ghost-connector')) {
         return;
       } else if (target.classList.contains('note') || target.closest('.note')) {
-        // ... existing note handling code ...
+        // This is the situation when the cursor is over a note
+        // and the user is initiating a drag select event
       } else {
         startSelectionBox(event, canvas);
       }
@@ -65,6 +66,7 @@ export function clearSelections() {
 }
 
 function startSelectionBox(event, canvas) {
+  document.body.classList.add('dragging');
   clearSelections();
   clearExistingSelectionBox(); // Clear any existing selection box
 
@@ -89,6 +91,7 @@ function startSelectionBox(event, canvas) {
 }
 
 function clearSelectionBox() {
+  document.body.classList.remove('dragging');
   if (isDrawingSelectionBox) {
     isDrawingSelectionBox = false;
     document.removeEventListener('mousemove', onMouseMove);
