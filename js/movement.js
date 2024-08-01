@@ -1,30 +1,23 @@
+// movement.js
 import { updateNote } from './dataStore.js';
-import { updateConnections } from './connections.js';
-import { getZoomLevel } from './zoomManager.js';
-import { selectNote, clearSelections } from './events.js';
+import { NoteManager } from './events.js';
 import { throttle } from './utils.js';
+import { getZoomLevel } from './zoomManager.js';
+import { updateConnections } from './connections.js';
 
 const throttledUpdateConnections = throttle(updateConnections, 16); // ~60fps
 
 let activeNote = null;
 let shiftX = 0,
   shiftY = 0;
-let selectedNotes = [];
 let offsets = [];
 
-/**
- * Ends the note movement process.
- */
 export function moveNoteEnd() {
   activeNote = null;
   document.removeEventListener('mousemove', onMouseMove);
   document.removeEventListener('mouseup', onMouseUp);
 }
 
-/**
- * Handles mouse movement when dragging a note.
- * @param {MouseEvent} event - The mouse event.
- */
 function onMouseMove(event) {
   if (activeNote) {
     moveAt(event.clientX, event.clientY, activeNote.closest('#canvas'));
@@ -32,28 +25,20 @@ function onMouseMove(event) {
   }
 }
 
-/**
- * Handles mouse up event when dragging a note.
- */
 function onMouseUp() {
   if (activeNote) {
     moveNoteEnd();
   }
 }
 
-/**
- * Starts the note movement process.
- * @param {HTMLElement} note - The note being moved.
- * @param {MouseEvent} event - The mousedown event.
- */
 export function moveNoteStart(note, event) {
   if (!note.classList.contains('selected')) {
-    clearSelections();
-    selectNote(note);
+    NoteManager.clearSelections();
+    NoteManager.selectNote(note);
   }
 
   activeNote = note;
-  selectedNotes = Array.from(document.querySelectorAll('.note.selected'));
+  const selectedNotes = NoteManager.getSelectedNotes();
 
   const zoomLevel = getZoomLevel();
   const scale = zoomLevel / 5;
@@ -82,12 +67,6 @@ export function moveNoteStart(note, event) {
   document.addEventListener('mouseup', onMouseUp);
 }
 
-/**
- * Moves the note to a new position.
- * @param {number} pageX - The x-coordinate of the mouse.
- * @param {number} pageY - The y-coordinate of the mouse.
- * @param {HTMLElement} canvas - The canvas element.
- */
 function moveAt(pageX, pageY, canvas) {
   const zoomLevel = getZoomLevel();
   const scale = zoomLevel / 5;
@@ -112,6 +91,3 @@ function moveAt(pageX, pageY, canvas) {
     updateConnections(note, canvas);
   });
 }
-
-document.addEventListener('mouseup', onMouseUp);
-document.addEventListener('mousemove', onMouseMove);

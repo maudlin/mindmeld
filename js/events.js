@@ -1,72 +1,66 @@
-//event.js
+// events.js
 import { createNoteAtPosition, deleteNoteWithConnections } from './note.js';
 import { initializeConnectionDrawing } from './connections.js';
 import { calculateOffsetPosition } from './utils.js';
 
-let isDebouncing = false;
 let selectionBox = null;
-let startX, startY;
 let isDrawingSelectionBox = false;
+let startX, startY;
+let lastUpdateTime = 0;
+const updateInterval = 16; // ~60fps
 
-function debounce(func, delay) {
-  return function (...args) {
-    if (isDebouncing) return;
-    isDebouncing = true;
-    setTimeout(() => {
-      func.apply(this, args);
-      isDebouncing = false;
-    }, delay);
-  };
-}
+export const NoteManager = {
+  selectedNotes: new Set(),
+
+  selectNote(note) {
+    note.classList.add('selected');
+    this.selectedNotes.add(note);
+  },
+
+  deselectNote(note) {
+    note.classList.remove('selected');
+    this.selectedNotes.delete(note);
+  },
+
+  clearSelections() {
+    this.selectedNotes.forEach((note) => note.classList.remove('selected'));
+    this.selectedNotes.clear();
+  },
+
+  getSelectedNotes() {
+    return Array.from(this.selectedNotes);
+  },
+};
 
 export function setupCanvasEvents(canvas) {
-  canvas.addEventListener(
-    'dblclick',
-    debounce((event) => {
-      createNoteAtPosition(canvas, event);
-    }, 300),
+  canvas.addEventListener('dblclick', (event) =>
+    createNoteAtPosition(canvas, event),
   );
-
-  initializeConnectionDrawing(canvas);
-
-  canvas.addEventListener('mousedown', (event) => {
-    if (event.button === 0) {
-      // Left mouse button
-      const target = event.target;
-      if (target.classList.contains('ghost-connector')) {
-        return;
-      } else if (target.classList.contains('note') || target.closest('.note')) {
-        // ... existing note handling code ...
-      } else {
-        startSelectionBox(event, canvas);
-      }
-    }
-  });
-
-  // Add these new event listeners
+  canvas.addEventListener('mousedown', handleMouseDown);
   document.addEventListener('mouseup', clearSelectionBox);
   document.addEventListener('mouseleave', clearSelectionBox);
+  document.addEventListener('contextmenu', (event) => event.preventDefault());
 
-  // Disable default right-click menu
-  document.addEventListener('contextmenu', (event) => {
-    event.preventDefault();
-  });
+  initializeConnectionDrawing(canvas);
 }
 
-export function selectNote(note) {
-  note.classList.add('selected');
-}
+function handleMouseDown(event) {
+  if (event.button !== 0) return; // Only handle left mouse button
 
-export function clearSelections() {
-  const selectedNotes = document.querySelectorAll('.note.selected');
-  selectedNotes.forEach((note) => {
-    note.classList.remove('selected');
-  });
+  const target = event.target;
+  if (
+    !target.classList.contains('ghost-connector') &&
+    !target.classList.contains('note') &&
+    !target.closest('.note')
+  ) {
+    startSelectionBox(event, event.currentTarget);
+  }
 }
 
 function startSelectionBox(event, canvas) {
-  clearSelections();
-  clearExistingSelectionBox(); // Clear any existing selection box
+  document.body.classList.add('dragging');
+  NoteManager.clearSelections();
+  clearExistingSelectionBox();
 
   const { left: startXOffset, top: startYOffset } = calculateOffsetPosition(
     canvas,
@@ -77,11 +71,13 @@ function startSelectionBox(event, canvas) {
   startY = startYOffset;
   selectionBox = document.createElement('div');
   selectionBox.id = 'selection-box';
-  selectionBox.style.position = 'absolute';
-  selectionBox.style.border = '1px dashed #000';
-  selectionBox.style.backgroundColor = 'rgba(0, 0, 255, 0.1)';
-  selectionBox.style.left = `${startX}px`;
-  selectionBox.style.top = `${startY}px`;
+  Object.assign(selectionBox.style, {
+    position: 'absolute',
+    border: '1px dashed #000',
+    backgroundColor: 'rgba(0, 0, 255, 0.1)',
+    left: `${startX}px`,
+    top: `${startY}px`,
+  });
   canvas.appendChild(selectionBox);
 
   isDrawingSelectionBox = true;
@@ -89,6 +85,7 @@ function startSelectionBox(event, canvas) {
 }
 
 function clearSelectionBox() {
+  document.body.classList.remove('dragging');
   if (isDrawingSelectionBox) {
     isDrawingSelectionBox = false;
     document.removeEventListener('mousemove', onMouseMove);
@@ -104,23 +101,29 @@ function clearExistingSelectionBox() {
 }
 
 function onMouseMove(event) {
-  if (isDrawingSelectionBox && selectionBox) {
-    const canvas = document.getElementById('canvas');
-    const { left: currentX, top: currentY } = calculateOffsetPosition(
-      canvas,
-      event,
-    );
+  if (!isDrawingSelectionBox || !selectionBox) return;
 
-    const width = currentX - startX;
-    const height = currentY - startY;
+  const now = Date.now();
+  if (now - lastUpdateTime < updateInterval) return;
+  lastUpdateTime = now;
 
-    selectionBox.style.width = `${Math.abs(width)}px`;
-    selectionBox.style.height = `${Math.abs(height)}px`;
-    selectionBox.style.left = `${Math.min(currentX, startX)}px`;
-    selectionBox.style.top = `${Math.min(currentY, startY)}px`;
+  const canvas = document.getElementById('canvas');
+  const { left: currentX, top: currentY } = calculateOffsetPosition(
+    canvas,
+    event,
+  );
 
-    selectNotesWithinBox();
-  }
+  const width = currentX - startX;
+  const height = currentY - startY;
+
+  Object.assign(selectionBox.style, {
+    width: `${Math.abs(width)}px`,
+    height: `${Math.abs(height)}px`,
+    left: `${Math.min(currentX, startX)}px`,
+    top: `${Math.min(currentY, startY)}px`,
+  });
+
+  selectNotesWithinBox();
 }
 
 function selectNotesWithinBox() {
@@ -129,27 +132,29 @@ function selectNotesWithinBox() {
 
   notes.forEach((note) => {
     const noteRect = note.getBoundingClientRect();
-    if (
+    const isSelected =
       noteRect.left >= boxRect.left &&
       noteRect.right <= boxRect.right &&
       noteRect.top >= boxRect.top &&
-      noteRect.bottom <= boxRect.bottom
-    ) {
-      note.classList.add('selected');
+      noteRect.bottom <= boxRect.bottom;
+
+    if (isSelected) {
+      NoteManager.selectNote(note);
     } else {
-      note.classList.remove('selected');
+      NoteManager.deselectNote(note);
     }
   });
 }
 
 export function setupDocumentEvents() {
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Delete') {
-      const selectedNotes = document.querySelectorAll('.note.selected');
-      selectedNotes.forEach((note) => {
-        const canvas = document.getElementById('canvas');
-        deleteNoteWithConnections(note, canvas);
-      });
-    }
-  });
+  document.addEventListener('keydown', handleKeyDown);
+}
+
+function handleKeyDown(event) {
+  if (event.key === 'Delete') {
+    const canvas = document.getElementById('canvas');
+    NoteManager.getSelectedNotes().forEach((note) =>
+      deleteNoteWithConnections(note, canvas),
+    );
+  }
 }
