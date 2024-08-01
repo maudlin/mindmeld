@@ -4,6 +4,7 @@ import { updateConnections, deleteConnectionsByNote } from './connections.js';
 import { moveNoteStart } from './movement.js';
 import { calculateOffsetPosition } from './utils.js';
 import { NOTE_DIMENSIONS } from './constants.js';
+import { NoteManager } from './events.js';
 
 export function createNoteAtPosition(canvas, event) {
   const { left: x, top: y } = calculateOffsetPosition(canvas, event);
@@ -58,11 +59,11 @@ export function addNoteEventListeners(note, canvas) {
     if (!event.target.classList.contains('ghost-connector')) {
       if (!event.shiftKey) {
         if (!note.classList.contains('selected')) {
-          clearSelections();
-          selectNote(note);
+          NoteManager.clearSelections();
+          NoteManager.selectNote(note);
         }
       }
-      moveNoteStart(note, event, canvas);
+      moveNoteStart(note, event);
     }
   });
 
@@ -82,8 +83,8 @@ export function addNoteEventListeners(note, canvas) {
       toggleNoteSelection(note);
     } else {
       if (!note.classList.contains('selected')) {
-        clearSelections();
-        selectNote(note);
+        NoteManager.clearSelections();
+        NoteManager.selectNote(note);
       }
     }
     event.stopPropagation();
@@ -94,18 +95,11 @@ export function addNoteEventListeners(note, canvas) {
   });
 }
 
-function clearSelections() {
-  const selectedNotes = document.querySelectorAll('.note.selected');
-  selectedNotes.forEach((note) => {
-    note.classList.remove('selected');
-  });
-}
-
 function toggleNoteSelection(note) {
   if (note.classList.contains('selected')) {
-    note.classList.remove('selected');
+    NoteManager.deselectNote(note);
   } else {
-    note.classList.add('selected');
+    NoteManager.selectNote(note);
   }
 }
 
@@ -117,17 +111,9 @@ export function deleteNoteWithConnections(note, canvas) {
 }
 
 export function deleteNote() {
-  const selected = document.querySelector('.note.selected');
+  const selected = NoteManager.getSelectedNotes()[0];
   if (selected) {
     const canvas = document.getElementById('canvas');
     deleteNoteWithConnections(selected, canvas);
   }
-}
-
-export function selectNote(note) {
-  const selected = document.querySelector('.note.selected');
-  if (selected && selected !== note) {
-    selected.classList.remove('selected');
-  }
-  note.classList.add('selected');
 }
