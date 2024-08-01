@@ -152,9 +152,17 @@ export function setupDocumentEvents() {
 
 function handleKeyDown(event) {
   if (event.key === 'Delete') {
-    const canvas = document.getElementById('canvas');
-    NoteManager.getSelectedNotes().forEach((note) =>
-      deleteNoteWithConnections(note, canvas),
-    );
+    const activeElement = document.activeElement;
+    const isEditingNoteContent =
+      activeElement.classList.contains('note-content') &&
+      activeElement.isContentEditable;
+
+    if (!isEditingNoteContent) {
+      const canvas = document.getElementById('canvas');
+      NoteManager.getSelectedNotes().forEach((note) =>
+        deleteNoteWithConnections(note, canvas),
+      );
+    }
+    // If we are editing note content, do nothing and let the default delete behavior occur
   }
 }

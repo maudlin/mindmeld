@@ -17,11 +17,9 @@ export function getZoomLevel() {
 
 export function setZoomLevel(newZoomLevel) {
   zoomLevel = Math.max(zoomMin, Math.min(zoomMax, newZoomLevel));
-  //log(`Zoom level set to ${zoomLevel}`);
 }
 
 function setInitialCanvasPosition(canvasContainer, canvas) {
-  //log('Setting initial canvas position');
   const containerRect = canvasContainer.getBoundingClientRect();
   const canvasRect = canvas.getBoundingClientRect();
   const scale = ZOOM_LEVELS.DEFAULT / ZOOM_LEVELS.DEFAULT;
@@ -33,18 +31,11 @@ function setInitialCanvasPosition(canvasContainer, canvas) {
   // Apply the initial transform
   canvas.style.transform = `translate(${desiredCenterX}px, ${desiredCenterY}px) scale(${scale})`;
 
-  //log(
-  //  `Initial position set: translateX=${desiredCenterX}, translateY=${desiredCenterY}, scale=${scale}`,
-  //);
-
   isInitialPositionSet = true;
-  //log('Initial position set complete');
 }
 
 function positionCanvas(canvasContainer, canvas) {
-  //log('Positioning canvas');
   if (!isInitialPositionSet) {
-    //log('Initial position not set, calling setInitialCanvasPosition');
     setInitialCanvasPosition(canvasContainer, canvas);
     return;
   }
