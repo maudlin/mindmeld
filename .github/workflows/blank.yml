@@ -16,7 +16,7 @@ jobs:
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          ssh-private-key: ${{ secrets.Dreamhost }}
+          ssh-private-key: ${{ secrets.dreamhost }}
 
       - name: Copy files to remote server
         run: |
