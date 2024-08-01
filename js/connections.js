@@ -3,10 +3,13 @@ import { calculateOffsetPosition, log } from './utils.js';
 import { getZoomLevel } from './zoomManager.js';
 import { updateConnectionInDataStore } from './dataStore.js';
 import { ContextMenu } from './contextMenu.js';
+import { throttle } from './utils.js';
 
 const STROKE_COLOR = '#888';
 const STROKE_WIDTH = '2';
 const STROKE_DASHARRAY = '5,5';
+
+const throttledUpdateConnections = throttle(updateConnections, 16);
 
 export const CONNECTION_TYPES = {
   NONE: 'none',
@@ -22,6 +25,16 @@ const contextMenu = new ContextMenu(
   STROKE_COLOR,
   STROKE_WIDTH,
 );
+
+let currentZoomLevel = null;
+
+function getCurrentZoomLevel() {
+  return currentZoomLevel !== null ? currentZoomLevel : getZoomLevel();
+}
+
+export function startDragging() {
+  currentZoomLevel = getZoomLevel();
+}
 
 // Set up callbacks
 contextMenu.setDeleteCallback((startId, endId, connectionGroup) => {
@@ -69,7 +82,7 @@ contextMenu.setTypeChangeCallback((startId, endId, newType) => {
       // Force a re-render of the connection
       log('Forcing re-render of connection');
       requestAnimationFrame(() => {
-        updateConnections(connectionGroup);
+        throttledUpdateConnections(connectionGroup);
       });
     } else {
       log('Missing elements for update:', {
@@ -107,13 +120,14 @@ export function initializeConnectionDrawing(canvas) {
 }
 
 export function updateConnections(noteOrGroup) {
-  // log('updateConnections called with:', noteOrGroup);
   const updateSingle = (group) => {
-    const path = group.querySelector('path');
-    const hotspot = group.querySelector('circle');
-    const contextMenuElement = group.querySelector('.context-menu');
-    const startNote = document.getElementById(group.dataset.start);
-    const endNote = document.getElementById(group.dataset.end);
+    const [startNote, endNote, path, hotspot, contextMenuElement] = [
+      document.getElementById(group.dataset.start),
+      document.getElementById(group.dataset.end),
+      group.querySelector('path'),
+      group.querySelector('circle'),
+      group.querySelector('.context-menu'),
+    ];
 
     if (startNote && endNote && path && hotspot && contextMenuElement) {
       const points = getClosestPoints(startNote, endNote);
@@ -128,50 +142,45 @@ export function updateConnections(noteOrGroup) {
 
       const hotspotX = (points.x1 + points.x2) / 2;
       const hotspotY = (points.y1 + points.y2) / 2;
-      hotspot.setAttribute('cx', hotspotX);
-      hotspot.setAttribute('cy', hotspotY);
-      contextMenuElement.setAttribute(
-        'transform',
-        `translate(${hotspotX}, ${hotspotY})`,
-      );
 
-      // Update the background line
-      const backgroundLine = group.querySelector('.connector-background-line');
-      if (backgroundLine) {
-        backgroundLine.setAttribute('x1', hotspotX);
-        backgroundLine.setAttribute('y1', hotspotY - 10);
-        backgroundLine.setAttribute('x2', hotspotX);
-        backgroundLine.setAttribute('y2', hotspotY + 10);
-      }
+      // 3. Batch DOM updates
+      requestAnimationFrame(() => {
+        hotspot.setAttribute('cx', hotspotX);
+        hotspot.setAttribute('cy', hotspotY);
+        contextMenuElement.setAttribute(
+          'transform',
+          `translate(${hotspotX}, ${hotspotY})`,
+        );
+
+        const backgroundLine = group.querySelector(
+          '.connector-background-line',
+        );
+        if (backgroundLine) {
+          backgroundLine.setAttribute('x1', hotspotX);
+          backgroundLine.setAttribute('y1', hotspotY - 10);
+          backgroundLine.setAttribute('x2', hotspotX);
+          backgroundLine.setAttribute('y2', hotspotY + 10);
+        }
+      });
 
       group.appendChild(contextMenuElement);
     } else {
-      log('Missing elements for connection:', {
-        startNote: !!startNote,
-        endNote: !!endNote,
-        path: !!path,
-        hotspot: !!hotspot,
-        contextMenuElement: !!contextMenuElement,
-      });
       if (group.parentNode) {
         group.remove();
       }
     }
   };
 
-  if (
-    noteOrGroup instanceof Element &&
-    noteOrGroup.classList.contains('note')
-  ) {
-    const connections = document.querySelectorAll(
-      `g[data-start="${noteOrGroup.id}"], g[data-end="${noteOrGroup.id}"]`,
-    );
-    connections.forEach(updateSingle);
-  } else if (
-    noteOrGroup instanceof Element &&
-    noteOrGroup.tagName.toLowerCase() === 'g'
-  ) {
-    updateSingle(noteOrGroup);
+  // Use more efficient selectors and avoid unnecessary updates
+  if (noteOrGroup instanceof Element) {
+    if (noteOrGroup.classList.contains('note')) {
+      const connections = document.querySelectorAll(
+        `g[data-start="${noteOrGroup.id}"], g[data-end="${noteOrGroup.id}"]`,
+      );
+      connections.forEach(updateSingle);
+    } else if (noteOrGroup.tagName.toLowerCase() === 'g') {
+      updateSingle(noteOrGroup);
+    }
   } else {
     const connections = document.querySelectorAll('g[data-start]');
     connections.forEach(updateSingle);
@@ -209,7 +218,7 @@ export function createConnection(fromId, toId, type) {
   group.appendChild(contextMenuElement);
   svgContainer.appendChild(group);
 
-  updateConnections(group);
+  throttledUpdateConnections(group);
   log('Connection created:', { fromId, toId, type });
 }
 
@@ -406,53 +415,60 @@ function getClosestPoints(note1, note2) {
     return { x1: 0, y1: 0, x2: 0, y2: 0 };
   }
 
-  const zoomLevel = getZoomLevel();
-  const scale = zoomLevel / 5;
-
-  const rect1 = note1.getBoundingClientRect();
-  const rect2 = note2.getBoundingClientRect();
+  const scale = getCurrentZoomLevel() / 5;
   const canvasRect = document.getElementById('canvas').getBoundingClientRect();
 
-  const adjustedRect1 = adjustRectForZoom(rect1, canvasRect, scale);
-  const adjustedRect2 = adjustRectForZoom(rect2, canvasRect, scale);
+  const [rect1, rect2] = [note1, note2].map((note) => {
+    const rect = note.getBoundingClientRect();
+    return {
+      left: (rect.left - canvasRect.left) / scale,
+      top: (rect.top - canvasRect.top) / scale,
+      width: rect.width / scale,
+      height: rect.height / scale,
+      right: (rect.right - canvasRect.left) / scale,
+      bottom: (rect.bottom - canvasRect.top) / scale,
+    };
+  });
 
-  const center1 = getCenter(adjustedRect1);
-  const center2 = getCenter(adjustedRect2);
+  const [center1, center2] = [rect1, rect2].map((rect) => ({
+    x: rect.left + rect.width / 2,
+    y: rect.top + rect.height / 2,
+  }));
 
   if (Math.abs(center1.x - center2.x) > Math.abs(center1.y - center2.y)) {
     return {
-      x1: center1.x > center2.x ? adjustedRect1.left : adjustedRect1.right,
+      x1: center1.x > center2.x ? rect1.left : rect1.right,
       y1: center1.y,
-      x2: center1.x > center2.x ? adjustedRect2.right : adjustedRect2.left,
+      x2: center1.x > center2.x ? rect2.right : rect2.left,
       y2: center2.y,
     };
   } else {
     return {
       x1: center1.x,
-      y1: center1.y > center2.y ? adjustedRect1.top : adjustedRect1.bottom,
+      y1: center1.y > center2.y ? rect1.top : rect1.bottom,
       x2: center2.x,
-      y2: center1.y > center2.y ? adjustedRect2.bottom : adjustedRect2.top,
+      y2: center1.y > center2.y ? rect2.bottom : rect2.top,
     };
   }
 }
 
-function adjustRectForZoom(rect, canvasRect, scale) {
-  return {
-    left: (rect.left - canvasRect.left) / scale,
-    top: (rect.top - canvasRect.top) / scale,
-    width: rect.width / scale,
-    height: rect.height / scale,
-    right: (rect.right - canvasRect.left) / scale,
-    bottom: (rect.bottom - canvasRect.top) / scale,
-  };
-}
+// function adjustRectForZoom(rect, canvasRect, scale) {
+//   return {
+//     left: (rect.left - canvasRect.left) / scale,
+//     top: (rect.top - canvasRect.top) / scale,
+//     width: rect.width / scale,
+//     height: rect.height / scale,
+//     right: (rect.right - canvasRect.left) / scale,
+//     bottom: (rect.bottom - canvasRect.top) / scale,
+//   };
+// }
 
-function getCenter(rect) {
-  return {
-    x: rect.left + rect.width / 2,
-    y: rect.top + rect.height / 2,
-  };
-}
+// function getCenter(rect) {
+//   return {
+//     x: rect.left + rect.width / 2,
+//     y: rect.top + rect.height / 2,
+//   };
+// }
 
 function createSVGElement(type, attributes = {}) {
   const element = document.createElementNS('http://www.w3.org/2000/svg', type);
@@ -548,7 +564,7 @@ function finalizeConnection(startNote, endNote, connectionGroup) {
 
   connectionGroup.contextMenu.connectionGroup = connectionGroup.group;
 
-  updateConnections(connectionGroup.group);
+  throttledUpdateConnections(connectionGroup.group);
 
   updateConnectionInDataStore(startNote.id, endNote.id, CONNECTION_TYPES.NONE);
 }
