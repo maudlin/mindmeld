@@ -1,4 +1,3 @@
-
 name: Deploy to Remote Server
 
 on:
@@ -10,20 +9,22 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up SSH
+        id: ssh-setup
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Verify SSH Key
+        run: ssh-add -L
+
       - name: Debug SSH Connection
         run: |
           ssh -vvv -o StrictHostKeyChecking=no maudlin@pdx1-shared-a1-41.dreamhost.com 'echo "SSH connection successful"'
-
 
       - name: Pull latest changes and deploy
         run: |
