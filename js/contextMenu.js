@@ -13,64 +13,89 @@ export class ContextMenu {
     this.onTypeChange = null;
     this.connectionGroup = null;
 
-    // Bind the handleClick method to this instance
+    // Pre-create menu items
+    this.menuItems = this.createMenuItems();
+
+    // Bind methods
     this.handleClick = this.handleClick.bind(this);
+    this.handleMouseEnter = this.handleMouseEnter.bind(this);
+    this.handleMouseLeave = this.handleMouseLeave.bind(this);
   }
 
-  createMenu(connectionGroup) {
-    this.connectionGroup = connectionGroup;
-    const menu = this.createSVGElement('g', { class: 'context-menu' });
-
-    // Add background rectangle
-    const backgroundRect = this.createSVGElement('rect', {
-      x: -1, // Slightly wider than the menu items
-      y: -60, // Extend above the top menu item
-      width: 1, // Thin line
-      height: 120, // Extend below the bottom menu item
-      fill: '#ccc',
-      class: 'menu-background-line',
-    });
-    menu.appendChild(backgroundRect);
-
-    const menuItems = [
+  createMenuItems() {
+    return [
       { type: 'delete', symbol: 'x', y: -40 },
       { type: this.CONNECTION_TYPES.UNI_BACKWARD, symbol: '<', y: -20 },
       { type: this.CONNECTION_TYPES.NONE, symbol: '-', y: 0 },
       { type: this.CONNECTION_TYPES.UNI_FORWARD, symbol: '>', y: 20 },
       { type: this.CONNECTION_TYPES.BI, symbol: '<>', y: 40 },
     ];
+  }
 
-    menuItems.forEach((item) => {
-      const button = this.createSVGElement('g', {
-        class: 'menu-item context-menu-item',
-        'data-type': item.type,
-      });
+  createMenu() {
+    const menu = this.createSVGElement('g', { class: 'context-menu' });
 
-      const circle = this.createSVGElement('circle', {
+    // Add background rectangle
+    menu.appendChild(this.createBackgroundRect());
+
+    // Add menu items
+    this.menuItems.forEach((item) => {
+      menu.appendChild(this.createMenuItem(item));
+    });
+
+    // Add menu background
+    menu.insertBefore(this.createMenuBackground(), menu.firstChild);
+
+    menu.addEventListener('mouseenter', this.handleMouseEnter);
+    menu.addEventListener('mouseleave', this.handleMouseLeave);
+
+    return menu;
+  }
+
+  createBackgroundRect() {
+    return this.createSVGElement('rect', {
+      x: -1,
+      y: -60,
+      width: 1,
+      height: 120,
+      fill: '#ccc',
+      class: 'menu-background-line',
+    });
+  }
+
+  createMenuItem(item) {
+    const button = this.createSVGElement('g', {
+      class: 'menu-item context-menu-item',
+      'data-type': item.type,
+    });
+
+    button.appendChild(
+      this.createSVGElement('circle', {
         r: '10',
         cx: '0',
         cy: item.y,
         fill: item.type === 'delete' ? 'pink' : 'white',
         stroke: this.STROKE_COLOR,
         'stroke-width': this.STROKE_WIDTH,
-      });
+      }),
+    );
 
-      const text = this.createSVGElement('text', {
-        x: '0',
-        y: item.y,
-        'text-anchor': 'middle',
-        'dominant-baseline': 'central',
-        'font-size': '12',
-        fill: 'black',
-      });
-      text.textContent = item.symbol;
-
-      button.appendChild(circle);
-      button.appendChild(text);
-      menu.appendChild(button);
+    const text = this.createSVGElement('text', {
+      x: '0',
+      y: item.y,
+      'text-anchor': 'middle',
+      'dominant-baseline': 'central',
+      'font-size': '12',
+      fill: 'black',
     });
+    text.textContent = item.symbol;
+    button.appendChild(text);
 
-    const menuBackground = this.createSVGElement('rect', {
+    return button;
+  }
+
+  createMenuBackground() {
+    return this.createSVGElement('rect', {
       x: -15,
       y: -55,
       width: 30,
@@ -78,12 +103,6 @@ export class ContextMenu {
       fill: 'transparent',
       class: 'menu-background',
     });
-    menu.insertBefore(menuBackground, menu.firstChild);
-
-    menu.addEventListener('mouseenter', this.handleMouseEnter.bind(this));
-    menu.addEventListener('mouseleave', this.handleMouseLeave.bind(this));
-
-    return menu;
   }
 
   createSVGElement(type, attributes = {}) {
@@ -116,12 +135,6 @@ export class ContextMenu {
       }
     }, 300);
   }
-  //   hide() {
-  //     if (this.activeMenu) {
-  //       this.activeMenu.style.display = 'none';
-  //       this.activeMenu = null;
-  //     }
-  //   }
 
   handleMouseEnter() {
     this.isMouseOver = true;
@@ -134,7 +147,6 @@ export class ContextMenu {
   }
 
   handleClick(event) {
-    log('Context menu item clicked', event.target);
     const menuItem = event.target.closest('.menu-item');
     if (!menuItem) return;
 
@@ -149,19 +161,12 @@ export class ContextMenu {
       return;
     }
 
-    const startId = connectionGroup.dataset.start;
-    const endId = connectionGroup.dataset.end;
-
-    log('Connection details:', { startId, endId, connectionType });
+    const { start: startId, end: endId } = connectionGroup.dataset;
 
     if (connectionType === 'delete') {
-      if (this.onDelete) {
-        this.onDelete(startId, endId, connectionGroup);
-      }
+      this.onDelete?.(startId, endId, connectionGroup);
     } else {
-      if (this.onTypeChange) {
-        this.onTypeChange(startId, endId, connectionType);
-      }
+      this.onTypeChange?.(startId, endId, connectionType);
     }
 
     this.hide();
@@ -172,12 +177,10 @@ export class ContextMenu {
   }
 
   setDeleteCallback(callback) {
-    log('Delete callback set');
     this.onDelete = callback;
   }
 
   setTypeChangeCallback(callback) {
-    log('Type change callback set');
     this.onTypeChange = callback;
   }
 }

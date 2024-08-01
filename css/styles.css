@@ -114,7 +114,7 @@ html {
   position: fixed;
   bottom: 10px;
   left: 10px;
-  color: rgba(128, 128, 128, 0.5); /* 50% gray */
+  color: rgba(94, 94, 94, 0.5); /* 50% gray */
   font-family: 'Poppins', sans-serif;
   font-size: 10pt;
   line-height: 1.5;
@@ -183,6 +183,10 @@ html {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+}
+
+#version {
+  color: #faa;
 }
 
 body.dragging,
