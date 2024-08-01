@@ -20,6 +20,11 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Debug SSH Connection
+        run: |
+          ssh -vvv -o StrictHostKeyChecking=no maudlin@pdx1-shared-a1-41.dreamhost.com 'echo "SSH connection successful"'
+
+
       - name: Pull latest changes and deploy
         run: |
           ssh -o StrictHostKeyChecking=no maudlin@pdx1-shared-a1-41.dreamhost.com 'cd /home/maudlin/ridley.co/mindmeld && git pull && ./deploy.sh'
