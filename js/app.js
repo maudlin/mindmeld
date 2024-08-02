@@ -3,84 +3,78 @@ import { exportToJSON, importFromJSON } from './dataStore.js';
 import './movement.js';
 import { setupZoomAndPan } from './zoomManager.js';
 import { DOM_SELECTORS } from './constants.js';
+import { canvasManager } from './canvasManager.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  const overlay = document.getElementById('overlay');
-  const dismissButton = document.getElementById('dismiss-button');
+  const canvasContainer = document.getElementById('canvas-container');
+  const canvas = document.querySelector(DOM_SELECTORS.CANVAS);
+  const zoomDisplay = document.getElementById('zoom-display');
+  const canvasStyleDropdown = document.getElementById('canvas-style-dropdown');
+  const menu = document.getElementById('menu');
 
-  // Check if the user has seen the overlay before
-  if (!localStorage.getItem('overlayDismissed')) {
-    overlay.classList.remove('hidden');
-    console.log('Overlay shown');
-  } else {
-    overlay.classList.add('hidden');
-    console.log('Overlay already dismissed');
+  // Populate the canvas style dropdown
+  function populateCanvasStyleDropdown() {
+    canvasManager.getAvailableModules().forEach((moduleName) => {
+      if (moduleName !== 'Standard Canvas') {
+        const li = document.createElement('li');
+        const button = document.createElement('button');
+        button.textContent = moduleName;
+        button.addEventListener('click', () => {
+          canvasManager.setCurrentModule(moduleName);
+          canvasManager.renderCurrentModule(canvas);
+          setupZoomAndPan(canvasContainer, canvas, zoomDisplay);
+        });
+        li.appendChild(button);
+        canvasStyleDropdown.appendChild(li);
+      }
+    });
   }
 
-  // Add event listener to the dismiss button
-  dismissButton.addEventListener('click', function () {
-    console.log('Dismiss button clicked');
-    overlay.classList.add('hidden');
-    console.log('Overlay should now be hidden');
-    localStorage.setItem('overlayDismissed', 'true');
-    console.log('LocalStorage set to true');
-  });
+  populateCanvasStyleDropdown();
 
-  // Add event listener to hide overlay when clicking outside of it
-  overlay.addEventListener('click', function (event) {
-    if (event.target === overlay) {
-      console.log('Overlay clicked');
-      overlay.classList.add('hidden');
-      console.log('Overlay should now be hidden');
-      localStorage.setItem('overlayDismissed', 'true');
-      console.log('LocalStorage set to true');
+  // Set up export and import functionality using event delegation
+  menu.addEventListener('click', (event) => {
+    if (event.target.id === 'export-button') {
+      const json = exportToJSON();
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'mindmap_export.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } else if (event.target.id === 'import-button') {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.onchange = (event) => {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            importFromJSON(e.target.result, canvas);
+          } catch (error) {
+            console.error('Error importing file:', error);
+            alert(
+              "Error importing file. Please make sure it's a valid JSON file.",
+            );
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
     }
   });
 
-  const canvasContainer = document.getElementById('canvas-container');
-  const canvas = document.querySelector(DOM_SELECTORS.CANVAS);
-  const exportButton = document.getElementById('export-json');
-  const importButton = document.getElementById('import-json');
-  const zoomDisplay = document.getElementById('zoom-display');
+  // Initialize with Standard Canvas
+  canvasManager.setCurrentModule('Standard Canvas');
+  canvasManager.renderCurrentModule(canvas);
 
   setupCanvasEvents(canvas);
   setupDocumentEvents();
   setupZoomAndPan(canvasContainer, canvas, zoomDisplay);
-
-  exportButton.addEventListener('click', () => {
-    const json = exportToJSON();
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'mindmap_export.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  });
-
-  importButton.addEventListener('click', () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = (event) => {
-      const file = event.target.files[0];
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          importFromJSON(e.target.result, canvas);
-        } catch (error) {
-          console.error('Error importing file:', error);
-          alert(
-            "Error importing file. Please make sure it's a valid JSON file.",
-          );
-        }
-      };
-      reader.readAsText(file);
-    };
-    input.click();
-  });
 
   document.addEventListener('contextmenu', (event) => {
     event.preventDefault();

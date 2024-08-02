@@ -10,63 +10,138 @@ html {
 }
 /* Navbar styles */
 #navbar {
-  background-color: #1f2937; /* Tailwind gray-800 */
-  padding: 0.5rem 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: #1f2937;
 }
-
 #logo {
   display: flex;
   align-items: center;
-  color: #eee; /* Tailwind gray-100 */
+  color: #ffffff;
   font-size: 1.25rem;
   font-weight: bold;
 }
 
 #logo-icon {
-  width: 32px; /* Adjust the size as needed */
-  height: 32px; /* Adjust the size as needed */
-  margin-right: 0.5rem; /* Space between the icon and the text */
+  width: 32px;
+  height: 32px;
+  margin-right: 0.5rem;
+}
+
+#menu {
+  display: flex;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
 }
 
 /* Menu and button styles */
-#menu {
-  display: flex;
-  gap: 0.5rem;
+.menu-item {
+  position: relative;
+  margin-left: 1rem;
 }
 
-#menu button {
+.menu-button {
+  background-color: transparent;
+  position: relative;
   background-color: transparent;
   border: none;
   color: #d1d5db;
   padding: 0.5rem;
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-#menu button:hover {
-  background-color: rgba(30, 65, 107, 0.5); /* Slightly lighter with opacity */
-}
-
-#menu button img {
-  width: 1.25rem;
-  height: 1.25rem;
-  filter: brightness(0) invert(1); /* Ensure icon is white */
-}
-
-#menu button span {
   font-family: 'Poppins', sans-serif;
   font-weight: bold;
-  font-size: 6pt;
   text-transform: uppercase;
-  margin-top: 0.25rem;
+  font-size: 0.65rem;
+  white-space: nowrap; /* Ensure button text doesn't wrap */
+  overflow: hidden; /* Hide overflow for the pseudo-element */
 }
 
+.menu-button:hover {
+  background-color: rgba(30, 65, 107, 0.5);
+}
+
+.menu-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 40, 0.3); /* Very pale yellow */
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none; /* Ensure it doesn't interfere with clicks */
+}
+
+.menu-button:active::after {
+  opacity: 1;
+}
+
+.dropdown {
+  display: none;
+  position: absolute;
+  min-width: 150px;
+  top: 100%;
+  right: 0; /* Align to the right of the menu item */
+  left: auto;
+  background-color: #ffffff;
+  border-radius: 0.375rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+  padding: 0;
+}
+
+.menu-item:hover .dropdown {
+  display: block;
+}
+
+.dropdown li {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.dropdown button {
+  width: 100%;
+  border-radius: 0.375rem;
+  font-family: 'Poppins', sans-serif;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  display: block;
+  text-align: left;
+  padding: 0.5rem 0.5rem;
+  background: none;
+  border: none;
+  color: #374151;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.dropdown button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 200, 0.3); /* Very pale yellow */
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none; /* Ensure it doesn't interfere with clicks */
+}
+
+.dropdown button:hover {
+  background-color: #f3f4f6;
+}
+
+.dropdown button:active::after {
+  opacity: 1;
+}
 /* Canvas Styles */
 
 #canvas-container {
