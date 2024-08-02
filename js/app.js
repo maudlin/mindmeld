@@ -4,6 +4,7 @@ import './movement.js';
 import { setupZoomAndPan } from './zoomManager.js';
 import { DOM_SELECTORS } from './constants.js';
 import { canvasManager } from './canvasManager.js';
+import HerosJourneyCanvas from './canvas/herosJourneyCanvas.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const canvasContainer = document.getElementById('canvas-container');
@@ -11,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const zoomDisplay = document.getElementById('zoom-display');
   const canvasStyleDropdown = document.getElementById('canvas-style-dropdown');
   const menu = document.getElementById('menu');
+
+  canvasManager.registerModule(new HerosJourneyCanvas());
 
   // Populate the canvas style dropdown
   function populateCanvasStyleDropdown() {
