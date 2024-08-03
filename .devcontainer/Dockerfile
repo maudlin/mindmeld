@@ -1,5 +1,3 @@
-# Stage 1: Build React App
-
 # Use an official Node.js runtime as a parent image
 FROM node:18
 
@@ -9,9 +7,6 @@ WORKDIR /workspace
 # Install dependencies
 COPY package*.json ./
 RUN npm install
-
-# Install ESLint and Prettier globally (optional)
-RUN npm install -g eslint prettier
 
 # Copy the rest of the application code
 COPY . .

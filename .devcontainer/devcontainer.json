@@ -2,7 +2,7 @@
   "name": "Mindmeld",
   "dockerFile": "Dockerfile",
   "context": "..",
-  "appPort": [3000],
+  "appPort": [8080],
   "workspaceFolder": "/workspace",
   "customizations": {
     "vscode": {

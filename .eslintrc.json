@@ -5,16 +5,12 @@
   },
   "extends": ["eslint:recommended", "plugin:prettier/recommended"],
   "parserOptions": {
-    "ecmaVersion": 12,
+    "ecmaVersion": 2021,
     "sourceType": "module"
   },
   "rules": {
-    "prettier/prettier": [
-      "error",
-      {
-        "prettier.semi": true,
-        "prettier.endOfLine": "auto"
-      }
-    ]
+    "prettier/prettier": "error",
+    "no-unused-vars": "warn",
+    "no-console": "warn"
   }
 }

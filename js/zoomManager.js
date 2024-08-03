@@ -132,7 +132,7 @@ function handleZoom(event, canvas, canvasContainer, zoomDisplay) {
   log(
     `New transform applied: translate(${currentX - dx}px, ${
       currentY - dy
-    }px) scale(${newScale})`,
+    }px) scale(${newScale})`
   );
 
   updateZoomDisplay(zoomDisplay);
@@ -246,7 +246,7 @@ export function setupZoomAndPan(canvasContainer, canvas, zoomDisplay) {
       event.preventDefault();
       debouncedHandleZoom(event);
     },
-    { passive: false },
+    { passive: false }
   );
 
   // Prevent scrolling on the document when the mouse is over the canvas
@@ -261,7 +261,7 @@ export function setupZoomAndPan(canvasContainer, canvas, zoomDisplay) {
         event.preventDefault();
       }
     },
-    { passive: false },
+    { passive: false }
   );
 
   // Panning functionality

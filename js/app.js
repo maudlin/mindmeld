@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
           } catch (error) {
             console.error('Error importing file:', error);
             alert(
-              "Error importing file. Please make sure it's a valid JSON file.",
+              "Error importing file. Please make sure it's a valid JSON file."
             );
           }
         };
