@@ -1,10 +1,13 @@
 //note.js
-import { addNote, updateNote, deleteNoteById } from './dataStore.js';
-import { updateConnections, deleteConnectionsByNote } from './connections.js';
-import { moveNoteStart } from './movement.js';
-import { calculateOffsetPosition } from './utils.js';
-import { NOTE_DIMENSIONS } from './constants.js';
-import { NoteManager } from './events.js';
+import { addNote, updateNote, deleteNoteById } from '../../data/dataStore.js';
+import {
+  updateConnections,
+  deleteConnectionsByNote,
+} from '../connection/connection.js';
+import { moveNoteStart } from '../../core/movement.js';
+import { calculateOffsetPosition } from '../../utils/utils.js';
+import { NoteManager } from '../../core/event.js';
+import config from '../../core/config.js';
 
 export function createNoteAtPosition(canvas, event) {
   const { left: x, top: y } = calculateOffsetPosition(canvas, event);
@@ -25,8 +28,8 @@ export function createNote(x, y, canvas) {
 
   note.style.left = `${x}px`;
   note.style.top = `${y}px`;
-  note.style.width = `${NOTE_DIMENSIONS.WIDTH}px`;
-  note.style.padding = `${NOTE_DIMENSIONS.PADDING}px`;
+  note.style.width = `${config.noteSize.width}px`;
+  note.style.padding = `${config.noteSize.padding}px`;
 
   note.id = `note-${Date.now()}`;
   addNote({

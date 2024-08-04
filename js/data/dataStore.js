@@ -1,12 +1,11 @@
 // dataStore.js
-
-import { createNote, addNoteEventListeners } from './note.js';
+import { createNote, addNoteEventListeners } from '../features/note/note.js';
 import {
   createConnection,
   updateConnections,
   initializeConnectionDrawing,
-} from './connections.js';
-import { debounce, log } from './utils.js';
+} from '../features/connection/connection.js';
+import { debounce, log } from '../utils/utils.js';
 import { appState } from './observableState.js';
 
 export function addNote(note) {
@@ -41,7 +40,7 @@ const debouncedUpdateConnection = debounce((startId, endId, type) => {
   const existingConnectionIndex = connections.findIndex(
     (conn) =>
       (conn.from === startId && conn.to === endId) ||
-      (conn.from === endId && conn.to === startId),
+      (conn.from === endId && conn.to === startId)
   );
 
   if (type === null) {
@@ -90,7 +89,7 @@ export function importFromJSON(jsonData, canvas) {
       const note = createNote(
         parseFloat(noteData.left),
         parseFloat(noteData.top),
-        canvas,
+        canvas
       );
       note.id = noteData.id;
       note.querySelector('.note-content').textContent = noteData.content;

@@ -1,11 +1,11 @@
 // zoomManager.js
 
-import { debounce, log } from './utils.js';
-import { ZOOM_LEVELS, CANVAS_DIMENSIONS } from './constants.js';
+import { debounce, log } from '../../utils/utils.js';
+import config from '../../core/config.js';
 
-let zoomLevel = ZOOM_LEVELS.DEFAULT;
-const zoomMin = ZOOM_LEVELS.MIN;
-const zoomMax = ZOOM_LEVELS.MAX;
+let zoomLevel = config.zoomLevels.default;
+const zoomMin = config.zoomLevels.min;
+const zoomMax = config.zoomLevels.min;
 
 let isPanning = false;
 let startX, startY;
@@ -22,7 +22,7 @@ export function setZoomLevel(newZoomLevel) {
 function setInitialCanvasPosition(canvasContainer, canvas) {
   const containerRect = canvasContainer.getBoundingClientRect();
   const canvasRect = canvas.getBoundingClientRect();
-  const scale = ZOOM_LEVELS.DEFAULT / ZOOM_LEVELS.DEFAULT;
+  const scale = zoomLevel / zoomLevel;
 
   // Calculate the desired center position
   const desiredCenterX = (containerRect.width - canvasRect.width) / 2;
@@ -41,14 +41,14 @@ function positionCanvas(canvasContainer, canvas) {
   }
 
   const containerRect = canvasContainer.getBoundingClientRect();
-  const scale = zoomLevel / ZOOM_LEVELS.DEFAULT;
+  const scale = zoomLevel / zoomLevel;
 
   const currentTransform = new DOMMatrix(getComputedStyle(canvas).transform);
   const currentLeft = currentTransform.e;
   const currentTop = currentTransform.f;
 
-  const scaledWidth = CANVAS_DIMENSIONS.WIDTH * scale;
-  const scaledHeight = CANVAS_DIMENSIONS.HEIGHT * scale;
+  const scaledWidth = config.canvasSize.width * scale;
+  const scaledHeight = config.canvasSize.height * scale;
 
   let left = currentLeft;
   let top = currentTop;
@@ -98,21 +98,24 @@ function handleZoom(event, canvas, canvasContainer, zoomDisplay) {
   const mouseY = event.clientY - rect.top;
 
   // Calculate new zoom level
-  if (event.deltaY < 0 && zoomLevel < zoomMax) {
-    //log('Zoom level unchanged, returning');
+  if (event.deltaY < 0 && zoomLevel < config.zoomLevels.max) {
+    log('Zooming in');
     zoomLevel++;
-  } else if (event.deltaY > 0 && zoomLevel > zoomMin) {
+  } else if (event.deltaY > 0 && zoomLevel > config.zoomLevels.min) {
+    log('Zooming out');
     zoomLevel--;
   }
 
   // If zoom level didn't change, don't proceed
   if (oldZoom === zoomLevel) {
-    //log(`Zoom level changed from ${oldZoom} to ${zoomLevel}`);
+    log(`Zoom level unchanged: ${zoomLevel}`);
     return;
   }
 
-  const newScale = zoomLevel / ZOOM_LEVELS.DEFAULT;
-  const oldScale = oldZoom / ZOOM_LEVELS.DEFAULT;
+  log(`Zoom level changed from ${oldZoom} to ${zoomLevel}`);
+
+  const newScale = zoomLevel / config.zoomLevels.default;
+  const oldScale = oldZoom / config.zoomLevels.default;
 
   // Calculate how much the canvas should move to keep the mouse point stable
   const dx = (mouseX / oldScale) * (newScale - oldScale);

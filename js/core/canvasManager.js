@@ -1,11 +1,11 @@
 // canvasManager.js
 
-import { CANVAS_DIMENSIONS } from './constants.js';
 import { CanvasModule } from './canvasModule.js';
+import config from './config.js';
 
 class StandardCanvas extends CanvasModule {
   constructor() {
-    super('Standard Canvas', CANVAS_DIMENSIONS.WIDTH, CANVAS_DIMENSIONS.HEIGHT);
+    super('Standard Canvas', config.canvasSize.width, config.canvasSize.height);
   }
 
   render(canvas) {

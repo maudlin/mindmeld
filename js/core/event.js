@@ -1,7 +1,10 @@
-// events.js
-import { createNoteAtPosition, deleteNoteWithConnections } from './note.js';
-import { initializeConnectionDrawing } from './connections.js';
-import { calculateOffsetPosition } from './utils.js';
+// event.js
+import {
+  createNoteAtPosition,
+  deleteNoteWithConnections,
+} from '../features/note/note.js';
+import { initializeConnectionDrawing } from '../features/connection/connection.js';
+import { calculateOffsetPosition } from '../utils/utils.js';
 
 let selectionBox = null;
 let isDrawingSelectionBox = false;
@@ -34,7 +37,7 @@ export const NoteManager = {
 
 export function setupCanvasEvents(canvas) {
   canvas.addEventListener('dblclick', (event) =>
-    createNoteAtPosition(canvas, event),
+    createNoteAtPosition(canvas, event)
   );
   canvas.addEventListener('mousedown', handleMouseDown);
   document.addEventListener('mouseup', clearSelectionBox);
@@ -64,7 +67,7 @@ function startSelectionBox(event, canvas) {
 
   const { left: startXOffset, top: startYOffset } = calculateOffsetPosition(
     canvas,
-    event,
+    event
   );
 
   startX = startXOffset;
@@ -110,7 +113,7 @@ function onMouseMove(event) {
   const canvas = document.getElementById('canvas');
   const { left: currentX, top: currentY } = calculateOffsetPosition(
     canvas,
-    event,
+    event
   );
 
   const width = currentX - startX;
@@ -160,7 +163,7 @@ function handleKeyDown(event) {
     if (!isEditingNoteContent) {
       const canvas = document.getElementById('canvas');
       NoteManager.getSelectedNotes().forEach((note) =>
-        deleteNoteWithConnections(note, canvas),
+        deleteNoteWithConnections(note, canvas)
       );
     }
     // If we are editing note content, do nothing and let the default delete behavior occur

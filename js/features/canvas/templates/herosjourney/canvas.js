@@ -1,6 +1,6 @@
 // herosJourneyCanvas.js
 
-import { CanvasModule } from '../canvasModule.js';
+import { CanvasModule } from '../../../../core/canvasModule.js';
 
 const STAGES = [
   'The Ordinary World',

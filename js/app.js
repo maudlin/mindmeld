@@ -1,10 +1,10 @@
-import { setupCanvasEvents, setupDocumentEvents } from './events.js';
-import { exportToJSON, importFromJSON } from './dataStore.js';
-import './movement.js';
-import { setupZoomAndPan } from './zoomManager.js';
-import { DOM_SELECTORS } from './constants.js';
-import { canvasManager } from './canvasManager.js';
-import HerosJourneyCanvas from './canvas/herosJourneyCanvas.js';
+import { setupCanvasEvents, setupDocumentEvents } from './core/event.js';
+import { exportToJSON, importFromJSON } from './data/dataStore.js';
+import './core/movement.js';
+import { setupZoomAndPan } from './features/zoom/zoomManager.js';
+import { DOM_SELECTORS } from './core/constants.js';
+import { canvasManager } from './core/canvasManager.js';
+import HerosJourneyCanvas from './features/canvas/templates/herosjourney/canvas.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const canvasContainer = document.getElementById('canvas-container');
