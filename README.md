@@ -138,47 +138,49 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 
 ## File Manifest
 
+```
 .
 ├── js/
-│ ├── app.js # Main application entry point
-│ ├── data/
-│ │ ├── observableState.js # Manages application state
-│ │ └── dataStore.js # Handles data persistence (import/export)
-│ ├── features/
-│ │ ├── canvas/
-│ │ │ └── templates/ # Contains different canvas types
-│ │ │ ├── standardCanvas/
-│ │ │ │ ├── canvas.js
-│ │ │ │ └── canvas.css
-│ │ │ └── herosJourney/
-│ │ │ ├── canvas.js
-│ │ │ └── canvas.css
-│ │ ├── connection/
-│ │ │ ├── connection.js # Manages connections between notes
-│ │ │ └── contextMenu.js # Handles context menu for connections
-│ │ ├── note/
-│ │ │ └── note.js # Defines note creation and behavior
-│ │ └── zoom/
-│ │ └── zoomManager.js # Manages zoom and pan functionality
-│ ├── utils/
-│ │ └── utils.js # Utility functions used across the app
-│ └── core/
-│ ├── event.js # Core event handling
-│ ├── config.js # Central configuration
-│ ├── canvasManager.js # Manages different canvas types
-│ ├── canvasModule.js # Base class for canvas modules
-│ ├── constants.js # Application-wide constants
-│ └── movement.js # Handles note movement
-├── package.json # Node.js dependencies and scripts
-├── eslint.config.js # ESLint configuration
+│   ├── app.js                 # Main application entry point
+│   ├── data/
+│   │   ├── observableState.js # Manages application state
+│   │   └── dataStore.js       # Handles data persistence (import/export)
+│   ├── features/
+│   │   ├── canvas/
+│   │   │   └── templates/     # Contains different canvas types
+│   │   │       ├── standardCanvas/
+│   │   │       │   ├── canvas.js
+│   │   │       │   └── canvas.css
+│   │   │       └── herosJourney/
+│   │   │           ├── canvas.js
+│   │   │           └── canvas.css
+│   │   ├── connection/
+│   │   │   ├── connection.js  # Manages connections between notes
+│   │   │   └── contextMenu.js # Handles context menu for connections
+│   │   ├── note/
+│   │   │   └── note.js        # Defines note creation and behavior
+│   │   └── zoom/
+│   │       └── zoomManager.js # Manages zoom and pan functionality
+│   ├── utils/
+│   │   └── utils.js           # Utility functions used across the app
+│   └── core/
+│       ├── event.js           # Core event handling
+│       ├── config.js          # Central configuration
+│       ├── canvasManager.js   # Manages different canvas types
+│       ├── canvasModule.js    # Base class for canvas modules
+│       ├── constants.js       # Application-wide constants
+│       └── movement.js        # Handles note movement
+├── package.json               # Node.js dependencies and scripts
+├── eslint.config.js           # ESLint configuration
 ├── .devcontainer/
-│ ├── devcontainer.json # VS Code dev container configuration
-│ └── Dockerfile # Docker configuration for dev environment
+│   ├── devcontainer.json      # VS Code dev container configuration
+│   └── Dockerfile             # Docker configuration for dev environment
 ├── package-lock.json
-├── index.html # Main HTML file
-├── README.md # Project documentation
-├── .prettierrc # Prettier configuration
-└── img/ # Contains application icons and images
+├── index.html                 # Main HTML file
+├── README.md                  # Project documentation
+├── .prettierrc                # Prettier configuration
+└── img/                       # Contains application icons and images
+```
 
 ## Implementation Guide for New Canvases
 
@@ -186,7 +188,7 @@ To implement a new canvas template, follow these steps:
 
 1. **Create a New Canvas File**:
 
-   - Create a new file for your canvas (e.g., `myNewCanvas.js`) in the `./js/canvases/` directory.
+   - Create a new file for your canvas (e.g., `canvas.js`) in the `./js/canvases/[myNewCanvas]` directory.
 
 2. **Extend the CanvasModule Base Class**:
 
@@ -215,7 +217,7 @@ To implement a new canvas template, follow these steps:
 3. **Register Your New Canvas in app.js**:
 
    ```javascript
-   import MyNewCanvas from './canvases/myNewCanvas.js';
+   import MyNewCanvas from './canvases/[myNewCanvas]/canvas.js';
 
    // In the DOMContentLoaded event listener
    canvasManager.registerModule(new MyNewCanvas());
