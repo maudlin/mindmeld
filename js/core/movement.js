@@ -1,9 +1,9 @@
 // movement.js
-import { updateNote } from './dataStore.js';
-import { NoteManager } from './events.js';
-import { throttle } from './utils.js';
-import { getZoomLevel } from './zoomManager.js';
-import { updateConnections } from './connections.js';
+import { updateNote } from '../data/dataStore.js';
+import { NoteManager } from './event.js';
+import { throttle } from '../utils/utils.js';
+import { getZoomLevel } from '../features/zoom/zoomManager.js';
+import { updateConnections } from '../features/connection/connection.js';
 
 const throttledUpdateConnections = throttle(updateConnections, 16); // ~60fps
 

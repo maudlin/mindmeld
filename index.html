@@ -23,22 +23,27 @@
     />
   </head>
   <body>
-    <div id="navbar">
+    <nav id="navbar">
       <div id="logo">
-        <img id="logo-icon" src="img/icon64.png" alt="MindMeld Logo" />
+        <img src="img/icon64.png" alt="MindMeld Logo" id="logo-icon" />
         mindmeld
       </div>
-      <div id="menu">
-        <button id="export-json" aria-label="Export">
-          <img src="img/file-download.svg" alt="" />
-          <span>Export</span>
-        </button>
-        <button id="import-json" aria-label="Import">
-          <img src="img/file.svg" alt="" />
-          <span>Import</span>
-        </button>
-      </div>
-    </div>
+      <ul id="menu">
+        <li class="menu-item">
+          <button class="menu-button">Import/Export</button>
+          <ul class="dropdown">
+            <li><button id="import-button">Import</button></li>
+            <li><button id="export-button">Export</button></li>
+          </ul>
+        </li>
+        <li class="menu-item">
+          <button class="menu-button">Canvas Style</button>
+          <ul class="dropdown" id="canvas-style-dropdown">
+            <!-- <li><button>Standard Canvas</button></li> -->
+          </ul>
+        </li>
+      </ul>
+    </nav>
     <div id="canvas-container">
       <div id="canvas-wrapper">
         <div id="canvas">
@@ -76,6 +81,6 @@
         <button id="dismiss-button">Get Started</button>
       </div>
     </div>
-    <script type="module" src="js/app.js?v=0.5"></script>
+    <script type="module" src="js/app.js?v=0.6"></script>
   </body>
 </html>

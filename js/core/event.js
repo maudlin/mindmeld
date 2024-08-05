@@ -1,7 +1,10 @@
-// events.js
-import { createNoteAtPosition, deleteNoteWithConnections } from './note.js';
-import { initializeConnectionDrawing } from './connections.js';
-import { calculateOffsetPosition } from './utils.js';
+// event.js
+import {
+  createNoteAtPosition,
+  deleteNoteWithConnections,
+} from '../features/note/note.js';
+import { initializeConnectionDrawing } from '../features/connection/connection.js';
+import { calculateOffsetPosition } from '../utils/utils.js';
 
 let selectionBox = null;
 let isDrawingSelectionBox = false;
@@ -33,15 +36,30 @@ export const NoteManager = {
 };
 
 export function setupCanvasEvents(canvas) {
-  canvas.addEventListener('dblclick', (event) =>
-    createNoteAtPosition(canvas, event),
-  );
+  // Remove existing event listeners
+  canvas.removeEventListener('dblclick', handleDoubleClick);
+  canvas.removeEventListener('mousedown', handleMouseDown);
+  document.removeEventListener('mouseup', clearSelectionBox);
+  document.removeEventListener('mouseleave', clearSelectionBox);
+  document.removeEventListener('contextmenu', preventDefault);
+
+  // Add event listeners
+  canvas.addEventListener('dblclick', handleDoubleClick);
   canvas.addEventListener('mousedown', handleMouseDown);
   document.addEventListener('mouseup', clearSelectionBox);
   document.addEventListener('mouseleave', clearSelectionBox);
-  document.addEventListener('contextmenu', (event) => event.preventDefault());
+  document.addEventListener('contextmenu', preventDefault);
 
+  // Re-initialize connection drawing
   initializeConnectionDrawing(canvas);
+}
+
+function handleDoubleClick(event) {
+  createNoteAtPosition(event.target.closest('#canvas'), event);
+}
+
+function preventDefault(event) {
+  event.preventDefault();
 }
 
 function handleMouseDown(event) {

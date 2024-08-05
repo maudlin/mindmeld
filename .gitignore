@@ -1,1 +1,47 @@
-node_modules
+# Node.js dependencies
+node_modules/
+npm-debug.log
+
+# Local development files
+.env
+.vscode/
+.idea/
+.DS_Store
+*.local
+
+# Logs
+logs/
+*.log
+yarn-debug.log*
+yarn-error.log*
+
+# Dependency directories
+jspm_packages/
+typings/
+
+# Optional npm cache directory
+.npm
+
+# IDE specific files
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Operating system files
+Thumbs.db
+.DS_Store
+
+# Docker specific files
+.dockerignore
+
+# Build output
+dist/
+build/
+
+# Coverage directory used by tools like jest
+coverage/
+
+# Configuration files
+*.config.js

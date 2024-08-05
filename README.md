@@ -20,36 +20,43 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 - **Debounce Mechanism**: Prevents accidental multiple note creations by handling double-click events effectively.
 - **Data Store and Export**: Modular data store handler that manages the state of the notes and allows exporting the current state to JSON format. A button is provided to copy the JSON data to the clipboard.
 - **Help Text**: Provides users with instructions on how to use key functionalities.
+- **Modular Canvas System**: Support for different canvas types with a modular approach, including Standard Canvas and Hero's Journey.
+- **Canvas Switching**: Seamlessly switch between different canvas types using a dropdown menu.
+- **Zoom and Pan Enhancements**: Improved zoom level handling and canvas positioning when switching canvases.
+- **Event Handling Enhancements**: Idempotent setup of event listeners for proper reattachment during canvas switching.
 
 ## Recent Enhancements
 
-### Dynamic Connectors
+### Canvas Module System Refactoring
 
-- **Proximity-Based Connections**: Connections are drawn from the closest proximity points on the notes.
-- **Two-Way Dynamic Connection Points**: Both the source and target notes dynamically adjust to connect from their nearest edges.
+- Implemented a more modular approach for handling different canvas types (e.g., Standard Canvas, Hero's Journey).
+- Updated config.js to include definitions for different canvas types and their respective file paths.
 
-### Ghost Connectors
+### Canvas Manager Improvements
 
-- **Hover Indicators**: Four ghost connecting points appear at the center of each side of a note when hovering, serving as visual indicators for initiating connections.
-- **Connector Interaction**: Connections can be created by clicking and dragging from any ghost connector to another note.
+- Modified canvasManager.js to handle dynamic loading and registration of canvas modules.
+- Implemented error handling and fallback mechanisms for canvas module loading and rendering.
 
-### Connection Handling
+### Event Handling Enhancements
 
-- **Real-Time Updates**: Connections dynamically update as notes are moved around the canvas, maintaining the shortest path between connected notes.
-- **Directional Arrows**: Connections feature directional arrows to indicate the flow of connections.
+- Updated setupCanvasEvents in event.js to be idempotent, allowing for proper reattachment of event listeners when switching canvases.
+- Modified initializeConnectionDrawing in connections.js to properly handle SVG container creation and event listener attachment across canvas switches.
 
-### Zoom and Pan
+### Zoom and Pan Functionality
 
-- **Zoom Levels**: The application starts zoomed in at 5x, and users can zoom out with the mouse scroll wheel.
-- **Panning**: Users can pan the canvas in the wider view by clicking and holding the right mouse button.
+- Refactored zoomManager.js to improve zoom level handling and canvas positioning when switching canvases.
 
-### Canvas Positioning Improvements
+### Canvas Switching Logic
 
-- **Enhanced Logging**: Implemented detailed logging throughout the zoom and positioning processes, which was crucial for diagnosing positioning issues.
-- **Refined Positioning Logic**: Developed a more accurate method for positioning the canvas, taking into account the actual rendered position relative to the container.
-- **Handling of Transform Properties**: Improved the way we interact with CSS transforms, ensuring more precise control over the canvas position and scale.
-- **Initial Positioning**: Revised the initial positioning logic to set the canvas in the correct centered position from the start.
-- **Continuous Monitoring**: Implemented a system to monitor the canvas position for a period after initial load, helping to catch any delayed positioning changes.
+- Updated the canvas switching process in app.js (within populateCanvasStyleDropdown) to properly handle module changing, zoom resetting, and event reattachment.
+
+### Asynchronous Loading Handling
+
+- Introduced asynchronous handling in canvas initialization and switching to ensure proper rendering and positioning.
+
+### Configuration Centralization
+
+- Utilized config.js more effectively for storing canvas-related configurations, improving maintainability and flexibility.
 
 ## Installation
 
@@ -131,43 +138,94 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 
 ## File Manifest
 
-### .devcontainer
+```
+.
+├── js/
+│   ├── app.js                 # Main application entry point
+│   ├── data/
+│   │   ├── observableState.js # Manages application state
+│   │   └── dataStore.js       # Handles data persistence (import/export)
+│   ├── features/
+│   │   ├── canvas/
+│   │   │   └── templates/     # Contains different canvas types
+│   │   │       ├── standardCanvas/
+│   │   │       │   ├── canvas.js
+│   │   │       │   └── canvas.css
+│   │   │       └── herosJourney/
+│   │   │           ├── canvas.js
+│   │   │           └── canvas.css
+│   │   ├── connection/
+│   │   │   ├── connection.js  # Manages connections between notes
+│   │   │   └── contextMenu.js # Handles context menu for connections
+│   │   ├── note/
+│   │   │   └── note.js        # Defines note creation and behavior
+│   │   └── zoom/
+│   │       └── zoomManager.js # Manages zoom and pan functionality
+│   ├── utils/
+│   │   └── utils.js           # Utility functions used across the app
+│   └── core/
+│       ├── event.js           # Core event handling
+│       ├── config.js          # Central configuration
+│       ├── canvasManager.js   # Manages different canvas types
+│       ├── canvasModule.js    # Base class for canvas modules
+│       ├── constants.js       # Application-wide constants
+│       └── movement.js        # Handles note movement
+├── package.json               # Node.js dependencies and scripts
+├── eslint.config.js           # ESLint configuration
+├── .devcontainer/
+│   ├── devcontainer.json      # VS Code dev container configuration
+│   └── Dockerfile             # Docker configuration for dev environment
+├── package-lock.json
+├── index.html                 # Main HTML file
+├── README.md                  # Project documentation
+├── .prettierrc                # Prettier configuration
+└── img/                       # Contains application icons and images
+```
 
-- **devcontainer.json**: Configuration for the development container.
-- **Dockerfile**: Docker configuration for the development container.
+## Implementation Guide for New Canvases
 
-### css
+To implement a new canvas template, follow these steps:
 
-- **styles.css**: Styles for the application.
+1. **Create a New Canvas File**:
 
-### js
+   - Create a new file for your canvas (e.g., `canvas.js`) in the `./js/canvases/[myNewCanvas]` directory.
 
-- **app.js**: Main application logic.
-- **connections.js**: Logic for handling connections between notes.
-- **constants.js**: Constants used across the application.
-- **contextMenu.js**: Logic for the context menu functionality for connections.
-- **dataStore.js**: Data storage handler for managing the state of notes.
-- **events.js**: Event handling for user interactions.
-- **movement.js**: Logic for handling note movement.
-- **note.js**: Logic for creating and managing notes.
-- **observableState.js**: State management with observables.
-- **utils.js**: Utility functions used across the application.
-- **zoomManager.js**: Logic for handling zoom and pan functionality.
+2. **Extend the CanvasModule Base Class**:
 
-### Root Files
+   ```javascript
+   import { CanvasModule } from '../canvasModule.js';
 
-- **.eslintrc.json**: ESLint configuration file.
-- **.gitignore**: Git ignore file.
-- **.prettierrc**: Prettier configuration file.
-- **index.html**: Main HTML file for the application.
-- **package.json**: Project metadata and dependencies.
-- **package-lock.json**: Lockfile for project dependencies.
-- **README.md**: Project documentation.
+   export default class MyNewCanvas extends CanvasModule {
+     constructor() {
+       super('My New Canvas', width, height);
+     }
 
-## Contributing
+     render(canvas) {
+       // Implement your canvas rendering logic here
+       canvas.style.width = `${this.width}px`;
+       canvas.style.height = `${this.height}px`;
+       // Add any specific styling or elements
+     }
 
-Contributions are welcome! Please open an issue or submit a pull request.
+     getVisibleDimensions() {
+       // Return the visible dimensions of your canvas
+       return { width: this.width, height: this.height };
+     }
+   }
+   ```
 
-## License
+3. **Register Your New Canvas in app.js**:
 
-This project is licensed under the MIT License.
+   ```javascript
+   import MyNewCanvas from './canvases/[myNewCanvas]/canvas.js';
+
+   // In the DOMContentLoaded event listener
+   canvasManager.registerModule(new MyNewCanvas());
+   ```
+
+4. **Update constants.js for Specific Dimensions**:
+   ```javascript
+   export const MY_NEW_CANVAS_DIMENSIONS = {
+     WIDTH: 1000,
+     HEIGHT: 800,
+   ```

@@ -1,9 +1,9 @@
 // connections.js
-import { calculateOffsetPosition, log } from './utils.js';
-import { getZoomLevel } from './zoomManager.js';
-import { updateConnectionInDataStore } from './dataStore.js';
+import { calculateOffsetPosition, log } from '../../utils/utils.js';
+import { getZoomLevel } from '../zoom/zoomManager.js';
+import { updateConnectionInDataStore } from '../../data/dataStore.js';
 import { ContextMenu } from './contextMenu.js';
-import { throttle } from './utils.js';
+import { throttle } from '../../utils/utils.js';
 
 const STROKE_COLOR = '#888';
 const STROKE_WIDTH = '2';
@@ -97,26 +97,45 @@ contextMenu.setTypeChangeCallback((startId, endId, newType) => {
 });
 
 export function initializeConnectionDrawing(canvas) {
+  // Remove existing SVG container if it exists
+  const existingSvgContainer = document.getElementById('svg-container');
+  if (existingSvgContainer) {
+    existingSvgContainer.remove();
+  }
+
   const svgContainer = createSVGContainer(canvas);
   const [startMarker, endMarker] = createArrowMarkers();
   svgContainer.appendChild(startMarker);
   svgContainer.appendChild(endMarker);
 
-  canvas.addEventListener('mousedown', (event) => {
-    if (event.target.classList.contains('ghost-connector')) {
-      handleMouseDown(event, canvas, svgContainer);
-    }
-  });
+  // Remove existing event listeners
+  canvas.removeEventListener('mousedown', handleCanvasMouseDown);
+  svgContainer.removeEventListener('click', handleSvgClick);
+  svgContainer.removeEventListener('mousemove', handleSvgMouseMove);
+  svgContainer.removeEventListener('mouseleave', handleSvgMouseLeave);
+  document.removeEventListener('keydown', handleKeyDown);
 
+  // Add event listeners
+  canvas.addEventListener('mousedown', handleCanvasMouseDown);
   svgContainer.addEventListener('click', handleSvgClick);
   svgContainer.addEventListener('mousemove', handleSvgMouseMove);
   svgContainer.addEventListener('mouseleave', handleSvgMouseLeave);
-
   document.addEventListener('keydown', handleKeyDown);
 
+  // Attach context menu click handler
   contextMenu.attachClickHandler(svgContainer);
 
   return svgContainer;
+}
+
+function handleCanvasMouseDown(event) {
+  if (event.target.classList.contains('ghost-connector')) {
+    handleMouseDown(
+      event,
+      event.target.closest('#canvas'),
+      document.getElementById('svg-container'),
+    );
+  }
 }
 
 export function updateConnections(noteOrGroup) {

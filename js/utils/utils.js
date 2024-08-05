@@ -1,4 +1,4 @@
-import { getZoomLevel } from './zoomManager.js';
+import { getZoomLevel } from '../features/zoom/zoomManager.js';
 
 /**
  * Calculates the offset position of the note or connector handle relative to the canvas,
@@ -60,7 +60,7 @@ export function throttle(func, limit) {
   };
 }
 
-const logging = false;
+const logging = true;
 
 export function log(message) {
   if (logging) {

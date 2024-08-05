@@ -1,11 +1,11 @@
 // zoomManager.js
 
-import { debounce, log } from './utils.js';
-import { ZOOM_LEVELS, CANVAS_DIMENSIONS } from './constants.js';
+import { debounce, log } from '../../utils/utils.js';
+import config from '../../core/config.js';
 
-let zoomLevel = ZOOM_LEVELS.DEFAULT;
-const zoomMin = ZOOM_LEVELS.MIN;
-const zoomMax = ZOOM_LEVELS.MAX;
+let zoomLevel = config.zoomLevels.default;
+const zoomMin = config.zoomLevels.min;
+const zoomMax = config.zoomLevels.max;
 
 let isPanning = false;
 let startX, startY;
@@ -21,75 +21,67 @@ export function setZoomLevel(newZoomLevel) {
 
 function setInitialCanvasPosition(canvasContainer, canvas) {
   const containerRect = canvasContainer.getBoundingClientRect();
-  const canvasRect = canvas.getBoundingClientRect();
-  const scale = ZOOM_LEVELS.DEFAULT / ZOOM_LEVELS.DEFAULT;
+  const scale = zoomLevel / 5;
 
   // Calculate the desired center position
-  const desiredCenterX = (containerRect.width - canvasRect.width) / 2;
-  const desiredCenterY = (containerRect.height - canvasRect.height) / 2;
+  const desiredCenterX =
+    (containerRect.width - canvas.width * scale) / 2 / scale;
+  const desiredCenterY =
+    (containerRect.height - canvas.height * scale) / 2 / scale;
+
+  console.log('Initial position calculation:', {
+    containerWidth: containerRect.width,
+    containerHeight: containerRect.height,
+    canvasWidth: canvas.width,
+    canvasHeight: canvas.height,
+    scale,
+    desiredCenterX,
+    desiredCenterY,
+  });
 
   // Apply the initial transform
   canvas.style.transform = `translate(${desiredCenterX}px, ${desiredCenterY}px) scale(${scale})`;
+  console.log('Applied initial transform:', canvas.style.transform);
 
   isInitialPositionSet = true;
 }
 
 function positionCanvas(canvasContainer, canvas) {
-  if (!isInitialPositionSet) {
-    setInitialCanvasPosition(canvasContainer, canvas);
-    return;
-  }
+  console.log('Positioning canvas:', {
+    containerWidth: canvasContainer.clientWidth,
+    containerHeight: canvasContainer.clientHeight,
+    canvasWidth: canvas.width,
+    canvasHeight: canvas.height,
+    zoomLevel: zoomLevel,
+  });
 
   const containerRect = canvasContainer.getBoundingClientRect();
-  const scale = zoomLevel / ZOOM_LEVELS.DEFAULT;
+  const scale = zoomLevel / 5;
 
-  const currentTransform = new DOMMatrix(getComputedStyle(canvas).transform);
-  const currentLeft = currentTransform.e;
-  const currentTop = currentTransform.f;
-
-  const scaledWidth = CANVAS_DIMENSIONS.WIDTH * scale;
-  const scaledHeight = CANVAS_DIMENSIONS.HEIGHT * scale;
-
-  let left = currentLeft;
-  let top = currentTop;
-
-  // Adjust position if canvas is smaller than container
-  if (scaledWidth < containerRect.width) {
-    left = (containerRect.width - scaledWidth) / 2;
-  }
-  if (scaledHeight < containerRect.height) {
-    top = (containerRect.height - scaledHeight) / 2;
-  }
+  let left = (containerRect.width - canvas.width * scale) / 2 / scale;
+  let top = (containerRect.height - canvas.height * scale) / 2 / scale;
 
   // Ensure canvas doesn't go out of bounds
-  left = Math.min(Math.max(left, containerRect.width - scaledWidth), 0);
-  top = Math.min(Math.max(top, containerRect.height - scaledHeight), 0);
+  left = Math.min(
+    Math.max(left, (containerRect.width - canvas.width * scale) / scale),
+    0,
+  );
+  top = Math.min(
+    Math.max(top, (containerRect.height - canvas.height * scale) / scale),
+    0,
+  );
 
-  // Apply the initial transform
   canvas.style.transform = `translate(${left}px, ${top}px) scale(${scale})`;
-
-  // Force a reflow to ensure the transform is applied
-  canvas.offsetHeight;
-
-  // Get the actual rendered position
-  const renderedRect = canvas.getBoundingClientRect();
-
-  // Calculate the adjustment needed
-  const adjustX = left - (renderedRect.left - containerRect.left);
-  const adjustY = top - (renderedRect.top - containerRect.top);
-
-  // Apply the adjustment
-  left += adjustX;
-  top += adjustY;
-
-  // Apply the final transform
-  canvas.style.transform = `translate(${left}px, ${top}px) scale(${scale})`;
-
-  //log(`Adjusted canvas position: left=${left}, top=${top}, scale=${scale}`);
+  console.log('New canvas position:', {
+    left,
+    top,
+    scale,
+    transform: canvas.style.transform,
+  });
 }
 
 function handleZoom(event, canvas, canvasContainer, zoomDisplay) {
-  log('Handling zoom event');
+  log('Zoom event. Current level:', zoomLevel);
   event.preventDefault();
 
   const oldZoom = zoomLevel;
@@ -98,21 +90,24 @@ function handleZoom(event, canvas, canvasContainer, zoomDisplay) {
   const mouseY = event.clientY - rect.top;
 
   // Calculate new zoom level
-  if (event.deltaY < 0 && zoomLevel < zoomMax) {
-    //log('Zoom level unchanged, returning');
+  if (event.deltaY < 0 && zoomLevel < config.zoomLevels.max) {
+    log('Zooming in');
     zoomLevel++;
-  } else if (event.deltaY > 0 && zoomLevel > zoomMin) {
+  } else if (event.deltaY > 0 && zoomLevel > config.zoomLevels.min) {
+    log('Zooming out');
     zoomLevel--;
   }
 
   // If zoom level didn't change, don't proceed
   if (oldZoom === zoomLevel) {
-    //log(`Zoom level changed from ${oldZoom} to ${zoomLevel}`);
+    log(`Zoom level unchanged: ${zoomLevel}`);
     return;
+  } else if (oldZoom !== zoomLevel) {
+    log(`Zoom level changed from ${oldZoom} to ${zoomLevel}`);
   }
 
-  const newScale = zoomLevel / ZOOM_LEVELS.DEFAULT;
-  const oldScale = oldZoom / ZOOM_LEVELS.DEFAULT;
+  const newScale = zoomLevel / config.zoomLevels.default;
+  const oldScale = oldZoom / config.zoomLevels.default;
 
   // Calculate how much the canvas should move to keep the mouse point stable
   const dx = (mouseX / oldScale) * (newScale - oldScale);
@@ -181,19 +176,19 @@ function stopPanning() {
   }
 }
 
-// function logResizeDetails(canvasContainer, canvas) {
-//   log(`Window inner dimensions: ${window.innerWidth}x${window.innerHeight}`);
-//   log(
-//     `Document dimensions: ${document.documentElement.clientWidth}x${document.documentElement.clientHeight}`,
-//   );
-//   log(
-//     `Body dimensions: ${document.body.clientWidth}x${document.body.clientHeight}`,
-//   );
-//   log(
-//     `Canvas container dimensions: ${canvasContainer.clientWidth}x${canvasContainer.clientHeight}`,
-//   );
-//   log(`Canvas dimensions: ${canvas.clientWidth}x${canvas.clientHeight}`);
-// }
+function logResizeDetails(canvasContainer, canvas) {
+  log(`Window inner dimensions: ${window.innerWidth}x${window.innerHeight}`);
+  log(
+    `Document dimensions: ${document.documentElement.clientWidth}x${document.documentElement.clientHeight}`,
+  );
+  log(
+    `Body dimensions: ${document.body.clientWidth}x${document.body.clientHeight}`,
+  );
+  log(
+    `Canvas container dimensions: ${canvasContainer.clientWidth}x${canvasContainer.clientHeight}`,
+  );
+  log(`Canvas dimensions: ${canvas.clientWidth}x${canvas.clientHeight}`);
+}
 
 function monitorCanvasPosition(canvas) {
   // MutationObserver to watch for style changes
@@ -224,20 +219,34 @@ function monitorCanvasPosition(canvas) {
 }
 
 export function setupZoomAndPan(canvasContainer, canvas, zoomDisplay) {
-  window.addEventListener('resize', () => {
-    //log('Window resize event triggered');
-    //logResizeDetails(canvasContainer, canvas);
-    positionCanvas(canvasContainer, canvas);
-  });
+  // Remove existing event listeners if any
+  canvasContainer.removeEventListener('wheel', handleZoom);
 
-  // Log initial dimensions
-  //log('Initial dimensions:');
-  //logResizeDetails(canvasContainer, canvas);
-
-  log('Setting up zoom and pan');
   const debouncedHandleZoom = debounce((event) => {
     handleZoom(event, canvas, canvasContainer, zoomDisplay);
   }, 16);
+
+  canvasContainer.addEventListener(
+    'wheel',
+    (event) => {
+      event.preventDefault();
+      debouncedHandleZoom(event);
+    },
+    { passive: false },
+  );
+
+  positionCanvas(canvasContainer, canvas);
+
+  window.addEventListener('resize', () => {
+    log('Window resize event triggered');
+    positionCanvas(canvasContainer, canvas);
+  });
+
+  //Log initial dimensions
+  log('Initial dimensions:');
+  logResizeDetails(canvasContainer, canvas);
+
+  log('Setting up zoom and pan');
 
   canvasContainer.addEventListener(
     'wheel',
@@ -277,15 +286,15 @@ export function setupZoomAndPan(canvasContainer, canvas, zoomDisplay) {
   });
 
   // Set initial position immediately
-  //log('Setting initial canvas position');
+  log('Setting initial canvas position');
   setInitialCanvasPosition(canvasContainer, canvas);
 
   // Update zoom display
-  //log('Updating initial zoom display');
+  log('Updating initial zoom display');
   updateZoomDisplay(zoomDisplay);
 
   // Reposition on window resize
-  //log('Window resized, repositioning canvas');
+  log('Window resized, repositioning canvas');
   window.addEventListener('resize', () => {
     positionCanvas(canvasContainer, canvas);
   });
@@ -299,4 +308,9 @@ export function setupZoomAndPan(canvasContainer, canvas, zoomDisplay) {
   monitorCanvasPosition(canvas, canvasContainer);
 
   //log('Zoom and pan setup complete');
+}
+
+export function resetZoomLevel() {
+  zoomLevel = config.zoomLevels.default;
+  console.log('Zoom level reset to:', zoomLevel);
 }
