@@ -29,10 +29,10 @@ class HerosJourneyCanvas extends CanvasModule {
     // canvas.innerHTML = ''; // Clear existing content
 
     // Add link to the CSS file
-    if (!document.querySelector('link[href$="herosJourney.css"]')) {
+    if (!document.querySelector('link[href$="canvas.css"]')) {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = 'css/canvas/herosJourney.css';
+      link.href = '/js/features/canvas/templates/herosJourney/canvas.css';
       document.head.appendChild(link);
     }
 

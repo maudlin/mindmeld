@@ -3,20 +3,6 @@
 import { CanvasModule } from './canvasModule.js';
 import config from './config.js';
 
-// Move StandardCanvas to its own file in the future
-class StandardCanvas extends CanvasModule {
-  constructor() {
-    super('Standard Canvas', config.canvasSize.width, config.canvasSize.height);
-  }
-
-  render(canvas) {
-    canvas.style.width = `${this.width}px`;
-    canvas.style.height = `${this.height}px`;
-    canvas.style.backgroundImage = 'radial-gradient(#eee 2px, transparent 2px)';
-    canvas.style.backgroundSize = '20px 20px';
-  }
-}
-
 class CanvasManager {
   constructor() {
     this.modules = new Map();
@@ -67,7 +53,7 @@ class CanvasManager {
       console.error(
         'Default canvas module not found. Unable to render any canvas.',
       );
-      // Here you might want to render a basic error message on the canvas
+      // Consider rendering a basic error message on the canvas
     }
   }
 
@@ -77,4 +63,3 @@ class CanvasManager {
 }
 
 export const canvasManager = new CanvasManager();
-canvasManager.registerModule(new StandardCanvas());
