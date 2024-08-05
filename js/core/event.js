@@ -36,15 +36,30 @@ export const NoteManager = {
 };
 
 export function setupCanvasEvents(canvas) {
-  canvas.addEventListener('dblclick', (event) =>
-    createNoteAtPosition(canvas, event)
-  );
+  // Remove existing event listeners
+  canvas.removeEventListener('dblclick', handleDoubleClick);
+  canvas.removeEventListener('mousedown', handleMouseDown);
+  document.removeEventListener('mouseup', clearSelectionBox);
+  document.removeEventListener('mouseleave', clearSelectionBox);
+  document.removeEventListener('contextmenu', preventDefault);
+
+  // Add event listeners
+  canvas.addEventListener('dblclick', handleDoubleClick);
   canvas.addEventListener('mousedown', handleMouseDown);
   document.addEventListener('mouseup', clearSelectionBox);
   document.addEventListener('mouseleave', clearSelectionBox);
-  document.addEventListener('contextmenu', (event) => event.preventDefault());
+  document.addEventListener('contextmenu', preventDefault);
 
+  // Re-initialize connection drawing
   initializeConnectionDrawing(canvas);
+}
+
+function handleDoubleClick(event) {
+  createNoteAtPosition(event.target.closest('#canvas'), event);
+}
+
+function preventDefault(event) {
+  event.preventDefault();
 }
 
 function handleMouseDown(event) {
@@ -67,7 +82,7 @@ function startSelectionBox(event, canvas) {
 
   const { left: startXOffset, top: startYOffset } = calculateOffsetPosition(
     canvas,
-    event
+    event,
   );
 
   startX = startXOffset;
@@ -113,7 +128,7 @@ function onMouseMove(event) {
   const canvas = document.getElementById('canvas');
   const { left: currentX, top: currentY } = calculateOffsetPosition(
     canvas,
-    event
+    event,
   );
 
   const width = currentX - startX;
@@ -163,7 +178,7 @@ function handleKeyDown(event) {
     if (!isEditingNoteContent) {
       const canvas = document.getElementById('canvas');
       NoteManager.getSelectedNotes().forEach((note) =>
-        deleteNoteWithConnections(note, canvas)
+        deleteNoteWithConnections(note, canvas),
       );
     }
     // If we are editing note content, do nothing and let the default delete behavior occur
