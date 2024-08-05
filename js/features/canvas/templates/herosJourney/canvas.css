@@ -1,0 +1,26 @@
+/* herosJourney.css */
+
+.journey-stage {
+  /* transition: all 0.3s ease; */
+  position: absolute;
+  width: 1000px;
+  height: 1000px;
+  border-radius: 20px;
+  border: 2px solid #ccc;
+  padding: 20px;
+  box-sizing: border-box;
+
+  background-color: #ffffff88;
+}
+
+.journey-stage:first-child {
+  padding-left: 60px; /* 20px original padding + 40px extra */
+}
+
+.journey-stage h3 {
+  margin: 0;
+  padding: 10px;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+}
