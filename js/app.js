@@ -1,7 +1,11 @@
 import { setupCanvasEvents, setupDocumentEvents } from './core/event.js';
 import { exportToJSON, importFromJSON } from './data/dataStore.js';
 import './core/movement.js';
-import { setupZoomAndPan } from './features/zoom/zoomManager.js';
+import {
+  setupZoomAndPan,
+  getZoomLevel,
+  resetZoomLevel,
+} from './features/zoom/zoomManager.js';
 import { DOM_SELECTORS } from './core/constants.js';
 import { canvasManager } from './core/canvasManager.js';
 import config from './core/config.js';
@@ -12,6 +16,18 @@ async function initializeApp() {
   const zoomDisplay = document.getElementById('zoom-display');
   const canvasStyleDropdown = document.getElementById('canvas-style-dropdown');
   const menu = document.getElementById('menu');
+
+  // Check for any delayed style applications
+  requestAnimationFrame(() => {
+    console.log('Checking canvas position after frame render');
+    const canvasRect = canvas.getBoundingClientRect();
+    console.log('Canvas position:', {
+      left: canvasRect.left,
+      top: canvasRect.top,
+      width: canvasRect.width,
+      height: canvasRect.height,
+    });
+  });
 
   // Register canvas modules
   for (const [key, value] of Object.entries(config.canvasTypes)) {
@@ -57,9 +73,12 @@ function populateCanvasStyleDropdown(
     const button = document.createElement('button');
     button.textContent = moduleName;
     button.addEventListener('click', () => {
+      console.log('Switching canvas. Current zoom level:', getZoomLevel());
+      resetZoomLevel();
       canvasManager.setCurrentModule(moduleName);
       canvasManager.renderCurrentModule(canvas);
       setupZoomAndPan(canvasContainer, canvas, zoomDisplay);
+      console.log('Canvas switched. New zoom level:', getZoomLevel());
     });
     li.appendChild(button);
     dropdown.appendChild(li);
