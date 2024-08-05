@@ -13,6 +13,17 @@ export default {
     width: 150,
     padding: 10,
   },
-  defaultCanvasType: 'standard',
+  defaultCanvasType: 'standardCanvas',
+  canvasTypes: {
+    standardCanvas: {
+      name: 'Standard Canvas',
+      path: './features/canvas/templates/standardCanvas/standardCanvas.js',
+    },
+    herosJourney: {
+      name: "Hero's Journey",
+      path: './features/canvas/templates/herosJourney/herosJourneyCanvas.js',
+    },
+    // Add other canvas types here
+  },
   // Add other configuration options as needed
 };

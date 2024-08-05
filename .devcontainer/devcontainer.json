@@ -2,7 +2,7 @@
   "name": "Mindmeld",
   "dockerFile": "Dockerfile",
   "context": "..",
-  "appPort": [8080],
+  "appPort": [3000],
   "workspaceFolder": "/workspace",
   "customizations": {
     "vscode": {
@@ -17,5 +17,8 @@
       }
     }
   },
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
+  ],
   "postCreateCommand": "npm install"
 }

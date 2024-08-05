@@ -4,7 +4,7 @@ import './core/movement.js';
 import { setupZoomAndPan } from './features/zoom/zoomManager.js';
 import { DOM_SELECTORS } from './core/constants.js';
 import { canvasManager } from './core/canvasManager.js';
-import HerosJourneyCanvas from './features/canvas/templates/herosjourney/canvas.js';
+import HerosJourneyCanvas from './features/canvas/templates/herosJourney/canvas.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const canvasContainer = document.getElementById('canvas-container');
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
           } catch (error) {
             console.error('Error importing file:', error);
             alert(
-              "Error importing file. Please make sure it's a valid JSON file."
+              "Error importing file. Please make sure it's a valid JSON file.",
             );
           }
         };
