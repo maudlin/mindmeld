@@ -18,13 +18,17 @@ const STAGES = [
 
 class HerosJourneyCanvas extends CanvasModule {
   constructor() {
-    super("Hero's Journey", 14000, 1200);
+    super(
+      "Hero's Journey",
+      14000,
+      1200,
+      './js/features/canvas/templates/herosJourney/herosJourneyCanvas.css',
+    );
   }
 
   createBackgroundLayout() {
     const layout = super.createBackgroundLayout();
     layout.classList.add('heros-journey');
-    layout.style.backgroundColor = '#fffcf8';
 
     STAGES.forEach((stage, index) => {
       const box = document.createElement('div');

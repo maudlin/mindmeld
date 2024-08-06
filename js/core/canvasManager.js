@@ -63,7 +63,7 @@ export class CanvasManager {
     return this.currentModule;
   }
 
-  switchBackgroundLayout(moduleName, canvas) {
+  async switchBackgroundLayout(moduleName, canvas) {
     console.log(`Switching background layout to: ${moduleName}`);
     const module = this.setCurrentModule(moduleName);
     if (!module) {
@@ -75,6 +75,18 @@ export class CanvasManager {
     const existingBackground = canvas.querySelector('.background-layout');
     if (existingBackground) {
       existingBackground.remove();
+    }
+
+    // Remove existing module-specific styles
+    const existingStyle = document.head.querySelector(`style[id^="style-"]`);
+    if (existingStyle) {
+      existingStyle.remove();
+    }
+
+    // Load and apply new CSS
+    const newStyle = await module.loadCSS();
+    if (newStyle) {
+      document.head.appendChild(newStyle);
     }
 
     // Create and append new background layout
