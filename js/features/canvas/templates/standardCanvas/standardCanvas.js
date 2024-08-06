@@ -17,7 +17,6 @@ class standardCanvas extends CanvasModule {
     if (!document.querySelector('link[href$="canvas.css"]')) {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
-      ('../../../../features/canvas/templates/herosJourney/canvas.css');
       link.href = './js/features/canvas/templates/standardCanvas/canvas.css';
       document.head.appendChild(link);
     }
