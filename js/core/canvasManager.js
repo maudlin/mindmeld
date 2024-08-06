@@ -41,7 +41,6 @@ class CanvasManager {
           canvas.width = this.currentModule.width;
           canvas.height = this.currentModule.height;
         }
-
         console.log('Canvas rendered:', {
           width: canvas.width,
           height: canvas.height,

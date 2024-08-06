@@ -23,6 +23,7 @@ class HerosJourneyCanvas extends CanvasModule {
   }
 
   render(canvas) {
+    canvas.classList.add('heros-journey');
     canvas.style.width = `${this.width}px`;
     canvas.style.height = `${this.height}px`;
     canvas.style.backgroundColor = '#fffcf8';

@@ -1,5 +1,13 @@
 /* herosJourney.css */
 
+#canvas.heros-journey {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transform-origin: top left;
+}
+
 .journey-stage {
   /* transition: all 0.3s ease; */
   position: absolute;
@@ -9,7 +17,6 @@
   border: 2px solid #ccc;
   padding: 20px;
   box-sizing: border-box;
-
   background-color: #ffffff88;
 }
 
