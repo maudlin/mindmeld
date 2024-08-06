@@ -1,6 +1,5 @@
 import { setupCanvasEvents, setupDocumentEvents } from './core/event.js';
 import { exportToJSON, importFromJSON } from './data/dataStore.js';
-import './core/movement.js';
 import {
   setupZoomAndPan,
   getZoomLevel,
@@ -11,25 +10,21 @@ import { canvasManager } from './core/canvasManager.js';
 import config from './core/config.js';
 
 async function initializeApp() {
-  const canvasContainer = document.getElementById('canvas-container');
-  const canvas = document.querySelector(DOM_SELECTORS.CANVAS);
-  const zoomDisplay = document.getElementById('zoom-display');
-  const canvasStyleDropdown = document.getElementById('canvas-style-dropdown');
-  const menu = document.getElementById('menu');
+  const elements = {
+    canvasContainer: document.getElementById('canvas-container'),
+    canvas: document.querySelector(DOM_SELECTORS.CANVAS),
+    zoomDisplay: document.getElementById('zoom-display'),
+    canvasStyleDropdown: document.getElementById('canvas-style-dropdown'),
+    menu: document.getElementById('menu'),
+  };
 
-  // Check for any delayed style applications
-  requestAnimationFrame(() => {
-    console.log('Checking canvas position after frame render');
-    const canvasRect = canvas.getBoundingClientRect();
-    console.log('Canvas position:', {
-      left: canvasRect.left,
-      top: canvasRect.top,
-      width: canvasRect.width,
-      height: canvasRect.height,
-    });
-  });
+  await registerCanvasModules();
+  setupUI(elements);
+  initializeCanvas(elements);
+  setupEventListeners(elements);
+}
 
-  // Register canvas modules
+async function registerCanvasModules() {
   for (const [key, value] of Object.entries(config.canvasTypes)) {
     try {
       const module = await import(value.path);
@@ -38,60 +33,67 @@ async function initializeApp() {
       console.error(`Failed to load canvas module: ${key}`, error);
     }
   }
+}
 
-  populateCanvasStyleDropdown(
-    canvasStyleDropdown,
-    canvas,
-    canvasContainer,
-    zoomDisplay,
-  );
+function setupUI(elements) {
+  populateCanvasStyleDropdown(elements);
+  setupExportImport(elements.menu, elements.canvas);
+}
 
-  // Set up export and import functionality
-  setupExportImport(menu, canvas);
-
-  // Initialize with default canvas
+function initializeCanvas(elements) {
   canvasManager.setCurrentModule(config.defaultCanvasType);
-  canvasManager.renderCurrentModule(canvas);
+  canvasManager.renderCurrentModule(elements.canvas);
+  setupZoomAndPan(
+    elements.canvasContainer,
+    elements.canvas,
+    elements.zoomDisplay,
+  );
+}
 
-  setupCanvasEvents(canvas);
+function setupEventListeners(elements) {
+  setupCanvasEvents(elements.canvas);
   setupDocumentEvents();
-  setupZoomAndPan(canvasContainer, canvas, zoomDisplay);
+  document.addEventListener('contextmenu', (event) => event.preventDefault());
+}
 
-  document.addEventListener('contextmenu', (event) => {
-    event.preventDefault();
+function populateCanvasStyleDropdown(elements) {
+  canvasManager.getAvailableModules().forEach((moduleName) => {
+    const button = createDropdownButton(moduleName, () =>
+      switchCanvas(moduleName, elements),
+    );
+    elements.canvasStyleDropdown.appendChild(button);
   });
 }
 
-function populateCanvasStyleDropdown(
-  dropdown,
-  canvas,
-  canvasContainer,
-  zoomDisplay,
-) {
-  canvasManager.getAvailableModules().forEach((moduleName) => {
-    const li = document.createElement('li');
-    const button = document.createElement('button');
-    button.textContent = moduleName;
-    button.addEventListener('click', () => {
-      console.log('Switching canvas. Current zoom level:', getZoomLevel());
-      resetZoomLevel();
-      canvasManager.setCurrentModule(moduleName);
-      canvasManager.renderCurrentModule(canvas);
-      setupZoomAndPan(canvasContainer, canvas, zoomDisplay);
-      console.log('Canvas switched. New zoom level:', getZoomLevel());
-    });
-    li.appendChild(button);
-    dropdown.appendChild(li);
+function createDropdownButton(text, onClick) {
+  const li = document.createElement('li');
+  const button = document.createElement('button');
+  button.textContent = text;
+  button.addEventListener('click', onClick);
+  li.appendChild(button);
+  return li;
+}
+
+function switchCanvas(moduleName, elements) {
+  console.log('Switching canvas. Current zoom level:', getZoomLevel());
+  resetZoomLevel();
+  canvasManager.setCurrentModule(moduleName);
+  canvasManager.renderCurrentModule(elements.canvas);
+
+  requestAnimationFrame(() => {
+    setupZoomAndPan(
+      elements.canvasContainer,
+      elements.canvas,
+      elements.zoomDisplay,
+    );
+    console.log('Canvas switched. New zoom level:', getZoomLevel());
   });
 }
 
 function setupExportImport(menu, canvas) {
   menu.addEventListener('click', (event) => {
-    if (event.target.id === 'export-button') {
-      handleExport();
-    } else if (event.target.id === 'import-button') {
-      handleImport(canvas);
-    }
+    if (event.target.id === 'export-button') handleExport();
+    else if (event.target.id === 'import-button') handleImport(canvas);
   });
 }
 
@@ -102,9 +104,7 @@ function handleExport() {
   const a = document.createElement('a');
   a.href = url;
   a.download = 'mindmap_export.json';
-  document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
 
