@@ -1,5 +1,4 @@
 // herosJourneyCanvas.js
-
 import { CanvasModule } from '../../../../core/canvasModule.js';
 
 const STAGES = [
@@ -22,41 +21,25 @@ class HerosJourneyCanvas extends CanvasModule {
     super("Hero's Journey", 14000, 1200);
   }
 
-  render(canvas) {
-    canvas.classList.add('heros-journey');
-    canvas.style.width = `${this.width}px`;
-    canvas.style.height = `${this.height}px`;
-    canvas.style.backgroundColor = '#fffcf8';
-    // canvas.innerHTML = ''; // Clear existing content
-
-    // Add link to the CSS file
-    if (!document.querySelector('link[href$="canvas.css"]')) {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href =
-        './js/features/canvas/templates/herosJourney/herosJourneyCanvas.css';
-      document.head.appendChild(link);
-    }
+  createBackgroundLayout() {
+    const layout = super.createBackgroundLayout();
+    layout.classList.add('heros-journey');
+    layout.style.backgroundColor = '#fffcf8';
 
     STAGES.forEach((stage, index) => {
       const box = document.createElement('div');
       box.className = 'journey-stage';
-
+      box.style.left = `${index * 1150 + 150}px`;
       box.style.top = '100px';
-
-      // Adjust the left position of the first box to account for the extra padding
-      if (index === 0) {
-        box.style.left = '150px';
-      } else {
-        box.style.left = `${index * 1150 + 150}px`; // Subtract 40px to account for the extra padding of the first box
-      }
 
       const heading = document.createElement('h3');
       heading.textContent = stage;
 
       box.appendChild(heading);
-      canvas.appendChild(box);
+      layout.appendChild(box);
     });
+
+    return layout;
   }
 }
 

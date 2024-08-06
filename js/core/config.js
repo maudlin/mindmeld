@@ -17,11 +17,11 @@ export default {
   canvasTypes: {
     standardCanvas: {
       name: 'Standard Canvas',
-      path: '../js/features/canvas/templates/standardCanvas/standardCanvas.js',
+      path: '../features/canvas/templates/standardCanvas/standardCanvas.js',
     },
     herosJourney: {
       name: "Hero's Journey",
-      path: '../js/features/canvas/templates/herosJourney/herosJourneyCanvas.js',
+      path: '../features/canvas/templates/herosJourney/herosJourneyCanvas.js',
     },
     // Add other canvas types here
   },

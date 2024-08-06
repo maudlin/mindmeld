@@ -1,5 +1,3 @@
-// canvasModule.js
-
 export class CanvasModule {
   constructor(name, width, height) {
     this.name = name;
@@ -7,8 +5,12 @@ export class CanvasModule {
     this.height = height;
   }
 
-  render(_canvas) {
-    // This method should be overridden by specific canvas modules
-    throw new Error('render method must be implemented');
+  createBackgroundLayout() {
+    const layout = document.createElement('div');
+    layout.classList.add('background-layout');
+    layout.style.width = `${this.width}px`;
+    layout.style.height = `${this.height}px`;
+    // Add module-specific background content
+    return layout;
   }
 }

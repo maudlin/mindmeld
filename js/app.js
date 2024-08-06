@@ -1,16 +1,13 @@
+// app.js
 import { setupCanvasEvents, setupDocumentEvents } from './core/event.js';
 import { exportToJSON, importFromJSON } from './data/dataStore.js';
-import {
-  setupZoomAndPan,
-  getZoomLevel,
-  removeZoomAndPan,
-  setFixedZoom,
-} from './features/zoom/zoomManager.js';
+import { setupZoomAndPan, setFixedZoom } from './features/zoom/zoomManager.js';
 import { DOM_SELECTORS } from './core/constants.js';
 import { canvasManager } from './core/canvasManager.js';
 import config from './core/config.js';
 
 async function initializeApp() {
+  console.log('Initializing app...');
   const elements = {
     canvasContainer: document.getElementById('canvas-container'),
     canvas: document.querySelector(DOM_SELECTORS.CANVAS),
@@ -19,10 +16,33 @@ async function initializeApp() {
     menu: document.getElementById('menu'),
   };
 
-  await registerCanvasModules();
+  await canvasManager.loadModules();
   setupUI(elements);
   initializeCanvas(elements);
   setupEventListeners(elements);
+}
+
+function setupUI(elements) {
+  populateCanvasStyleDropdown(elements);
+  setupExportImport(elements.menu, elements.canvas);
+}
+
+function initializeCanvas(elements) {
+  console.log('Initializing canvas...');
+  const initialModule = canvasManager.setCurrentModule(
+    config.defaultCanvasType,
+  );
+  if (initialModule) {
+    console.log(`Initial module set: ${initialModule.name}`);
+    canvasManager.switchBackgroundLayout(initialModule.name, elements.canvas);
+    setupZoomAndPan(
+      elements.canvasContainer,
+      elements.canvas,
+      elements.zoomDisplay,
+    );
+  } else {
+    console.error('Failed to initialize canvas. No default module found.');
+  }
 }
 
 async function registerCanvasModules() {
@@ -34,21 +54,6 @@ async function registerCanvasModules() {
       console.error(`Failed to load canvas module: ${key}`, error);
     }
   }
-}
-
-function setupUI(elements) {
-  populateCanvasStyleDropdown(elements);
-  setupExportImport(elements.menu, elements.canvas);
-}
-
-function initializeCanvas(elements) {
-  canvasManager.setCurrentModule(config.defaultCanvasType);
-  canvasManager.renderCurrentModule(elements.canvas);
-  setupZoomAndPan(
-    elements.canvasContainer,
-    elements.canvas,
-    elements.zoomDisplay,
-  );
 }
 
 function setupEventListeners(elements) {
@@ -76,31 +81,30 @@ function createDropdownButton(text, onClick) {
 }
 
 function switchCanvas(moduleName, elements) {
-  console.log('Switching canvas. Current zoom level:', getZoomLevel());
+  console.log('Switching to canvas:', moduleName);
+  try {
+    canvasManager.switchBackgroundLayout(moduleName, elements.canvas);
 
-  canvasManager.setCurrentModule(moduleName);
-  canvasManager.renderCurrentModule(elements.canvas);
+    // Update canvas dimensions if necessary
+    const currentModule = canvasManager.getCurrentModule();
+    if (currentModule) {
+      elements.canvas.style.width = `${currentModule.width}px`;
+      elements.canvas.style.height = `${currentModule.height}px`;
+    }
 
-  // Use requestAnimationFrame to ensure the canvas is rendered before zooming
-  requestAnimationFrame(() => {
-    const centerX = elements.canvas.width / 2;
-    const centerY = elements.canvas.height / 2;
-    console.log('Canvas dimensions:', {
-      width: elements.canvas.width,
-      height: elements.canvas.height,
-    });
-
-    // Remove existing zoom and pan setup
-    removeZoomAndPan(elements.canvasContainer);
-
+    // Handle zoom and pan
+    const centerX = elements.canvas.clientWidth / 2;
+    const centerY = elements.canvas.clientHeight / 2;
     setFixedZoom(1, elements.canvas, elements.zoomDisplay, centerX, centerY);
     setupZoomAndPan(
       elements.canvasContainer,
       elements.canvas,
       elements.zoomDisplay,
     );
-    console.log('Canvas switched. New zoom level:', getZoomLevel());
-  });
+  } catch (error) {
+    console.error(`Error switching to canvas ${moduleName}:`, error);
+    alert(`Failed to switch to ${moduleName}. Please try again.`);
+  }
 }
 
 function setupExportImport(menu, canvas) {
