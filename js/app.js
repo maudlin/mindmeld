@@ -3,7 +3,8 @@ import { exportToJSON, importFromJSON } from './data/dataStore.js';
 import {
   setupZoomAndPan,
   getZoomLevel,
-  resetZoomLevel,
+  removeZoomAndPan,
+  setFixedZoom,
 } from './features/zoom/zoomManager.js';
 import { DOM_SELECTORS } from './core/constants.js';
 import { canvasManager } from './core/canvasManager.js';
@@ -76,11 +77,23 @@ function createDropdownButton(text, onClick) {
 
 function switchCanvas(moduleName, elements) {
   console.log('Switching canvas. Current zoom level:', getZoomLevel());
-  resetZoomLevel();
+
   canvasManager.setCurrentModule(moduleName);
   canvasManager.renderCurrentModule(elements.canvas);
 
+  // Use requestAnimationFrame to ensure the canvas is rendered before zooming
   requestAnimationFrame(() => {
+    const centerX = elements.canvas.width / 2;
+    const centerY = elements.canvas.height / 2;
+    console.log('Canvas dimensions:', {
+      width: elements.canvas.width,
+      height: elements.canvas.height,
+    });
+
+    // Remove existing zoom and pan setup
+    removeZoomAndPan(elements.canvasContainer);
+
+    setFixedZoom(1, elements.canvas, elements.zoomDisplay, centerX, centerY);
     setupZoomAndPan(
       elements.canvasContainer,
       elements.canvas,
