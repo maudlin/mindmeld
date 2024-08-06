@@ -182,50 +182,98 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 └── img/                       # Contains application icons and images
 ```
 
-## Implementation Guide for New Canvases
+## Implementing New Canvas Template Modules
 
-To implement a new canvas template, follow these steps:
+To add a new canvas template to MindMeld, follow these steps:
 
-1. **Create a New Canvas File**:
+### 1. Create the Module Files
 
-   - Create a new file for your canvas (e.g., `canvas.js`) in the `./js/canvases/[myNewCanvas]` directory.
+Create a new directory for your module in `js/features/canvas/templates/[your-module-name]/`. In this directory, create two files:
 
-2. **Extend the CanvasModule Base Class**:
+- `[YourModuleName]Canvas.js`: The main module file
+- `[YourModuleName]Canvas.css`: The CSS styles for your module
 
-   ```javascript
-   import { CanvasModule } from '../canvasModule.js';
+### 2. Implement the Canvas Module
 
-   export default class MyNewCanvas extends CanvasModule {
-     constructor() {
-       super('My New Canvas', width, height);
-     }
+In your `[YourModuleName]Canvas.js` file:
 
-     render(canvas) {
-       // Implement your canvas rendering logic here
-       canvas.style.width = `${this.width}px`;
-       canvas.style.height = `${this.height}px`;
-       // Add any specific styling or elements
-     }
+```javascript
+import { CanvasModule } from '../../../../core/canvasModule.js';
 
-     getVisibleDimensions() {
-       // Return the visible dimensions of your canvas
-       return { width: this.width, height: this.height };
-     }
-   }
-   ```
+class YourModuleNameCanvas extends CanvasModule {
+  constructor() {
+    super(
+      'Your Module Name',
+      width,
+      height,
+      './js/features/canvas/templates/[your-module-name]/[YourModuleName]Canvas.css',
+    );
+  }
 
-3. **Register Your New Canvas in app.js**:
+  createBackgroundLayout() {
+    const layout = super.createBackgroundLayout();
+    layout.classList.add('your-module-name');
 
-   ```javascript
-   import MyNewCanvas from './canvases/[myNewCanvas]/canvas.js';
+    // Add your custom layout elements here
+    // For example:
+    // const element = document.createElement('div');
+    // element.className = 'custom-element';
+    // layout.appendChild(element);
 
-   // In the DOMContentLoaded event listener
-   canvasManager.registerModule(new MyNewCanvas());
-   ```
+    return layout;
+  }
+}
 
-4. **Update constants.js for Specific Dimensions**:
-   ```javascript
-   export const MY_NEW_CANVAS_DIMENSIONS = {
-     WIDTH: 1000,
-     HEIGHT: 800,
-   ```
+export default YourModuleNameCanvas;
+```
+
+Replace `width` and `height` with the desired dimensions for your canvas.
+
+### 3. Add CSS Styles
+
+In your `[YourModuleName]Canvas.css` file, add the styles for your canvas layout:
+
+```css
+.background-layout.your-module-name {
+  /* Add your custom styles here */
+}
+
+/* Add more specific styles as needed */
+```
+
+### 4. Register the New Module
+
+Update the `config.js` file to include your new module:
+
+```javascript
+export default {
+  // ... other config options ...
+  canvasTypes: {
+    // ... existing canvas types ...
+    yourModuleName: {
+      name: 'Your Module Name',
+      path: '../js/features/canvas/templates/[your-module-name]/[YourModuleName]Canvas.js',
+    },
+  },
+};
+```
+
+### 5. Best Practices and Considerations
+
+- Ensure your module name is unique and descriptive.
+- Keep your CSS scoped to your module to avoid conflicts with other styles.
+- Use semantic HTML elements in your `createBackgroundLayout` method.
+- Consider the impact of your layout on existing notes and connections.
+- Test your module thoroughly with different zoom levels and canvas sizes.
+- Document any specific interactions or features unique to your module.
+
+### 6. Testing Your New Module
+
+After implementing your module:
+
+1. Rebuild and restart the application.
+2. Use the canvas style dropdown to select your new module.
+3. Verify that the layout renders correctly and CSS styles are applied.
+4. Test interactions with notes and connections within your new layout.
+
+By following these steps, you can create and integrate new canvas template modules into the MindMeld application, extending its functionality with custom layouts and designs.
