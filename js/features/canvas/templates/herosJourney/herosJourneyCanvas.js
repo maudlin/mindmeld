@@ -34,7 +34,7 @@ class HerosJourneyCanvas extends CanvasModule {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.href =
-        './js/features/canvas/templates/herosJourney/herosJourney.css';
+        './js/features/canvas/templates/herosJourney/herosJourneyCanvas.css';
       document.head.appendChild(link);
     }
 
