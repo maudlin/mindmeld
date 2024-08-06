@@ -165,11 +165,6 @@ html {
   background-size: 20px 20px; /* Adjust the grid size */
 }
 
-/* Add this new rule */
-body.loading #canvas {
-  visibility: hidden;
-}
-
 #canvas-wrapper {
   position: absolute;
   top: 50%;

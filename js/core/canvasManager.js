@@ -35,6 +35,17 @@ class CanvasManager {
     if (this.currentModule) {
       try {
         this.currentModule.render(canvas);
+
+        // Ensure canvas dimensions are set
+        if (!canvas.width || !canvas.height) {
+          canvas.width = this.currentModule.width;
+          canvas.height = this.currentModule.height;
+        }
+
+        console.log('Canvas rendered:', {
+          width: canvas.width,
+          height: canvas.height,
+        });
       } catch (error) {
         console.error(`Error rendering ${this.currentModule.name}:`, error);
         this.fallbackToDefaultCanvas(canvas);
