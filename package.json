@@ -1,24 +1,28 @@
 {
   "name": "mindmeld",
-  "version": "1.0.0",
+  "version": "0.6",
   "description": "A web-based mind mapping tool",
-  "main": "index.js",
+  "main": "src/js/app.js",
   "type": "module",
   "scripts": {
-    "start": "live-server --port=8080 --entry-file=index.html",
-    "lint": "eslint '**/*.js'",
-    "lint:fix": "eslint '**/*.js' --fix",
-    "format": "prettier --write '**/*.{js,html,css}'",
-    "format:check": "prettier --check '**/*.{js,html,css}'"
+    "start": "live-server src --port=8080 --no-css-inject --cors",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write 'src/**/*.{js,html,css}'",
+    "format:check": "prettier --check 'src/**/*.{js,html,css}'",
+    "postinstall": "playwright install chromium"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "eslint": "9.8.0",
-    "prettier": "^3.3.3",
+    "@eslint/js": "^8.0.0",
+    "eslint": "^8.0.0",
     "eslint-plugin-prettier": "^5.2.1",
-    "eslint-config-prettier": "^9.1.0",
-    "@eslint/js": "^9.8.0",
-    "live-server": "^1.2.2"
+    "live-server": "^1.2.2",
+    "prettier": "^3.3.3",
+    "@playwright/test": "^1.35.0"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.46.0"
   }
 }

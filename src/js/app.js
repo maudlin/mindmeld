@@ -1,4 +1,6 @@
 // app.js
+import { log } from './utils/utils.js';
+log('app.js loaded');
 import { setupCanvasEvents, setupDocumentEvents } from './core/event.js';
 import { exportToJSON, importFromJSON } from './data/dataStore.js';
 import { setupZoomAndPan, setFixedZoom } from './features/zoom/zoomManager.js';
@@ -7,9 +9,10 @@ import { canvasManager } from './core/canvasManager.js';
 import config from './core/config.js';
 
 async function initializeApp() {
-  console.log('Initializing app...');
+  log('Initializing app...');
   const elements = {
     canvasContainer: document.getElementById('canvas-container'),
+    svgContainer: document.getElementById('svg-container'),
     canvas: document.querySelector(DOM_SELECTORS.CANVAS),
     zoomDisplay: document.getElementById('zoom-display'),
     canvasStyleDropdown: document.getElementById('canvas-style-dropdown'),
@@ -28,12 +31,12 @@ function setupUI(elements) {
 }
 
 function initializeCanvas(elements) {
-  console.log('Initializing canvas...');
+  log('Initializing canvas...');
   const initialModule = canvasManager.setCurrentModule(
     config.defaultCanvasType,
   );
   if (initialModule) {
-    console.log(`Initial module set: ${initialModule.name}`);
+    log(`Initial module set: ${initialModule.name}`);
     canvasManager.switchBackgroundLayout(initialModule.name, elements.canvas);
     setupZoomAndPan(
       elements.canvasContainer,
@@ -41,7 +44,7 @@ function initializeCanvas(elements) {
       elements.zoomDisplay,
     );
   } else {
-    console.error('Failed to initialize canvas. No default module found.');
+    log('Failed to initialize canvas. No default module found.');
   }
 }
 
@@ -51,7 +54,7 @@ async function registerCanvasModules() {
       const module = await import(value.path);
       canvasManager.registerModule(new module.default());
     } catch (error) {
-      console.error(`Failed to load canvas module: ${key}`, error);
+      error(`Failed to load canvas module: ${key}`, error);
     }
   }
 }
@@ -81,7 +84,7 @@ function createDropdownButton(text, onClick) {
 }
 
 function switchCanvas(moduleName, elements) {
-  console.log('Switching to canvas:', moduleName);
+  log('Switching to canvas:', moduleName);
   try {
     canvasManager.switchBackgroundLayout(moduleName, elements.canvas);
 
@@ -102,7 +105,7 @@ function switchCanvas(moduleName, elements) {
       elements.zoomDisplay,
     );
   } catch (error) {
-    console.error(`Error switching to canvas ${moduleName}:`, error);
+    error(`Error switching to canvas ${moduleName}:`, error);
     alert(`Failed to switch to ${moduleName}. Please try again.`);
   }
 }
@@ -136,7 +139,7 @@ function handleImport(canvas) {
       try {
         importFromJSON(e.target.result, canvas);
       } catch (error) {
-        console.error('Error importing file:', error);
+        error('Error importing file:', error);
         alert("Error importing file. Please make sure it's a valid JSON file.");
       }
     };

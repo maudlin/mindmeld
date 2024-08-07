@@ -103,7 +103,7 @@ export function importFromJSON(jsonData, canvas) {
     log('Notes created:', document.querySelectorAll('.note').length);
 
     // Ensure SVG container exists
-    let svgContainer = document.getElementById('svg-container');
+    let svgContainer = SVG_CONTAINER;
     if (!svgContainer) {
       log('SVG container not found, initializing connection drawing');
       svgContainer = initializeConnectionDrawing(canvas);

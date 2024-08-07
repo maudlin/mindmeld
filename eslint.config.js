@@ -1,3 +1,4 @@
+// eslint.config.mjs
 import js from '@eslint/js';
 import prettier from 'eslint-plugin-prettier';
 
@@ -5,16 +6,26 @@ export default [
   js.configs.recommended,
   {
     files: ['**/*.js'],
-    extends: ['eslint:recommended', 'plugin:prettier/recommended'],
-    parserOptions: {
+    plugins: {
+      prettier: prettier,
+    },
+    languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
+      globals: {
+        // Browser globals
+        window: 'readonly',
+        document: 'readonly',
+        // Node.js globals
+        process: 'readonly',
+        // Add any other globals you're using
+      },
     },
     env: {
       browser: true,
+      node: true,
       es2022: true,
     },
-    plugins: ['prettier'],
     rules: {
       'prettier/prettier': [
         'error',
@@ -24,5 +35,8 @@ export default [
         },
       ],
     },
+  },
+  {
+    ignores: ['**/node_modules/**', '**/dist/**'],
   },
 ];

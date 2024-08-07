@@ -2,7 +2,8 @@
   "name": "Mindmeld",
   "dockerFile": "Dockerfile",
   "context": "..",
-  "appPort": [8080],
+  "forwardPorts": [8080, 9323],
+  "appPort": [8080, 9323],
   "workspaceFolder": "/workspace",
   "customizations": {
     "vscode": {
@@ -10,7 +11,8 @@
         "ms-vscode-remote.remote-containers",
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
-        "ms-azuretools.vscode-docker"
+        "ms-azuretools.vscode-docker",
+        "ms-playwright.playwright"
       ],
       "settings": {
         "terminal.integrated.shell.linux": "/bin/bash"
