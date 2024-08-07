@@ -6,12 +6,12 @@ To add a new canvas template to MindMeld, follow these steps:
 
 Create a new directory for your module in `js/features/canvas/templates/[your-module-name]/`. In this directory, create two files:
 
-- `[YourModuleName]Canvas.js`: The main module file
-- `[YourModuleName]Canvas.css`: The CSS styles for your module
+- `[yourModuleName]Canvas.js`: The main module file
+- `[yourModuleName]Canvas.css`: The CSS styles for your module
 
 ### 2. Implement the Canvas Module
 
-In your `[YourModuleName]Canvas.js` file:
+In your `[yourModuleName]Canvas.js` file:
 
 ```javascript
 import { CanvasModule } from '../../../../core/canvasModule.js';
@@ -22,7 +22,7 @@ class YourModuleNameCanvas extends CanvasModule {
       'Your Module Name',
       width,
       height,
-      './js/features/canvas/templates/[your-module-name]/[YourModuleName]Canvas.css',
+      './js/features/canvas/templates/[yourModuleName]/[yourModuleName]Canvas.css',
     );
   }
 
@@ -47,7 +47,7 @@ Replace `width` and `height` with the desired dimensions for your canvas.
 
 ### 3. Add CSS Styles
 
-In your `[YourModuleName]Canvas.css` file, add the styles for your canvas layout:
+In your `[yourModuleName]Canvas.css` file, add the styles for your canvas layout:
 
 ```css
 .background-layout.your-module-name {
@@ -68,7 +68,7 @@ export default {
     // ... existing canvas types ...
     yourModuleName: {
       name: 'Your Module Name',
-      path: '../js/features/canvas/templates/[your-module-name]/[YourModuleName]Canvas.js',
+      path: '../features/canvas/templates/[your-module-name]/[yourModuleName]Canvas.js',
     },
   },
 };
@@ -82,6 +82,10 @@ export default {
 - Consider the impact of your layout on existing notes and connections.
 - Test your module thoroughly with different zoom levels and canvas sizes.
 - Document any specific interactions or features unique to your module.
+- Files should be camel case (eg nowNextFuture) and suffix 'canvas', eg nowNextFutureCanvas.js or .css (this helps identify different files)
+- Coloured backgrounds should be no more than 50% transparent so we can see the grid from beneath
+- Design for containers (eg columns, boxes), that are no smaller than one box width (150px) and 20px padding on each side. Containers should aim for a border radius of c. 20px for consistency
+- Headings in containers should indicate the purpose of the box, and should be in an H3, added as a heading, eg `const heading = document.createElement('h3'); heading.textContent = content`
 
 ### 6. Testing Your New Module
 

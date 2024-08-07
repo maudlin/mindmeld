@@ -23,6 +23,10 @@ export default {
       name: "Hero's Journey",
       path: '../features/canvas/templates/herosJourney/herosJourneyCanvas.js',
     },
+    nowNextFuture: {
+      name: 'Now/Next/Future',
+      path: '../features/canvas/templates/nowNextFuture/nowNextFutureCanvas.js',
+    },
     // Add other canvas types here
   },
 };

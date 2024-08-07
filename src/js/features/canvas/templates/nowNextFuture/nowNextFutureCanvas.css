@@ -1,0 +1,33 @@
+.background-layout.now-next-future {
+  display: flex;
+  padding: 20px;
+  gap: 20px;
+  width: 600px;
+  box-sizing: border-box;
+}
+
+.background-layout.now-next-future .column {
+  flex: 1;
+  width: 210px;
+  height: 95%;
+  border: 1px solid #ccc;
+  padding: 20px;
+  box-sizing: border-box;
+  border-radius: 20px;
+}
+
+.background-layout.now-next-future .column.now {
+  background-color: rgba(240, 248, 255, 0.5); /* 50% transparent */
+}
+
+.background-layout.now-next-future .column.next {
+  background-color: rgba(230, 247, 255, 0.5); /* 50% transparent */
+}
+
+.background-layout.now-next-future .column.future {
+  background-color: rgba(224, 255, 255, 0.5); /* 50% transparent */
+}
+
+.background-layout.now-next-future .column h3 {
+  margin-top: 0;
+}
