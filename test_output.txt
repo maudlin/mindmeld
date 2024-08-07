@@ -1,0 +1,25 @@
+
+Running 1 test using 1 worker
+
+Starting test: Create a single note
+Navigated to application
+Canvas is visible
+Initial note count: 0
+Canvas bounds: {"x":-3200,"y":-1772,"width":7680,"height":4320}
+Clicking at: (640, 388)
+Double-clicked on canvas
+Waited for 1 second
+Note count after click: 1
+Final note count: 1
+Is note visible: true
+Note content: 
+Note bounds: {"x":640,"y":388,"width":150,"height":43}
+Test completed
+  ✓  1 [chromium] › create-note.spec.js:5:3 › Simplified Note Creation › Create a single note (1.3s)
+
+  1 passed (2.5s)
+
+To open last HTML report run:
+
+  npx playwright show-report
+

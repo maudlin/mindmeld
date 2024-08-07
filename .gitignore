@@ -45,6 +45,8 @@ coverage/
 
 # Configuration files
 *.config.js
+
+# Playwright specific files
 /test-results/
 /playwright-report/
 /blob-report/
