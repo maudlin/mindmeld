@@ -2,10 +2,10 @@
   "name": "mindmeld",
   "version": "1.0.0",
   "description": "A web-based mind mapping tool",
-  "main": "index.js",
+  "main": "/src/js/app.js",
   "type": "module",
   "scripts": {
-    "start": "live-server --port=8080 --entry-file=index.html",
+    "start": "live-server --port=8080 --entry-file=src/index.html",
     "lint": "eslint '**/*.js'",
     "lint:fix": "eslint '**/*.js' --fix",
     "format": "prettier --write '**/*.{js,html,css}'",
@@ -14,11 +14,13 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "eslint": "9.8.0",
-    "prettier": "^3.3.3",
-    "eslint-plugin-prettier": "^5.2.1",
-    "eslint-config-prettier": "^9.1.0",
     "@eslint/js": "^9.8.0",
-    "live-server": "^1.2.2"
+    "@playwright/test": "^1.46.0",
+    "@types/node": "^22.1.0",
+    "eslint": "9.8.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "live-server": "^1.2.2",
+    "prettier": "^3.3.3"
   }
 }
