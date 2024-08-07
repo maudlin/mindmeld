@@ -1,26 +1,24 @@
 {
   "name": "mindmeld",
-  "version": "1.0.0",
+  "version": "0.6",
   "description": "A web-based mind mapping tool",
-  "main": "/src/js/app.js",
+  "main": "src/js/app.js",
   "type": "module",
   "scripts": {
-    "start": "live-server --port=8080 --entry-file=src/index.html",
-    "lint": "eslint '**/*.js'",
-    "lint:fix": "eslint '**/*.js' --fix",
-    "format": "prettier --write '**/*.{js,html,css}'",
-    "format:check": "prettier --check '**/*.{js,html,css}'"
+    "start": "live-server src --port=8080 --no-css-inject --cors",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write 'src/**/*.{js,html,css}'",
+    "format:check": "prettier --check 'src/**/*.{js,html,css}'"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@eslint/js": "^9.8.0",
-    "@playwright/test": "^1.46.0",
-    "@types/node": "^22.1.0",
-    "eslint": "9.8.0",
-    "eslint-config-prettier": "^9.1.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.3.3",
     "eslint-plugin-prettier": "^5.2.1",
+    "@eslint/js": "^8.0.0",
     "live-server": "^1.2.2",
-    "prettier": "^3.3.3"
+    "@playwright/test": "^1.32.0"
   }
 }
