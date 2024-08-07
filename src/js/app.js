@@ -48,17 +48,6 @@ function initializeCanvas(elements) {
   }
 }
 
-async function registerCanvasModules() {
-  for (const [key, value] of Object.entries(config.canvasTypes)) {
-    try {
-      const module = await import(value.path);
-      canvasManager.registerModule(new module.default());
-    } catch (error) {
-      error(`Failed to load canvas module: ${key}`, error);
-    }
-  }
-}
-
 function setupEventListeners(elements) {
   setupCanvasEvents(elements.canvas);
   setupDocumentEvents();
