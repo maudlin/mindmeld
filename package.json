@@ -14,11 +14,13 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "eslint": "^8.0.0",
-    "prettier": "^3.3.3",
-    "eslint-plugin-prettier": "^5.2.1",
     "@eslint/js": "^8.0.0",
+    "eslint": "^8.0.0",
+    "eslint-plugin-prettier": "^5.2.1",
     "live-server": "^1.2.2",
-    "@playwright/test": "^1.32.0"
+    "prettier": "^3.3.3"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.46.0"
   }
 }
