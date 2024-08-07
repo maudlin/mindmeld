@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write 'src/**/*.{js,html,css}'",
-    "format:check": "prettier --check 'src/**/*.{js,html,css}'"
+    "format:check": "prettier --check 'src/**/*.{js,html,css}'",
+    "postinstall": "playwright install chromium"
   },
   "author": "",
   "license": "ISC",
@@ -18,7 +19,8 @@
     "eslint": "^8.0.0",
     "eslint-plugin-prettier": "^5.2.1",
     "live-server": "^1.2.2",
-    "prettier": "^3.3.3"
+    "prettier": "^3.3.3",
+    "@playwright/test": "^1.35.0"
   },
   "dependencies": {
     "@playwright/test": "^1.46.0"
