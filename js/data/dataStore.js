@@ -40,7 +40,7 @@ const debouncedUpdateConnection = debounce((startId, endId, type) => {
   const existingConnectionIndex = connections.findIndex(
     (conn) =>
       (conn.from === startId && conn.to === endId) ||
-      (conn.from === endId && conn.to === startId)
+      (conn.from === endId && conn.to === startId),
   );
 
   if (type === null) {
@@ -79,6 +79,10 @@ export function exportToJSON() {
 export function importFromJSON(jsonData, canvas) {
   try {
     const { notes, connections } = JSON.parse(jsonData);
+    log('Parsed JSON data:', {
+      noteCount: notes.length,
+      connectionCount: connections.length,
+    });
 
     // Clear existing notes and connections
     document.querySelectorAll('.note').forEach((note) => note.remove());
@@ -89,28 +93,38 @@ export function importFromJSON(jsonData, canvas) {
       const note = createNote(
         parseFloat(noteData.left),
         parseFloat(noteData.top),
-        canvas
+        canvas,
       );
       note.id = noteData.id;
       note.querySelector('.note-content').textContent = noteData.content;
       addNoteEventListeners(note, canvas);
     });
 
+    log('Notes created:', document.querySelectorAll('.note').length);
+
+    // Ensure SVG container exists
+    let svgContainer = document.getElementById('svg-container');
+    if (!svgContainer) {
+      log('SVG container not found, initializing connection drawing');
+      svgContainer = initializeConnectionDrawing(canvas);
+    }
+
     // Create connections
     connections.forEach((conn) => {
+      log('Creating connection:', conn);
       createConnection(conn.from, conn.to, conn.type);
     });
 
     // Update appState
     appState.setState({ notes, connections });
 
-    // Reinitialize connection drawing
-    initializeConnectionDrawing(canvas);
-
     // Update all connections
+    log('Updating all connections');
     updateConnections();
+
+    log('Import complete');
   } catch (error) {
-    console.error('Error importing data:', error);
+    error('Error importing data:', error);
     throw new Error('Invalid JSON data');
   }
 }
