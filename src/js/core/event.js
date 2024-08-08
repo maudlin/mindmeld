@@ -5,6 +5,7 @@ import {
 } from '../features/note/note.js';
 import { initializeConnectionDrawing } from '../features/connection/connection.js';
 import { calculateOffsetPosition } from '../utils/utils.js';
+import { saveStateToStorage } from '../data/storageManager.js';
 
 let selectionBox = null;
 let isDrawingSelectionBox = false;
@@ -56,6 +57,7 @@ export function setupCanvasEvents(canvas) {
 
 function handleDoubleClick(event) {
   createNoteAtPosition(event.target.closest('#canvas'), event);
+  saveStateToStorage();
 }
 
 function preventDefault(event) {
@@ -181,6 +183,6 @@ function handleKeyDown(event) {
         deleteNoteWithConnections(note, canvas),
       );
     }
-    // If we are editing note content, do nothing and let the default delete behavior occur
+    saveStateToStorage();
   }
 }

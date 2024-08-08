@@ -4,11 +4,12 @@ import {
   updateConnections,
   deleteConnectionsByNote,
 } from '../connection/connection.js';
-import { moveNoteStart } from '../../core/movement.js';
+import { moveNoteStart, moveNoteEnd } from '../../core/movement.js';
 import { calculateOffsetPosition, toBase62 } from '../../utils/utils.js';
 import { NoteManager } from '../../core/event.js';
 import config from '../../core/config.js';
 import { NOTE_CONTENT_LIMIT } from '../../core/constants.js';
+import { saveStateToStorage } from '../../data/storageManager.js';
 
 let nextNoteId = 1;
 
@@ -56,6 +57,7 @@ export function createNote(x, y, canvas) {
       sel.addRange(range);
     }
     updateNote(noteId, { content: this.innerHTML });
+    saveStateToStorage();
   });
 
   addNoteEventListeners(note, canvas);
@@ -108,8 +110,9 @@ export function addNoteEventListeners(note, canvas) {
     event.stopPropagation();
   });
 
-  note.addEventListener('mousemove', () => {
-    updateConnections(note, canvas);
+  note.addEventListener('mouseup', () => {
+    moveNoteEnd();
+    updateConnections(note, canvas); // Update connections after move ends
   });
 }
 

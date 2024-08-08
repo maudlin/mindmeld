@@ -15,3 +15,6 @@ export const EVENT_TYPES = {
 };
 
 export const NOTE_CONTENT_LIMIT = 200;
+
+export const STORAGE_KEY = 'mindmeld_state';
+export const BACKUP_INTERVAL = 60000; // 1 minute
