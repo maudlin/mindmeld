@@ -1,4 +1,5 @@
 import { getZoomLevel } from '../features/zoom/zoomManager.js';
+import { NOTE_CONTENT_LIMIT } from '../core/constants.js';
 
 /**
  * Calculates the offset position of the note or connector handle relative to the canvas,
@@ -67,3 +68,28 @@ export function log(message) {
     console.log(`[${new Date().toISOString()}] ${message}`);
   }
 }
+
+export function truncateNoteContent(content) {
+  return content.length > NOTE_CONTENT_LIMIT
+    ? content.substring(0, NOTE_CONTENT_LIMIT)
+    : content;
+}
+
+// Base62 encoding functions
+const BASE62 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+export const toBase62 = (num) => {
+  if (num === 0) return BASE62[0];
+  let encoded = '';
+  while (num > 0) {
+    encoded = BASE62[num % 62] + encoded;
+    num = Math.floor(num / 62);
+  }
+  return encoded;
+};
+
+export const fromBase62 = (str) => {
+  return str
+    .split('')
+    .reduce((acc, char) => acc * 62 + BASE62.indexOf(char), 0);
+};

@@ -5,12 +5,14 @@ import {
   updateConnections,
   initializeConnectionDrawing,
 } from '../features/connection/connection.js';
-import { debounce, log } from '../utils/utils.js';
+import { debounce, log, truncateNoteContent } from '../utils/utils.js';
 import { appState } from './observableState.js';
+import { NOTE_CONTENT_LIMIT } from '../core/constants.js';
 
 export function addNote(note) {
   const currentNotes = appState.getState().notes;
   appState.setState({ notes: [...currentNotes, note] });
+  return note;
 }
 
 export function updateNote(id, updatedNote) {
@@ -63,9 +65,8 @@ const debouncedUpdateConnection = debounce((startId, endId, type) => {
 
   appState.setState({ connections: updatedConnections });
   log('Updated connections:', updatedConnections);
-}, 300); // 300ms debounce time
+}, 300);
 
-// Export the debounced function
 export function updateConnectionInDataStore(startId, endId, type) {
   log('Queueing connection update:', { startId, endId, type });
   debouncedUpdateConnection(startId, endId, type);
@@ -73,15 +74,27 @@ export function updateConnectionInDataStore(startId, endId, type) {
 
 export function exportToJSON() {
   const { notes, connections } = appState.getState();
-  return JSON.stringify({ notes, connections }, null, 2);
+  const compressedData = {
+    n: notes.map((note) => ({
+      i: note.id,
+      p: [Math.round(parseFloat(note.left)), Math.round(parseFloat(note.top))],
+      c: truncateNoteContent(note.content || '', NOTE_CONTENT_LIMIT),
+    })),
+    c: connections.map((conn) => [
+      conn.from,
+      conn.to,
+      conn.type === 'bi' ? 0 : 1,
+    ]),
+  };
+  return JSON.stringify({ data: compressedData }, null, 2);
 }
 
 export function importFromJSON(jsonData, canvas) {
   try {
-    const { notes, connections } = JSON.parse(jsonData);
+    const { data } = JSON.parse(jsonData);
     log('Parsed JSON data:', {
-      noteCount: notes.length,
-      connectionCount: connections.length,
+      noteCount: data.n.length,
+      connectionCount: data.c.length,
     });
 
     // Clear existing notes and connections
@@ -89,30 +102,37 @@ export function importFromJSON(jsonData, canvas) {
     document.querySelectorAll('g[data-start]').forEach((conn) => conn.remove());
 
     // Create notes
-    notes.forEach((noteData) => {
-      const note = createNote(
-        parseFloat(noteData.left),
-        parseFloat(noteData.top),
-        canvas,
+    const notes = data.n.map((noteData) => {
+      const note = createNote(noteData.p[0], noteData.p[1], canvas);
+      note.id = noteData.i;
+      note.querySelector('.note-content').textContent = truncateNoteContent(
+        noteData.c,
+        NOTE_CONTENT_LIMIT,
       );
-      note.id = noteData.id;
-      note.querySelector('.note-content').textContent = noteData.content;
       addNoteEventListeners(note, canvas);
+      return {
+        id: note.id,
+        content: truncateNoteContent(noteData.c, NOTE_CONTENT_LIMIT),
+        left: noteData.p[0],
+        top: noteData.p[1],
+      };
     });
 
-    log('Notes created:', document.querySelectorAll('.note').length);
+    log('Notes created:', notes.length);
 
     // Ensure SVG container exists
-    let svgContainer = SVG_CONTAINER;
+    let svgContainer = document.getElementById('svg-container');
     if (!svgContainer) {
       log('SVG container not found, initializing connection drawing');
       svgContainer = initializeConnectionDrawing(canvas);
     }
 
     // Create connections
-    connections.forEach((conn) => {
-      log('Creating connection:', conn);
-      createConnection(conn.from, conn.to, conn.type);
+    const connections = data.c.map((conn) => {
+      const [fromId, toId, typeNum] = conn;
+      const type = typeNum === 0 ? 'bi' : 'uni-forward';
+      createConnection(fromId, toId, type);
+      return { from: fromId, to: toId, type };
     });
 
     // Update appState
@@ -124,7 +144,7 @@ export function importFromJSON(jsonData, canvas) {
 
     log('Import complete');
   } catch (error) {
-    error('Error importing data:', error);
+    console.error('Error importing data:', error);
     throw new Error('Invalid JSON data');
   }
 }

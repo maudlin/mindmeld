@@ -5,9 +5,12 @@ import {
   deleteConnectionsByNote,
 } from '../connection/connection.js';
 import { moveNoteStart } from '../../core/movement.js';
-import { calculateOffsetPosition } from '../../utils/utils.js';
+import { calculateOffsetPosition, toBase62 } from '../../utils/utils.js';
 import { NoteManager } from '../../core/event.js';
 import config from '../../core/config.js';
+import { NOTE_CONTENT_LIMIT } from '../../core/constants.js';
+
+let nextNoteId = 1;
 
 export function createNoteAtPosition(canvas, event) {
   const { left: x, top: y } = calculateOffsetPosition(canvas, event);
@@ -31,16 +34,28 @@ export function createNote(x, y, canvas) {
   note.style.width = `${config.noteSize.width}px`;
   note.style.padding = `${config.noteSize.padding}px`;
 
-  note.id = `note-${Date.now()}`;
+  const noteId = toBase62(nextNoteId++);
+  note.id = noteId;
+
   addNote({
-    id: note.id,
+    id: noteId,
     content: '',
     left: note.style.left,
     top: note.style.top,
   });
 
-  noteContent.addEventListener('input', () => {
-    updateNote(note.id, { content: noteContent.innerHTML });
+  noteContent.addEventListener('input', function () {
+    if (this.innerText.length > NOTE_CONTENT_LIMIT) {
+      this.innerText = this.innerText.slice(0, NOTE_CONTENT_LIMIT);
+      // Place the cursor at the end
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.setStart(this.childNodes[0], NOTE_CONTENT_LIMIT);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    updateNote(noteId, { content: this.innerHTML });
   });
 
   addNoteEventListeners(note, canvas);

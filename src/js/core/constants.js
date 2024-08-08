@@ -13,3 +13,5 @@ export const EVENT_TYPES = {
   NOTE_MOVED: 'noteMoved',
   NOTE_DELETED: 'noteDeleted',
 };
+
+export const NOTE_CONTENT_LIMIT = 200;
