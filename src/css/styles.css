@@ -251,6 +251,8 @@ html {
   outline: none; /* Remove default outline when focused */
   cursor: text; /* Ensure cursor is text when focused */
   min-width: 50px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Prevent text selection in notes */
