@@ -7,6 +7,12 @@ import { setupZoomAndPan, setFixedZoom } from './features/zoom/zoomManager.js';
 import { DOM_SELECTORS } from './core/constants.js';
 import { canvasManager } from './core/canvasManager.js';
 import config from './core/config.js';
+import {
+  loadStateFromStorage,
+  saveStateToStorage,
+  initializeStateManagement,
+  shouldRestoreState,
+} from './data/storageManager.js';
 
 async function initializeApp() {
   log('Initializing app...');
@@ -23,6 +29,16 @@ async function initializeApp() {
   setupUI(elements);
   initializeCanvas(elements);
   setupEventListeners(elements);
+
+  loadStateFromStorage(elements.canvas);
+
+  if (shouldRestoreState()) {
+    loadStateFromStorage();
+  }
+
+  initializeStateManagement();
+
+  window.addEventListener('beforeunload', saveStateToStorage);
 }
 
 function setupUI(elements) {

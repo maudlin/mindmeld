@@ -15,7 +15,7 @@ export function addNote(note) {
   return note;
 }
 
-export function updateNote(id, updatedNote) {
+export function updateNote(id, updatedNote, silent = false) {
   const currentNotes = appState.getState().notes;
   const index = currentNotes.findIndex((note) => note.id === id);
   if (index !== -1) {
@@ -33,6 +33,39 @@ export function deleteNoteById(id) {
 
 export function getNotes() {
   return appState.getState().notes;
+}
+
+export function updateNotesAndConnections(state) {
+  const canvas = document.querySelector('#canvas');
+
+  // Clear existing notes and connections
+  document.querySelectorAll('.note').forEach((note) => note.remove());
+  document.querySelectorAll('g[data-start]').forEach((conn) => conn.remove());
+
+  // Create notes
+  state.notes.forEach((noteData) => {
+    const note = createNote(
+      parseFloat(noteData.left),
+      parseFloat(noteData.top),
+      canvas,
+    );
+    note.id = noteData.id;
+    const noteContent = note.querySelector('.note-content');
+    noteContent.textContent = noteData.content;
+    addNoteEventListeners(note, canvas);
+  });
+
+  // Create connections
+  state.connections.forEach((conn) => {
+    createConnection(conn.from, conn.to, conn.type);
+  });
+
+  // Update all connections
+  updateConnections();
+
+  console.log(
+    `Updated ${state.notes.length} notes and ${state.connections.length} connections`,
+  );
 }
 
 const debouncedUpdateConnection = debounce((startId, endId, type) => {
@@ -70,6 +103,27 @@ const debouncedUpdateConnection = debounce((startId, endId, type) => {
 export function updateConnectionInDataStore(startId, endId, type) {
   log('Queueing connection update:', { startId, endId, type });
   debouncedUpdateConnection(startId, endId, type);
+}
+
+export function getCurrentState() {
+  const notes = Array.from(document.querySelectorAll('.note')).map(
+    (noteElement) => ({
+      id: noteElement.id,
+      content: noteElement.querySelector('.note-content').innerHTML,
+      left: noteElement.style.left,
+      top: noteElement.style.top,
+    }),
+  );
+
+  const connections = Array.from(
+    document.querySelectorAll('g[data-start]'),
+  ).map((connElement) => ({
+    from: connElement.dataset.start,
+    to: connElement.dataset.end,
+    type: connElement.dataset.type,
+  }));
+
+  return { notes, connections, zoomLevel: appState.getState().zoomLevel };
 }
 
 export function exportToJSON() {
@@ -147,4 +201,17 @@ export function importFromJSON(jsonData, canvas) {
     console.error('Error importing data:', error);
     throw new Error('Invalid JSON data');
   }
+}
+
+export function clearAllNotesAndConnections() {
+  // Remove all notes from the DOM
+  document.querySelectorAll('.note').forEach((note) => note.remove());
+
+  // Remove all connections from the DOM
+  document.querySelectorAll('g[data-start]').forEach((conn) => conn.remove());
+
+  // Clear the state
+  appState.setState({ notes: [], connections: [], zoomLevel: 5 });
+
+  console.log('All notes and connections cleared');
 }

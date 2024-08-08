@@ -4,6 +4,7 @@ import { getZoomLevel } from '../zoom/zoomManager.js';
 import { updateConnectionInDataStore } from '../../data/dataStore.js';
 import { ContextMenu } from './contextMenu.js';
 import { throttle } from '../../utils/utils.js';
+import { saveStateToStorage } from '../../data/storageManager.js';
 
 const STROKE_COLOR = '#888';
 const STROKE_WIDTH = '2';
@@ -162,7 +163,7 @@ export function updateConnections(noteOrGroup) {
       const hotspotX = (points.x1 + points.x2) / 2;
       const hotspotY = (points.y1 + points.y2) / 2;
 
-      // 3. Batch DOM updates
+      // Batch DOM updates
       requestAnimationFrame(() => {
         hotspot.setAttribute('cx', hotspotX);
         hotspot.setAttribute('cy', hotspotY);
@@ -471,24 +472,6 @@ function getClosestPoints(note1, note2) {
   }
 }
 
-// function adjustRectForZoom(rect, canvasRect, scale) {
-//   return {
-//     left: (rect.left - canvasRect.left) / scale,
-//     top: (rect.top - canvasRect.top) / scale,
-//     width: rect.width / scale,
-//     height: rect.height / scale,
-//     right: (rect.right - canvasRect.left) / scale,
-//     bottom: (rect.bottom - canvasRect.top) / scale,
-//   };
-// }
-
-// function getCenter(rect) {
-//   return {
-//     x: rect.left + rect.width / 2,
-//     y: rect.top + rect.height / 2,
-//   };
-// }
-
 function createSVGElement(type, attributes = {}) {
   const element = document.createElementNS('http://www.w3.org/2000/svg', type);
   Object.entries(attributes).forEach(([key, value]) =>
@@ -583,9 +566,11 @@ function finalizeConnection(startNote, endNote, connectionGroup) {
 
   connectionGroup.contextMenu.connectionGroup = connectionGroup.group;
 
-  throttledUpdateConnections(connectionGroup.group);
-
   updateConnectionInDataStore(startNote.id, endNote.id, CONNECTION_TYPES.NONE);
+
+  updateConnections(connectionGroup.group);
+
+  saveStateToStorage();
 }
 
 function connectionExists(id1, id2) {

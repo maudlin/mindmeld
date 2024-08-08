@@ -4,6 +4,7 @@ import { NoteManager } from './event.js';
 import { throttle } from '../utils/utils.js';
 import { getZoomLevel } from '../features/zoom/zoomManager.js';
 import { updateConnections } from '../features/connection/connection.js';
+import { appState } from '../data/observableState.js';
 
 const throttledUpdateConnections = throttle(updateConnections, 16); // ~60fps
 
@@ -11,9 +12,17 @@ let activeNote = null;
 let shiftX = 0,
   shiftY = 0;
 let offsets = [];
+let hasStateChanged = false;
 
 export function moveNoteEnd() {
+  if (activeNote) {
+    updateConnections(activeNote, activeNote.closest('#canvas'));
+    if (hasStateChanged) {
+      appState.saveToLocalStorage(); // Explicitly save state after movement
+    }
+  }
   activeNote = null;
+  hasStateChanged = false;
   document.removeEventListener('mousemove', onMouseMove);
   document.removeEventListener('mouseup', onMouseUp);
 }
@@ -22,6 +31,7 @@ function onMouseMove(event) {
   if (activeNote) {
     moveAt(event.clientX, event.clientY, activeNote.closest('#canvas'));
     throttledUpdateConnections(activeNote);
+    hasStateChanged = true;
   }
 }
 
@@ -65,6 +75,8 @@ export function moveNoteStart(note, event) {
 
   document.addEventListener('mousemove', onMouseMove);
   document.addEventListener('mouseup', onMouseUp);
+
+  hasStateChanged = false;
 }
 
 function moveAt(pageX, pageY, canvas) {
@@ -84,10 +96,14 @@ function moveAt(pageX, pageY, canvas) {
     const noteShiftY = offsetY + relativeY;
     note.style.left = `${noteShiftX}px`;
     note.style.top = `${noteShiftY}px`;
-    updateNote(note.id, {
-      left: note.style.left,
-      top: note.style.top,
-    });
+    updateNote(
+      note.id,
+      {
+        left: note.style.left,
+        top: note.style.top,
+      },
+      false,
+    );
     updateConnections(note, canvas);
   });
 }
