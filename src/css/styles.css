@@ -309,7 +309,7 @@ line.connection-line {
 /* Connector Hotspot Styles */
 .connector-hotspot {
   fill: #fff;
-  stroke: #888;
+  stroke: #5a6f86;
   stroke-width: 2;
   cursor: pointer;
 }
@@ -321,6 +321,7 @@ line.connection-line {
   -moz-user-select: none;
   -ms-user-select: none;
   font-family: 'Poppins', sans-serif;
+  font-size: 14px;
   font-weight: bold;
 }
 

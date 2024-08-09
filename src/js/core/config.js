@@ -27,6 +27,10 @@ export default {
       name: 'Now/Next/Future',
       path: '../features/canvas/templates/nowNextFuture/nowNextFutureCanvas.js',
     },
+    wardleyMap: {
+      name: 'Wardley Map',
+      path: '../features/canvas/templates/wardleyMap/wardleyMapCanvas.js',
+    },
     // Add other canvas types here
   },
 };

@@ -1,0 +1,26 @@
+.background-layout.wardley-map {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: #f9f9f91a;
+  padding: 50px; /* Add a border around the map area */
+  box-sizing: border-box;
+}
+
+/* Ensure SVG elements are styled consistently */
+svg {
+  width: 100%;
+  height: 100%;
+}
+
+line {
+  stroke: rgba(61, 61, 61, 0.514);
+  stroke-width: 9;
+}
+
+text {
+  font-family: 'Poppins', Arial, sans-serif;
+  font-size: 2em;
+  font-weight: 900;
+  fill: rgb(71, 71, 71);
+}

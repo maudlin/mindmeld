@@ -77,7 +77,7 @@ export class ContextMenu {
         fill: item.type === 'delete' ? 'pink' : 'white',
         stroke: this.STROKE_COLOR,
         'stroke-width': this.STROKE_WIDTH,
-      })
+      }),
     );
 
     const text = this.createSVGElement('text', {
@@ -85,7 +85,7 @@ export class ContextMenu {
       y: item.y,
       'text-anchor': 'middle',
       'dominant-baseline': 'central',
-      'font-size': '12',
+      'font-size': '8',
       fill: 'black',
     });
     text.textContent = item.symbol;
@@ -108,10 +108,10 @@ export class ContextMenu {
   createSVGElement(type, attributes = {}) {
     const element = document.createElementNS(
       'http://www.w3.org/2000/svg',
-      type
+      type,
     );
     Object.entries(attributes).forEach(([key, value]) =>
-      element.setAttribute(key, value)
+      element.setAttribute(key, value),
     );
     return element;
   }
