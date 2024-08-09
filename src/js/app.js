@@ -12,6 +12,7 @@ import {
   saveStateToStorage,
   initializeStateManagement,
   shouldRestoreState,
+  clearAllState,
 } from './data/storageManager.js';
 
 async function initializeApp() {
@@ -44,6 +45,7 @@ async function initializeApp() {
 function setupUI(elements) {
   populateCanvasStyleDropdown(elements);
   setupExportImport(elements.menu, elements.canvas);
+  setupClearCanvas(elements.menu, elements.canvas);
 }
 
 function initializeCanvas(elements) {
@@ -151,6 +153,22 @@ function handleImport(canvas) {
     reader.readAsText(file);
   };
   input.click();
+}
+
+function setupClearCanvas(menu, canvas) {
+  menu.addEventListener('click', (event) => {
+    if (event.target.id === 'clear-canvas-button') handleClearCanvas();
+  });
+}
+
+function handleClearCanvas() {
+  if (
+    confirm(
+      'Are you sure you want to clear all data? This action cannot be undone.',
+    )
+  ) {
+    clearAllState();
+  }
 }
 
 document.addEventListener('DOMContentLoaded', initializeApp);
