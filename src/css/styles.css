@@ -301,6 +301,18 @@ line.connection-line {
   pointer-events: none;
 }
 
+svg text {
+  user-select: none; /* Prevent text selection */
+  pointer-events: none; /* Disable pointer events */
+}
+
+/* Apply styles only to divs within a .background-layout element */
+.background-layout div,
+.background-layout div * {
+  user-select: none; /* Prevent text selection */
+  pointer-events: none; /* Disable pointer events */
+}
+
 #svg-container line,
 #svg-container circle {
   pointer-events: all;

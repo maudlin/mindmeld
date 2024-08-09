@@ -80,6 +80,10 @@ class WardleyMapCanvas extends CanvasModule {
       textElement.setAttribute('x', label.x);
       textElement.setAttribute('y', label.y);
       textElement.textContent = label.text;
+      textElement.setAttribute(
+        'style',
+        'user-select: none; pointer-events: none;',
+      );
       svg.appendChild(textElement);
     });
 
@@ -88,8 +92,8 @@ class WardleyMapCanvas extends CanvasModule {
     xAxisLabel.setAttribute('x', '1300');
     xAxisLabel.setAttribute('y', '2080');
     xAxisLabel.textContent = 'Evolution';
-    xAxisLabel.style.fontSize = '3em';
     xAxisLabel.style.textAnchor = 'middle';
+    xAxisLabel.setAttribute('style', 'font-size:3em;');
     svg.appendChild(xAxisLabel);
 
     // Add labels for the y-axis
@@ -109,7 +113,10 @@ class WardleyMapCanvas extends CanvasModule {
         'transform',
         `rotate(-70, ${rotateCenterX}, ${rotateCenterY})`,
       );
-
+      textElement.setAttribute(
+        'style',
+        'user-select: none; pointer-events: none;',
+      );
       svg.appendChild(textElement);
     });
 
@@ -119,8 +126,7 @@ class WardleyMapCanvas extends CanvasModule {
     yAxisLabel.setAttribute('y', '1000');
     yAxisLabel.setAttribute('transform', 'rotate(-90, 50, 1000)');
     yAxisLabel.textContent = 'Value Chain';
-    yAxisLabel.style.fontSize = '3em';
-    yAxisLabel.style.fontFamily = 'Poppins, Arial, sans-serif';
+    yAxisLabel.setAttribute('style', 'font-size:3em;');
     yAxisLabel.style.textAnchor = 'middle';
     svg.appendChild(yAxisLabel);
 
