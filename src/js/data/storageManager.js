@@ -114,5 +114,12 @@ export function shouldRestoreState() {
     appState.hasStoredState()
   );
 }
+
+export function clearAllState() {
+  clearStateFromStorage();
+
+  log('All state cleared, local storage cleared, and UI reset');
+}
+
 // Event listener for before unload to save state
 window.addEventListener('beforeunload', saveStateToStorage);
