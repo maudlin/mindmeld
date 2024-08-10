@@ -350,6 +350,8 @@ svg text {
   font-family: 'Poppins', sans-serif;
   font-size: 10pt;
   line-height: 1.5;
+  user-select: none; /* Prevent text selection */
+  pointer-events: none; /* Disable pointer events */
 }
 
 #selection-box {
