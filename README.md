@@ -2,7 +2,7 @@
 
 MindMeld is a web-based mind mapping tool that allows users to create, organize, and connect notes in a flexible, freeform manner. This application is designed to help users visually map out their ideas and relationships between them.
 
-A demof of the latest stable version is available to try at: https://mind-meld.co/
+A demo of the latest stable version is available to try at: https://mind-meld.co/
 
 ## Features
 
