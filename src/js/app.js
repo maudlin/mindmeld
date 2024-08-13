@@ -157,7 +157,7 @@ function handleExportToClipboard() {
     (err) => {
       console.error('Failed to copy to clipboard', err);
       alert('Failed to copy to clipboard');
-    }
+    },
   );
 }
 
@@ -169,17 +169,19 @@ function handleImportFromClipboard(canvas) {
         alert('Mind map imported from clipboard');
       } catch (error) {
         console.error('Error importing from clipboard:', error);
-        alert("Error importing from clipboard. Please make sure it's valid JSON data.");
+        alert(
+          "Error importing from clipboard. Please make sure it's valid JSON data.",
+        );
       }
     },
     (err) => {
       console.error('Failed to read from clipboard', err);
       alert('Failed to read from clipboard');
-    }
+    },
   );
 }
 
-function setupImportExport(menu, canvas) {
+function setupExportImport(menu, canvas) {
   menu.addEventListener('click', (event) => {
     switch (event.target.id) {
       case 'export-to-file-button':
