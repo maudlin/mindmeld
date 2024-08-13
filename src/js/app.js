@@ -117,14 +117,7 @@ function switchCanvas(moduleName, elements) {
   }
 }
 
-function setupExportImport(menu, canvas) {
-  menu.addEventListener('click', (event) => {
-    if (event.target.id === 'export-button') handleExport();
-    else if (event.target.id === 'import-button') handleImport(canvas);
-  });
-}
-
-function handleExport() {
+function handleExportToFile() {
   const json = exportToJSON();
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -135,7 +128,7 @@ function handleExport() {
   URL.revokeObjectURL(url);
 }
 
-function handleImport(canvas) {
+function handleImportFromFile(canvas) {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.json';
@@ -146,13 +139,63 @@ function handleImport(canvas) {
       try {
         importFromJSON(e.target.result, canvas);
       } catch (error) {
-        error('Error importing file:', error);
+        console.error('Error importing file:', error);
         alert("Error importing file. Please make sure it's a valid JSON file.");
       }
     };
     reader.readAsText(file);
   };
   input.click();
+}
+
+function handleExportToClipboard() {
+  const json = exportToJSON();
+  navigator.clipboard.writeText(json).then(
+    () => {
+      alert('Mind map data copied to clipboard');
+    },
+    (err) => {
+      console.error('Failed to copy to clipboard', err);
+      alert('Failed to copy to clipboard');
+    }
+  );
+}
+
+function handleImportFromClipboard(canvas) {
+  navigator.clipboard.readText().then(
+    (text) => {
+      try {
+        importFromJSON(text, canvas);
+        alert('Mind map imported from clipboard');
+      } catch (error) {
+        console.error('Error importing from clipboard:', error);
+        alert("Error importing from clipboard. Please make sure it's valid JSON data.");
+      }
+    },
+    (err) => {
+      console.error('Failed to read from clipboard', err);
+      alert('Failed to read from clipboard');
+    }
+  );
+}
+
+function setupImportExport(menu, canvas) {
+  menu.addEventListener('click', (event) => {
+    switch (event.target.id) {
+      case 'export-to-file-button':
+        handleExportToFile();
+        break;
+      case 'import-from-file-button':
+        handleImportFromFile(canvas);
+        break;
+      case 'export-to-clipboard-button':
+        handleExportToClipboard();
+        break;
+      case 'import-from-clipboard-button':
+        handleImportFromClipboard(canvas);
+        break;
+    }
+  });
 }
 
 function setupClearCanvas(menu, canvas) {
