@@ -1,4 +1,4 @@
-import { CanvasModule } from '../src/js/core/canvasModule';
+import { CanvasModule } from '../../src/js/core/canvasModule';
 
 describe('CanvasModule', () => {
   let canvasModule;
