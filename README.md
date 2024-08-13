@@ -136,50 +136,25 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 10. **Import State**:
     - Click the "Import" button in the navigation bar to load a previously saved mind map from a JSON file.
 
+## JSON Schema Description
+Schema Explanation: The JSON represents a diagram with two main components: "notes" (n) and "connections" (c).
+
+Notes (n):
+
+ID (i): A unique base-62 identifier for each note, starting at "1".
+Position (p): An array representing the x and y coordinates of the note on the canvas.
+Content (c): A string containing the text or label of the note.
+Connections (c):
+
+Each connection is an array with three elements:
+From ID: The i value of the starting note.
+To ID: The i value of the ending note.
+Type: An integer representing the connection type (e.g., directional, non-directional).
+
 ## File Manifest
 
 ```
-.
-├── js/
-│   ├── app.js                 # Main application entry point
-│   ├── data/
-│   │   ├── observableState.js # Manages application state
-│   │   └── dataStore.js       # Handles data persistence (import/export)
-│   ├── features/
-│   │   ├── canvas/
-│   │   │   └── templates/     # Contains different canvas types
-│   │   │       ├── standardCanvas/
-│   │   │       │   ├── canvas.js
-│   │   │       │   └── canvas.css
-│   │   │       └── herosJourney/
-│   │   │           ├── canvas.js
-│   │   │           └── canvas.css
-│   │   ├── connection/
-│   │   │   ├── connection.js  # Manages connections between notes
-│   │   │   └── contextMenu.js # Handles context menu for connections
-│   │   ├── note/
-│   │   │   └── note.js        # Defines note creation and behavior
-│   │   └── zoom/
-│   │       └── zoomManager.js # Manages zoom and pan functionality
-│   ├── utils/
-│   │   └── utils.js           # Utility functions used across the app
-│   └── core/
-│       ├── event.js           # Core event handling
-│       ├── config.js          # Central configuration
-│       ├── canvasManager.js   # Manages different canvas types
-│       ├── canvasModule.js    # Base class for canvas modules
-│       ├── constants.js       # Application-wide constants
-│       └── movement.js        # Handles note movement
-├── package.json               # Node.js dependencies and scripts
-├── eslint.config.js           # ESLint configuration
-├── .devcontainer/
-│   ├── devcontainer.json      # VS Code dev container configuration
-│   └── Dockerfile             # Docker configuration for dev environment
-├── package-lock.json
-├── index.html                 # Main HTML file
-├── README.md                  # Project documentation
-├── .prettierrc                # Prettier configuration
-└── img/                       # Contains application icons and images
+
 ```
 
 Please also see CANVAS_TEMPLATE.md for instructions on how to create custom templates and PLAYWRIGHT_SETUP.md for instructions on how to implement end to end browser tests.
