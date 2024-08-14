@@ -128,17 +128,21 @@
           The JSON defines a diagram with two main components: "notes" (n) and
           "connections" (c).
         </p>
-        <p>Notes (n):</p>
-        <p>ID (i): Unique base-62 identifier, starting at "1".</p>
-        <p>Position (p): Array with x and y coordinates on the canvas.</p>
-        <p>Content (c): Text or label of the note.</p>
-        <p>Connections (c):</p>
-        <p>Array with three elements:</p>
-        <p>From ID: i value of the starting note.</p>
-        <p>To ID: i value of the ending note.</p>
-        <p>
-          Type: Integer representing the connection type (e.g., directional).
-        </p>
+        <p><strong>Notes (n):</strong></p>
+        <ul>
+          <li>ID (i): Unique base-62 identifier, starting at "1".</li>
+          <li>Position (p): Array with x and y coordinates on the canvas.</li>
+          <li>Content (c): Text or label of the note.</li>
+        </ul>
+        <p><strong>Connections (c):</strong></p>
+        <ul>
+          <li>Array with three elements:</li>
+          <li>From ID: &apos;i&apos; value of the starting note.</li>
+          <li>To ID: &apos;i&apos; value of the ending note.</li>
+          <li>
+            Type: Integer representing the connection type (e.g., directional).
+          </li>
+        </ul>
         <p>
           This structure maps relationships between notes on a canvas, with
           notes positioned by coordinates and connected by defined
@@ -158,10 +162,11 @@
       <section>
         <h2>Running Your Own Copy</h2>
         <p>
-          You can download the Mindmeld files from GitHub and run MindMeld from
-          your own server or even locally on your own laptop. This provides you
-          with complete control over your mind mapping environment and allows
-          for offline usage.
+          You can download the Mindmeld files from
+          <a href="https://github.com/maudlin/mindmeld">Github</a> and run
+          MindMeld from your own server or even locally on your own laptop. This
+          provides you with complete control over your mind mapping environment
+          and allows for offline usage.
         </p>
       </section>
 
