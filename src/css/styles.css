@@ -195,6 +195,8 @@ html {
   font-family: 'Poppins', sans-serif;
   font-size: 10pt;
   line-height: 1.5;
+  pointer-events: none;
+  user-select: none;
 }
 
 /* Zoom Display Styles */
@@ -206,6 +208,8 @@ html {
   font-size: 36px;
   font-weight: 900;
   color: #ddd;
+  pointer-events: none;
+  user-select: none;
 }
 
 /* Note Styles */
