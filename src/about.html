@@ -118,7 +118,33 @@
           JSON in this format...") [see the readme for more details]
         </p>
       </section>
-
+      <section>
+        <h2>Schema Explanation</h2>
+        <p>
+          You can use this explanation in a prompt to an LLM to help it parse
+          your clipboard or exported JSON files.
+        </p>
+        <p>
+          The JSON defines a diagram with two main components: "notes" (n) and
+          "connections" (c).
+        </p>
+        <p>Notes (n):</p>
+        <p>ID (i): Unique base-62 identifier, starting at "1".</p>
+        <p>Position (p): Array with x and y coordinates on the canvas.</p>
+        <p>Content (c): Text or label of the note.</p>
+        <p>Connections (c):</p>
+        <p>Array with three elements:</p>
+        <p>From ID: i value of the starting note.</p>
+        <p>To ID: i value of the ending note.</p>
+        <p>
+          Type: Integer representing the connection type (e.g., directional).
+        </p>
+        <p>
+          This structure maps relationships between notes on a canvas, with
+          notes positioned by coordinates and connected by defined
+          relationships.
+        </p>
+      </section>
       <section>
         <h2>Your Data</h2>
         <p>
