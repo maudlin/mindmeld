@@ -1,6 +1,9 @@
 // eslint.config.mjs
 import js from '@eslint/js';
 import prettier from 'eslint-plugin-prettier';
+import globals from 'globals';
+import jestPlugin from 'eslint-plugin-jest';
+import playwrightPlugin from 'eslint-plugin-playwright';
 
 export default [
   js.configs.recommended,
@@ -13,18 +16,9 @@ export default [
       ecmaVersion: 2022,
       sourceType: 'module',
       globals: {
-        // Browser globals
-        window: 'readonly',
-        document: 'readonly',
-        // Node.js globals
-        process: 'readonly',
-        // Add any other globals you're using
+        ...globals.browser,
+        ...globals.node,
       },
-    },
-    env: {
-      browser: true,
-      node: true,
-      es2022: true,
     },
     rules: {
       'prettier/prettier': [
@@ -34,6 +28,34 @@ export default [
           endOfLine: 'auto',
         },
       ],
+    },
+  },
+  {
+    files: ['**/*.test.js', '**/*.spec.js'],
+    plugins: {
+      jest: jestPlugin,
+    },
+    languageOptions: {
+      globals: {
+        ...globals.jest,
+      },
+    },
+    rules: {
+      ...jestPlugin.configs.recommended.rules,
+    },
+  },
+  {
+    files: ['**/e2e/**/*.js', '**/e2e/**/*.ts'],
+    plugins: {
+      playwright: playwrightPlugin,
+    },
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+      },
+    },
+    rules: {
+      ...playwrightPlugin.configs.recommended.rules,
     },
   },
   {

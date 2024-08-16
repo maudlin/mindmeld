@@ -11,6 +11,10 @@ import {
 } from './dataStore.js';
 import { log } from '../utils/utils.js';
 
+// Function to check if we're in a browser environment
+const isBrowser =
+  typeof window !== 'undefined' && typeof window.document !== 'undefined';
+
 let stateLoaded = false;
 
 // Save state to localStorage
@@ -97,6 +101,9 @@ export function setupStateListeners() {
 
 // Initialize state management
 export function initializeStateManagement() {
+  if (isBrowser) {
+    window.addEventListener('beforeunload', saveStateToStorage);
+  }
   // Only attempt to load state if it hasn't been loaded before
   // and the current state is empty
   if (!stateLoaded && appState.getState().notes.length === 0) {
@@ -117,9 +124,10 @@ export function shouldRestoreState() {
 
 export function clearAllState() {
   clearStateFromStorage();
-
   log('All state cleared, local storage cleared, and UI reset');
 }
 
 // Event listener for before unload to save state
-window.addEventListener('beforeunload', saveStateToStorage);
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', saveStateToStorage);
+}
