@@ -10,4 +10,6 @@ export default {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   testMatch: ['**/tests/unit/**/*.test.js'],
+  collectCoverage: true,
+  coverageReporters: ['lcov', 'text-summary'],
 };
