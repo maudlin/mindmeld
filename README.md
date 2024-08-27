@@ -139,6 +139,7 @@ A demo of the latest stable version is available to try at: https://mind-meld.co
     - Click the "Import" button in the navigation bar to load a previously saved mind map from a JSON file.
 
 ## JSON Schema Description
+
 Schema Explanation: The JSON represents a diagram with two main components: "notes" (n) and "connections" (c).
 
 Notes (n):
@@ -156,7 +157,67 @@ Type: An integer representing the connection type (e.g., directional, non-direct
 ## File Manifest
 
 ```
-
+│   about.html
+│   index.html
+│
+├───css
+│       styles.css
+│
+├───img
+│       file-download.svg
+│       file.svg
+│       icon16.png
+│       icon256.png
+│       icon32.png
+│       icon64.png
+│
+└───js
+    │   app.js
+    │
+    ├───core
+    │       canvasManager.js
+    │       canvasModule.js
+    │       config.js
+    │       constants.js
+    │       event.js
+    │       movement.js
+    │
+    ├───data
+    │       dataStore.js
+    │       observableState.js
+    │       storageManager.js
+    │
+    ├───features
+    │   ├───canvas
+    │   │   └───templates
+    │   │       ├───herosJourney
+    │   │       │       herosJourneyCanvas.css
+    │   │       │       herosJourneyCanvas.js
+    │   │       │
+    │   │       ├───nowNextFuture
+    │   │       │       nowNextFutureCanvas.css
+    │   │       │       nowNextFutureCanvas.js
+    │   │       │
+    │   │       ├───standardCanvas
+    │   │       │       standardCanvas.css
+    │   │       │       standardCanvas.js
+    │   │       │
+    │   │       └───wardleyMap
+    │   │               wardleyMapCanvas.css
+    │   │               wardleyMapCanvas.js
+    │   │
+    │   ├───connection
+    │   │       connection.js
+    │   │       contextMenu.js
+    │   │
+    │   ├───note
+    │   │       note.js
+    │   │
+    │   └───zoom
+    │           zoomManager.js
+    │
+    └───utils
+            utils.js
 ```
 
 Please also see CANVAS_TEMPLATE.md for instructions on how to create custom templates and PLAYWRIGHT_SETUP.md for instructions on how to implement end to end browser tests.
