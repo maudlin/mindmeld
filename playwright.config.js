@@ -1,23 +1,17 @@
 // playwright.config.js
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './tests',
-  use: {
-    headless: true,
-    browserName: 'chromium',
-  },
+  testDir: './tests/e2e',
+  fullyParallel: true,
+  reporter: 'list',
   webServer: {
     command: 'npm start',
     url: 'http://localhost:8080',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true,
     timeout: 120000, // 2 minutes
   },
-  reporter: 'list',
-  projects: [
-    {
-      name: 'chromium',
-      use: { browserName: 'chromium' },
-    },
-  ],
+  use: {
+    ...devices['Desktop Chrome'],
+  },
 });

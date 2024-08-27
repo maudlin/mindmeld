@@ -1,15 +1,13 @@
-// jest.config.js or jest.config.mjs
-export default {
+/** @type {import('jest').Config} */
+const config = {
+  clearMocks: true,
+  coverageProvider: 'v8',
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/tests/unit/setup.js'],
-  transform: {
-    '^.+\\.js$': 'babel-jest',
-  },
-  transformIgnorePatterns: ['/node_modules/(?!(@babel/runtime)/)'],
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-  },
-  testMatch: ['**/tests/unit/**/*.test.js'],
-  collectCoverage: true,
-  coverageReporters: ['lcov', 'text-summary'],
+  // Specify which directories Jest should look for tests in
+  roots: ['<rootDir>/tests/unit'],
+
+  // Ignore E2E tests
+  testPathIgnorePatterns: ['/tests/e2e/'],
 };
+
+export default config;
