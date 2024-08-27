@@ -1,5 +1,10 @@
+//src/js/utils/utils.js
+
 import { getZoomLevel } from '../features/zoom/zoomManager.js';
-import { NOTE_CONTENT_LIMIT } from '../core/constants.js';
+import {
+  NOTE_CONTENT_LIMIT,
+  LOGGING as defaultLogging,
+} from '../core/constants.js';
 
 /**
  * Calculates the offset position of the note or connector handle relative to the canvas,
@@ -61,10 +66,8 @@ export function throttle(func, limit) {
   };
 }
 
-const logging = false;
-
-export function log(message) {
-  if (logging) {
+export function log(message, LOGGING = defaultLogging) {
+  if (LOGGING) {
     console.log(`[${new Date().toISOString()}] ${message}`);
   }
 }
