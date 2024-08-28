@@ -1,4 +1,4 @@
-// /src/js/features/zoom/zoomManager.js
+// src/js/features/zoom/zoomManager.js
 import config from '../../core/config.js';
 
 let zoomLevel = config.zoomLevels.default;
@@ -103,53 +103,6 @@ function handleZoom(event, canvas, zoomDisplay) {
   console.log('New transform:', newTransform);
 }
 
-// function handleZoom(event, canvas, zoomDisplay) {
-//   event.preventDefault();
-//   const oldZoom = getZoomLevel();
-//   const rect = canvas.getBoundingClientRect();
-//   const mouseX = event.clientX - rect.left;
-//   const mouseY = event.clientY - rect.top;
-
-//   if (event.deltaY < 0 && getZoomLevel() < config.zoomLevels.max) {
-//     setZoomLevel(getZoomLevel() + 1);
-//   } else if (event.deltaY > 0 && getZoomLevel() > config.zoomLevels.min) {
-//     setZoomLevel(getZoomLevel() - 1);
-//   }
-
-//   if (oldZoom === getZoomLevel()) return;
-
-//   const newScale = getZoomLevel() / 5;
-//   const oldScale = oldZoom / 5;
-//   const dx = (mouseX / oldScale) * (newScale - oldScale);
-//   const dy = (mouseY / oldScale) * (newScale - oldScale);
-
-//   const transform = new DOMMatrix(window.getComputedStyle(canvas).transform);
-//   canvas.style.transform = `translate(${transform.e - dx}px, ${
-//     transform.f - dy
-//   }px) scale(${newScale})`;
-
-//   updateZoomDisplay(zoomDisplay);
-//   console.log(`Zoom level changed from ${oldZoom} to ${getZoomLevel()}`);
-// }
-
-// function handleZoom(event, canvas, zoomDisplay) {
-//   const oldZoom = getZoomLevel();
-//   const zoomDirection = event.deltaY < 0 ? 1 : -1;
-//   const newZoom = Math.max(
-//     config.zoomLevels.min,
-//     Math.min(config.zoomLevels.max, oldZoom + zoomDirection),
-//   );
-
-//   if (oldZoom !== newZoom) {
-//     setZoomLevel(newZoom);
-//     const rect = canvas.getBoundingClientRect();
-//     const mouseX = event.clientX - rect.left;
-//     const mouseY = event.clientY - rect.top;
-//     setFixedZoom(newZoom, canvas, zoomDisplay, mouseX, mouseY);
-//     console.log(`Zoom level changed from ${oldZoom} to ${newZoom}`);
-//   }
-// }
-
 function updateZoomDisplay(zoomDisplay) {
   if (zoomDisplay) {
     zoomDisplay.textContent = `${getZoomLevel()}x`;
@@ -191,10 +144,10 @@ function stopPanning() {
 let currentZoomListener = null;
 
 export function setupZoom(canvasContainer, canvas, zoomDisplay) {
-  // Remove existing zoom listener if there is one
-  if (currentZoomListener) {
-    canvasContainer.removeEventListener('wheel', currentZoomListener);
-  }
+  // Remove any existing listener, even if currentZoomListener is null
+  canvasContainer.removeEventListener('wheel', currentZoomListener, {
+    passive: false,
+  });
 
   currentZoomListener = (event) => {
     event.preventDefault();
