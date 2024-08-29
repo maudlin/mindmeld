@@ -1,25 +1,39 @@
 /* Global Styles */
+:root {
+  --primary-color: #1f2937; /* Navbar background */
+  --secondary-color: #d1d5db; /* Light text color */
+  --accent-color: #ffd588; /* Accent color */
+  --hover-color: rgba(30, 65, 107, 0.5); /* Hover background */
+  --font-family: 'Poppins', sans-serif;
+  --font-family-alt: 'Over the Rainbow', cursive;
+}
+
 body,
 html {
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
   overflow: hidden; /* Hide overflow */
 }
+
 /* Navbar styles */
-#navbar {
+#navbar,
+#logo,
+#menu {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 1rem;
-  background-color: #1f2937;
 }
+
+#navbar {
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background-color: var(--primary-color);
+}
+
 #logo {
-  display: flex;
-  align-items: center;
-  color: #d1d5db;
+  color: var(--secondary-color);
   font-size: 1.25rem;
   font-weight: bold;
 }
@@ -31,7 +45,6 @@ html {
 }
 
 #menu {
-  display: flex;
   list-style-type: none;
   margin: 0;
   padding: 0;
@@ -44,15 +57,13 @@ html {
 }
 
 .menu-button,
-.menu-link {
-  background-color: transparent;
-  position: relative;
+.menu-link,
+.dropdown button {
   background-color: transparent;
   border: none;
-  color: #d1d5db;
-  padding: 0.5rem;
+  color: var(--secondary-color);
   cursor: pointer;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
   font-weight: bold;
   text-transform: uppercase;
   font-size: 0.65rem;
@@ -61,24 +72,13 @@ html {
   overflow: hidden; /* Hide overflow for the pseudo-element */
 }
 
-.menu-button:hover {
-  background-color: rgba(30, 65, 107, 0.5);
+.menu-button:hover,
+.menu-button:active {
+  background-color: var(--hover-color);
 }
 
-.menu-button::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(255, 255, 40, 0.3); /* Very pale yellow */
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none; /* Ensure it doesn't interfere with clicks */
-}
-
-.menu-button:active::after {
+.menu-button:active::after,
+.dropdown button:active::after {
   opacity: 1;
 }
 
@@ -88,7 +88,6 @@ html {
   min-width: 150px;
   top: 100%;
   right: 0; /* Align to the right of the menu item */
-  left: auto;
   background-color: #ffffff;
   border-radius: 0.375rem;
   box-shadow:
@@ -109,42 +108,20 @@ html {
 }
 
 .dropdown button {
-  width: 100%;
   border-radius: 0.375rem;
-  font-family: 'Poppins', sans-serif;
-  font-weight: bold;
-  text-transform: uppercase;
-  font-size: 0.65rem;
+  width: 100%;
   display: block;
   text-align: left;
   padding: 0.5rem 0.5rem;
-  background: none;
-  border: none;
   color: #374151;
   cursor: pointer;
   overflow: hidden;
 }
 
-.dropdown button::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(255, 255, 200, 0.3); /* Very pale yellow */
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none; /* Ensure it doesn't interfere with clicks */
-}
-
 .dropdown button:hover {
-  background-color: #f3f4f6;
+  background-color: #edf0ff;
 }
 
-.dropdown button:active::after {
-  opacity: 1;
-}
 /* Canvas Styles */
 #canvas-container {
   width: 100%;
@@ -157,13 +134,12 @@ html {
 #canvas {
   width: 7680px;
   height: 4320px;
-  background-color: #fffcf8;
+  background: #fffcf8 radial-gradient(#eee 2px, transparent 2px);
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   transform-origin: top left;
-  background-image: radial-gradient(#eee 2px, transparent 2px);
   background-size: 20px 20px; /* Adjust the grid size */
 }
 
@@ -192,7 +168,7 @@ html {
   bottom: 10px;
   left: 10px;
   color: rgba(94, 94, 94, 0.5); /* 50% gray */
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
   font-size: 10pt;
   line-height: 1.5;
   pointer-events: none;
@@ -204,7 +180,7 @@ html {
   position: fixed;
   bottom: 10px;
   right: 10px;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
   font-size: 36px;
   font-weight: 900;
   color: #ddd;
@@ -218,28 +194,28 @@ html {
   width: 150px;
   padding: 8px;
   background-color: #fff3cd; /* Light yellow for deselected notes */
-  border: 1px solid #ffd588; /* Transparent border for deselected notes */
+  border: 1px solid var(--accent-color);
   border-radius: 8px;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
   cursor: move;
-  font-family: 'Poppins', sans-serif;
-  font-weight: bold; /* Bold text */
-  font-size: 14px;
   color: #333;
   box-sizing: border-box;
   z-index: 1; /* Ensure notes are above the SVG container */
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 #svg-container {
   z-index: 0; /* Ensure SVG container is below the notes */
+  pointer-events: none;
 }
 
 .note.selected {
-  border: 1px solid #ffbe45; /* Highlight with a border */
+  border-color: #ffbe45; /* Highlight with a border */
   background-color: #ffe599; /* Slightly different background */
 }
 
@@ -252,11 +228,21 @@ html {
 }
 
 .note-content {
+  font-family: var(--font-family);
+  font-size: 0.8em;
+  font-weight: bold;
+  color: #333;
   outline: none; /* Remove default outline when focused */
   cursor: text; /* Ensure cursor is text when focused */
   min-width: 50px;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: center;
+}
+
+.note-content-handdrawn {
+  font-family: var(--font-family-alt);
+  font-size: 1.1em;
 }
 
 /* Prevent text selection in notes */
@@ -266,10 +252,6 @@ html {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-}
-
-#version {
-  color: #faa;
 }
 
 body.dragging,
@@ -288,38 +270,10 @@ body.dragging * {
   user-select: text !important;
 }
 
-.note {
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease;
-}
-
 /* Connector Styles */
 line.connection-line {
   stroke: #888;
   stroke-width: 2;
-}
-
-/* Update existing styles for the SVG container to allow pointer events on connectors */
-#svg-container {
-  pointer-events: none;
-}
-
-svg text {
-  user-select: none; /* Prevent text selection */
-  pointer-events: none; /* Disable pointer events */
-}
-
-/* Apply styles only to divs within a .background-layout element */
-.background-layout div,
-.background-layout div * {
-  user-select: none; /* Prevent text selection */
-  pointer-events: none; /* Disable pointer events */
-}
-
-#svg-container line,
-#svg-container circle {
-  pointer-events: all;
 }
 
 /* Connector Hotspot Styles */
@@ -330,78 +284,9 @@ svg text {
   cursor: pointer;
 }
 
-/* Add this to your CSS file */
-.context-menu-item text {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  font-weight: bold;
-}
-
-/* For the help-text div */
-.help-text {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  color: rgba(128, 128, 128, 0.5); /* 50% gray */
-  font-family: 'Poppins', sans-serif;
-  font-size: 10pt;
-  line-height: 1.5;
-  user-select: none; /* Prevent text selection */
-  pointer-events: none; /* Disable pointer events */
-}
-
-#selection-box {
-  position: absolute;
-  border: 1px dashed #000;
-  background-color: rgba(0, 0, 255, 0.1);
-  pointer-events: none; /* Ensure selection box does not interfere with interactions */
-}
-
-/* Ghost Connecting Points */
-.note .ghost-connector {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  background-color: rgba(112, 181, 255, 0.5); /* Semi-transparent blue */
-  border-radius: 50%;
-  display: none; /* Hidden by default */
-  cursor: crosshair;
-}
-
-.note:hover .ghost-connector {
-  display: block; /* Show on hover */
-}
-
-.ghost-connector.top {
-  top: -5px; /* Adjust for circle size */
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.ghost-connector.bottom {
-  bottom: -5px; /* Adjust for circle size */
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.ghost-connector.left {
-  left: -5px; /* Adjust for circle size */
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.ghost-connector.right {
-  right: -5px; /* Adjust for circle size */
-  top: 50%;
-  transform: translateY(-50%);
+#svg-container line,
+#svg-container circle {
+  pointer-events: all;
 }
 
 /* Overlay Styles */
@@ -419,11 +304,11 @@ svg text {
 }
 
 #overlay-content {
-  background: #1f2937; /* Tailwind gray-800 for dark background */
+  background: var(--primary-color);
   padding: 2rem;
   border-radius: 12px; /* Slightly larger border radius */
   text-align: center;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
   max-width: 600px; /* Adjusted for more width */
   color: white; /* White text color for contrast */
   box-shadow:
@@ -513,22 +398,7 @@ svg text {
   padding: 2rem;
   background-color: #1a202c; /* bg-gray-900 */
   color: #ffffff; /* text-white */
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    'Noto Sans',
-    sans-serif,
-    'Apple Color Emoji',
-    'Segoe UI Emoji',
-    'Segoe UI Symbol',
-    'Noto Color Emoji';
+  font-family: var(--font-family-alt);
   border-radius: 0.5rem; /* rounded-lg */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* shadow */
 }
@@ -574,4 +444,72 @@ svg text {
   margin-bottom: 2rem; /* mb-8 */
   border-bottom: 1px solid #2d3748; /* border-b */
   padding-bottom: 1rem;
+}
+
+/* Ghost Connecting Points */
+.note .ghost-connector {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: rgba(112, 181, 255, 0.5); /* Semi-transparent blue */
+  border-radius: 50%;
+  display: none; /* Hidden by default */
+  cursor: crosshair;
+}
+
+.note:hover .ghost-connector {
+  display: block; /* Show on hover */
+}
+
+.ghost-connector.top {
+  top: -5px; /* Adjust for circle size */
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ghost-connector.bottom {
+  bottom: -5px; /* Adjust for circle size */
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ghost-connector.left {
+  left: -5px; /* Adjust for circle size */
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.ghost-connector.right {
+  right: -5px; /* Adjust for circle size */
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+#selection-box {
+  position: absolute;
+  border: 1px dashed #000;
+  background-color: rgba(0, 0, 255, 0.1);
+  pointer-events: none; /* Ensure selection box does not interfere with interactions */
+}
+
+.context-menu {
+  z-index: 1000;
+}
+
+.context-menu-item text {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+/* Prevent text selection in specific elements */
+.help-text,
+.context-menu-item text,
+svg text {
+  user-select: none;
+  pointer-events: none;
 }
