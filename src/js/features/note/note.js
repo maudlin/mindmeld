@@ -12,6 +12,7 @@ import { NOTE_CONTENT_LIMIT } from '../../core/constants.js';
 import { saveStateToStorage } from '../../data/storageManager.js';
 
 let nextNoteId = 1;
+let handDrawn = false;
 
 export function createNoteAtPosition(canvas, event) {
   const { left: x, top: y } = calculateOffsetPosition(canvas, event);
@@ -24,6 +25,10 @@ export function createNote(x, y, canvas) {
 
   const noteContent = document.createElement('div');
   noteContent.className = 'note-content';
+  if (handDrawn) {
+    noteContent.classList.add('note-content-handdrawn');
+  }
+
   noteContent.contentEditable = true;
 
   note.appendChild(noteContent);
