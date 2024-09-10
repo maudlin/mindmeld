@@ -1,5 +1,5 @@
 // src/js/core/constants.js
-export const LOGGING = false; // Default value for logging
+export const LOGGING = true; // Default value for logging
 
 export const DOM_SELECTORS = {
   CANVAS: '#canvas',
