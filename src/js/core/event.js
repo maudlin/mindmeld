@@ -4,7 +4,7 @@ import {
   deleteNoteWithConnections,
 } from '../features/note/note.js';
 import { initializeConnectionDrawing } from '../features/connection/connection.js';
-import { calculateOffsetPosition } from '../utils/utils.js';
+import { calculateOffsetPosition, throttle } from '../utils/utils.js';
 import { saveStateToStorage } from '../data/storageManager.js';
 
 let selectionBox = null;
@@ -55,9 +55,22 @@ export function setupCanvasEvents(canvas) {
   initializeConnectionDrawing(canvas);
 }
 
+const throttledHandleDoubleClick = throttle((event) => {
+  const canvas = event.target.closest('#canvas');
+  if (canvas) {
+    createNoteAtPosition(canvas, event);
+    saveStateToStorage();
+  }
+}, 500); // 500ms throttle
+
 function handleDoubleClick(event) {
-  createNoteAtPosition(event.target.closest('#canvas'), event);
-  saveStateToStorage();
+  // Check if the click is directly on the canvas, not on a note
+  if (
+    event.target.id === 'canvas' ||
+    event.target.classList.contains('background-layout')
+  ) {
+    throttledHandleDoubleClick(event);
+  }
 }
 
 function preventDefault(event) {
@@ -171,18 +184,39 @@ export function setupDocumentEvents() {
 }
 
 function handleKeyDown(event) {
-  if (event.key === 'Delete') {
-    const activeElement = document.activeElement;
-    const isEditingNoteContent =
-      activeElement.classList.contains('note-content') &&
-      activeElement.isContentEditable;
+  const isEditing = isEditingNoteContent(event.target);
 
-    if (!isEditingNoteContent) {
+  if (event.key === 'Delete' || event.key === 'Backspace') {
+    if (!isEditing) {
+      // Not editing: delete the selected note(s)
+      event.preventDefault();
       const canvas = document.getElementById('canvas');
       NoteManager.getSelectedNotes().forEach((note) =>
         deleteNoteWithConnections(note, canvas),
       );
+      saveStateToStorage();
+    } else if (event.key === 'Delete') {
+      // Editing and Delete key: allow default behavior (delete forward)
+      return;
+    } else if (
+      event.key === 'Backspace' &&
+      event.target.textContent.length === 0
+    ) {
+      // Editing, Backspace key, and content is empty: delete the note
+      event.preventDefault();
+      const note = event.target.closest('.note');
+      if (note) {
+        const canvas = document.getElementById('canvas');
+        deleteNoteWithConnections(note, canvas);
+        saveStateToStorage();
+      }
     }
-    saveStateToStorage();
+    // If editing and Backspace with content, allow default behavior
   }
+}
+
+function isEditingNoteContent(element) {
+  return (
+    element.classList.contains('note-content') && element.isContentEditable
+  );
 }

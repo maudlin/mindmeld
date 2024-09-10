@@ -35,6 +35,9 @@ export function calculateOffsetPosition(canvas, event, element = null) {
 
 /**
  * Debounces a function call.
+ * Ensures the function is called only after a specified delay has passed since the last call.
+ * Useful for limiting the rate of function execution, such as handling user input or resize events.
+ *
  * @param {Function} func - The function to debounce.
  * @param {number} delay - The delay in milliseconds.
  * @returns {Function} - The debounced function.
@@ -42,7 +45,9 @@ export function calculateOffsetPosition(canvas, event, element = null) {
 export function debounce(func, delay) {
   let timeoutId;
   return function (...args) {
+    // Clear the previous timeout
     clearTimeout(timeoutId);
+    // Set a new timeout
     timeoutId = setTimeout(() => {
       func.apply(this, args);
     }, delay);
@@ -51,6 +56,9 @@ export function debounce(func, delay) {
 
 /**
  * Throttles a function call.
+ * Ensures the function is called at most once in a specified time period.
+ * Useful for ensuring a function is called at regular intervals, such as handling scroll or continuous button clicks.
+ *
  * @param {Function} func - The function to throttle.
  * @param {number} limit - The time limit in milliseconds.
  * @returns {Function} - The throttled function.
@@ -59,8 +67,10 @@ export function throttle(func, limit) {
   let inThrottle;
   return function (...args) {
     if (!inThrottle) {
+      // Call the function and set the throttle flag
       func.apply(this, args);
       inThrottle = true;
+      // Reset the throttle flag after the limit period
       setTimeout(() => (inThrottle = false), limit);
     }
   };

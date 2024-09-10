@@ -200,7 +200,7 @@ function setupExportImport(menu, canvas) {
   });
 }
 
-function setupClearCanvas(menu, canvas) {
+function setupClearCanvas(menu) {
   menu.addEventListener('click', (event) => {
     if (event.target.id === 'clear-canvas-button') handleClearCanvas();
   });

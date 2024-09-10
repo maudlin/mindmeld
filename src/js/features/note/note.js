@@ -16,7 +16,8 @@ let handDrawn = false;
 
 export function createNoteAtPosition(canvas, event) {
   const { left: x, top: y } = calculateOffsetPosition(canvas, event);
-  return createNote(x, y, canvas);
+  // Offset the note creation position to centre the note
+  return createNote(x - config.noteSize.width / 2, y - 20, canvas);
 }
 
 export function createNote(x, y, canvas) {
