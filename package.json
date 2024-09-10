@@ -5,7 +5,7 @@
   "main": "src/js/app.js",
   "type": "module",
   "scripts": {
-    "start": "live-server src --port=8080 --no-css-inject --cors",
+    "start": "http-server src -p 8080 --cors",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write 'src/**/*.{js,html,css}'",
