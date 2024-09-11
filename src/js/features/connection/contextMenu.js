@@ -1,4 +1,4 @@
-// contextMenu.js
+// src/js/features/connection/contextMenu.js
 import { log } from '../../utils/utils.js';
 
 export class ContextMenu {
@@ -24,11 +24,8 @@ export class ContextMenu {
 
   createMenuItems() {
     return [
-      { type: 'delete', symbol: 'x', y: -40 },
-      { type: this.CONNECTION_TYPES.UNI_BACKWARD, symbol: '<', y: -20 },
-      { type: this.CONNECTION_TYPES.NONE, symbol: '-', y: 0 },
-      { type: this.CONNECTION_TYPES.UNI_FORWARD, symbol: '>', y: 20 },
-      { type: this.CONNECTION_TYPES.BI, symbol: '<>', y: 40 },
+      { type: 'delete', symbol: 'x', y: -20 },
+      { type: 'cycle', symbol: '<>', y: 0 },
     ];
   }
 
@@ -55,9 +52,9 @@ export class ContextMenu {
   createBackgroundRect() {
     return this.createSVGElement('rect', {
       x: -1,
-      y: -60,
+      y: -40,
       width: 1,
-      height: 120,
+      height: 60,
       fill: '#ccc',
       class: 'menu-background-line',
     });
@@ -97,9 +94,9 @@ export class ContextMenu {
   createMenuBackground() {
     return this.createSVGElement('rect', {
       x: -15,
-      y: -55,
+      y: -35,
       width: 30,
-      height: 110,
+      height: 70,
       fill: 'transparent',
       class: 'menu-background',
     });
@@ -165,11 +162,20 @@ export class ContextMenu {
 
     if (connectionType === 'delete') {
       this.onDelete?.(startId, endId, connectionGroup);
-    } else {
-      this.onTypeChange?.(startId, endId, connectionType);
+    } else if (connectionType === 'cycle') {
+      const currentType = connectionGroup.dataset.type;
+      const newType = this.getNextConnectionType(currentType);
+      this.onTypeChange?.(startId, endId, newType);
     }
 
     this.hide();
+  }
+
+  getNextConnectionType(currentType) {
+    const types = Object.values(this.CONNECTION_TYPES);
+    const currentIndex = types.indexOf(currentType);
+    const nextIndex = (currentIndex + 1) % types.length;
+    return types[nextIndex];
   }
 
   attachClickHandler(element) {

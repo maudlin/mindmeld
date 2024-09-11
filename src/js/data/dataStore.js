@@ -8,6 +8,21 @@ import {
 import { debounce, log, truncateNoteContent } from '../utils/utils.js';
 import { appState } from './observableState.js';
 import { NOTE_CONTENT_LIMIT } from '../core/constants.js';
+import { CONNECTION_TYPES } from '../features/connection/connection.js';
+
+const CONNECTION_TYPE_MAP = {
+  [CONNECTION_TYPES.NONE]: 0,
+  [CONNECTION_TYPES.UNI_FORWARD]: 1,
+  [CONNECTION_TYPES.UNI_BACKWARD]: 2,
+  [CONNECTION_TYPES.BI]: 3,
+};
+
+const CONNECTION_TYPE_MAP_REVERSE = {
+  0: CONNECTION_TYPES.NONE,
+  1: CONNECTION_TYPES.UNI_FORWARD,
+  2: CONNECTION_TYPES.UNI_BACKWARD,
+  3: CONNECTION_TYPES.BI,
+};
 
 export function addNote(note) {
   const currentNotes = appState.getState().notes;
@@ -15,7 +30,7 @@ export function addNote(note) {
   return note;
 }
 
-export function updateNote(id, updatedNote, silent = false) {
+export function updateNote(id, updatedNote) {
   const currentNotes = appState.getState().notes;
   const index = currentNotes.findIndex((note) => note.id === id);
   if (index !== -1) {
@@ -87,8 +102,13 @@ const debouncedUpdateConnection = debounce((startId, endId, type) => {
       log(`No connection found to remove: ${startId} - ${endId}`);
     }
   } else {
+    // Ensure type is valid
+    const validType = Object.values(CONNECTION_TYPES).includes(type)
+      ? type
+      : CONNECTION_TYPES.NONE;
+
     // Update or add connection
-    const connection = { from: startId, to: endId, type };
+    const connection = { from: startId, to: endId, type: validType };
     if (existingConnectionIndex !== -1) {
       updatedConnections[existingConnectionIndex] = connection;
     } else {
@@ -137,7 +157,7 @@ export function exportToJSON() {
     c: connections.map((conn) => [
       conn.from,
       conn.to,
-      conn.type === 'bi' ? 0 : 1,
+      CONNECTION_TYPE_MAP[conn.type] || 0,
     ]),
   };
   return JSON.stringify({ data: compressedData }, null, 2);
@@ -184,7 +204,8 @@ export function importFromJSON(jsonData, canvas) {
     // Create connections
     const connections = data.c.map((conn) => {
       const [fromId, toId, typeNum] = conn;
-      const type = typeNum === 0 ? 'bi' : 'uni-forward';
+      const type =
+        CONNECTION_TYPE_MAP_REVERSE[typeNum] || CONNECTION_TYPES.NONE;
       createConnection(fromId, toId, type);
       return { from: fromId, to: toId, type };
     });

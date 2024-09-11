@@ -1,4 +1,4 @@
-// connections.js
+// src/js/features/connection/connections.js
 import { calculateOffsetPosition, log } from '../../utils/utils.js';
 import { getZoomLevel } from '../zoom/zoomManager.js';
 import { updateConnectionInDataStore } from '../../data/dataStore.js';
@@ -13,10 +13,10 @@ const STROKE_DASHARRAY = '5,5';
 const throttledUpdateConnections = throttle(updateConnections, 16);
 
 export const CONNECTION_TYPES = {
-  NONE: 'none',
   UNI_FORWARD: 'uni-forward',
   UNI_BACKWARD: 'uni-backward',
   BI: 'bi',
+  NONE: 'none',
 };
 
 export let isConnecting = false;
@@ -207,7 +207,7 @@ export function updateConnections(noteOrGroup) {
   }
 }
 
-export function createConnection(fromId, toId, type) {
+export function createConnection(fromId, toId, type = CONNECTION_TYPES.NONE) {
   const svgContainer = document.getElementById('svg-container');
   const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   group.setAttribute('data-start', fromId);
@@ -371,7 +371,6 @@ function updateConnectionPath(path, x1, y1, x2, y2, type) {
 
   path.setAttribute('marker-start', markerStart);
   path.setAttribute('marker-end', markerEnd);
-  //log('Markers set:', { markerStart, markerEnd });
 }
 
 function handleSvgClick(event) {
@@ -562,11 +561,15 @@ function finalizeConnection(startNote, endNote, connectionGroup) {
 
   connectionGroup.group.dataset.start = startNote.id;
   connectionGroup.group.dataset.end = endNote.id;
-  connectionGroup.group.dataset.type = CONNECTION_TYPES.NONE;
+  connectionGroup.group.dataset.type = CONNECTION_TYPES.UNI_FORWARD;
 
   connectionGroup.contextMenu.connectionGroup = connectionGroup.group;
 
-  updateConnectionInDataStore(startNote.id, endNote.id, CONNECTION_TYPES.NONE);
+  updateConnectionInDataStore(
+    startNote.id,
+    endNote.id,
+    CONNECTION_TYPES.UNI_FORWARD,
+  );
 
   updateConnections(connectionGroup.group);
 
