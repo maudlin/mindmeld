@@ -398,7 +398,7 @@ line.connection-line {
   padding: 2rem;
   background-color: #1a202c; /* bg-gray-900 */
   color: #ffffff; /* text-white */
-  font-family: var(--font-family-alt);
+  font-family: var(--font-family);
   border-radius: 0.5rem; /* rounded-lg */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* shadow */
 }
