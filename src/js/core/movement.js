@@ -3,10 +3,13 @@ import { updateNote } from '../data/dataStore.js';
 import { NoteManager } from './event.js';
 import { throttle } from '../utils/utils.js';
 import { getZoomLevel } from '../features/zoom/zoomManager.js';
-import { updateConnections } from '../features/connection/connection.js';
+import { connectionManager } from '../features/connection/connectionManager.js';
 import { appState } from '../data/observableState.js';
 
-const throttledUpdateConnections = throttle(updateConnections, 16); // ~60fps
+const throttledUpdateConnections = throttle(
+  (noteOrGroup) => connectionManager.updateConnections(noteOrGroup),
+  16,
+);
 
 let activeNote = null;
 let shiftX = 0,
@@ -16,7 +19,10 @@ let hasStateChanged = false;
 
 export function moveNoteEnd() {
   if (activeNote) {
-    updateConnections(activeNote, activeNote.closest('#canvas'));
+    connectionManager.updateConnections(
+      activeNote,
+      activeNote.closest('#canvas'),
+    );
     if (hasStateChanged) {
       appState.saveToLocalStorage(); // Explicitly save state after movement
     }
@@ -104,6 +110,6 @@ function moveAt(pageX, pageY, canvas) {
       },
       false,
     );
-    updateConnections(note, canvas);
+    connectionManager.updateConnections(note, canvas);
   });
 }
