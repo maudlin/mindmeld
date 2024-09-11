@@ -1,9 +1,7 @@
 //note.js
 import { addNote, updateNote, deleteNoteById } from '../../data/dataStore.js';
-import {
-  updateConnections,
-  deleteConnectionsByNote,
-} from '../connection/connection.js';
+import { deleteConnectionsByNote } from '../connection/connection.js';
+import { connectionManager } from '../connection/connectionManager.js';
 import { moveNoteStart, moveNoteEnd } from '../../core/movement.js';
 import { calculateOffsetPosition, toBase62 } from '../../utils/utils.js';
 import { NoteManager } from '../../core/event.js';
@@ -118,7 +116,7 @@ export function addNoteEventListeners(note, canvas) {
 
   note.addEventListener('mouseup', () => {
     moveNoteEnd();
-    updateConnections(note, canvas); // Update connections after move ends
+    connectionManager.updateConnections(note, canvas); // Update connections after move ends
   });
 }
 
@@ -134,7 +132,7 @@ export function deleteNoteWithConnections(note, canvas) {
   deleteConnectionsByNote(note);
   deleteNoteById(note.id);
   note.remove();
-  updateConnections(note, canvas);
+  connectionManager.updateConnections(note, canvas);
 }
 
 export function deleteNote() {

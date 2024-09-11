@@ -1,27 +1,22 @@
-// dataStore.js
+// src/js/data/dataStore.js
 import { createNote, addNoteEventListeners } from '../features/note/note.js';
-import {
-  createConnection,
-  updateConnections,
-  initializeConnectionDrawing,
-} from '../features/connection/connection.js';
+import { connectionManager } from '../features/connection/connectionManager.js';
 import { debounce, log, truncateNoteContent } from '../utils/utils.js';
 import { appState } from './observableState.js';
 import { NOTE_CONTENT_LIMIT } from '../core/constants.js';
-import { CONNECTION_TYPES } from '../features/connection/connection.js';
 
 const CONNECTION_TYPE_MAP = {
-  [CONNECTION_TYPES.NONE]: 0,
-  [CONNECTION_TYPES.UNI_FORWARD]: 1,
-  [CONNECTION_TYPES.UNI_BACKWARD]: 2,
-  [CONNECTION_TYPES.BI]: 3,
+  [connectionManager.CONNECTION_TYPES.NONE]: 0,
+  [connectionManager.CONNECTION_TYPES.UNI_FORWARD]: 1,
+  [connectionManager.CONNECTION_TYPES.UNI_BACKWARD]: 2,
+  [connectionManager.CONNECTION_TYPES.BI]: 3,
 };
 
 const CONNECTION_TYPE_MAP_REVERSE = {
-  0: CONNECTION_TYPES.NONE,
-  1: CONNECTION_TYPES.UNI_FORWARD,
-  2: CONNECTION_TYPES.UNI_BACKWARD,
-  3: CONNECTION_TYPES.BI,
+  0: connectionManager.CONNECTION_TYPES.NONE,
+  1: connectionManager.CONNECTION_TYPES.UNI_FORWARD,
+  2: connectionManager.CONNECTION_TYPES.UNI_BACKWARD,
+  3: connectionManager.CONNECTION_TYPES.BI,
 };
 
 export function addNote(note) {
@@ -72,11 +67,11 @@ export function updateNotesAndConnections(state) {
 
   // Create connections
   state.connections.forEach((conn) => {
-    createConnection(conn.from, conn.to, conn.type);
+    connectionManager.createConnection(conn.from, conn.to, conn.type);
   });
 
   // Update all connections
-  updateConnections();
+  connectionManager.updateConnections();
 
   console.log(
     `Updated ${state.notes.length} notes and ${state.connections.length} connections`,
@@ -103,9 +98,11 @@ const debouncedUpdateConnection = debounce((startId, endId, type) => {
     }
   } else {
     // Ensure type is valid
-    const validType = Object.values(CONNECTION_TYPES).includes(type)
+    const validType = Object.values(
+      connectionManager.CONNECTION_TYPES,
+    ).includes(type)
       ? type
-      : CONNECTION_TYPES.NONE;
+      : connectionManager.CONNECTION_TYPES.NONE;
 
     // Update or add connection
     const connection = { from: startId, to: endId, type: validType };
@@ -198,15 +195,16 @@ export function importFromJSON(jsonData, canvas) {
     let svgContainer = document.getElementById('svg-container');
     if (!svgContainer) {
       log('SVG container not found, initializing connection drawing');
-      svgContainer = initializeConnectionDrawing(canvas);
+      svgContainer = connectionManager.initializeConnectionDrawing(canvas);
     }
 
     // Create connections
     const connections = data.c.map((conn) => {
       const [fromId, toId, typeNum] = conn;
       const type =
-        CONNECTION_TYPE_MAP_REVERSE[typeNum] || CONNECTION_TYPES.NONE;
-      createConnection(fromId, toId, type);
+        CONNECTION_TYPE_MAP_REVERSE[typeNum] ||
+        connectionManager.CONNECTION_TYPES.NONE;
+      connectionManager.createConnection(fromId, toId, type);
       return { from: fromId, to: toId, type };
     });
 
@@ -215,7 +213,7 @@ export function importFromJSON(jsonData, canvas) {
 
     // Update all connections
     log('Updating all connections');
-    updateConnections();
+    connectionManager.updateConnections();
 
     log('Import complete');
   } catch (error) {
