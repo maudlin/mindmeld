@@ -154,6 +154,21 @@ From ID: The i value of the starting note.
 To ID: The i value of the ending note.
 Type: An integer representing the connection type (e.g., directional, non-directional).
 
+### Example
+```
+{
+  "data": {
+    "n": [
+      { "i": "1", "p": [0, 0], "c": "First Note" },
+      { "i": "2", "p": [150, 0], "c": "Second Note" }
+    ],
+    "c": [
+      ["1", "2", 1]
+    ]
+  }
+}
+```
+
 ## File Manifest
 
 ```
