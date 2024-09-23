@@ -152,7 +152,7 @@ Connections (c):
 Each connection is an array with three elements:
 From ID: The i value of the starting note.
 To ID: The i value of the ending note.
-Type: An integer representing the connection type (e.g., directional, non-directional).
+Type: An integer representing the connection type (1: from-to, 2: to-from, 3: bidirectional, 0: non-directional).
 
 ### Example
 ```
