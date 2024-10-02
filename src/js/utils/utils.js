@@ -1,3 +1,4 @@
+//src/js/utils/utils.js
 import { getZoomLevel } from '../features/zoom/zoomManager.js';
 import {
   NOTE_CONTENT_LIMIT,

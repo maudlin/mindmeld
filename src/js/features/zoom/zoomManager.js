@@ -1,3 +1,4 @@
+// src/js/features/zoom/zoomManager.js
 import config from '../../core/config.js';
 import { isMobileDevice } from '../../utils/utils.js';
 

@@ -1,3 +1,4 @@
+// src/js/core/event.js.js
 import {
   createNoteAtPosition,
   deleteNoteWithConnections,
