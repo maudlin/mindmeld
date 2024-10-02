@@ -1,10 +1,9 @@
-// event.js
 import {
   createNoteAtPosition,
   deleteNoteWithConnections,
 } from '../features/note/note.js';
 import { initializeConnectionDrawing } from '../features/connection/connection.js';
-import { calculateOffsetPosition, throttle } from '../utils/utils.js';
+import { calculateOffsetPosition, throttle, isMobileDevice } from '../utils/utils.js';
 import { saveStateToStorage } from '../data/storageManager.js';
 
 let selectionBox = null;
@@ -50,6 +49,13 @@ export function setupCanvasEvents(canvas) {
   document.addEventListener('mouseup', clearSelectionBox);
   document.addEventListener('mouseleave', clearSelectionBox);
   document.addEventListener('contextmenu', preventDefault);
+
+  // Add touch event listeners for mobile
+  if (isMobileDevice()) {
+    canvas.addEventListener('touchstart', handleTouchStart);
+    canvas.addEventListener('touchend', handleTouchEnd);
+    canvas.addEventListener('touchmove', handleTouchMove);
+  }
 
   // Re-initialize connection drawing
   initializeConnectionDrawing(canvas);
@@ -219,4 +225,45 @@ function isEditingNoteContent(element) {
   return (
     element.classList.contains('note-content') && element.isContentEditable
   );
+}
+
+// Touch event handlers for mobile
+function handleTouchStart(event) {
+  const touch = event.touches[0];
+  const target = document.elementFromPoint(touch.clientX, touch.clientY);
+
+  if (
+    !target.classList.contains('ghost-connector') &&
+    !target.classList.contains('note') &&
+    !target.closest('.note')
+  ) {
+    startSelectionBox(touch, event.currentTarget);
+  }
+}
+
+function handleTouchEnd(event) {
+  clearSelectionBox();
+}
+
+function handleTouchMove(event) {
+  if (!isDrawingSelectionBox || !selectionBox) return;
+
+  const touch = event.touches[0];
+  const canvas = document.getElementById('canvas');
+  const { left: currentX, top: currentY } = calculateOffsetPosition(
+    canvas,
+    touch,
+  );
+
+  const width = currentX - startX;
+  const height = currentY - startY;
+
+  Object.assign(selectionBox.style, {
+    width: `${Math.abs(width)}px`,
+    height: `${Math.abs(height)}px`,
+    left: `${Math.min(currentX, startX)}px`,
+    top: `${Math.min(currentY, startY)}px`,
+  });
+
+  selectNotesWithinBox();
 }

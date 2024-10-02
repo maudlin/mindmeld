@@ -1,5 +1,3 @@
-//src/js/utils/utils.js
-
 import { getZoomLevel } from '../features/zoom/zoomManager.js';
 import {
   NOTE_CONTENT_LIMIT,
@@ -106,3 +104,11 @@ export const fromBase62 = (str) => {
     .split('')
     .reduce((acc, char) => acc * 62 + BASE62.indexOf(char), 0);
 };
+
+/**
+ * Detects if the current device is a mobile device.
+ * @returns {boolean} - True if the device is mobile, false otherwise.
+ */
+export function isMobileDevice() {
+  return /Mobi|Android/i.test(navigator.userAgent);
+}

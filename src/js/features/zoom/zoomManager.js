@@ -1,5 +1,5 @@
-// src/js/features/zoom/zoomManager.js
 import config from '../../core/config.js';
+import { isMobileDevice } from '../../utils/utils.js';
 
 let zoomLevel = config.zoomLevels.default;
 let isPanning = false;
@@ -141,6 +141,38 @@ function stopPanning() {
   isPanning = false;
 }
 
+function startTouchPanning(event) {
+  if (event.touches.length === 1) {
+    event.preventDefault();
+    isPanning = true;
+    startX = event.touches[0].clientX - event.currentTarget.offsetLeft;
+    startY = event.touches[0].clientY - event.currentTarget.offsetTop;
+  }
+}
+
+function touchPan(event) {
+  if (isPanning && event.touches.length === 1) {
+    event.preventDefault();
+    const canvas = event.currentTarget.querySelector('#canvas');
+    const x = event.touches[0].clientX - event.currentTarget.offsetLeft;
+    const y = event.touches[0].clientY - event.currentTarget.offsetTop;
+    const dx = x - startX;
+    const dy = y - startY;
+
+    const transform = new DOMMatrix(window.getComputedStyle(canvas).transform);
+    canvas.style.transform = `translate(${transform.e + dx}px, ${
+      transform.f + dy
+    }px) scale(${transform.a})`;
+
+    startX = x;
+    startY = y;
+  }
+}
+
+function stopTouchPanning() {
+  isPanning = false;
+}
+
 let currentZoomListener = null;
 
 export function setupZoom(canvasContainer, canvas, zoomDisplay) {
@@ -168,9 +200,24 @@ export function setupPan(canvasContainer, canvas) {
   canvasContainer.addEventListener('mouseleave', stopPanning);
 }
 
+export function setupTouchPan(canvasContainer, canvas) {
+  canvasContainer.addEventListener('touchstart', (event) =>
+    startTouchPanning(event, canvas),
+  );
+  canvasContainer.addEventListener('touchmove', (event) =>
+    touchPan(event, canvas),
+  );
+  canvasContainer.addEventListener('touchend', stopTouchPanning);
+  canvasContainer.addEventListener('touchcancel', stopTouchPanning);
+}
+
 export function setupZoomAndPan(canvasContainer, canvas, zoomDisplay) {
   setupZoom(canvasContainer, canvas, zoomDisplay);
   setupPan(canvasContainer, canvas);
+
+  if (isMobileDevice()) {
+    setupTouchPan(canvasContainer, canvas);
+  }
 
   // Prevent default context menu
   canvasContainer.addEventListener('contextmenu', (event) =>
@@ -198,4 +245,10 @@ export function removeZoomAndPan(canvasContainer) {
   canvasContainer.removeEventListener('mousemove', pan);
   canvasContainer.removeEventListener('mouseup', stopPanning);
   canvasContainer.removeEventListener('mouseleave', stopPanning);
+
+  // Remove touch pan event listeners
+  canvasContainer.removeEventListener('touchstart', startTouchPanning);
+  canvasContainer.removeEventListener('touchmove', touchPan);
+  canvasContainer.removeEventListener('touchend', stopTouchPanning);
+  canvasContainer.removeEventListener('touchcancel', stopTouchPanning);
 }
