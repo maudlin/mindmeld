@@ -138,6 +138,38 @@ A demo of the latest stable version is available to try at: https://mind-meld.co
 10. **Import State**:
     - Click the "Import" button in the navigation bar to load a previously saved mind map from a JSON file.
 
+## Testing
+
+MindMeld includes comprehensive testing coverage with both unit tests (Jest) and end-to-end tests (Playwright).
+
+### Quick Start
+```bash
+# Run all tests
+npm test
+
+# Run E2E tests
+npm run test:e2e
+
+# Run unit tests only
+npm run test:unit
+```
+
+### Test Documentation
+**📖 Complete testing guide and technical findings**: [tests/README.md](tests/README.md)
+
+The testing README includes:
+- **Technical findings** from E2E test implementation
+- **Application-specific behaviors** (throttling, DOM patterns)
+- **Best practices** for reliable test development
+- **Troubleshooting guide** for common issues
+- **Page Object Model patterns** for maintainable tests
+
+### Test Coverage Status
+- ✅ **Unit Tests**: Core utilities and zoom functionality
+- ✅ **E2E Tests**: Note operations, connections, basic functionality
+
+See [tests/README.md](tests/README.md) for complete technical documentation and implementation guidelines.
+
 ## JSON Schema Description
 
 Schema Explanation: The JSON represents a diagram with two main components: "notes" (n) and "connections" (c).
