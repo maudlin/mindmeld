@@ -91,6 +91,30 @@ await expect(connectionPath).toBeAttached();
 await expect(connectionPath).toBeVisible();
 ```
 
+#### 4. Selection Box Coordinate Precision ⚠️
+**Issue**: Selection boxes must fully encompass note bounding boxes for selection to work
+**Solution**: Use larger selection boxes that extend well beyond note boundaries
+```javascript
+// ❌ Too small - may not select notes
+await createSelectionBox(250, 200, 550, 300);
+
+// ✅ Larger box ensures full note containment
+await createSelectionBox(400, 200, 800, 350);
+```
+
+#### 5. Multi-Select Group Movement
+**Issue**: Moving selected notes requires dragging any selected note, not the selection box
+**Solution**: Get first selected note and perform drag operation on it
+```javascript
+async moveSelectedNotes(deltaX, deltaY) {
+  const selectedNotes = await this.getSelectedNotes();
+  const selectedNote = selectedNotes.first();
+  // Drag the note (this moves all selected notes together)
+  await selectedNote.hover();
+  // ... drag operation
+}
+```
+
 ### DOM Element Reference
 
 #### Core Selectors
@@ -195,9 +219,10 @@ await page.goto(url, { waitUntil: 'networkidle' });
 
 ### For Multi-Select Tests
 - **Selection Box**: Click and drag on empty canvas areas (not on notes)
+- **Coordinate Precision**: Make selection boxes larger than expected to ensure full note containment
 - **Multiple Selection**: Verify `.selected` class on target notes
-- **Group Movement**: Test that relative positioning is maintained
-- **Edge Cases**: Empty selections, partial selections
+- **Group Movement**: Test that relative positioning is maintained after dragging any selected note
+- **Edge Cases**: Empty selections, partial selections, overlapping selection areas
 
 ### For Canvas Template Tests
 - **Template Switching**: Use dropdown menu in navbar
@@ -225,9 +250,9 @@ console.log('Note count:', await page.locator('.note').count());
 - **Basic Functionality**: Page loading, element visibility
 - **Note Operations**: Create, edit, move, delete notes
 - **Note Connections**: Create connections via ghost connectors
+- **Multi-Select Operations**: Selection box and group movement (MM-74)
 
-### ❌ Remaining (2/6)
-- **Multi-Select Operations**: Selection box and group movement
+### ❌ Remaining (1/6)
 - **Canvas Template Switching**: Template dropdown and layout changes
 
 ## Configuration Files
