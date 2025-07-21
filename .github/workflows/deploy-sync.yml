@@ -19,9 +19,9 @@ jobs:
 
       - name: Copy deployable files
         run: |
-          rm -rf deploy-staging
-          mkdir deploy-staging
-          cp -r src/* deploy-staging/
+          mkdir -p deploy-staging
+          rsync -av --exclude='node_modules' --exclude='.git' --exclude='.gitignore' src/ deploy-staging/
+
       
       - name: Push to deploy branch
         run: |
