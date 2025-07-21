@@ -1,107 +1,5 @@
 import { test, expect } from '@playwright/test';
-
-class CanvasPage {
-  constructor(page) {
-    this.page = page;
-    this.canvas = page.locator('#canvas');
-    this.selectionBox = page.locator('#selection-box');
-  }
-
-  async load() {
-    await this.page.goto('http://localhost:8080');
-    await expect(this.canvas).toBeVisible();
-  }
-
-  async createNoteAt(x, y) {
-    const noteCountBefore = await this.page.locator('.note').count();
-
-    await this.page.mouse.dblclick(x, y);
-    await this.page.waitForTimeout(100); // Small delay for note creation
-
-    // Wait for new note to be created
-    await this.page.waitForFunction(
-      (count) => document.querySelectorAll('.note').length > count,
-      noteCountBefore,
-      { timeout: 2000 },
-    );
-
-    // Get the newly created note (at the count index)
-    const note = this.page.locator('.note').nth(noteCountBefore);
-    await expect(note).toBeVisible();
-    return note;
-  }
-
-  async createSelectionBox(startX, startY, endX, endY) {
-    // Clear any existing selections first
-    await this.page.mouse.click(100, 100); // Click on empty area
-    await this.page.waitForTimeout(100);
-
-    // Start dragging from empty canvas area using absolute coordinates
-    await this.page.mouse.move(startX, startY);
-    await this.page.mouse.down({ button: 'left' });
-
-    // Drag to create selection box
-    await this.page.mouse.move(endX, endY, { steps: 10 });
-
-    // Release mouse to complete selection
-    await this.page.mouse.up({ button: 'left' });
-
-    // Wait for selection to be processed
-    await this.page.waitForTimeout(300);
-  }
-
-  async getSelectedNotes() {
-    return this.page.locator('.note.selected');
-  }
-
-  async moveSelectedNotes(deltaX, deltaY) {
-    // Get first selected note to drag
-    const selectedNotes = await this.getSelectedNotes();
-    const selectedNote = selectedNotes.first();
-    await expect(selectedNote).toBeVisible();
-
-    // Get initial position
-    const initialBox = await selectedNote.boundingBox();
-
-    // Drag the note (this will move all selected notes)
-    await selectedNote.hover();
-    await this.page.mouse.move(
-      initialBox.x + initialBox.width / 2,
-      initialBox.y + initialBox.height / 2,
-    );
-    await this.page.mouse.down();
-    await this.page.mouse.move(
-      initialBox.x + initialBox.width / 2 + deltaX,
-      initialBox.y + initialBox.height / 2 + deltaY,
-    );
-    await this.page.mouse.up();
-
-    // Wait for movement to complete
-    await this.page.waitForTimeout(100);
-  }
-
-  async verifyNotesSelected(expectedCount) {
-    const selectedNotes = await this.getSelectedNotes();
-    const count = await selectedNotes.count();
-    expect(count).toBe(expectedCount);
-    return selectedNotes;
-  }
-
-  async verifyNotePositions(notes, expectedPositions) {
-    const noteCount = await notes.count();
-    expect(noteCount).toBe(expectedPositions.length);
-
-    for (let i = 0; i < noteCount; i++) {
-      const note = notes.nth(i);
-      const box = await note.boundingBox();
-      const expected = expectedPositions[i];
-
-      // Allow for small positioning differences (within 5px tolerance)
-      expect(Math.abs(box.x - expected.x)).toBeLessThan(5);
-      expect(Math.abs(box.y - expected.y)).toBeLessThan(5);
-    }
-  }
-}
+import { CanvasPage, TestCoordinates } from './helpers/CanvasPage.js';
 
 test.describe('MindMeld Multi-Select Notes', () => {
   test('Create multiple notes and select them with selection box', async ({
@@ -112,20 +10,9 @@ test.describe('MindMeld Multi-Select Notes', () => {
     // Load the application
     await canvasPage.load();
 
-    // Create notes using coordinates similar to the working test
-    // Create first note at position (500, 300)
-    const note1 = await canvasPage.createNoteAt(500, 300);
-
-    // Wait for throttle to clear (500ms + buffer due to throttled double-click handler)
-    await page.waitForTimeout(600);
-
-    // Create second note at position (700, 300)
-    const note2 = await canvasPage.createNoteAt(700, 300);
-
-    // Wait for throttle to clear
-    await page.waitForTimeout(600);
-
-    // Create third note at position (600, 500)
+    // Create notes using standard test coordinates
+    const note1 = await canvasPage.createNoteWithThrottleWait(500, 300);
+    const note2 = await canvasPage.createNoteWithThrottleWait(TestCoordinates.note2.x, TestCoordinates.note2.y);
     const note3 = await canvasPage.createNoteAt(600, 500);
 
     // Verify all three notes are created
@@ -161,16 +48,10 @@ test.describe('MindMeld Multi-Select Notes', () => {
     // Load the application
     await canvasPage.load();
 
-    // Create notes in a pattern
-    const note1 = await canvasPage.createNoteAt(300, 300);
-    await page.waitForTimeout(600);
-
-    const note2 = await canvasPage.createNoteAt(500, 300);
-    await page.waitForTimeout(600);
-
-    const note3 = await canvasPage.createNoteAt(400, 450);
-    await page.waitForTimeout(600);
-
+    // Create notes in a pattern using standard coordinates
+    const note1 = await canvasPage.createNoteWithThrottleWait(300, 300);
+    const note2 = await canvasPage.createNoteWithThrottleWait(500, 300);
+    const note3 = await canvasPage.createNoteWithThrottleWait(400, 450);
     const note4 = await canvasPage.createNoteAt(600, 450);
 
     // Get initial positions
@@ -227,16 +108,10 @@ test.describe('MindMeld Multi-Select Notes', () => {
     // Load the application
     await canvasPage.load();
 
-    // Create notes in different areas
-    const note1 = await canvasPage.createNoteAt(200, 200); // Top-left
-    await page.waitForTimeout(600);
-
-    const note2 = await canvasPage.createNoteAt(400, 200); // Top-right
-    await page.waitForTimeout(600);
-
-    const note3 = await canvasPage.createNoteAt(200, 400); // Bottom-left
-    await page.waitForTimeout(600);
-
+    // Create notes in different areas using helper method
+    const note1 = await canvasPage.createNoteWithThrottleWait(200, 200); // Top-left
+    const note2 = await canvasPage.createNoteWithThrottleWait(400, 200); // Top-right
+    const note3 = await canvasPage.createNoteWithThrottleWait(200, 400); // Bottom-left
     const note4 = await canvasPage.createNoteAt(400, 400); // Bottom-right
 
     // Create selection box that only covers top two notes
