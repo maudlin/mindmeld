@@ -1,10 +1,10 @@
 // movement.js
-import { updateNote } from '../data/dataStore.js';
 import { NoteManager } from './event.js';
 import { throttle } from '../utils/utils.js';
 import { getZoomLevel } from '../features/zoom/zoomManager.js';
 import { connectionManager } from '../features/connection/connectionManager.js';
 import { appState } from '../data/observableState.js';
+import { eventBus } from './eventBus.js';
 
 const throttledUpdateConnections = throttle(
   (noteOrGroup) => connectionManager.updateConnections(noteOrGroup),
@@ -102,14 +102,12 @@ function moveAt(pageX, pageY, canvas) {
     const noteShiftY = offsetY + relativeY;
     note.style.left = `${noteShiftX}px`;
     note.style.top = `${noteShiftY}px`;
-    updateNote(
-      note.id,
-      {
-        left: note.style.left,
-        top: note.style.top,
-      },
-      false,
-    );
+    // Use event bus instead of direct dataStore call
+    eventBus.emit('note.updated', {
+      id: note.id,
+      left: note.style.left,
+      top: note.style.top,
+    });
     connectionManager.updateConnections(note, canvas);
   });
 }

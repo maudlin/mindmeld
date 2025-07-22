@@ -1,15 +1,8 @@
-// src/js/core/event.js.js
-import {
-  createNoteAtPosition,
-  deleteNoteWithConnections,
-} from '../features/note/note.js';
+// src/js/core/event.js
 import { initializeConnectionDrawing } from '../features/connection/connection.js';
-import {
-  calculateOffsetPosition,
-  throttle,
-  isMobileDevice,
-} from '../utils/utils.js';
-import { saveStateToStorage } from '../data/storageManager.js';
+import { calculateOffsetPosition, throttle } from '../utils/utils.js';
+import { isMobileDevice } from '../utils/deviceUtils.js';
+import { eventBus } from './eventBus.js';
 
 let selectionBox = null;
 let isDrawingSelectionBox = false;
@@ -67,10 +60,15 @@ export function setupCanvasEvents(canvas) {
 }
 
 const throttledHandleDoubleClick = throttle((event) => {
+  console.log('Double-click handler triggered:', event.target); // Debug
   const canvas = event.target.closest('#canvas');
   if (canvas) {
-    createNoteAtPosition(canvas, event);
-    saveStateToStorage();
+    console.log('Emitting note.createAtPosition event'); // Debug
+    // Use event bus instead of direct calls
+    eventBus.emit('note.createAtPosition', { canvas, event });
+    eventBus.emit('state.save');
+  } else {
+    console.log('No canvas found for double-click'); // Debug
   }
 }, 500); // 500ms throttle
 
@@ -203,9 +201,9 @@ function handleKeyDown(event) {
       event.preventDefault();
       const canvas = document.getElementById('canvas');
       NoteManager.getSelectedNotes().forEach((note) =>
-        deleteNoteWithConnections(note, canvas),
+        eventBus.emit('note.deleteWithConnections', { note, canvas }),
       );
-      saveStateToStorage();
+      eventBus.emit('state.save');
     } else if (event.key === 'Delete') {
       // Editing and Delete key: allow default behavior (delete forward)
       return;
@@ -218,8 +216,8 @@ function handleKeyDown(event) {
       const note = event.target.closest('.note');
       if (note) {
         const canvas = document.getElementById('canvas');
-        deleteNoteWithConnections(note, canvas);
-        saveStateToStorage();
+        eventBus.emit('note.deleteWithConnections', { note, canvas });
+        eventBus.emit('state.save');
       }
     }
     // If editing and Backspace with content, allow default behavior

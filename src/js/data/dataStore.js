@@ -1,23 +1,15 @@
 // src/js/data/dataStore.js
-import { createNote, addNoteEventListeners } from '../features/note/note.js';
-import { connectionManager } from '../features/connection/connectionManager.js';
 import { debounce, log, truncateNoteContent } from '../utils/utils.js';
 import { appState } from './observableState.js';
-import { NOTE_CONTENT_LIMIT } from '../core/constants.js';
-
-const CONNECTION_TYPE_MAP = {
-  [connectionManager.CONNECTION_TYPES.NONE]: 0,
-  [connectionManager.CONNECTION_TYPES.UNI_FORWARD]: 1,
-  [connectionManager.CONNECTION_TYPES.UNI_BACKWARD]: 2,
-  [connectionManager.CONNECTION_TYPES.BI]: 3,
-};
-
-const CONNECTION_TYPE_MAP_REVERSE = new Map([
-  [0, connectionManager.CONNECTION_TYPES.NONE],
-  [1, connectionManager.CONNECTION_TYPES.UNI_FORWARD],
-  [2, connectionManager.CONNECTION_TYPES.UNI_BACKWARD],
-  [3, connectionManager.CONNECTION_TYPES.BI],
-]);
+import {
+  NOTE_CONTENT_LIMIT,
+  CONNECTION_TYPE_MAP,
+  CONNECTION_TYPE_MAP_REVERSE,
+  CONNECTION_TYPES,
+} from '../core/constants.js';
+import { NoteService } from '../services/noteService.js';
+import { ConnectionService } from '../services/connectionService.js';
+import { eventBus } from '../core/eventBus.js';
 
 export function addNote(note) {
   const currentNotes = appState.getState().notes;
@@ -50,29 +42,21 @@ export function updateNotesAndConnections(state) {
   const canvas = document.querySelector('#canvas');
 
   // Clear existing notes and connections
-  document.querySelectorAll('.note').forEach((note) => note.remove());
+  NoteService.clearAllNotes();
   document.querySelectorAll('g[data-start]').forEach((conn) => conn.remove());
 
   // Create notes
   state.notes.forEach((noteData) => {
-    const note = createNote(
-      parseFloat(noteData.left),
-      parseFloat(noteData.top),
-      canvas,
-    );
-    note.id = noteData.id;
-    const noteContent = note.querySelector('.note-content');
-    noteContent.textContent = noteData.content;
-    addNoteEventListeners(note, canvas);
+    NoteService.createNoteFromData(noteData, canvas);
   });
 
   // Create connections
   state.connections.forEach((conn) => {
-    connectionManager.createConnection(conn.from, conn.to, conn.type);
+    ConnectionService.createConnection(conn.from, conn.to, conn.type);
   });
 
   // Update all connections
-  connectionManager.updateConnections();
+  ConnectionService.updateConnections();
 
   console.log(
     `Updated ${state.notes.length} notes and ${state.connections.length} connections`,
@@ -99,11 +83,9 @@ const debouncedUpdateConnection = debounce((startId, endId, type) => {
     }
   } else {
     // Ensure type is valid
-    const validType = Object.values(
-      connectionManager.CONNECTION_TYPES,
-    ).includes(type)
+    const validType = Object.values(CONNECTION_TYPES).includes(type)
       ? type
-      : connectionManager.CONNECTION_TYPES.NONE;
+      : CONNECTION_TYPES.NONE;
 
     // Update or add connection
     const connection = { from: startId, to: endId, type: validType };
@@ -171,18 +153,19 @@ export function importFromJSON(jsonData, canvas) {
     });
 
     // Clear existing notes and connections
-    document.querySelectorAll('.note').forEach((note) => note.remove());
+    NoteService.clearAllNotes();
     document.querySelectorAll('g[data-start]').forEach((conn) => conn.remove());
 
     // Create notes
     const notes = data.n.map((noteData) => {
-      const note = createNote(noteData.p[0], noteData.p[1], canvas);
-      note.id = noteData.i;
-      note.querySelector('.note-content').textContent = truncateNoteContent(
-        noteData.c,
-        NOTE_CONTENT_LIMIT,
+      const note = NoteService.createNoteFromData(
+        {
+          i: noteData.i,
+          c: noteData.c,
+          p: noteData.p,
+        },
+        canvas,
       );
-      addNoteEventListeners(note, canvas);
       return {
         id: note.id,
         content: truncateNoteContent(noteData.c, NOTE_CONTENT_LIMIT),
@@ -197,16 +180,15 @@ export function importFromJSON(jsonData, canvas) {
     let svgContainer = document.getElementById('svg-container');
     if (!svgContainer) {
       log('SVG container not found, initializing connection drawing');
-      svgContainer = connectionManager.initializeConnectionDrawing(canvas);
+      svgContainer = ConnectionService.initializeConnectionDrawing(canvas);
     }
 
     // Create connections
     const connections = data.c.map((conn) => {
       const [fromId, toId, typeNum] = conn;
       const type =
-        CONNECTION_TYPE_MAP_REVERSE.get(typeNum) ||
-        connectionManager.CONNECTION_TYPES.NONE;
-      connectionManager.createConnection(fromId, toId, type);
+        CONNECTION_TYPE_MAP_REVERSE.get(typeNum) || CONNECTION_TYPES.NONE;
+      ConnectionService.createConnection(fromId, toId, type);
       return { from: fromId, to: toId, type };
     });
 
@@ -215,13 +197,26 @@ export function importFromJSON(jsonData, canvas) {
 
     // Update all connections
     log('Updating all connections');
-    connectionManager.updateConnections();
+    ConnectionService.updateConnections();
 
     log('Import complete');
   } catch (error) {
     console.error('Error importing data:', error);
     throw new Error('Invalid JSON data');
   }
+}
+
+// Initialize dataStore event listeners
+export function initializeDataStore() {
+  eventBus.on('note.created', addNote);
+  eventBus.on('note.updated', ({ id, content, left, top }) => {
+    const updateData = {};
+    if (content !== undefined) updateData.content = content;
+    if (left !== undefined) updateData.left = left;
+    if (top !== undefined) updateData.top = top;
+    updateNote(id, updateData);
+  });
+  log('DataStore event listeners initialized');
 }
 
 export function clearAllNotesAndConnections() {

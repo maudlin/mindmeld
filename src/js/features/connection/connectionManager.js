@@ -1,7 +1,7 @@
 // src/js/features/connection/connectionManager.js
 import { ConnectionCreation } from './connectionCreation.js';
 import { ConnectionUpdate } from './connectionUpdate.js';
-import { updateConnectionInDataStore } from '../../data/dataStore.js';
+// Removed direct dataStore dependency - will use service injection
 import { throttle, calculateOffsetPosition, log } from '../../utils/utils.js';
 import { ContextMenu } from './contextMenu.js';
 import {
@@ -18,6 +18,7 @@ export class ConnectionManager {
     this.isConnecting = false;
     this.currentZoomLevel = null;
     this.CONNECTION_TYPES = CONNECTION_TYPES;
+    this.onConnectionUpdate = null; // Callback for connection updates
     this.STROKE_COLOR = STROKE_COLOR;
     this.STROKE_WIDTH = STROKE_WIDTH;
     this.STROKE_DASHARRAY = STROKE_DASHARRAY;
@@ -58,7 +59,13 @@ export class ConnectionManager {
   }
 
   updateConnectionInDataStore(startId, endId, type) {
-    updateConnectionInDataStore(startId, endId, type);
+    if (this.onConnectionUpdate) {
+      this.onConnectionUpdate(startId, endId, type);
+    }
+  }
+
+  setConnectionUpdateCallback(callback) {
+    this.onConnectionUpdate = callback;
   }
 
   setConnecting(value) {
