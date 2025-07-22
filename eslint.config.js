@@ -4,6 +4,8 @@ import prettier from 'eslint-plugin-prettier';
 import globals from 'globals';
 import jestPlugin from 'eslint-plugin-jest';
 import playwrightPlugin from 'eslint-plugin-playwright';
+import security from 'eslint-plugin-security';
+import noUnsanitized from 'eslint-plugin-no-unsanitized';
 
 export default [
   js.configs.recommended,
@@ -11,6 +13,8 @@ export default [
     files: ['**/*.js'],
     plugins: {
       prettier: prettier,
+      security: security,
+      'no-unsanitized': noUnsanitized,
     },
     languageOptions: {
       ecmaVersion: 2022,
@@ -28,6 +32,10 @@ export default [
           endOfLine: 'auto',
         },
       ],
+      // Security rules
+      ...security.configs.recommended.rules,
+      'no-unsanitized/method': 'error',
+      'no-unsanitized/property': 'error',
     },
   },
   {
