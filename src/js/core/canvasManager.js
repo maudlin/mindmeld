@@ -17,9 +17,9 @@ export class CanvasManager {
     // Security: Allowlist of safe module paths to prevent code injection
     const allowedPaths = [
       '../features/canvas/templates/standardCanvas/standardCanvas.js',
-      '../features/canvas/templates/herosJourney/herosJourney.js',
-      '../features/canvas/templates/nowNextFuture/nowNextFuture.js',
-      '../features/canvas/templates/wardleyMap/wardleyMap.js',
+      '../features/canvas/templates/herosJourney/herosJourneyCanvas.js',
+      '../features/canvas/templates/nowNextFuture/nowNextFutureCanvas.js',
+      '../features/canvas/templates/wardleyMap/wardleyMapCanvas.js',
     ];
 
     for (const [key, value] of Object.entries(config.canvasTypes)) {
