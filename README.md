@@ -1,6 +1,6 @@
 # MindMeld
 
-[![CI Tests](https://github.com/YOUR_USERNAME/mindmeld/actions/workflows/playwright.yml/badge.svg)](https://github.com/YOUR_USERNAME/mindmeld/actions/workflows/playwright.yml)
+[![CI Tests](https://github.com/maudlin/mindmeld/actions/workflows/playwright.yml/badge.svg)](https://github.com/maudlin/mindmeld/actions/workflows/playwright.yml)
 
 MindMeld is a web-based mind mapping tool that allows users to create, organize, and connect notes in a flexible, freeform manner. This application is designed to help users visually map out their ideas and relationships between them.
 
