@@ -240,7 +240,7 @@ Type: An integer representing the connection type (1: from-to, 2: to-from, 3: bi
 ## Development Resources
 
 Please also see:
-- **CANVAS_TEMPLATE.md** - Instructions for creating custom templates
+- **CANVAS_TEMPLATES.md** - Instructions for creating custom templates
 - **PLAYWRIGHT_SETUP.md** - End-to-end browser testing setup  
 - **ARCHITECTURE_HEALTH.md** - Architecture monitoring and health checks
 - **TODO.md** - Technical debt tracking and improvement roadmap
