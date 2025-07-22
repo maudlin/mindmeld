@@ -16,7 +16,14 @@
     "test": "if [ \"$NODE_ENV\" != \"production\" ]; then npm run test:unit; else echo 'Skipping tests in production'; fi",
     "security": "eslint --config eslint.config.js src/ --rule 'security/*: error'",
     "security:fix": "eslint --config eslint.config.js src/ --fix",
-    "prepare": "husky"
+    "prepare": "husky",
+    "health-check": "./scripts/health-check.sh",
+    "deps:check": "npx depcheck",
+    "deps:update": "npx ncu --target minor",
+    "deps:upgrade": "npx ncu --target minor -u && npm install",
+    "analyze:circular": "npx madge --circular --extensions js src/",
+    "analyze:complexity": "npx madge --summary src/",
+    "analyze:duplication": "npx jscpd --min-lines=5 --min-tokens=50 src/"
   },
   "author": "",
   "license": "ISC",
@@ -26,6 +33,7 @@
     "@eslint/js": "^9.9.0",
     "@playwright/test": "^1.46.1",
     "babel-jest": "^29.7.0",
+    "depcheck": "^1.4.7",
     "eslint": "^9.9.0",
     "eslint-plugin-jest": "^28.8.0",
     "eslint-plugin-no-unsanitized": "^4.1.2",
@@ -37,8 +45,12 @@
     "husky": "^9.1.7",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
+    "jscpd": "^4.0.5",
     "lint-staged": "^16.1.2",
-    "prettier": "^3.3.3"
+    "madge": "^8.0.0",
+    "npm-check-updates": "^18.0.1",
+    "prettier": "^3.3.3",
+    "typescript": "^5.8.3"
   },
   "lint-staged": {
     "src/**/*.{js,jsx}": [
