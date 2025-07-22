@@ -12,12 +12,12 @@ const CONNECTION_TYPE_MAP = {
   [connectionManager.CONNECTION_TYPES.BI]: 3,
 };
 
-const CONNECTION_TYPE_MAP_REVERSE = {
-  0: connectionManager.CONNECTION_TYPES.NONE,
-  1: connectionManager.CONNECTION_TYPES.UNI_FORWARD,
-  2: connectionManager.CONNECTION_TYPES.UNI_BACKWARD,
-  3: connectionManager.CONNECTION_TYPES.BI,
-};
+const CONNECTION_TYPE_MAP_REVERSE = new Map([
+  [0, connectionManager.CONNECTION_TYPES.NONE],
+  [1, connectionManager.CONNECTION_TYPES.UNI_FORWARD],
+  [2, connectionManager.CONNECTION_TYPES.UNI_BACKWARD],
+  [3, connectionManager.CONNECTION_TYPES.BI],
+]);
 
 export function addNote(note) {
   const currentNotes = appState.getState().notes;
@@ -30,6 +30,7 @@ export function updateNote(id, updatedNote) {
   const index = currentNotes.findIndex((note) => note.id === id);
   if (index !== -1) {
     const updatedNotes = [...currentNotes];
+    // eslint-disable-next-line security/detect-object-injection
     updatedNotes[index] = { ...updatedNotes[index], ...updatedNote };
     appState.setState({ notes: updatedNotes });
   }
@@ -107,6 +108,7 @@ const debouncedUpdateConnection = debounce((startId, endId, type) => {
     // Update or add connection
     const connection = { from: startId, to: endId, type: validType };
     if (existingConnectionIndex !== -1) {
+      // eslint-disable-next-line security/detect-object-injection
       updatedConnections[existingConnectionIndex] = connection;
     } else {
       updatedConnections.push(connection);
@@ -202,7 +204,7 @@ export function importFromJSON(jsonData, canvas) {
     const connections = data.c.map((conn) => {
       const [fromId, toId, typeNum] = conn;
       const type =
-        CONNECTION_TYPE_MAP_REVERSE[typeNum] ||
+        CONNECTION_TYPE_MAP_REVERSE.get(typeNum) ||
         connectionManager.CONNECTION_TYPES.NONE;
       connectionManager.createConnection(fromId, toId, type);
       return { from: fromId, to: toId, type };

@@ -175,6 +175,7 @@ export class ContextMenu {
     const types = Object.values(this.CONNECTION_TYPES);
     const currentIndex = types.indexOf(currentType);
     const nextIndex = (currentIndex + 1) % types.length;
+    // eslint-disable-next-line security/detect-object-injection
     return types[nextIndex];
   }
 
