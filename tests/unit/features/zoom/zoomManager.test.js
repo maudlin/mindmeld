@@ -170,7 +170,8 @@ describe('zoomManager', () => {
       setupZoomAndPan(mockCanvasContainer, mockCanvas, mockZoomDisplay);
       removeZoomAndPan(mockCanvasContainer);
       // Update the expected number of calls to match the actual implementation
-      expect(mockCanvasContainer.removeEventListener).toHaveBeenCalledTimes(6);
+      // Expects: wheel(1) + mouse events(4) + touch events(4) + initial wheel cleanup(1) = 10
+      expect(mockCanvasContainer.removeEventListener).toHaveBeenCalledTimes(10);
     });
   });
 });
