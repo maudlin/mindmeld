@@ -12,7 +12,10 @@ test.describe('MindMeld Multi-Select Notes', () => {
 
     // Create notes using standard test coordinates
     const note1 = await canvasPage.createNoteWithThrottleWait(500, 300);
-    const note2 = await canvasPage.createNoteWithThrottleWait(TestCoordinates.note2.x, TestCoordinates.note2.y);
+    const note2 = await canvasPage.createNoteWithThrottleWait(
+      TestCoordinates.note2.x,
+      TestCoordinates.note2.y,
+    );
     const note3 = await canvasPage.createNoteAt(600, 500);
 
     // Verify all three notes are created

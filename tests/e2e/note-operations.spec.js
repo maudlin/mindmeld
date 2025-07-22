@@ -1,5 +1,52 @@
 import { test, expect } from '@playwright/test';
-import { CanvasPage } from './helpers/CanvasPage.js';
+
+class CanvasPage {
+  constructor(page) {
+    this.page = page;
+    this.canvas = page.locator('#canvas');
+    this.note = page.locator('.note').first();
+  }
+
+  async load() {
+    await this.page.goto('http://localhost:8080');
+    await expect(this.canvas).toBeVisible();
+  }
+
+  async createNote() {
+    await this.page.mouse.dblclick(640, 388);
+    await expect(this.note).toBeVisible();
+  }
+
+  async selectNote() {
+    await this.note.click({ position: { x: 3, y: 3 } });
+    await expect(this.note).toHaveClass(/selected/);
+  }
+
+  async moveNote() {
+    const initialPosition = await this.note.boundingBox();
+    await this.page.mouse.move(initialPosition.x + 5, initialPosition.y + 5);
+    await this.page.mouse.down();
+    await this.page.mouse.move(
+      initialPosition.x + 105,
+      initialPosition.y + 105,
+    );
+    await this.page.mouse.up();
+    return initialPosition;
+  }
+
+  async editNoteContent(text) {
+    const noteContent = this.note.locator('.note-content');
+    await noteContent.click();
+    await this.page.keyboard.type(text);
+    await expect(noteContent).toHaveText(text);
+  }
+
+  async deleteNote() {
+    await this.page.keyboard.press('Delete');
+    const noteCount = await this.page.locator('.note').count();
+    expect(noteCount).toBe(0);
+  }
+}
 
 // Usage in Test
 test.describe('MindMeld Operations', () => {

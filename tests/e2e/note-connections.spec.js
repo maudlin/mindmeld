@@ -9,13 +9,19 @@ test.describe('MindMeld Note Connections', () => {
     await canvasPage.load();
 
     // Create first note using standard coordinates
-    const note1 = await canvasPage.createNoteAt(TestCoordinates.note1.x, TestCoordinates.note1.y);
+    const note1 = await canvasPage.createNoteAt(
+      TestCoordinates.note1.x,
+      TestCoordinates.note1.y,
+    );
 
     // Wait for throttle to clear (500ms + buffer due to throttled double-click handler)
     await page.waitForTimeout(600);
 
     // Create second note using standard coordinates
-    const note2 = await canvasPage.createNoteAt(TestCoordinates.note2.x, TestCoordinates.note2.y);
+    const note2 = await canvasPage.createNoteAt(
+      TestCoordinates.note2.x,
+      TestCoordinates.note2.y,
+    );
 
     // Verify both notes are created
     await expect(note1).toBeVisible();

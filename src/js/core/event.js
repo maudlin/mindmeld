@@ -246,7 +246,7 @@ function handleTouchStart(event) {
   }
 }
 
-function handleTouchEnd(event) {
+function handleTouchEnd() {
   clearSelectionBox();
 }
 

@@ -7,25 +7,27 @@ import { expect } from '@playwright/test';
 export class CanvasPage {
   constructor(page) {
     this.page = page;
-    
+
     // Core canvas elements
     this.canvas = page.locator('#canvas');
     this.canvasContainer = page.locator('#canvas-container');
     this.svgContainer = page.locator('#svg-container');
     this.backgroundLayout = page.locator('.background-layout');
-    
+
     // Note elements
     this.note = page.locator('.note').first();
     this.notes = page.locator('.note');
     this.selectedNotes = page.locator('.note.selected');
-    
+
     // UI elements
     this.selectionBox = page.locator('#selection-box');
-    
+
     // Canvas style dropdown elements
     this.canvasStyleDropdown = page.locator('#canvas-style-dropdown');
     this.canvasStyleMenuButton = page.locator('text="Canvas Style"');
-    this.canvasStyleMenuItem = page.locator('.menu-item').filter({ hasText: 'Canvas Style' });
+    this.canvasStyleMenuItem = page
+      .locator('.menu-item')
+      .filter({ hasText: 'Canvas Style' });
   }
 
   // Common application loading
@@ -205,15 +207,17 @@ export class CanvasPage {
   async switchToTemplate(templateName) {
     // Hover over Canvas Style menu item to reveal dropdown
     await this.canvasStyleMenuItem.hover();
-    
+
     // Wait for dropdown menu to appear and become visible
     await expect(this.canvasStyleDropdown).toBeVisible();
-    
+
     // Click the specific template option
-    const templateOption = this.canvasStyleDropdown.locator(`text="${templateName}"`);
+    const templateOption = this.canvasStyleDropdown.locator(
+      `text="${templateName}"`,
+    );
     await expect(templateOption).toBeVisible();
     await templateOption.click();
-    
+
     // Wait for template switch to complete
     await this.page.waitForTimeout(500);
   }
@@ -221,9 +225,9 @@ export class CanvasPage {
   async verifyTemplate(templateName) {
     const templateClassMap = {
       'Standard Canvas': 'standard-canvas',
-      'Hero\'s Journey': 'heros-journey',
+      "Hero's Journey": 'heros-journey',
       'Now/Next/Future': 'now-next-future',
-      'Wardley Map': 'wardley-map'
+      'Wardley Map': 'wardley-map',
     };
 
     const expectedClass = templateClassMap[templateName];
@@ -236,7 +240,7 @@ export class CanvasPage {
 
     // Template-specific verifications
     switch (templateName) {
-      case 'Hero\'s Journey':
+      case "Hero's Journey":
         await this.verifyHerosJourneyElements();
         break;
       case 'Now/Next/Future':
@@ -278,12 +282,12 @@ export class CanvasPage {
     // Check for SVG element created by Wardley Map
     const svg = this.backgroundLayout.locator('svg');
     await expect(svg).toBeVisible();
-    
+
     // Check for axis lines
     const lines = svg.locator('line');
     const lineCount = await lines.count();
     expect(lineCount).toBeGreaterThan(0);
-    
+
     // Check for axis labels
     const labels = svg.locator('text');
     const labelCount = await labels.count();
@@ -301,25 +305,27 @@ export class CanvasPage {
   async verifyTemplateCleanup(previousTemplateName) {
     const previousTemplateClassMap = {
       'Standard Canvas': 'standard-canvas',
-      'Hero\'s Journey': 'heros-journey',
+      "Hero's Journey": 'heros-journey',
       'Now/Next/Future': 'now-next-future',
-      'Wardley Map': 'wardley-map'
+      'Wardley Map': 'wardley-map',
     };
 
     const previousClass = previousTemplateClassMap[previousTemplateName];
     if (previousClass) {
       // Verify previous template elements are removed
       switch (previousTemplateName) {
-        case 'Hero\'s Journey':
+        case "Hero's Journey": {
           const journeyStages = this.page.locator('.journey-stage');
           const stageCount = await journeyStages.count();
           expect(stageCount).toBe(0);
           break;
-        case 'Now/Next/Future':
+        }
+        case 'Now/Next/Future': {
           const columns = this.page.locator('.column');
           const columnCount = await columns.count();
           expect(columnCount).toBe(0);
           break;
+        }
       }
     }
   }
@@ -332,7 +338,7 @@ export const TestCoordinates = {
   note2: { x: 700, y: 300 },
   note3: { x: 400, y: 600 },
   note4: { x: 700, y: 600 },
-  
+
   // Empty canvas areas for selection box operations
   emptyAreas: {
     topLeft: { x: 200, y: 200 },
@@ -344,5 +350,5 @@ export const TestCoordinates = {
     topHalf: { startX: 300, startY: 200, endX: 800, endY: 350 },
     bottomHalf: { startX: 300, startY: 450, endX: 800, endY: 650 },
     fullArea: { startX: 200, startY: 200, endX: 900, endY: 700 },
-  }
+  },
 };
