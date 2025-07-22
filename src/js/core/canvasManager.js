@@ -13,9 +13,28 @@ export class CanvasManager {
 
   async loadModules() {
     log('Loading modules...');
+
+    // Security: Allowlist of safe module paths to prevent code injection
+    const allowedPaths = [
+      '../features/canvas/templates/standardCanvas/standardCanvas.js',
+      '../features/canvas/templates/herosJourney/herosJourney.js',
+      '../features/canvas/templates/nowNextFuture/nowNextFuture.js',
+      '../features/canvas/templates/wardleyMap/wardleyMap.js',
+    ];
+
     for (const [key, value] of Object.entries(config.canvasTypes)) {
       try {
         log(`Attempting to load module: ${key} from path: ${value.path}`);
+
+        // Security check: Only import from approved paths
+        if (!allowedPaths.includes(value.path)) {
+          console.error(
+            `Security: Attempted to load unauthorized module path: ${value.path}`,
+          );
+          continue;
+        }
+
+        // eslint-disable-next-line no-unsanitized/method
         const module = await import(value.path);
         const instance = new module.default();
         if (instance instanceof CanvasModule) {
