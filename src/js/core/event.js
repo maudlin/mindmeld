@@ -4,7 +4,11 @@ import {
   deleteNoteWithConnections,
 } from '../features/note/note.js';
 import { initializeConnectionDrawing } from '../features/connection/connection.js';
-import { calculateOffsetPosition, throttle, isMobileDevice } from '../utils/utils.js';
+import {
+  calculateOffsetPosition,
+  throttle,
+  isMobileDevice,
+} from '../utils/utils.js';
 import { saveStateToStorage } from '../data/storageManager.js';
 
 let selectionBox = null;
@@ -242,7 +246,7 @@ function handleTouchStart(event) {
   }
 }
 
-function handleTouchEnd(event) {
+function handleTouchEnd() {
   clearSelectionBox();
 }
 
