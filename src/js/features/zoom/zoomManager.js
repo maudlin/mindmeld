@@ -1,6 +1,6 @@
 // src/js/features/zoom/zoomManager.js
 import config from '../../core/config.js';
-import { isMobileDevice } from '../../utils/utils.js';
+import { isMobileDevice } from '../../utils/deviceUtils.js';
 
 let zoomLevel = config.zoomLevels.default;
 let isPanning = false;

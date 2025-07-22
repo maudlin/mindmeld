@@ -1,13 +1,12 @@
 //note.js
-import { addNote, updateNote, deleteNoteById } from '../../data/dataStore.js';
-import { deleteConnectionsByNote } from '../connection/connection.js';
-import { connectionManager } from '../connection/connectionManager.js';
-import { moveNoteStart, moveNoteEnd } from '../../core/movement.js';
+import { addNote, updateNote } from '../../data/dataStore.js';
 import { calculateOffsetPosition, toBase62 } from '../../utils/utils.js';
-import { NoteManager } from '../../core/event.js';
 import config from '../../core/config.js';
 import { NOTE_CONTENT_LIMIT } from '../../core/constants.js';
+import { addNoteEventListeners } from './noteEvents.js';
+import { createGhostConnectors } from './ghostConnectors.js';
 import { saveStateToStorage } from '../../data/storageManager.js';
+export { deleteNote, deleteNoteWithConnections } from './noteDeletion.js';
 
 let nextNoteId = 1;
 let handDrawn = false;
@@ -67,78 +66,4 @@ export function createNote(x, y, canvas) {
   addNoteEventListeners(note, canvas);
 
   return note;
-}
-
-function createGhostConnectors(note) {
-  const positions = ['top', 'bottom', 'left', 'right'];
-  positions.forEach((position) => {
-    const connector = document.createElement('div');
-    connector.className = `ghost-connector ${position}`;
-    note.appendChild(connector);
-  });
-}
-
-export function addNoteEventListeners(note, canvas) {
-  note.addEventListener('mousedown', (event) => {
-    if (!event.target.classList.contains('ghost-connector')) {
-      if (!event.shiftKey) {
-        if (!note.classList.contains('selected')) {
-          NoteManager.clearSelections();
-          NoteManager.selectNote(note);
-        }
-      }
-      moveNoteStart(note, event);
-    }
-  });
-
-  note.ondragstart = () => false;
-
-  note.addEventListener('blur', () => {
-    note.removeAttribute('contenteditable');
-  });
-
-  note.addEventListener('dblclick', () => {
-    note.contentEditable = true;
-    note.focus();
-  });
-
-  note.addEventListener('click', (event) => {
-    if (event.shiftKey) {
-      toggleNoteSelection(note);
-    } else {
-      if (!note.classList.contains('selected')) {
-        NoteManager.clearSelections();
-        NoteManager.selectNote(note);
-      }
-    }
-    event.stopPropagation();
-  });
-
-  note.addEventListener('mouseup', () => {
-    moveNoteEnd();
-    connectionManager.updateConnections(note, canvas); // Update connections after move ends
-  });
-}
-
-function toggleNoteSelection(note) {
-  if (note.classList.contains('selected')) {
-    NoteManager.deselectNote(note);
-  } else {
-    NoteManager.selectNote(note);
-  }
-}
-
-export function deleteNoteWithConnections(note, canvas) {
-  deleteConnectionsByNote(note);
-  deleteNoteById(note.id);
-  note.remove();
-  connectionManager.updateConnections(note, canvas);
-}
-
-export function deleteNote() {
-  const selected = NoteManager.getSelectedNotes()[0];
-  if (selected) {
-    const canvas = document.getElementById('canvas');
-    deleteNoteWithConnections(selected, canvas);
-  }
 }
