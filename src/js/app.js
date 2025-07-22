@@ -12,6 +12,13 @@ import {
 } from './data/storageManager.js';
 import { setupUI } from './core/uiSetup.js';
 import { initializeCanvas } from './core/canvasInitialization.js';
+import { ConnectionService } from './services/connectionService.js';
+import { connectionManager } from './features/connection/connectionManager.js';
+import {
+  updateConnectionInDataStore,
+  initializeDataStore,
+} from './data/dataStore.js';
+import { NoteEventService } from './services/noteEventService.js';
 
 async function initializeApp() {
   log('Initializing app...');
@@ -23,6 +30,12 @@ async function initializeApp() {
     canvasStyleDropdown: document.getElementById('canvas-style-dropdown'),
     menu: document.getElementById('menu'),
   };
+
+  // Initialize dependency injection and event bus
+  initializeDataStore();
+  NoteEventService.initialize();
+  ConnectionService.setConnectionManager(connectionManager);
+  ConnectionService.setDataStoreUpdateCallback(updateConnectionInDataStore);
 
   await canvasManager.loadModules();
   setupUI(elements);

@@ -1,17 +1,13 @@
 // src/js/features/connection/connectionUtils.js
 import { log } from '../../utils/utils.js';
 import { getZoomLevel } from '../zoom/zoomManager.js';
+import { CONNECTION_TYPES } from '../../core/constants.js';
 
 export const STROKE_COLOR = '#888';
 export const STROKE_WIDTH = '2';
 export const STROKE_DASHARRAY = '5,5';
 
-export const CONNECTION_TYPES = {
-  NONE: 'none',
-  UNI_FORWARD: 'uni-forward',
-  UNI_BACKWARD: 'uni-backward',
-  BI: 'bi',
-};
+export { CONNECTION_TYPES };
 
 export class ConnectionUtils {
   constructor() {

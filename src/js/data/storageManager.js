@@ -4,6 +4,7 @@
 import { appState } from './observableState.js';
 import { debounce } from '../utils/utils.js';
 import { BACKUP_INTERVAL } from '../core/constants.js';
+import { eventBus } from '../core/eventBus.js';
 import {
   updateNotesAndConnections,
   clearAllNotesAndConnections,
@@ -104,6 +105,10 @@ export function initializeStateManagement() {
   if (isBrowser) {
     window.addEventListener('beforeunload', saveStateToStorage);
   }
+
+  // Set up event bus listeners
+  eventBus.on('state.save', saveStateToStorage);
+
   // Only attempt to load state if it hasn't been loaded before
   // and the current state is empty
   if (!stateLoaded && appState.getState().notes.length === 0) {
