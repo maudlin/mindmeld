@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>What's New - MindMeld</title>
+    <link rel="stylesheet" href="css/styles.css?v=0.7.0" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      href="img/icon16.png"
+      media="(prefers-color-scheme: light)"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      href="img/icon16.png"
+      media="(prefers-color-scheme: dark)"
+    />
+  </head>
+  <body class="override-overflow">
+    <nav id="navbar">
+      <div id="logo">
+        <img src="img/icon64.png" alt="MindMeld Logo" id="logo-icon" />
+        mindmeld
+      </div>
+      <ul id="menu">
+        <li class="menu-item">
+          <a class="menu-link" href="index.html">Home</a>
+        </li>
+        <li class="menu-item">
+          <button class="menu-button">About</button>
+          <ul class="dropdown">
+            <li>
+              <a href="about.html">About MindMeld</a>
+            </li>
+            <li>
+              <a href="changelog.html" style="font-weight: bold">What's New</a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+    <div class="about-container">
+      <h1>🚀 What's New in MindMeld</h1>
+
+      <section>
+        <p>
+          Recent updates and improvements to make your mind mapping experience
+          better.
+        </p>
+        <p><strong>Current Version:</strong> v0.7.0</p>
+      </section>
+
+      <section>
+        <h2>✨ New Features</h2>
+        <ul>
+          <li>
+            Add automated version synchronization between package.json and HTML
+            display
+            <small style="color: #666; margin-left: 1rem">
+              (<a
+                href="https://github.com/maudlin/mindmeld/pull/48"
+                target="_blank"
+                >#48</a
+              >, July 24, 2025)
+            </small>
+          </li>
+
+          <li>
+            Update version to 0.7.0 following semver for this new feature
+            <small style="color: #666; margin-left: 1rem">
+              (<a
+                href="https://github.com/maudlin/mindmeld/pull/48"
+                target="_blank"
+                >#48</a
+              >, July 24, 2025)
+            </small>
+          </li>
+
+          <li>
+            Add comprehensive architecture health monitoring system
+            <small style="color: #666; margin-left: 1rem">
+              (<a
+                href="https://github.com/maudlin/mindmeld/pull/46"
+                target="_blank"
+                >#46</a
+              >, July 22, 2025)
+            </small>
+          </li>
+        </ul>
+      </section>
+      <section>
+        <h2>⚡ Improvements</h2>
+        <ul>
+          <li>
+            Eliminated all 8 circular dependencies that were blocking
+            architectural improvements
+            <small style="color: #666; margin-left: 1rem">
+              (<a
+                href="https://github.com/maudlin/mindmeld/pull/47"
+                target="_blank"
+                >#47</a
+              >, July 22, 2025)
+            </small>
+          </li>
+
+          <li>
+            Improved architecture health score from 86/100 to 96/100 (EXCELLENT
+            rating)
+            <small style="color: #666; margin-left: 1rem">
+              (<a
+                href="https://github.com/maudlin/mindmeld/pull/47"
+                target="_blank"
+                >#47</a
+              >, July 22, 2025)
+            </small>
+          </li>
+        </ul>
+      </section>
+      <section>
+        <h2>🐛 Bug Fixes</h2>
+        <ul>
+          <li>
+            Fixed critical JavaScript import errors causing note creation
+            failures
+            <small style="color: #666; margin-left: 1rem">
+              (<a
+                href="https://github.com/maudlin/mindmeld/pull/47"
+                target="_blank"
+                >#47</a
+              >, July 22, 2025)
+            </small>
+          </li>
+        </ul>
+      </section>
+      <section>
+        <h2>🔒 Security Updates</h2>
+        <ul>
+          <li>
+            **Critical Security Fix**: Upgrade Jest to v30, eliminating
+            CVE-2025-7783 form-data vulnerability
+            <small style="color: #666; margin-left: 1rem">
+              (<a
+                href="https://github.com/maudlin/mindmeld/pull/44"
+                target="_blank"
+                >#44</a
+              >, July 22, 2025)
+            </small>
+          </li>
+
+          <li>
+            **Shift-Left Security**: Implement pre-commit security scanning with
+            Husky + ESLint security plugins
+            <small style="color: #666; margin-left: 1rem">
+              (<a
+                href="https://github.com/maudlin/mindmeld/pull/44"
+                target="_blank"
+                >#44</a
+              >, July 22, 2025)
+            </small>
+          </li>
+
+          <li>
+            **Zero Vulnerabilities**: Complete resolution of all security issues
+            via npm audit
+            <small style="color: #666; margin-left: 1rem">
+              (<a
+                href="https://github.com/maudlin/mindmeld/pull/44"
+                target="_blank"
+                >#44</a
+              >, July 22, 2025)
+            </small>
+          </li>
+
+          <li>
+            **Enhanced Documentation**: Comprehensive security testing guide and
+            fixed CI badge URLs
+            <small style="color: #666; margin-left: 1rem">
+              (<a
+                href="https://github.com/maudlin/mindmeld/pull/44"
+                target="_blank"
+                >#44</a
+              >, July 22, 2025)
+            </small>
+          </li>
+        </ul>
+      </section>
+      <section>
+        <h2>📝 Other Changes</h2>
+        <ul>
+          <li>
+            Implement ISO date stamping for continuous deployment visibility
+            <small style="color: #666; margin-left: 1rem">
+              (<a
+                href="https://github.com/maudlin/mindmeld/pull/48"
+                target="_blank"
+                >#48</a
+              >, July 24, 2025)
+            </small>
+          </li>
+
+          <li>
+            Hook version sync into npm start for seamless developer experience
+            <small style="color: #666; margin-left: 1rem">
+              (<a
+                href="https://github.com/maudlin/mindmeld/pull/48"
+                target="_blank"
+                >#48</a
+              >, July 24, 2025)
+            </small>
+          </li>
+
+          <li>
+            Implemented clean event-driven architecture with service layer
+            pattern
+            <small style="color: #666; margin-left: 1rem">
+              (<a
+                href="https://github.com/maudlin/mindmeld/pull/47"
+                target="_blank"
+                >#47</a
+              >, July 22, 2025)
+            </small>
+          </li>
+
+          <li>
+            Skip Playwright installation when NODE_ENV=production
+            <small style="color: #666; margin-left: 1rem">
+              (<a
+                href="https://github.com/maudlin/mindmeld/pull/45"
+                target="_blank"
+                >#45</a
+              >, July 22, 2025)
+            </small>
+          </li>
+
+          <li>
+            Skip all test execution in production environment
+            <small style="color: #666; margin-left: 1rem">
+              (<a
+                href="https://github.com/maudlin/mindmeld/pull/45"
+                target="_blank"
+                >#45</a
+              >, July 22, 2025)
+            </small>
+          </li>
+
+          <li>
+            Reduce Cloudflare Workers deployment time by avoiding unnecessary
+            dev tools
+            <small style="color: #666; margin-left: 1rem">
+              (<a
+                href="https://github.com/maudlin/mindmeld/pull/45"
+                target="_blank"
+                >#45</a
+              >, July 22, 2025)
+            </small>
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>📝 How This Changelog Works</h2>
+        <p>
+          This changelog is automatically generated from our recent development
+          work. Each time we merge improvements, bug fixes, or new features,
+          they appear here so you can see what's changed.
+        </p>
+        <p>
+          For detailed technical information, you can view the full changes on
+          our
+          <a
+            href="https://github.com/maudlin/mindmeld/pulls?q=is%3Apr+is%3Amerged"
+            target="_blank"
+            >GitHub repository</a
+          >.
+        </p>
+      </section>
+
+      <a href="index.html" class="text-blue-400 hover:underline">
+        Back to Main Application
+      </a>
+    </div>
+  </body>
+</html>
