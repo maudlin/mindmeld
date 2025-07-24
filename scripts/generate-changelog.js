@@ -86,6 +86,7 @@ function formatDate(isoDate) {
 
 async function generateChangelog() {
   console.log('🔄 Generating changelog from recent PRs...');
+  console.log('ℹ️  This script runs automatically via GitHub Actions after PR merges');
 
   try {
     // Get current version from package.json
