@@ -3,9 +3,9 @@
 ## Overview
 This guide documents testing approaches, technical findings, and best practices for the MindMeld mind mapping application. Tests are organized into unit tests and end-to-end (E2E) tests using Jest and Playwright respectively.
 
-**📅 Last Updated**: January 2025  
-**🎯 Test Coverage**: 100% of core functionality (9/9 E2E tests)  
-**🏗️ Architecture**: Refactored with shared Page Object Model (January 2025)
+**📅 Last Updated**: July 2025  
+**🎯 Test Coverage**: 100% of core functionality (9/9 E2E tests) + Event Bus (20/20 unit tests)  
+**🏗️ Architecture**: Refactored with shared Page Object Model + Event Bus foundation tests
 
 ## Test Structure
 
@@ -21,14 +21,40 @@ tests/
 │   ├── multi-select-notes.spec.js    # Multi-select and group operations
 │   └── canvas-template-switching.spec.js # Template switching functionality
 └── unit/                             # Unit tests (Jest)
+    ├── core/
+    │   └── eventBus.test.js          # 🆕 Event Bus comprehensive tests (20 tests, 100% coverage)
     ├── features/
+    │   ├── note/
+    │   │   └── noteCreation.test.js
     │   └── zoom/
     │       └── zoomManager.test.js
     └── utils/
         └── utils.test.js
 ```
 
-## 🏗️ **Architecture Overview (January 2025 Refactor)**
+## 🏗️ **Architecture Overview (July 2025 Update)**
+
+### **🆕 Event Bus Testing Foundation (July 2025)**
+The event bus (`src/js/core/eventBus.js`) is now comprehensively tested with production-ready enhancements:
+
+- **20 unit tests** covering all functionality with 100% code coverage
+- **Error resilience** - failed listeners don't crash other listeners  
+- **Memory cleanup** - automatic cleanup prevents memory leaks
+- **Performance validated** - tested with 1000+ listeners efficiently
+- **Production ready** with console error logging for debugging
+
+**Key Testing Patterns:**
+```javascript
+// Test error resilience
+const errorCallback = jest.fn(() => { throw new Error('Test error'); });
+const successCallback = jest.fn();
+testEventBus.on('event', errorCallback);
+testEventBus.on('event', successCallback);
+testEventBus.emit('event', 'data');
+// Both callbacks execute, error is logged but doesn't crash
+```
+
+## 🏗️ **E2E Architecture Overview (January 2025 Refactor)**
 
 ### **Shared Page Object Model**
 All E2E tests now use a unified `CanvasPage` class located in `tests/e2e/helpers/CanvasPage.js`. This eliminates ~400 lines of duplicated code and provides:
