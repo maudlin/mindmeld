@@ -2,209 +2,95 @@
 
 [![CI Tests](https://github.com/maudlin/mindmeld/actions/workflows/ci.yml/badge.svg)](https://github.com/maudlin/mindmeld/actions/workflows/ci.yml)
 
-MindMeld is a web-based mind mapping tool that allows users to create, organize, and connect notes in a flexible, freeform manner. This application is designed to help users visually map out their ideas and relationships between them.
+MindMeld is a web-based mind mapping tool that allows users to create, organize, and connect notes in a flexible, freeform manner. Built with modern event-driven architecture, it provides an intuitive interface for visualizing ideas and their relationships.
 
-A demo of the latest stable version is available to try at: https://mind-meld.co/
+**🌐 Live Demo**: [mind-meld.co](https://mind-meld.co/)
 
-## Features
+## Quick Start
 
-- **Add Notes**: Double-click anywhere on the canvas to create a new note.
-- **Move Notes**: Click and drag notes to reposition them on the canvas.
-- **Edit Notes**: Click on a note to enter edit mode and save changes.
-- **Delete Notes**: Delete notes by pressing the delete key.
-- **Multiple Select and Group Move**: Select multiple notes using a selection box and move them as a group.
-- **Group Delete**: Delete multiple selected notes by pressing the delete key.
-- **Dynamic Connectors**: Connections are drawn from the closest proximity points on the notes, ensuring clean and optimal connections.
-- **Ghost Connectors**: Four ghost connecting points appear at the center of each side of a note when hovering, allowing intuitive connection creation.
-- **Directional Arrows**: Connections feature directional arrows to indicate the flow of connections.
-- **Real-Time Updates**: Connections dynamically update as notes are moved around the canvas, maintaining the shortest path between connected notes.
-- **Zoom**: The application starts zoomed in at 5x, and users can zoom out with the mouse scroll wheel.
-- **Pan**: Users can pan the canvas in the wider view by clicking and holding the right mouse button.
-- **Style Notes and Canvas**: Notes have a pleasing background color, border, and text style. The canvas has a neutral background with styled hover and focus states for notes.
-- **Debounce Mechanism**: Prevents accidental multiple note creations by handling double-click events effectively.
-- **Data Store and Export**: Modular data store handler that manages the state of the notes and allows exporting the current state to JSON format. A button is provided to copy the JSON data to the clipboard.
-- **Help Text**: Provides users with instructions on how to use key functionalities.
-- **Modular Canvas System**: Support for different canvas types with a modular approach, including Standard Canvas and Hero's Journey.
-- **Canvas Switching**: Seamlessly switch between different canvas types using a dropdown menu.
-- **Zoom and Pan Enhancements**: Improved zoom level handling and canvas positioning when switching canvases.
-- **Event Handling Enhancements**: Idempotent setup of event listeners for proper reattachment during canvas switching.
+```bash
+# Clone the repository
+git clone https://github.com/maudlin/mindmeld.git
+cd mindmeld
 
-## Recent Enhancements
-
-### Canvas Module System Refactoring
-
-- Implemented a more modular approach for handling different canvas types (e.g., Standard Canvas, Hero's Journey).
-- Updated config.js to include definitions for different canvas types and their respective file paths.
-
-### Canvas Manager Improvements
-
-- Modified canvasManager.js to handle dynamic loading and registration of canvas modules.
-- Implemented error handling and fallback mechanisms for canvas module loading and rendering.
-
-### Event Handling Enhancements
-
-- Updated setupCanvasEvents in event.js to be idempotent, allowing for proper reattachment of event listeners when switching canvases.
-- Modified initializeConnectionDrawing in connections.js to properly handle SVG container creation and event listener attachment across canvas switches.
-
-### Zoom and Pan Functionality
-
-- Refactored zoomManager.js to improve zoom level handling and canvas positioning when switching canvases.
-
-### Canvas Switching Logic
-
-- Updated the canvas switching process in app.js (within populateCanvasStyleDropdown) to properly handle module changing, zoom resetting, and event reattachment.
-
-### Asynchronous Loading Handling
-
-- Introduced asynchronous handling in canvas initialization and switching to ensure proper rendering and positioning.
-
-### Configuration Centralization
-
-- Utilized config.js more effectively for storing canvas-related configurations, improving maintainability and flexibility.
-
-### Event-Driven Architecture Refactoring
-
-- **Eliminated All Circular Dependencies**: Resolved all 8 circular dependencies that were causing maintenance issues and blocking architectural improvements.
-- **Event Bus System**: Implemented a centralized event bus (`src/js/core/eventBus.js`) for decoupled communication between components.
-- **Service Layer Pattern**: Created dedicated service classes:
-  - `NoteService`: Handles note-related operations with clean separation from UI
-  - `ConnectionService`: Manages connection logic with dependency injection
-  - `NoteEventService`: Orchestrates note-related event handling
-- **Factory Pattern**: Extracted note creation logic into `noteFactory.js` for pure, testable functions.
-- **Dependency Injection**: Implemented proper dependency injection to eliminate tight coupling between modules.
-- **Architecture Health**: Improved overall architecture health score from 86/100 to 96/100 (EXCELLENT rating).
-
-#### Event Bus Usage for Developers
-
-The event bus enables loose coupling between components:
-
-```javascript
-import { eventBus } from './src/js/core/eventBus.js';
-
-// Emit events
-eventBus.emit('note.createAtPosition', { canvas, event });
-eventBus.emit('note.updated', { id, content, left, top });
-
-// Listen to events
-eventBus.on('note.created', (noteData) => {
-  // Handle note creation
-});
+# Install dependencies and start development server
+npm install && npm start
 ```
 
-#### Service Integration
+Visit `http://localhost:8080` to begin mind mapping.
 
-Services are initialized in `app.js` with proper dependency injection:
+## Key Features
 
-```javascript
-// Initialize services with dependencies
-initializeDataStore();
-NoteEventService.initialize();
-ConnectionService.setConnectionManager(connectionManager);
-```
+- **Dynamic Note Creation**: Double-click to create notes anywhere on the canvas
+- **Intelligent Connections**: Visual connections with directional arrows and real-time updates
+- **Multi-Canvas Templates**: Standard Canvas, Hero's Journey, and custom templates
+- **Advanced Selection**: Multi-select with group operations
+- **Data Management**: Export/import mind maps as JSON with full state preservation
+- **Modern Architecture**: Event-driven design with zero circular dependencies
 
-This architecture ensures maintainable, testable code with clear separation of concerns.
+## Documentation
 
-## Installation
+### For Users
+- **[User Guide](docs/user-guide.md)** - Complete feature overview and usage instructions
+- **[Canvas Templates](docs/canvas-templates.md)** - Guide to different mind mapping templates
+
+### For Developers
+- **[Developer Guide](docs/developer-guide.md)** - Architecture, setup, and development workflow
+- **[Contributing Guide](CONTRIBUTING.md)** - Code standards, testing, and contribution process
+- **[Testing Guide](docs/testing.md)** - Unit and E2E testing strategy
+- **[Scripts Reference](docs/scripts.md)** - Complete npm scripts documentation
+
+### Technical Documentation
+- **[CI/CD Guide](docs/ci-cd.md)** - GitHub Actions workflows and deployment
+- **[Architecture Health](docs/architecture-health.md)** - Code quality monitoring and metrics
+- **[Technical Debt](docs/technical-debt.md)** - Current improvements and roadmap
+
+## Architecture
+
+MindMeld features a modern, maintainable architecture:
+
+- **Event-Driven Design**: Centralized event bus eliminates circular dependencies
+- **Service Layer Pattern**: Clean separation with dependency injection
+- **Factory Pattern**: Pure, testable functions for core operations
+- **Modular Canvas System**: Template-based canvas types with extensible design
+
+### Current Health: 96/100 (EXCELLENT)
+- Zero circular dependencies
+- Comprehensive test coverage (unit + E2E)
+- Automated security scanning
+- Performance monitoring
+
+## Development
 
 ### Prerequisites
+- Node.js (LTS)
+- Modern web browser
 
-- Docker
-- VSCode with Remote - Containers extension
-
-### Setup
-
-1. **Clone the Repository**:
-
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/mindmeld.git
-   cd mindmeld
-   ```
-
-2. **Open in DevContainer**:
-   - Open VSCode.
-   - Open the command palette (`Ctrl + Shift + P`).
-   - Select "Remote-Containers: Open Folder in Container..." and choose the `mindmeld` folder.
-
-### Running the Application
-
-1. **Start Development Server**:
-
-   - Open the command palette (`Ctrl + Shift + P`).
-   - Type "Remote-Containers: Rebuild Container" and select the option to rebuild without cache.
-   - Run the local development server using "npm start"
-
-2. **Access the Application**:
-   - Open your browser and navigate to `http://localhost:8080`.
-
-## Usage
-
-1. **Add Notes**:
-
-   - Double-click anywhere on the canvas to create a new note.
-
-2. **Move Notes**:
-
-   - Click and drag notes to reposition them on the canvas.
-
-3. **Edit Notes**:
-
-   - Click on a note to enter edit mode and save changes.
-
-4. **Delete Notes**:
-
-   - Delete notes by interacting with the delete icon in the hover menu
-
-5. **Draw Connections**:
-
-   - Hover over a note to reveal ghost connecting points.
-   - Click and drag from a ghost connecting point to another note to create a connection.
-   - Hover over the connection line hotspot to reveal the context menu and toggle connection types.
-   - Click the delete menu button to delete a line, or other buttons to change the arrow directionality
-
-6. **Multiple Select and Group Move**:
-
-   - Left click and box-select notes together
-   - Move all selected notes together by dragging any of the selected notes.
-
-7. **Zoom and Pan**:
-
-   - Use the mouse scroll wheel to zoom in and out of the canvas.
-   - Click and hold the right mouse button to pan the canvas.
-
-8. **Help Text**:
-
-   - Refer to the help text at the bottom left of the canvas for instructions on key functionalities.
-
-9. **Export State**:
-
-   - Click the "Export" button in the navigation bar to copy the current state of the mind map to JSON format and copy it to the clipboard.
-
-10. **Import State**:
-    - Click the "Import" button in the navigation bar to load a previously saved mind map from a JSON file.
-
-## JSON Schema Description
-
-Schema Explanation: The JSON represents a diagram with two main components: "notes" (n) and "connections" (c).
-
-Notes (n):
-
-ID (i): A unique base-62 identifier for each note, starting at "1".
-Position (p): An array representing the x and y coordinates of the note on the canvas.
-Content (c): A string containing the text or label of the note.
-Connections (c):
-
-Each connection is an array with three elements:
-From ID: The i value of the starting note.
-To ID: The i value of the ending note.
-Type: An integer representing the connection type (1: from-to, 2: to-from, 3: bidirectional, 0: non-directional).
-
-### Example
+### Local Setup
+```bash
+npm install           # Install dependencies
+npm start            # Start development server (port 8080)
+npm test             # Run unit tests
+npm run test:e2e      # Run end-to-end tests
 ```
+
+### Quality Tools
+```bash
+npm run lint         # ESLint with security rules
+npm run format       # Prettier code formatting  
+npm run health-check # Architecture analysis
+npm run security     # Security-focused linting
+```
+
+## Data Format
+
+Mind maps are stored as JSON with this structure:
+
+```json
 {
   "data": {
     "n": [
-      { "i": "1", "p": [0, 0], "c": "First Note" },
-      { "i": "2", "p": [150, 0], "c": "Second Note" }
+      { "i": "1", "p": [100, 200], "c": "Note content" }
     ],
     "c": [
       ["1", "2", 1]
@@ -213,109 +99,10 @@ Type: An integer representing the connection type (1: from-to, 2: to-from, 3: bi
 }
 ```
 
-## File Manifest
+- **n**: Notes array (id, position, content)
+- **c**: Connections array (from, to, type)
+- **Connection types**: 0=none, 1=from→to, 2=to→from, 3=bidirectional
 
-```
-│   about.html
-│   index.html
-│
-├───css
-│       styles.css
-│
-├───img
-│       file-download.svg
-│       file.svg
-│       icon16.png
-│       icon256.png
-│       icon32.png
-│       icon64.png
-│
-└───js
-    │   app.js
-    │
-    ├───core
-    │       canvasInitialization.js
-    │       canvasManager.js
-    │       canvasModule.js
-    │       config.js
-    │       constants.js
-    │       event.js
-    │       eventBus.js
-    │       movement.js
-    │       uiSetup.js
-    │
-    ├───data
-    │       dataStore.js
-    │       observableState.js
-    │       storageManager.js
-    │
-    ├───factories
-    │       noteFactory.js
-    │
-    ├───features
-    │   ├───canvas
-    │   │   └───templates
-    │   │       ├───herosJourney
-    │   │       │       herosJourneyCanvas.css
-    │   │       │       herosJourneyCanvas.js
-    │   │       │
-    │   │       ├───nowNextFuture
-    │   │       │       nowNextFutureCanvas.css
-    │   │       │       nowNextFutureCanvas.js
-    │   │       │
-    │   │       ├───standardCanvas
-    │   │       │       standardCanvas.css
-    │   │       │       standardCanvas.js
-    │   │       │
-    │   │       └───wardleyMap
-    │   │               wardleyMapCanvas.css
-    │   │               wardleyMapCanvas.js
-    │   │
-    │   ├───connection
-    │   │       connection.js
-    │   │       connectionManager.js
-    │   │       connectionUtils.js
-    │   │       contextMenu.js
-    │   │
-    │   ├───note
-    │   │       note.js
-    │   │       noteDeletion.js
-    │   │       noteEvents.js
-    │   │
-    │   └───zoom
-    │           zoomManager.js
-    │
-    ├───services
-    │       connectionService.js
-    │       noteEventService.js
-    │       noteService.js
-    │
-    └───utils
-            deviceUtils.js
-            utils.js
-```
+## License
 
-## Development Resources
-
-Please also see:
-- **CANVAS_TEMPLATES.md** - Instructions for creating custom templates
-- **PLAYWRIGHT_SETUP.md** - End-to-end browser testing setup  
-- **ARCHITECTURE_HEALTH.md** - Architecture monitoring and health checks
-- **TODO.md** - Technical debt tracking and improvement roadmap
-
-## Architecture Health Monitoring
-
-This project includes automated tools to maintain code quality and prevent technical debt:
-
-```bash
-# Run comprehensive architecture health check
-npm run health-check
-
-# Check for circular dependencies (critical)
-npm run analyze:circular
-
-# Update dependencies safely
-npm run deps:upgrade
-```
-
-Health checks run automatically on pull requests and weekly. See `ARCHITECTURE_HEALTH.md` for complete documentation.
+Licensed under the same terms as the project. See project repository for details.
