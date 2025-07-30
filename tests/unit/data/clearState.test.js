@@ -2,7 +2,10 @@
  * Unit tests for clearAllState functionality
  */
 
-import { clearAllState, clearStateFromStorage } from '../../../src/js/data/storageManager.js';
+import {
+  clearAllState,
+  clearStateFromStorage,
+} from '../../../src/js/data/storageManager.js';
 import { appState } from '../../../src/js/data/observableState.js';
 import { clearAllNotesAndConnections } from '../../../src/js/data/dataStore.js';
 
@@ -11,26 +14,26 @@ jest.mock('../../../src/js/data/observableState.js');
 jest.mock('../../../src/js/data/dataStore.js');
 jest.mock('../../../src/js/utils/utils.js', () => ({
   log: jest.fn(),
-  debounce: jest.fn(fn => fn),
-  throttle: jest.fn(fn => fn)
+  debounce: jest.fn((fn) => fn),
+  throttle: jest.fn((fn) => fn),
 }));
 jest.mock('../../../src/js/core/eventBus.js', () => ({
   eventBus: {
     emit: jest.fn(),
     on: jest.fn(),
-    off: jest.fn()
-  }
+    off: jest.fn(),
+  },
 }));
 
 describe('Clear State Functionality', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock appState methods
     appState.clearLocalStorage = jest.fn();
     appState.setState = jest.fn();
     appState.getState = jest.fn();
-    
+
     // Mock clearAllNotesAndConnections
     clearAllNotesAndConnections.mockImplementation(() => {});
   });
@@ -43,7 +46,7 @@ describe('Clear State Functionality', () => {
       expect(appState.setState).toHaveBeenCalledWith({
         notes: [],
         connections: [],
-        zoomLevel: 5
+        zoomLevel: 5,
       });
       expect(clearAllNotesAndConnections).toHaveBeenCalled();
     });
@@ -67,7 +70,7 @@ describe('Clear State Functionality', () => {
       expect(appState.setState).toHaveBeenCalledWith({
         notes: [],
         connections: [],
-        zoomLevel: 5
+        zoomLevel: 5,
       });
       expect(clearAllNotesAndConnections).toHaveBeenCalled();
     });
@@ -83,7 +86,7 @@ describe('Clear State Functionality', () => {
       expect(appState.setState).toHaveBeenCalledWith({
         notes: [],
         connections: [],
-        zoomLevel: 5
+        zoomLevel: 5,
       });
       expect(clearAllNotesAndConnections).toHaveBeenCalled();
     });
@@ -124,15 +127,15 @@ describe('Clear State Functionality', () => {
 
     test('should call clearing functions in correct order', () => {
       const callOrder = [];
-      
+
       appState.clearLocalStorage.mockImplementation(() => {
         callOrder.push('clearLocalStorage');
       });
-      
+
       appState.setState.mockImplementation(() => {
         callOrder.push('setState');
       });
-      
+
       clearAllNotesAndConnections.mockImplementation(() => {
         callOrder.push('clearAllNotesAndConnections');
       });
@@ -142,7 +145,7 @@ describe('Clear State Functionality', () => {
       expect(callOrder).toEqual([
         'clearLocalStorage',
         'setState',
-        'clearAllNotesAndConnections'
+        'clearAllNotesAndConnections',
       ]);
     });
   });
@@ -184,14 +187,14 @@ describe('Clear State Functionality', () => {
 
       // Should clear persistent storage
       expect(appState.clearLocalStorage).toHaveBeenCalled();
-      
+
       // Should reset in-memory state
       expect(appState.setState).toHaveBeenCalledWith({
         notes: [],
         connections: [],
-        zoomLevel: 5
+        zoomLevel: 5,
       });
-      
+
       // Should clear DOM representation
       expect(clearAllNotesAndConnections).toHaveBeenCalled();
     });
@@ -208,11 +211,11 @@ describe('Clear State Functionality', () => {
       expect(clearAllNotesAndConnections).toHaveBeenCalledTimes(3);
 
       // All calls should use the same reset state
-      appState.setState.mock.calls.forEach(call => {
+      appState.setState.mock.calls.forEach((call) => {
         expect(call[0]).toEqual({
           notes: [],
           connections: [],
-          zoomLevel: 5
+          zoomLevel: 5,
         });
       });
     });
