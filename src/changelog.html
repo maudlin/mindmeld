@@ -33,21 +33,13 @@
           <a class="menu-link" href="index.html">Home</a>
         </li>
         <li class="menu-item">
-          <button class="menu-button">About</button>
-          <ul class="dropdown">
-            <li>
-              <a href="about.html">About MindMeld</a>
-            </li>
-            <li>
-              <a href="changelog.html" style="font-weight: bold">What's New</a>
-            </li>
-          </ul>
+          <a class="menu-link" href="about.html">About</a>
         </li>
       </ul>
     </nav>
     <div class="about-container">
       <h1>🚀 What's New in MindMeld</h1>
-
+      
       <section>
         <p>
           Recent updates and improvements to make your mind mapping experience
@@ -55,195 +47,138 @@
         </p>
         <p><strong>Current Version:</strong> v0.7.0</p>
       </section>
-
+      
+      
       <section>
         <h2>✨ New Features</h2>
         <ul>
-          <li>
-            Add deterministic changelog generation from PR data
-            <small style="color: #666; margin-left: 1rem">
-              (<a
-                href="https://github.com/maudlin/mindmeld/pull/49"
-                target="_blank"
-                >#49</a
-              >, July 24, 2025)
-            </small>
-          </li>
-
-          <li>
-            Add automated version synchronization between package.json and HTML
-            display
-            <small style="color: #666; margin-left: 1rem">
-              (<a
-                href="https://github.com/maudlin/mindmeld/pull/48"
-                target="_blank"
-                >#48</a
-              >, July 24, 2025)
-            </small>
-          </li>
-
-          <li>
-            Update version to 0.7.0 following semver for this new feature
-            <small style="color: #666; margin-left: 1rem">
-              (<a
-                href="https://github.com/maudlin/mindmeld/pull/48"
-                target="_blank"
-                >#48</a
-              >, July 24, 2025)
-            </small>
-          </li>
-
-          <li>
-            Add comprehensive architecture health monitoring system
-            <small style="color: #666; margin-left: 1rem">
-              (<a
-                href="https://github.com/maudlin/mindmeld/pull/46"
-                target="_blank"
-                >#46</a
-              >, July 22, 2025)
-            </small>
-          </li>
+          
+            <li>
+              Add deterministic changelog generation from PR data
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/49" target="_blank">#49</a>, July 24, 2025)
+              </small>
+            </li>
+          
         </ul>
       </section>
       <section>
         <h2>⚡ Improvements</h2>
         <ul>
-          <li>
-            Eliminated all 8 circular dependencies that were blocking
-            architectural improvements
-            <small style="color: #666; margin-left: 1rem">
-              (<a
-                href="https://github.com/maudlin/mindmeld/pull/47"
-                target="_blank"
-                >#47</a
-              >, July 22, 2025)
-            </small>
-          </li>
-
-          <li>
-            Improved architecture health score from 86/100 to 96/100 (EXCELLENT
-            rating)
-            <small style="color: #666; margin-left: 1rem">
-              (<a
-                href="https://github.com/maudlin/mindmeld/pull/47"
-                target="_blank"
-                >#47</a
-              >, July 22, 2025)
-            </small>
-          </li>
+          
+            <li>
+              Improve CSS organization by grouping related properties
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/52" target="_blank">#52</a>, July 24, 2025)
+              </small>
+            </li>
+          
         </ul>
       </section>
       <section>
         <h2>🐛 Bug Fixes</h2>
         <ul>
-          <li>
-            Fixed critical JavaScript import errors causing note creation
-            failures
-            <small style="color: #666; margin-left: 1rem">
-              (<a
-                href="https://github.com/maudlin/mindmeld/pull/47"
-                target="_blank"
-                >#47</a
-              >, July 22, 2025)
-            </small>
-          </li>
+          
+            <li>
+              ✅ **Production enhancements**: Error resilience and memory cleanup improvements
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/53" target="_blank">#53</a>, July 29, 2025)
+              </small>
+            </li>
+          
+            <li>
+              Fix dropdown menu styling to work with both buttons and anchor tags
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/52" target="_blank">#52</a>, July 24, 2025)
+              </small>
+            </li>
+          
         </ul>
       </section>
       <section>
         <h2>📝 Other Changes</h2>
         <ul>
-          <li>
-            Create user-facing changelog page following existing design patterns
-            <small style="color: #666; margin-left: 1rem">
-              (<a
-                href="https://github.com/maudlin/mindmeld/pull/49"
-                target="_blank"
-                >#49</a
-              >, July 24, 2025)
-            </small>
-          </li>
-
-          <li>
-            Enable manual changelog updates with future automation potential
-            <small style="color: #666; margin-left: 1rem">
-              (<a
-                href="https://github.com/maudlin/mindmeld/pull/49"
-                target="_blank"
-                >#49</a
-              >, July 24, 2025)
-            </small>
-          </li>
-
-          <li>
-            Implement ISO date stamping for continuous deployment visibility
-            <small style="color: #666; margin-left: 1rem">
-              (<a
-                href="https://github.com/maudlin/mindmeld/pull/48"
-                target="_blank"
-                >#48</a
-              >, July 24, 2025)
-            </small>
-          </li>
-
-          <li>
-            Hook version sync into npm start for seamless developer experience
-            <small style="color: #666; margin-left: 1rem">
-              (<a
-                href="https://github.com/maudlin/mindmeld/pull/48"
-                target="_blank"
-                >#48</a
-              >, July 24, 2025)
-            </small>
-          </li>
-
-          <li>
-            Implemented clean event-driven architecture with service layer
-            pattern
-            <small style="color: #666; margin-left: 1rem">
-              (<a
-                href="https://github.com/maudlin/mindmeld/pull/47"
-                target="_blank"
-                >#47</a
-              >, July 22, 2025)
-            </small>
-          </li>
-
-          <li>
-            Skip Playwright installation when NODE_ENV=production
-            <small style="color: #666; margin-left: 1rem">
-              (<a
-                href="https://github.com/maudlin/mindmeld/pull/45"
-                target="_blank"
-                >#45</a
-              >, July 22, 2025)
-            </small>
-          </li>
-
-          <li>
-            Skip all test execution in production environment
-            <small style="color: #666; margin-left: 1rem">
-              (<a
-                href="https://github.com/maudlin/mindmeld/pull/45"
-                target="_blank"
-                >#45</a
-              >, July 22, 2025)
-            </small>
-          </li>
-
-          <li>
-            Reduce Cloudflare Workers deployment time by avoiding unnecessary
-            dev tools
-            <small style="color: #666; margin-left: 1rem">
-              (<a
-                href="https://github.com/maudlin/mindmeld/pull/45"
-                target="_blank"
-                >#45</a
-              >, July 22, 2025)
-            </small>
-          </li>
+          
+            <li>
+              ✅ **Complete event bus test suite**: 20 comprehensive unit tests with 100% code coverage
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/53" target="_blank">#53</a>, July 29, 2025)
+              </small>
+            </li>
+          
+            <li>
+              ✅ **Documentation updates**: Updated TODO.md and tests/README.md
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/53" target="_blank">#53</a>, July 29, 2025)
+              </small>
+            </li>
+          
+            <li>
+              ✅ **Jira task completion**: MM-94 moved to Done status
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/53" target="_blank">#53</a>, July 29, 2025)
+              </small>
+            </li>
+          
+            <li>
+              Set correct font size (0.65rem) for dropdown items to match main navigation
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/52" target="_blank">#52</a>, July 24, 2025)
+              </small>
+            </li>
+          
+            <li>
+              Remove redundant CSS declarations
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/52" target="_blank">#52</a>, July 24, 2025)
+              </small>
+            </li>
+          
+            <li>
+              Create changelog.yml
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/51" target="_blank">#51</a>, July 24, 2025)
+              </small>
+            </li>
+          
+            <li>
+              Extended CSS selectors to properly style anchor tags in dropdown menus
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/50" target="_blank">#50</a>, July 24, 2025)
+              </small>
+            </li>
+          
+            <li>
+              The About dropdown was using `<a>` tags but CSS only targeted `dropdown button`
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/50" target="_blank">#50</a>, July 24, 2025)
+              </small>
+            </li>
+          
+            <li>
+              Now both buttons and anchor tags in dropdowns have consistent styling
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/50" target="_blank">#50</a>, July 24, 2025)
+              </small>
+            </li>
+          
+            <li>
+              Create user-facing changelog page following existing design patterns
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/49" target="_blank">#49</a>, July 24, 2025)
+              </small>
+            </li>
+          
+            <li>
+              Enable manual changelog updates with future automation potential
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/49" target="_blank">#49</a>, July 24, 2025)
+              </small>
+            </li>
+          
         </ul>
       </section>
-
+      
       <section>
         <h2>📝 How This Changelog Works</h2>
         <p>
