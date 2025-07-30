@@ -57,14 +57,36 @@ function switchCanvas(moduleName, elements) {
 }
 
 function setupExportImport(menu, canvas) {
-  const exportButton = menu.querySelector('#export-btn');
-  if (exportButton) {
-    exportButton.addEventListener('click', handleExportToFile);
+  // Export to file button
+  const exportToFileButton = menu.querySelector('#export-to-file-button');
+  if (exportToFileButton) {
+    exportToFileButton.addEventListener('click', handleExportToFile);
   }
 
-  const importButton = menu.querySelector('#import-btn');
-  if (importButton) {
-    importButton.addEventListener('change', () => handleImportFromFile(canvas));
+  // Import from file button
+  const importFromFileButton = menu.querySelector('#import-from-file-button');
+  if (importFromFileButton) {
+    importFromFileButton.addEventListener('click', () =>
+      handleImportFromFile(canvas),
+    );
+  }
+
+  // Export to clipboard button
+  const exportToClipboardButton = menu.querySelector(
+    '#export-to-clipboard-button',
+  );
+  if (exportToClipboardButton) {
+    exportToClipboardButton.addEventListener('click', handleExportToClipboard);
+  }
+
+  // Import from clipboard button
+  const importFromClipboardButton = menu.querySelector(
+    '#import-from-clipboard-button',
+  );
+  if (importFromClipboardButton) {
+    importFromClipboardButton.addEventListener('click', () =>
+      handleImportFromClipboard(canvas),
+    );
   }
 }
 
@@ -99,8 +121,41 @@ function handleImportFromFile(canvas) {
   input.click();
 }
 
+function handleExportToClipboard() {
+  const json = exportToJSON();
+  navigator.clipboard
+    .writeText(json)
+    .then(() => {
+      alert('Mind map exported to clipboard!');
+    })
+    .catch((error) => {
+      console.error('Error copying to clipboard:', error);
+      alert('Failed to copy to clipboard. Please try again.');
+    });
+}
+
+function handleImportFromClipboard(canvas) {
+  navigator.clipboard
+    .readText()
+    .then((text) => {
+      try {
+        importFromJSON(text, canvas);
+        alert('Mind map imported from clipboard!');
+      } catch (error) {
+        console.error('Error importing from clipboard:', error);
+        alert(
+          'Error importing from clipboard. Please make sure the clipboard contains valid JSON data.',
+        );
+      }
+    })
+    .catch((error) => {
+      console.error('Error reading from clipboard:', error);
+      alert('Failed to read from clipboard. Please try again.');
+    });
+}
+
 function setupClearCanvas(menu, canvas) {
-  const clearButton = menu.querySelector('#clear-btn');
+  const clearButton = menu.querySelector('#clear-canvas-button');
   if (clearButton) {
     clearButton.addEventListener('click', () => {
       if (confirm('Are you sure you want to clear the canvas?')) {

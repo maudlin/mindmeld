@@ -19,10 +19,15 @@ tests/
 │   ├── note-operations.spec.js       # Note CRUD operations
 │   ├── note-connections.spec.js      # Note connection functionality
 │   ├── multi-select-notes.spec.js    # Multi-select and group operations
-│   └── canvas-template-switching.spec.js # Template switching functionality
+│   ├── canvas-template-switching.spec.js # Template switching functionality
+│   └── menu-functionality.spec.js    # 🆕 Menu operations and import/export (12 tests)
 └── unit/                             # Unit tests (Jest)
     ├── core/
-    │   └── eventBus.test.js          # 🆕 Event Bus comprehensive tests (20 tests, 100% coverage)
+    │   ├── eventBus.test.js          # 🆕 Event Bus comprehensive tests (20 tests, 100% coverage)
+    │   └── uiSetup.test.js           # 🆕 Menu UI setup and button handlers (15+ tests)
+    ├── data/
+    │   ├── clearState.test.js        # 🆕 Clear state functionality tests (15 tests)
+    │   └── exportImportData.test.js  # 🆕 Export/import data transformation (20+ tests)
     ├── features/
     │   ├── note/
     │   │   └── noteCreation.test.js
@@ -34,6 +39,27 @@ tests/
 
 ## 🏗️ **Architecture Overview (July 2025 Update)**
 
+### **🆕 Menu Functionality Testing Foundation (July 30, 2025)**
+Complete menu functionality is now comprehensively tested with both E2E and unit test coverage:
+
+**E2E Testing (`menu-functionality.spec.js`):**
+- **12 comprehensive E2E tests** covering all menu operations
+- Navigation menu structure validation and dropdown accessibility
+- Clear canvas functionality with confirmation dialogs and cancellation
+- Import/export workflows including file operations and clipboard handling
+- Error scenario testing for clipboard failures and invalid data
+
+**Unit Testing (New test suites):**
+- **UI Setup Tests** (`uiSetup.test.js`) - Button event handlers and DOM interaction
+- **Data Transformation Tests** (`exportImportData.test.js`) - JSON export/import logic validation
+- **State Management Tests** (`clearState.test.js`) - Clear operations and localStorage handling
+
+**Key Bug Fixes Covered:**
+- Fixed broken clear canvas button (ID mismatch)
+- Added missing clipboard export/import functionality
+- Corrected export/import button selectors to match actual HTML IDs
+- Enhanced error handling for clipboard access failures
+
 ### **🆕 Event Bus Testing Foundation (July 2025)**
 The event bus (`src/js/core/eventBus.js`) is now comprehensively tested with production-ready enhancements:
 
@@ -42,17 +68,6 @@ The event bus (`src/js/core/eventBus.js`) is now comprehensively tested with pro
 - **Memory cleanup** - automatic cleanup prevents memory leaks
 - **Performance validated** - tested with 1000+ listeners efficiently
 - **Production ready** with console error logging for debugging
-
-**Key Testing Patterns:**
-```javascript
-// Test error resilience
-const errorCallback = jest.fn(() => { throw new Error('Test error'); });
-const successCallback = jest.fn();
-testEventBus.on('event', errorCallback);
-testEventBus.on('event', successCallback);
-testEventBus.emit('event', 'data');
-// Both callbacks execute, error is logged but doesn't crash
-```
 
 ## 🏗️ **E2E Architecture Overview (January 2025 Refactor)**
 
