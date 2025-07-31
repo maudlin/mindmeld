@@ -284,24 +284,8 @@ expect(result.style.left).toBe('100px');
 - **Factory Coverage:** 90% (pure functions, easy to test)
 
 ### **Quality Indicators:**
-```bash
-# Check current coverage
-npm test -- --coverage
-
-# Target: All metrics above thresholds
-Statements   : 80% 
-Branches     : 75%
-Functions    : 80%
-Lines        : 80%
-```
-
-### **Architecture Health Monitoring:**
-```bash
-# These should remain excellent (already achieved!)
-npx madge --circular src/        # Target: 0 circular dependencies ✅
-npx madge --summary src/         # Target: <5 deps per module ✅
-npm run health-check            # Target: A-grade ✅
-```
+**Target Coverage**: 80% statements, 75% branches, 80% functions/lines  
+**Commands**: See [Scripts Reference](scripts.md)
 
 ---
 
@@ -370,16 +354,7 @@ npm run health-check            # Target: A-grade ✅
 4. Update E2E tests for new user-facing functionality
 
 ### **Getting Started:**
-```bash
-# Run existing tests to understand current state
-npm test
-
-# Run with coverage to see current metrics
-npm test -- --coverage
-
-# Start with the event bus tests - they're foundational
-# Create tests/unit/core/eventBus.test.js first
-```
+Run tests and check coverage to understand current state. See [Scripts Reference](scripts.md) for all commands.
 
 ---
 

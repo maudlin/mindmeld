@@ -47,40 +47,17 @@ Visit `http://localhost:8080` to begin mind mapping.
 
 ## Architecture
 
-MindMeld features a modern, maintainable architecture:
+Event-driven design with zero circular dependencies. Service layer with dependency injection.
 
-- **Event-Driven Design**: Centralized event bus eliminates circular dependencies
-- **Service Layer Pattern**: Clean separation with dependency injection
-- **Factory Pattern**: Pure, testable functions for core operations
-- **Modular Canvas System**: Template-based canvas types with extensible design
-
-### Current Health: 96/100 (EXCELLENT)
-- Zero circular dependencies
-- Comprehensive test coverage (unit + E2E)
-- Automated security scanning
-- Performance monitoring
+**Health**: 96/100 (EXCELLENT) | Details: [Architecture Health](docs/architecture-health.md)
 
 ## Development
 
-### Prerequisites
-- Node.js (LTS)
-- Modern web browser
-
-### Local Setup
 ```bash
-npm install           # Install dependencies
-npm start            # Start development server (port 8080)
-npm test             # Run unit tests
-npm run test:e2e      # Run end-to-end tests
+npm install && npm start  # Setup and run (port 8080)
 ```
 
-### Quality Tools
-```bash
-npm run lint         # ESLint with security rules
-npm run format       # Prettier code formatting  
-npm run health-check # Architecture analysis
-npm run security     # Security-focused linting
-```
+Commands: [Scripts Reference](docs/scripts.md) | Setup: [Developer Guide](docs/developer-guide.md)
 
 ## Data Format
 

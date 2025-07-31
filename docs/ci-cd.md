@@ -56,16 +56,7 @@ npm run format:check
 ```
 
 ### Stage 3: Testing
-```bash
-# Unit tests (Jest)
-npm run test:unit
-
-# E2E test setup
-npx playwright install --with-deps
-
-# E2E tests (Playwright)
-npx playwright test
-```
+Unit and E2E tests run automatically. See [Testing Guide](testing.md) for details.
 
 ### Stage 4: Artifacts
 - **Playwright Reports**: Uploaded for test failures analysis
@@ -125,15 +116,8 @@ Automated checks using Husky + lint-staged:
 ```
 
 ### Local CI Validation
-Run the same checks locally:
 ```bash
-# Full CI simulation
-npm run lint && npm run format:check
-npm test && npm run test:e2e
-npm run security
-
-# Quick validation
-npm run dev-check    # Custom script for rapid feedback
+npm run lint && npm run format:check && npm test && npm run test:e2e && npm run security
 ```
 
 ## Environment Configuration
@@ -194,14 +178,7 @@ npm run security
 ```
 
 #### 2. Test Failures
-```bash
-# Run tests locally
-npm run test:unit -- --verbose
-npm run test:e2e -- --headed
-
-# Check artifacts in CI
-# Download Playwright reports from GitHub Actions
-```
+Run locally with verbose output. Download Playwright reports from GitHub Actions. See [Testing Guide](testing.md) for debugging.
 
 #### 3. Security Issues
 ```bash
@@ -255,5 +232,4 @@ npm run security
 - **Security Alerts**: Respond to new vulnerabilities
 - **Architecture Drift**: Prevent degradation over time
 
-For local development setup, see [Developer Guide](developer-guide.md).
-For testing details, see [Testing Guide](testing.md).
+See [Developer Guide](developer-guide.md) and [Testing Guide](testing.md).

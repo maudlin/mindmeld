@@ -1,150 +1,58 @@
 # Developer Guide
 
-## Overview
+## Get Started Fast
 
-MindMeld is a sophisticated mind mapping application built with vanilla JavaScript, following an event-driven architecture with clean separation of concerns. This guide will help you get started with development and understand the project's standards and practices.
+**Prerequisites:** Node.js (LTS), npm, Git
 
-## Quick Start
-
-### Prerequisites
-- Node.js (LTS version)
-- npm
-- Git
-
-### Setup
 ```bash
-# Clone the repository
 git clone https://github.com/maudlin/mindmeld.git
 cd mindmeld
-
-# Install dependencies
 npm install
-
-# Start development server
 npm start
-
-# Run tests
-npm test && npm run test:e2e
 ```
 
-## Project Architecture
+**Test it works:** `npm test && npm run test:e2e`
 
-### Directory Structure
+## Architecture Overview
+
+**Event-driven**: Components communicate via central event bus (`src/js/core/eventBus.js`)  
+**Service layer**: Clean separation with dependency injection (`src/js/services/`)  
+**Factory pattern**: Pure, testable functions (`src/js/factories/`)  
+**Zero circular deps**: Maintained via automated health checks
+
 ```
-src/
-├── js/
-│   ├── core/           # Core application logic
-│   ├── services/       # Service layer with dependency injection
-│   ├── factories/      # Pure factory functions
-│   ├── features/       # Feature-specific modules
-│   ├── data/          # Data management and storage
-│   └── utils/         # Utility functions
-├── css/               # Stylesheets
-└── *.html            # Application pages
-```
-
-### Key Architectural Principles
-- **Event-Driven Architecture**: Components communicate via the central event bus
-- **Service Layer Pattern**: Clean separation with dependency injection
-- **Factory Pattern**: Pure, testable functions for object creation
-- **No Circular Dependencies**: Clean, maintainable import structure
-
-## Development Standards
-
-### Code Style
-- **ES6+ JavaScript**: Use modern JavaScript features
-- **ESLint**: Follow configured linting rules (`npm run lint`)
-- **Prettier**: Code formatting (`npm run format`)
-- **Security**: ESLint security plugins detect vulnerabilities
-
-### Naming Conventions
-- **Files**: camelCase for JS files, kebab-case for HTML/CSS/MD
-- **Functions**: camelCase, descriptive names
-- **Classes**: PascalCase
-- **Constants**: UPPER_SNAKE_CASE
-- **Events**: `noun.verb` format (e.g., `note.created`, `canvas.cleared`)
-
-### Git Workflow
-- **Branch naming**: `feature/description`, `fix/description`, `refactor/description`
-- **Commits**: Follow conventional commit format
-- **PRs**: Use provided PR template, include testing evidence
-
-## Testing Strategy
-
-See [Testing Guide](testing.md) for comprehensive testing documentation.
-
-### Test Types
-- **Unit Tests**: Core logic and pure functions (`npm run test:unit`)
-- **E2E Tests**: User workflows with Playwright (`npm run test:e2e`)
-- **Integration Tests**: Service interactions and event flows
-
-### Testing Best Practices
-- **E2E for UI**: Test user interactions end-to-end
-- **Unit for Logic**: Test pure functions and business logic
-- **Mock Sparingly**: The clean architecture makes most code easily testable
-
-## CI/CD Process
-
-See [CI/CD Guide](ci-cd.md) for detailed automation documentation.
-
-### Automated Checks
-- **Linting**: ESLint with security plugins
-- **Formatting**: Prettier code style
-- **Testing**: Unit and E2E test suites
-- **Security**: Semgrep security scanning
-- **Architecture**: Health checks and dependency analysis
-
-## Contributing Workflow
-
-1. **Read**: [Contributing Guidelines](../CONTRIBUTING.md)
-2. **Setup**: Follow quick start above
-3. **Develop**: Create feature branch, follow coding standards
-4. **Test**: Ensure all tests pass locally
-5. **Document**: Update relevant documentation
-6. **Submit**: Create PR with clear description and testing evidence
-
-## Useful Scripts
-
-See [Scripts Reference](scripts.md) for complete command documentation.
-
-### Development
-```bash
-npm start              # Start development server
-npm run dev            # Alternative development command
-npm run lint           # Run ESLint
-npm run format         # Format code with Prettier
+src/js/
+├── core/          # Event bus, core logic  
+├── services/      # Service layer
+├── factories/     # Pure factory functions
+├── features/      # Feature modules
+└── data/          # Data management
 ```
 
-### Testing
-```bash
-npm test               # Run unit tests
-npm run test:e2e       # Run E2E tests
-npm run test:watch     # Run tests in watch mode
-```
+## Standards
 
-### Quality Assurance
-```bash
-npm run security       # Security-focused linting
-npm run health-check   # Architecture health assessment
-```
+**Code style**: ES6+, ESLint, Prettier  
+**Naming**: camelCase files/functions, PascalCase classes, events as `noun.verb`  
+**Git**: Branch as `feature/description`, conventional commits, use PR template  
+**Security**: ESLint security plugins catch vulnerabilities  
 
-## Architecture References
+## Testing & CI
 
-- **Event Bus**: `src/js/core/eventBus.js` - Central event system
-- **Services**: `src/js/services/` - Service layer implementations
-- **Factories**: `src/js/factories/` - Pure factory functions
+**Testing**: See [Testing Guide](testing.md)  
+**CI/CD**: See [CI/CD Guide](ci-cd.md)  
+**Commands**: See [Scripts Reference](scripts.md)
+
+## Contributing
+
+1. **Read** [Contributing Guidelines](../CONTRIBUTING.md)
+2. **Create** feature branch, follow standards above
+3. **Test** locally before submitting PR
+4. **Document** any new patterns or features
+
+## What's Where
+
+- **Event Bus**: `src/js/core/eventBus.js`
+- **Services**: `src/js/services/`  
 - **Health Monitoring**: [Architecture Health](architecture-health.md)
-
-## Getting Help
-
-- **Issues**: Check existing GitHub issues or create a new one
-- **Documentation**: Browse the `docs/` directory
-- **Testing**: Comprehensive guide in `../tests/README.md`
-- **Architecture**: Review [Architecture Health](architecture-health.md)
-
-## Next Steps
-
-1. Explore the [User Guide](user-guide.md) to understand the application features
-2. Review [Testing Documentation](testing.md) for testing approaches
-3. Check [Canvas Templates](canvas-templates.md) for extending templates
-4. Read [Contributing Guidelines](../CONTRIBUTING.md) before submitting changes
+- **User Features**: [User Guide](user-guide.md)
+- **Canvas Templates**: [Canvas Templates](canvas-templates.md)
