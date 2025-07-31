@@ -107,5 +107,4 @@ npm audit fix
 
 ---
 
-*For detailed remediation steps, see TODO.md*  
-*For complete documentation, see the full version of this file*
+*See [Technical Debt](technical-debt.md) for detailed remediation steps*
