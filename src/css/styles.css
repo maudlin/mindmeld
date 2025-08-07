@@ -355,52 +355,51 @@ body.dragging * {
   pointer-events: auto;
 }
 
-/* Container from Penpot design */
+/* Color Picker Container - Redesigned with clean integer values */
 .color-picker-palette {
   position: relative;
-  width: 115px;
-  height: 35px;
+  width: 120px;
+  height: 32px;
   background: rgba(217, 217, 217, 0);
   border: 1px solid rgba(103, 103, 103, 0.25);
-  border-radius: 30px;
+  border-radius: 16px;
   box-shadow: 2px 2px 4px 0px rgba(0, 0, 0, 0.25);
   box-sizing: border-box;
 }
 
-/* Color Swatches */
+/* Color Swatches - Normalized dimensions */
 .color-swatch {
   position: absolute;
-  width: 23.43px;
-  height: 22.72px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  top: 6px;
+  top: 4px;
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-/* Individual Color Positions and Colors */
+/* Individual Color Positions - Evenly spaced with 4px margins */
 .color-swatch[data-color="yellow"] {
-  left: 4.26px;
+  left: 4px;
   background: var(--note-color-yellow-bg);
   border-color: var(--note-color-yellow-border);
 }
 
 .color-swatch[data-color="pink"] {
-  left: 31.94px;
+  left: 32px;
   background: var(--note-color-pink-bg);
   border-color: var(--note-color-pink-border);
 }
 
 .color-swatch[data-color="green"] {
-  left: 58.92px;
+  left: 60px;
   background: var(--note-color-green-bg);
   border-color: var(--note-color-green-border);
 }
 
 .color-swatch[data-color="blue"] {
-  left: 86.6px;
-  width: 22.72px; /* Slightly different width as per Penpot */
+  left: 88px;
   background: var(--note-color-blue-bg);
   border-color: var(--note-color-blue-border);
 }
