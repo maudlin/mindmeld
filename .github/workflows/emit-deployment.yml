@@ -3,7 +3,7 @@ name: Report deployment for Jira
 on:
   push:
     branches:
-      - main  # or your production branch
+      - main
 
 permissions:
   deployments: write
@@ -14,17 +14,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create deployment
+        id: create_deploy
         uses: bobheadxi/deployments@v1
         with:
           step: start
           token: ${{ secrets.GITHUB_TOKEN }}
           env: production
+          ref: ${{ github.sha }}
 
-      - name: Mark deployment as successful
+      - name: Mark deployment as finished
+        if: always() # still mark failure if earlier steps fail
         uses: bobheadxi/deployments@v1
         with:
           step: finish
           token: ${{ secrets.GITHUB_TOKEN }}
           env: production
-          status: success
-          log-url: https://mind-meld.co  # optional but useful
+          status: ${{ job.status }} # success, failure, or cancelled
+          deployment_id: ${{ steps.create_deploy.outputs.deployment_id }}
+          env_url: https://mind-meld.co
+          auto_inactive: false
