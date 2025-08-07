@@ -1,0 +1,30 @@
+name: Report deployment for Jira
+
+on:
+  push:
+    branches:
+      - main  # or your production branch
+
+permissions:
+  deployments: write
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create deployment
+        uses: bobheadxi/deployments@v1
+        with:
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: production
+
+      - name: Mark deployment as successful
+        uses: bobheadxi/deployments@v1
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: production
+          status: success
+          log-url: https://mind-meld.co  # optional but useful
