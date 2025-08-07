@@ -23,10 +23,10 @@ npm start
 ```
 src/js/
 ├── core/          # Event bus, core logic  
-├── services/      # Service layer
+├── services/      # Service layer (noteService, colorService)
 ├── factories/     # Pure factory functions
-├── features/      # Feature modules
-└── data/          # Data management
+├── features/      # Feature modules (colorPicker, note, connection)
+└── data/          # Data management (with color persistence)
 ```
 
 ## Standards
@@ -64,8 +64,17 @@ npm run version:major   # Breaking changes (0.8.0 → 1.0.0)
 
 ## What's Where
 
-- **Event Bus**: `src/js/core/eventBus.js`
-- **Services**: `src/js/services/`  
+- **Event Bus**: `src/js/core/eventBus.js` - Central communication hub
+- **Services**: `src/js/services/` - Business logic layer
+  - `colorService.js` - Color state management and validation
+  - `noteService.js` - Note creation and manipulation  
+  - `connectionService.js` - Note connection handling
+- **Features**: `src/js/features/` - UI components and interactions
+  - `colorPicker/` - Color selection interface and events
+  - `note/` - Note creation, editing, and color application
+  - `connection/` - Connection drawing and management
+- **Data Layer**: `src/js/data/` - State management and persistence
+  - Export/import includes color data via `cl` field
 - **Health Monitoring**: [Architecture Health](architecture-health.md)
 - **User Features**: [User Guide](user-guide.md)
 - **Canvas Templates**: [Canvas Templates](canvas-templates.md)
