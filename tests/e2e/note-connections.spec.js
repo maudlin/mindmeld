@@ -14,11 +14,8 @@ test.describe('MindMeld Note Connections', () => {
       TestCoordinates.note1.y,
     );
 
-    // Wait for throttle to clear (500ms + buffer due to throttled double-click handler)
-    await page.waitForTimeout(600);
-
-    // Create second note using standard coordinates
-    const note2 = await canvasPage.createNoteAt(
+    // Create second note using createNoteWithThrottleWait to handle timing properly
+    const note2 = await canvasPage.createNoteWithThrottleWait(
       TestCoordinates.note2.x,
       TestCoordinates.note2.y,
     );

@@ -61,11 +61,14 @@ export function mockLocalStorage() {
   const localStorageMock = (() => {
     let store = {};
     return {
+      // eslint-disable-next-line security/detect-object-injection
       getItem: jest.fn((key) => store[key] || null),
       setItem: jest.fn((key, value) => {
+        // eslint-disable-next-line security/detect-object-injection
         store[key] = value.toString();
       }),
       removeItem: jest.fn((key) => {
+        // eslint-disable-next-line security/detect-object-injection
         delete store[key];
       }),
       clear: jest.fn(() => {

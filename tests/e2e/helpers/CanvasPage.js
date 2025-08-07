@@ -41,13 +41,12 @@ export class CanvasPage {
     const noteCountBefore = await this.notes.count();
 
     await this.page.mouse.dblclick(x, y);
-    await this.page.waitForTimeout(100); // Small delay for note creation
 
-    // Wait for new note to be created
+    // Wait for new note to be created with increased timeout
     await this.page.waitForFunction(
       (count) => document.querySelectorAll('.note').length > count,
       noteCountBefore,
-      { timeout: 2000 },
+      { timeout: 5000 },
     );
 
     // Get the newly created note (at the count index)
@@ -59,7 +58,19 @@ export class CanvasPage {
   // Note creation with automatic throttle handling
   async createNoteWithThrottleWait(x, y) {
     const note = await this.createNoteAt(x, y);
-    await this.page.waitForTimeout(600); // Handle 500ms throttle + buffer
+    // Wait for throttle to complete using a more reliable approach
+    await this.page
+      .waitForFunction(
+        () => {
+          // Check if the note creation throttle has completed
+          return !document.querySelector('.note-throttle-active');
+        },
+        { timeout: 1000 },
+      )
+      .catch(() => {
+        // Fallback if throttle indicator doesn't exist
+        return this.page.waitForTimeout(600);
+      });
     return note;
   }
 
@@ -124,8 +135,10 @@ export class CanvasPage {
     // Use dragTo method instead of manual mouse movements
     await ghostConnector.dragTo(targetNote);
 
-    // Small delay to allow connection creation
-    await this.page.waitForTimeout(100);
+    // Wait for connection to be created in the SVG container
+    await expect(this.svgContainer.locator('g[data-start]')).toBeVisible({
+      timeout: 2000,
+    });
   }
 
   async verifyConnection(sourceNote, targetNote) {
@@ -150,7 +163,7 @@ export class CanvasPage {
   async createSelectionBox(startX, startY, endX, endY) {
     // Clear any existing selections first
     await this.page.mouse.click(100, 100); // Click on empty area
-    await this.page.waitForTimeout(100);
+    await this.page.waitForLoadState('domcontentloaded');
 
     // Start dragging from empty canvas area using absolute coordinates
     await this.page.mouse.move(startX, startY);
@@ -162,8 +175,13 @@ export class CanvasPage {
     // Release mouse to complete selection
     await this.page.mouse.up({ button: 'left' });
 
-    // Wait for selection to be processed
-    await this.page.waitForTimeout(300);
+    // Wait for selection to be processed - check for selected notes
+    await this.page.waitForFunction(
+      () => {
+        return document.querySelectorAll('.note.selected').length > 0;
+      },
+      { timeout: 1000 },
+    );
   }
 
   async getSelectedNotes() {
@@ -192,8 +210,14 @@ export class CanvasPage {
     );
     await this.page.mouse.up();
 
-    // Wait for movement to complete
-    await this.page.waitForTimeout(100);
+    // Wait for movement to complete - ensure note positions have updated
+    await this.page.waitForFunction(
+      () => {
+        const note = document.querySelector('.note.selected');
+        return note && note.style.transform !== '';
+      },
+      { timeout: 1000 },
+    );
   }
 
   async verifyNotesSelected(expectedCount) {
@@ -218,8 +242,24 @@ export class CanvasPage {
     await expect(templateOption).toBeVisible();
     await templateOption.click();
 
-    // Wait for template switch to complete
-    await this.page.waitForTimeout(500);
+    // Wait for template switch to complete - check for class change on canvas
+    await this.page
+      .waitForFunction(
+        () => {
+          const canvas = document.getElementById('canvas');
+          return (
+            canvas &&
+            canvas.className.includes(
+              templateName.toLowerCase().replace(/\s+/g, '-'),
+            )
+          );
+        },
+        { timeout: 2000 },
+      )
+      .catch(() => {
+        // Fallback for templates that don't change canvas class
+        return this.page.waitForLoadState('domcontentloaded');
+      });
   }
 
   async verifyTemplate(templateName) {

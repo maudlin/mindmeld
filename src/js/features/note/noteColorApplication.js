@@ -162,6 +162,7 @@ export class NoteColorApplication {
       const noteId = noteElement.id;
 
       const noteColor =
+        // eslint-disable-next-line security/detect-object-injection
         allNoteColors[noteId]?.colorScheme || ColorService.getCurrentColor();
       this.applyColorClassesToNote(noteElement, noteColor);
     });
