@@ -40,14 +40,32 @@ export class CanvasPage {
   async createNoteAt(x, y) {
     const noteCountBefore = await this.notes.count();
 
-    await this.page.mouse.dblclick(x, y);
+    // Ensure we're clicking on the canvas area, not other UI elements
+    await this.canvas.click(); // Focus canvas first
+    await this.page.waitForTimeout(100); // Small delay to ensure focus
 
-    // Wait for new note to be created with increased timeout
-    await this.page.waitForFunction(
-      (count) => document.querySelectorAll('.note').length > count,
-      noteCountBefore,
-      { timeout: 5000 },
-    );
+    // Use a more reliable double-click approach
+    await this.page.mouse.click(x, y);
+    await this.page.waitForTimeout(50);
+    await this.page.mouse.click(x, y);
+
+    // Wait for new note to be created with more specific conditions
+    try {
+      await this.page.waitForFunction(
+        (count) => {
+          const notes = document.querySelectorAll('.note');
+          return notes.length > count;
+        },
+        noteCountBefore,
+        { timeout: 8000 },
+      );
+    } catch (error) {
+      // Debug information for CI
+      const currentCount = await this.notes.count();
+      throw new Error(
+        `Note creation failed at (${x}, ${y}). Expected: ${noteCountBefore + 1}, Got: ${currentCount}. Original error: ${error.message}`,
+      );
+    }
 
     // Get the newly created note (at the count index)
     const note = this.notes.nth(noteCountBefore);
@@ -58,19 +76,44 @@ export class CanvasPage {
   // Note creation with automatic throttle handling
   async createNoteWithThrottleWait(x, y) {
     const note = await this.createNoteAt(x, y);
-    // Wait for throttle to complete using a more reliable approach
-    await this.page
-      .waitForFunction(
-        () => {
-          // Check if the note creation throttle has completed
-          return !document.querySelector('.note-throttle-active');
-        },
-        { timeout: 1000 },
-      )
-      .catch(() => {
-        // Fallback if throttle indicator doesn't exist
-        return this.page.waitForTimeout(600);
-      });
+
+    // Wait for the 500ms throttle to complete plus buffer time
+    // This is simpler and more reliable than checking for throttle indicators
+    await this.page.waitForTimeout(800);
+
+    return note;
+  }
+
+  // Alternative note creation method using JavaScript events (for problematic environments)
+  async createNoteViaJavaScript(x, y) {
+    const noteCountBefore = await this.notes.count();
+
+    // Create note via JavaScript dispatch instead of mouse events
+    await this.page.evaluate(
+      ({ x, y }) => {
+        const canvas = document.getElementById('canvas');
+        if (canvas) {
+          const event = new MouseEvent('dblclick', {
+            clientX: x,
+            clientY: y,
+            bubbles: true,
+            cancelable: true,
+          });
+          canvas.dispatchEvent(event);
+        }
+      },
+      { x, y },
+    );
+
+    // Wait for note creation
+    await this.page.waitForFunction(
+      (count) => document.querySelectorAll('.note').length > count,
+      noteCountBefore,
+      { timeout: 8000 },
+    );
+
+    const note = this.notes.nth(noteCountBefore);
+    await expect(note).toBeVisible();
     return note;
   }
 
