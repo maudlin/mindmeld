@@ -359,7 +359,7 @@ body.dragging * {
 .color-picker-palette {
   position: relative;
   width: 115px;
-  height: 31.23px;
+  height: 35px;
   background: rgba(217, 217, 217, 0);
   border: 1px solid rgba(103, 103, 103, 0.25);
   border-radius: 30px;
@@ -375,7 +375,7 @@ body.dragging * {
   border-radius: 50%;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  top: 4.26px;
+  top: 6px;
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
@@ -413,7 +413,22 @@ body.dragging * {
 
 .color-swatch.active {
   transform: scale(1.15);
-  box-shadow: 0 0 0 2px #333;
+}
+
+.color-swatch[data-color="yellow"].active {
+  box-shadow: 0 0 0 2px var(--note-color-yellow-border-selected);
+}
+
+.color-swatch[data-color="pink"].active {
+  box-shadow: 0 0 0 2px var(--note-color-pink-border-selected);
+}
+
+.color-swatch[data-color="green"].active {
+  box-shadow: 0 0 0 2px var(--note-color-green-border-selected);
+}
+
+.color-swatch[data-color="blue"].active {
+  box-shadow: 0 0 0 2px var(--note-color-blue-border-selected);
 }
 
 .color-swatch:focus {
