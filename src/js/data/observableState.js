@@ -65,4 +65,8 @@ export const appState = new ObservableState({
   notes: [],
   connections: [],
   zoomLevel: 5,
+  colorState: {
+    currentColor: 'yellow', // Global state for new notes
+    notes: {}, // Individual note colors: { noteId: { colorScheme: 'blue' } }
+  },
 });

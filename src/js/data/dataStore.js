@@ -9,6 +9,7 @@ import {
 } from '../core/constants.js';
 import { NoteService } from '../services/noteService.js';
 import { ConnectionService } from '../services/connectionService.js';
+import { ColorService } from '../services/colorService.js';
 import { eventBus } from '../core/eventBus.js';
 
 export function addNote(note) {
@@ -129,12 +130,27 @@ export function getCurrentState() {
 
 export function exportToJSON() {
   const { notes, connections } = appState.getState();
+  const allNoteColors = ColorService.getAllNoteColors();
+
   const compressedData = {
-    n: notes.map((note) => ({
-      i: note.id,
-      p: [Math.round(parseFloat(note.left)), Math.round(parseFloat(note.top))],
-      c: truncateNoteContent(note.content || '', NOTE_CONTENT_LIMIT),
-    })),
+    n: notes.map((note) => {
+      const baseNote = {
+        i: note.id,
+        p: [
+          Math.round(parseFloat(note.left)),
+          Math.round(parseFloat(note.top)),
+        ],
+        c: truncateNoteContent(note.content || '', NOTE_CONTENT_LIMIT),
+      };
+
+      // Add color data if not default (yellow)
+      const noteColor = allNoteColors[note.id]?.colorScheme;
+      if (noteColor && noteColor !== 'yellow') {
+        baseNote.cl = noteColor;
+      }
+
+      return baseNote;
+    }),
     c: connections.map((conn) => [
       conn.from,
       conn.to,
@@ -155,6 +171,19 @@ export function importFromJSON(jsonData, canvas) {
     // Clear existing notes and connections
     NoteService.clearAllNotes();
     document.querySelectorAll('g[data-start]').forEach((conn) => conn.remove());
+
+    // Extract color data for import
+    const noteColors = {};
+    data.n.forEach((noteData) => {
+      if (noteData.cl && ColorService.isValidColor(noteData.cl)) {
+        noteColors[noteData.i] = { colorScheme: noteData.cl };
+      }
+    });
+
+    // Import colors if any exist
+    if (Object.keys(noteColors).length > 0) {
+      ColorService.setAllNoteColors(noteColors);
+    }
 
     // Create notes
     const notes = data.n.map((noteData) => {
@@ -198,6 +227,10 @@ export function importFromJSON(jsonData, canvas) {
     // Update all connections
     log('Updating all connections');
     ConnectionService.updateConnections();
+
+    // Apply imported colors to notes
+    eventBus.emit('notes.loaded');
+    log('Emitted notes.loaded event for color application');
 
     log('Import complete');
   } catch (error) {
