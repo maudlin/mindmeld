@@ -406,28 +406,32 @@ body.dragging * {
 
 /* Interactive States */
 .color-swatch:hover {
-  transform: scale(1.1);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.color-swatch.active {
-  transform: scale(1.15);
-}
-
+/* Selected state - inner glow + selected note colors */
 .color-swatch[data-color="yellow"].active {
-  box-shadow: 0 0 0 2px var(--note-color-yellow-border-selected);
+  background: var(--note-color-yellow-bg-selected);
+  border-color: var(--note-color-yellow-border-selected);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 8px rgba(255, 190, 69, 0.6);
 }
 
 .color-swatch[data-color="pink"].active {
-  box-shadow: 0 0 0 2px var(--note-color-pink-border-selected);
+  background: var(--note-color-pink-bg-selected);
+  border-color: var(--note-color-pink-border-selected);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 8px rgba(255, 119, 119, 0.6);
 }
 
 .color-swatch[data-color="green"].active {
-  box-shadow: 0 0 0 2px var(--note-color-green-border-selected);
+  background: var(--note-color-green-bg-selected);
+  border-color: var(--note-color-green-border-selected);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 8px rgba(0, 204, 0, 0.6);
 }
 
 .color-swatch[data-color="blue"].active {
-  box-shadow: 0 0 0 2px var(--note-color-blue-border-selected);
+  background: var(--note-color-blue-bg-selected);
+  border-color: var(--note-color-blue-border-selected);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 8px rgba(38, 128, 255, 0.6);
 }
 
 .color-swatch:focus {
