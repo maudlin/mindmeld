@@ -6,26 +6,26 @@
   --hover-color: rgba(30, 65, 107, 0.5); /* Hover background */
   --font-family: 'Poppins', sans-serif;
   --font-family-alt: 'Over the Rainbow', cursive;
-  
+
   /* Note Color Palette Variables */
   /* Yellow (Default) */
   --note-color-yellow-bg: #fff3cd;
   --note-color-yellow-border: #ffd588;
   --note-color-yellow-bg-selected: #ffe599;
   --note-color-yellow-border-selected: #ffbe45;
-  
+
   /* Pink */
   --note-color-pink-bg: #ffe2e2;
   --note-color-pink-border: #ffabab;
   --note-color-pink-bg-selected: #ffcccc;
   --note-color-pink-border-selected: #ff7777;
-  
+
   /* Green */
   --note-color-green-bg: #bdffc4;
   --note-color-green-border: #00ea17;
   --note-color-green-bg-selected: #a8ff88;
   --note-color-green-border-selected: #00cc00;
-  
+
   /* Blue */
   --note-color-blue-bg: #b5d7ff;
   --note-color-blue-border: #4198ff;
@@ -359,7 +359,7 @@ body.dragging * {
 .color-picker-palette {
   position: relative;
   width: 140px;
-  height: 40px;
+  height: 41px;
   background: rgba(217, 217, 217, 0);
   border: 1px solid rgba(103, 103, 103, 0.25);
   border-radius: 20px;
@@ -375,30 +375,30 @@ body.dragging * {
   border-radius: 50%;
   cursor: pointer;
   transition: box-shadow 0.2s ease;
-  top: 8px;
+  top: 7.5px;
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 /* Individual Color Positions - More spacing to prevent glow overlap */
-.color-swatch[data-color="yellow"] {
+.color-swatch[data-color='yellow'] {
   left: 8px;
   background: var(--note-color-yellow-bg);
   border-color: var(--note-color-yellow-border);
 }
 
-.color-swatch[data-color="pink"] {
+.color-swatch[data-color='pink'] {
   left: 40px;
   background: var(--note-color-pink-bg);
   border-color: var(--note-color-pink-border);
 }
 
-.color-swatch[data-color="green"] {
+.color-swatch[data-color='green'] {
   left: 72px;
   background: var(--note-color-green-bg);
   border-color: var(--note-color-green-border);
 }
 
-.color-swatch[data-color="blue"] {
+.color-swatch[data-color='blue'] {
   left: 104px;
   background: var(--note-color-blue-bg);
   border-color: var(--note-color-blue-border);
@@ -410,32 +410,40 @@ body.dragging * {
 }
 
 /* Selected state - inner glow + selected note colors */
-.color-swatch[data-color="yellow"].active {
+.color-swatch[data-color='yellow'].active {
   background: var(--note-color-yellow-bg-selected);
   border-color: var(--note-color-yellow-border-selected);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 8px rgba(255, 190, 69, 0.6);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.8),
+    0 0 8px rgba(255, 190, 69, 0.6);
 }
 
-.color-swatch[data-color="pink"].active {
+.color-swatch[data-color='pink'].active {
   background: var(--note-color-pink-bg-selected);
   border-color: var(--note-color-pink-border-selected);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 8px rgba(255, 119, 119, 0.6);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.8),
+    0 0 8px rgba(255, 119, 119, 0.6);
 }
 
-.color-swatch[data-color="green"].active {
+.color-swatch[data-color='green'].active {
   background: var(--note-color-green-bg-selected);
   border-color: var(--note-color-green-border-selected);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 8px rgba(0, 204, 0, 0.6);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.8),
+    0 0 8px rgba(0, 204, 0, 0.6);
 }
 
-.color-swatch[data-color="blue"].active {
+.color-swatch[data-color='blue'].active {
   background: var(--note-color-blue-bg-selected);
   border-color: var(--note-color-blue-border-selected);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 8px rgba(38, 128, 255, 0.6);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.8),
+    0 0 8px rgba(38, 128, 255, 0.6);
 }
 
 .color-swatch:focus {
-  outline: 2px solid #4A90E2;
+  outline: 2px solid #4a90e2;
   outline-offset: 2px;
 }
 

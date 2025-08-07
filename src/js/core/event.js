@@ -16,16 +16,19 @@ export const NoteManager = {
   selectNote(note) {
     note.classList.add('selected');
     this.selectedNotes.add(note);
+    eventBus.emit('note.selection.changed');
   },
 
   deselectNote(note) {
     note.classList.remove('selected');
     this.selectedNotes.delete(note);
+    eventBus.emit('note.selection.changed');
   },
 
   clearSelections() {
     this.selectedNotes.forEach((note) => note.classList.remove('selected'));
     this.selectedNotes.clear();
+    eventBus.emit('note.selection.changed');
   },
 
   getSelectedNotes() {

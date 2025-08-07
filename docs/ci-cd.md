@@ -140,11 +140,15 @@ Currently configured for GitHub Pages:
 - **Build**: No build step required (vanilla JavaScript)
 - **Deploy**: Manual deployment process
 
+### Current Automation
+- **Version Management**: Semantic versioning with `npm run version:*` commands
+- **Build Synchronization**: Automatic HTML file updates and cache busting
+
 ### Future Automation
 Planned enhancements:
 - **Automated Deployment**: Deploy on main branch updates
 - **Environment Branches**: Staging and production environments
-- **Version Tagging**: Semantic versioning automation
+- **Git Tagging**: Automated tag creation on releases
 
 ## Performance Monitoring
 

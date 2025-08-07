@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "mcp__sse-server__createJiraIssue",
+      "mcp__sse-server__getJiraIssue"
+    ],
+    "deny": []
+  }
+}

@@ -39,7 +39,7 @@ export default [
     },
   },
   {
-    files: ['**/*.test.js', '**/*.spec.js'],
+    files: ['**/*.test.js', '**/*.spec.js', '**/tests/**/*.js'],
     plugins: {
       jest: jestPlugin,
     },
@@ -67,6 +67,6 @@ export default [
     },
   },
   {
-    ignores: ['**/node_modules/**', '**/dist/**'],
+    ignores: ['**/node_modules/**', '**/dist/**', '**/coverage/**'],
   },
 ];

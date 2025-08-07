@@ -108,11 +108,17 @@ npm run validate
 
 ### Version Management
 ```bash
-# Update version and generate changelog
-node scripts/update-version.js
+# Semver Version Bumping (NEW - Automated)
+npm run version:patch   # 0.8.0 -> 0.8.1 (bug fixes)
+npm run version:minor   # 0.8.0 -> 0.9.0 (new features)
+npm run version:major   # 0.8.0 -> 1.0.0 (breaking changes)
 
-# Generate changelog from recent PRs
-node scripts/generate-changelog.js
+# Manual Version Management (Legacy)
+node scripts/update-version.js     # Sync version to HTML files
+node scripts/generate-changelog.js # Generate changelog from PRs
+
+# Example: Release new feature
+npm run version:minor  # Updates package.json + HTML files automatically
 ```
 
 ## Quality Assurance Scripts

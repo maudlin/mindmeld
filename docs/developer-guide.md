@@ -49,6 +49,19 @@ src/js/
 3. **Test** locally before submitting PR
 4. **Document** any new patterns or features
 
+## Version Management
+
+**Semantic Versioning**: Use automated semver commands for releases
+
+```bash
+npm run version:patch   # Bug fixes (0.8.0 → 0.8.1)
+npm run version:minor   # New features (0.8.0 → 0.9.0)
+npm run version:major   # Breaking changes (0.8.0 → 1.0.0)
+```
+
+**Process**: Commands update `package.json` + sync HTML files automatically  
+**Details**: See [Scripts Reference](scripts.md) for complete commands
+
 ## What's Where
 
 - **Event Bus**: `src/js/core/eventBus.js`

@@ -1,6 +1,6 @@
 {
   "name": "mindmeld",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "A web-based mind mapping tool",
   "main": "src/js/app.js",
   "type": "module",
@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write 'src/**/*.{js,html,css}'",
+    "format:all": "prettier --write '**/*.{js,html,css}' --ignore-path .prettierignore",
     "format:check": "prettier --check 'src/**/*.{js,html,css}'",
     "postinstall": "if [ \"$NODE_ENV\" != \"production\" ]; then playwright install chromium; fi",
     "test:unit": "if [ \"$NODE_ENV\" != \"production\" ]; then jest; else echo 'Skipping tests in production'; fi",
@@ -25,7 +26,13 @@
     "deps:upgrade": "npx ncu --target minor -u && npm install",
     "analyze:circular": "npx madge --circular --extensions js src/",
     "analyze:complexity": "npx madge --summary src/",
-    "analyze:duplication": "npx jscpd --min-lines=5 --min-tokens=50 src/"
+    "analyze:duplication": "npx jscpd --min-lines=5 --min-tokens=50 src/",
+    "fix": "npm run lint:fix && npm run format:all",
+    "dev:setup": "npm run fix && npm run health-check",
+    "pre-push": "npm run lint && npm run format:check && npm run test",
+    "version:patch": "npm version patch --no-git-tag-version && npm run version:sync",
+    "version:minor": "npm version minor --no-git-tag-version && npm run version:sync",
+    "version:major": "npm version major --no-git-tag-version && npm run version:sync"
   },
   "author": "",
   "license": "ISC",
@@ -55,6 +62,14 @@
   },
   "lint-staged": {
     "src/**/*.{js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "tests/**/*.{js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "scripts/**/*.{js,jsx}": [
       "eslint --fix",
       "prettier --write"
     ]
