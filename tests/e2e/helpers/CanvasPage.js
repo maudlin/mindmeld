@@ -7,6 +7,7 @@ import { expect } from '@playwright/test';
 export class CanvasPage {
   constructor(page) {
     this.page = page;
+    this.isCI = !!process.env.CI;
 
     // Core canvas elements
     this.canvas = page.locator('#canvas');
@@ -34,6 +35,12 @@ export class CanvasPage {
   async load() {
     await this.page.goto('http://localhost:8080');
     await expect(this.canvas).toBeVisible();
+
+    // CI-specific warmup period for application stability
+    if (this.isCI) {
+      await this.page.waitForLoadState('domcontentloaded');
+      await this.page.waitForTimeout(1500); // Extra warmup in CI
+    }
   }
 
   // Note creation with robust waiting
