@@ -32,7 +32,8 @@
     "pre-push": "npm run lint && npm run format:check && npm run test",
     "version:patch": "npm version patch --no-git-tag-version && npm run version:sync",
     "version:minor": "npm version minor --no-git-tag-version && npm run version:sync",
-    "version:major": "npm version major --no-git-tag-version && npm run version:sync"
+    "version:major": "npm version major --no-git-tag-version && npm run version:sync",
+    "ci:simulate": "CI=true npm run lint && npm run format:check && npm run test:unit && npm run test:e2e"
   },
   "author": "",
   "license": "ISC",
@@ -70,6 +71,10 @@
       "prettier --write"
     ],
     "scripts/**/*.{js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,jsx}": [
       "eslint --fix",
       "prettier --write"
     ]

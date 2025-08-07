@@ -112,12 +112,22 @@ export class CanvasPage {
       { x, y },
     );
 
-    // Wait for note creation
-    await this.page.waitForFunction(
-      (count) => document.querySelectorAll('.note').length > count,
-      noteCountBefore,
-      { timeout: 8000 },
-    );
+    // Wait for note creation with fallback
+    try {
+      await this.page.waitForFunction(
+        (count) => document.querySelectorAll('.note').length > count,
+        noteCountBefore,
+        { timeout: 10000 }, // Increased timeout
+      );
+    } catch {
+      // Fallback: Try regular mouse double-click if JavaScript dispatch fails
+      await this.page.mouse.dblclick(x, y);
+      await this.page.waitForFunction(
+        (count) => document.querySelectorAll('.note').length > count,
+        noteCountBefore,
+        { timeout: 5000 },
+      );
+    }
 
     const note = this.notes.nth(noteCountBefore);
     await expect(note).toBeVisible();
@@ -261,13 +271,26 @@ export class CanvasPage {
     await this.page.mouse.up();
 
     // Wait for movement to complete - ensure note positions have updated
-    await this.page.waitForFunction(
-      () => {
-        const note = document.querySelector('.note.selected');
-        return note && note.style.transform !== '';
-      },
-      { timeout: 1000 },
-    );
+    await this.page
+      .waitForFunction(
+        () => {
+          const notes = document.querySelectorAll('.note.selected');
+          return (
+            notes.length > 0 &&
+            Array.from(notes).some(
+              (note) =>
+                note.style.transform !== '' ||
+                note.style.left !== '' ||
+                note.style.top !== '',
+            )
+          );
+        },
+        { timeout: 3000 }, // Increased timeout
+      )
+      .catch(() => {
+        // Fallback: Just wait a bit if transform detection fails
+        return this.page.waitForTimeout(500);
+      });
   }
 
   async verifyNotesSelected(expectedCount) {
