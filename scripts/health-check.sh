@@ -77,7 +77,8 @@ calculate_circular_dep_score() {
         circular_count=${circular_count:-1}
     fi
     
-    echo "$circular_output"
+    # Output the analysis result to stderr so it doesn't interfere with score parsing
+    echo "$circular_output" >&2
     
     if [ "$circular_count" -eq 0 ]; then
         echo 100
@@ -92,7 +93,7 @@ calculate_circular_dep_score() {
 
 calculate_complexity_score() {
     local summary_output=$(npx madge --summary src/ 2>/dev/null || echo "Analysis failed")
-    echo "$summary_output"
+    echo "$summary_output" >&2
     
     local complex_modules=$(echo "$summary_output" | head -10 | awk -v max="$MAX_DEPS" '$1 > max {count++} END {print count+0}')
     local very_complex=$(echo "$summary_output" | head -10 | awk -v max="$MAX_DEPS" '$1 > max*2 {count++} END {print count+0}')
@@ -112,7 +113,7 @@ calculate_complexity_score() {
 
 calculate_duplication_score() {
     local dup_output=$(npx jscpd --min-lines=5 --min-tokens=50 --format=cli src/ 2>/dev/null || echo "No duplications")
-    echo "$dup_output"
+    echo "$dup_output" >&2
     
     # Extract duplication percentage if available
     local dup_percentage=0
