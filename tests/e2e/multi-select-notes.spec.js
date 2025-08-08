@@ -11,12 +11,14 @@ test.describe('MindMeld Multi-Select Notes', () => {
     await canvasPage.load();
 
     // Create notes using standard test coordinates
-    const note1 = await canvasPage.createNoteWithThrottleWait(500, 300);
-    const note2 = await canvasPage.createNoteWithThrottleWait(
+    const note1 = await canvasPage.createNoteViaJavaScript(500, 300);
+    await page.waitForTimeout(800); // Throttle handling
+    const note2 = await canvasPage.createNoteViaJavaScript(
       TestCoordinates.note2.x,
       TestCoordinates.note2.y,
     );
-    const note3 = await canvasPage.createNoteAt(600, 500);
+    await page.waitForTimeout(800); // Throttle handling
+    const note3 = await canvasPage.createNoteViaJavaScript(600, 500);
 
     // Verify all three notes are created
     await expect(note1).toBeVisible();
@@ -52,10 +54,13 @@ test.describe('MindMeld Multi-Select Notes', () => {
     await canvasPage.load();
 
     // Create notes in a pattern using standard coordinates
-    const note1 = await canvasPage.createNoteWithThrottleWait(300, 300);
-    const note2 = await canvasPage.createNoteWithThrottleWait(500, 300);
-    const note3 = await canvasPage.createNoteWithThrottleWait(400, 450);
-    const note4 = await canvasPage.createNoteAt(600, 450);
+    const note1 = await canvasPage.createNoteViaJavaScript(300, 300);
+    await page.waitForTimeout(800); // Throttle handling
+    const note2 = await canvasPage.createNoteViaJavaScript(500, 300);
+    await page.waitForTimeout(800); // Throttle handling
+    const note3 = await canvasPage.createNoteViaJavaScript(400, 450);
+    await page.waitForTimeout(800); // Throttle handling
+    const note4 = await canvasPage.createNoteViaJavaScript(600, 450);
 
     // Get initial positions
     const initial1 = await note1.boundingBox();
@@ -112,10 +117,13 @@ test.describe('MindMeld Multi-Select Notes', () => {
     await canvasPage.load();
 
     // Create notes in different areas using helper method
-    const note1 = await canvasPage.createNoteWithThrottleWait(200, 200); // Top-left
-    const note2 = await canvasPage.createNoteWithThrottleWait(400, 200); // Top-right
-    const note3 = await canvasPage.createNoteWithThrottleWait(200, 400); // Bottom-left
-    const note4 = await canvasPage.createNoteAt(400, 400); // Bottom-right
+    const note1 = await canvasPage.createNoteViaJavaScript(200, 200); // Top-left
+    await page.waitForTimeout(800); // Throttle handling
+    const note2 = await canvasPage.createNoteViaJavaScript(400, 200); // Top-right
+    await page.waitForTimeout(800); // Throttle handling
+    const note3 = await canvasPage.createNoteViaJavaScript(200, 400); // Bottom-left
+    await page.waitForTimeout(800); // Throttle handling
+    const note4 = await canvasPage.createNoteViaJavaScript(400, 400); // Bottom-right
 
     // Create selection box that only covers top two notes
     await canvasPage.createSelectionBox(100, 100, 500, 300);

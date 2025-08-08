@@ -32,6 +32,18 @@ Details: [Testing Guide](docs/testing.md)
 
 Update docs when changing functionality. Keep it concise and pragmatic.
 
+## Releases
+
+**Version bumps**: Use semver commands for releases
+
+```bash
+npm run version:patch   # Bug fixes
+npm run version:minor   # New features  
+npm run version:major   # Breaking changes
+```
+
+**Process**: Maintainers handle releases after PR merge
+
 ## Pull Requests
 
 **Before submitting**: Run quality checks above, update docs, write focused commits  

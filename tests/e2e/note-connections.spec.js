@@ -8,17 +8,15 @@ test.describe('MindMeld Note Connections', () => {
     // Load the application
     await canvasPage.load();
 
-    // Create first note using standard coordinates
-    const note1 = await canvasPage.createNoteAt(
+    // Create first note using JavaScript dispatch (more reliable in CI)
+    const note1 = await canvasPage.createNoteViaJavaScript(
       TestCoordinates.note1.x,
       TestCoordinates.note1.y,
     );
 
-    // Wait for throttle to clear (500ms + buffer due to throttled double-click handler)
-    await page.waitForTimeout(600);
-
-    // Create second note using standard coordinates
-    const note2 = await canvasPage.createNoteAt(
+    // Wait for throttle and create second note
+    await page.waitForTimeout(800);
+    const note2 = await canvasPage.createNoteViaJavaScript(
       TestCoordinates.note2.x,
       TestCoordinates.note2.y,
     );

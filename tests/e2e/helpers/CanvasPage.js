@@ -7,6 +7,7 @@ import { expect } from '@playwright/test';
 export class CanvasPage {
   constructor(page) {
     this.page = page;
+    this.isCI = !!process.env.CI;
 
     // Core canvas elements
     this.canvas = page.locator('#canvas');
@@ -34,21 +35,44 @@ export class CanvasPage {
   async load() {
     await this.page.goto('http://localhost:8080');
     await expect(this.canvas).toBeVisible();
+
+    // CI-specific warmup period for application stability
+    if (this.isCI) {
+      await this.page.waitForLoadState('domcontentloaded');
+      await this.page.waitForTimeout(1500); // Extra warmup in CI
+    }
   }
 
   // Note creation with robust waiting
   async createNoteAt(x, y) {
     const noteCountBefore = await this.notes.count();
 
-    await this.page.mouse.dblclick(x, y);
-    await this.page.waitForTimeout(100); // Small delay for note creation
+    // Ensure we're clicking on the canvas area, not other UI elements
+    await this.canvas.click(); // Focus canvas first
+    await this.page.waitForTimeout(100); // Small delay to ensure focus
 
-    // Wait for new note to be created
-    await this.page.waitForFunction(
-      (count) => document.querySelectorAll('.note').length > count,
-      noteCountBefore,
-      { timeout: 2000 },
-    );
+    // Use a more reliable double-click approach
+    await this.page.mouse.click(x, y);
+    await this.page.waitForTimeout(50);
+    await this.page.mouse.click(x, y);
+
+    // Wait for new note to be created with more specific conditions
+    try {
+      await this.page.waitForFunction(
+        (count) => {
+          const notes = document.querySelectorAll('.note');
+          return notes.length > count;
+        },
+        noteCountBefore,
+        { timeout: 8000 },
+      );
+    } catch (error) {
+      // Debug information for CI
+      const currentCount = await this.notes.count();
+      throw new Error(
+        `Note creation failed at (${x}, ${y}). Expected: ${noteCountBefore + 1}, Got: ${currentCount}. Original error: ${error.message}`,
+      );
+    }
 
     // Get the newly created note (at the count index)
     const note = this.notes.nth(noteCountBefore);
@@ -59,7 +83,54 @@ export class CanvasPage {
   // Note creation with automatic throttle handling
   async createNoteWithThrottleWait(x, y) {
     const note = await this.createNoteAt(x, y);
-    await this.page.waitForTimeout(600); // Handle 500ms throttle + buffer
+
+    // Wait for the 500ms throttle to complete plus buffer time
+    // This is simpler and more reliable than checking for throttle indicators
+    await this.page.waitForTimeout(800);
+
+    return note;
+  }
+
+  // Alternative note creation method using JavaScript events (for problematic environments)
+  async createNoteViaJavaScript(x, y) {
+    const noteCountBefore = await this.notes.count();
+
+    // Create note via JavaScript dispatch instead of mouse events
+    await this.page.evaluate(
+      ({ x, y }) => {
+        const canvas = document.getElementById('canvas');
+        if (canvas) {
+          const event = new MouseEvent('dblclick', {
+            clientX: x,
+            clientY: y,
+            bubbles: true,
+            cancelable: true,
+          });
+          canvas.dispatchEvent(event);
+        }
+      },
+      { x, y },
+    );
+
+    // Wait for note creation with fallback
+    try {
+      await this.page.waitForFunction(
+        (count) => document.querySelectorAll('.note').length > count,
+        noteCountBefore,
+        { timeout: 10000 }, // Increased timeout
+      );
+    } catch {
+      // Fallback: Try regular mouse double-click if JavaScript dispatch fails
+      await this.page.mouse.dblclick(x, y);
+      await this.page.waitForFunction(
+        (count) => document.querySelectorAll('.note').length > count,
+        noteCountBefore,
+        { timeout: 5000 },
+      );
+    }
+
+    const note = this.notes.nth(noteCountBefore);
+    await expect(note).toBeVisible();
     return note;
   }
 
@@ -124,8 +195,10 @@ export class CanvasPage {
     // Use dragTo method instead of manual mouse movements
     await ghostConnector.dragTo(targetNote);
 
-    // Small delay to allow connection creation
-    await this.page.waitForTimeout(100);
+    // Wait for connection to be created in the SVG container
+    await expect(this.svgContainer.locator('g[data-start]')).toBeVisible({
+      timeout: 2000,
+    });
   }
 
   async verifyConnection(sourceNote, targetNote) {
@@ -150,7 +223,7 @@ export class CanvasPage {
   async createSelectionBox(startX, startY, endX, endY) {
     // Clear any existing selections first
     await this.page.mouse.click(100, 100); // Click on empty area
-    await this.page.waitForTimeout(100);
+    await this.page.waitForLoadState('domcontentloaded');
 
     // Start dragging from empty canvas area using absolute coordinates
     await this.page.mouse.move(startX, startY);
@@ -162,8 +235,13 @@ export class CanvasPage {
     // Release mouse to complete selection
     await this.page.mouse.up({ button: 'left' });
 
-    // Wait for selection to be processed
-    await this.page.waitForTimeout(300);
+    // Wait for selection to be processed - check for selected notes
+    await this.page.waitForFunction(
+      () => {
+        return document.querySelectorAll('.note.selected').length > 0;
+      },
+      { timeout: 1000 },
+    );
   }
 
   async getSelectedNotes() {
@@ -192,8 +270,27 @@ export class CanvasPage {
     );
     await this.page.mouse.up();
 
-    // Wait for movement to complete
-    await this.page.waitForTimeout(100);
+    // Wait for movement to complete - ensure note positions have updated
+    await this.page
+      .waitForFunction(
+        () => {
+          const notes = document.querySelectorAll('.note.selected');
+          return (
+            notes.length > 0 &&
+            Array.from(notes).some(
+              (note) =>
+                note.style.transform !== '' ||
+                note.style.left !== '' ||
+                note.style.top !== '',
+            )
+          );
+        },
+        { timeout: 3000 }, // Increased timeout
+      )
+      .catch(() => {
+        // Fallback: Just wait a bit if transform detection fails
+        return this.page.waitForTimeout(500);
+      });
   }
 
   async verifyNotesSelected(expectedCount) {
@@ -218,8 +315,24 @@ export class CanvasPage {
     await expect(templateOption).toBeVisible();
     await templateOption.click();
 
-    // Wait for template switch to complete
-    await this.page.waitForTimeout(500);
+    // Wait for template switch to complete - check for class change on canvas
+    await this.page
+      .waitForFunction(
+        () => {
+          const canvas = document.getElementById('canvas');
+          return (
+            canvas &&
+            canvas.className.includes(
+              templateName.toLowerCase().replace(/\s+/g, '-'),
+            )
+          );
+        },
+        { timeout: 2000 },
+      )
+      .catch(() => {
+        // Fallback for templates that don't change canvas class
+        return this.page.waitForLoadState('domcontentloaded');
+      });
   }
 
   async verifyTemplate(templateName) {

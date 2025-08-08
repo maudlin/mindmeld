@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MindMeld</title>
-    <link rel="stylesheet" href="css/styles.css?v=0.7.0" />
+    <link rel="stylesheet" href="css/styles.css?v=0.8.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -76,6 +76,41 @@
         </li>
       </ul>
     </nav>
+
+    <!-- Color Picker UI - Fixed top-center position -->
+    <div id="color-picker-container" class="color-picker">
+      <div class="color-picker-palette">
+        <div
+          class="color-swatch active"
+          data-color="yellow"
+          role="button"
+          tabindex="0"
+          aria-label="Select yellow color"
+        ></div>
+        <div
+          class="color-swatch"
+          data-color="pink"
+          role="button"
+          tabindex="0"
+          aria-label="Select pink color"
+        ></div>
+        <div
+          class="color-swatch"
+          data-color="green"
+          role="button"
+          tabindex="0"
+          aria-label="Select green color"
+        ></div>
+        <div
+          class="color-swatch"
+          data-color="blue"
+          role="button"
+          tabindex="0"
+          aria-label="Select blue color"
+        ></div>
+      </div>
+    </div>
+
     <div id="canvas-container">
       <div id="canvas-wrapper">
         <div id="canvas">
@@ -87,13 +122,15 @@
       <strong>Create a note:</strong> double click on the canvas<br />
       <strong>Select & delete notes:</strong> left click to select a note. Press
       delete key to delete<br />
+      <strong>Color notes:</strong> use the color picker at the top to apply
+      colors to selected notes<br />
       <strong>Connect two notes:</strong> drag a line from one blue connector to
       another<br />
       <strong>Select multiple notes:</strong> click on the canvas and drag to
       select notes<br />
       <strong>Pan & Zoom:</strong> right click &amp; drag to pan, scroll to
       zoom<br />
-      <strong><span id="version">v0.7.0 (2025-07-30)</span></strong>
+      <strong><span id="version">v0.8.0 (2025-08-07)</span></strong>
     </div>
     <div id="zoom-display">5x</div>
     <div id="overlay" class="hidden">
@@ -106,6 +143,7 @@
         <h3>How to Use:</h3>
         <p>Double click to create a note</p>
         <p>Add some content</p>
+        <p>Use the color picker at the top to color your notes</p>
         <p>Create more notes and connect them together</p>
         <p>
           <em>Please note: this is not yet optimised for mobile devices</em>
@@ -113,6 +151,6 @@
         <button id="dismiss-button">Get Started</button>
       </div>
     </div>
-    <script type="module" src="js/app.js?v=0.7.0"></script>
+    <script type="module" src="js/app.js?v=0.8.0"></script>
   </body>
 </html>

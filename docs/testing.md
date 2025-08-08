@@ -20,6 +20,10 @@ Commands: See [Scripts Reference](scripts.md) for all testing commands
 ```
 tests/
 ├── unit/          # Jest unit tests
+│   ├── services/  # Service layer tests (colorService.test.js)
+│   ├── features/  # Feature tests (colorPicker.basic.test.js)
+│   ├── integration/ # Integration tests (colorPicker.integration.test.js)
+│   └── helpers/   # Test utilities (colorTestUtils.js)
 └── e2e/           # Playwright E2E tests
     └── helpers/   # Shared utilities (CanvasPage.js)
 ```
@@ -29,12 +33,24 @@ tests/
 Focus on pure functions and business logic. Avoid complex DOM testing - use E2E instead.
 
 ```javascript
-// Good: Test pure functions
+// Good: Test pure functions and service logic
 test('calculates note position correctly', () => {
   expect(calculatePosition(100, 200, canvas)).toEqual({ x: 100, y: 200 });
 });
 
-// Avoid: Complex DOM manipulation (use E2E)
+test('validates color schemes', () => {
+  expect(ColorService.isValidColor('pink')).toBe(true);
+  expect(ColorService.isValidColor('invalid')).toBe(false);
+});
+
+// Good: Test DOM behavior with mocked dependencies
+test('updates active color swatch', () => {
+  // Use test utilities and mocked event bus
+  const mockEventBus = createMockEventBus();
+  // Test isolated component behavior
+});
+
+// Avoid: Complex full-page DOM manipulation (use E2E)
 ```
 
 ## End-to-End Testing (Playwright)
@@ -65,13 +81,23 @@ Configuration in `playwright.config.js`. Tests in `tests/e2e/`.
 
 ## Key Testing Patterns
 
-**Event Bus**: Test event emission/handling in unit tests
-**Menu Functions**: E2E test complete export/import workflows  
+**Event Bus**: Test event emission/handling in unit tests  
+**Service Layer**: Test business logic with mocked dependencies (`colorService.test.js`)  
+**Feature Modules**: Test component behavior with DOM utilities (`colorPicker.basic.test.js`)  
+**Integration**: Test cross-component behavior (`colorPicker.integration.test.js`)  
+**Menu Functions**: E2E test complete export/import workflows (including color data)  
 **Canvas Templates**: E2E test template switching and verification
 
 ## Test Utilities
 
-Use `CanvasPage` and `TestCoordinates` from `tests/e2e/helpers/` for consistent E2E interactions.
+**E2E Helpers**: `CanvasPage` and `TestCoordinates` from `tests/e2e/helpers/` for consistent E2E interactions
+
+**Unit Test Helpers**: `colorTestUtils.js` provides:
+- `createMockEventBus()` - Mock event bus for isolated testing
+- `createTestNote()` - Generate test DOM elements with color classes  
+- `createColorPickerDOM()` - Build color picker structure for testing
+- `simulateClick()`, `simulateKeyboard()` - Event simulation utilities
+- `expectSwatchActive()` - Color picker state assertions
 
 ## Debugging
 

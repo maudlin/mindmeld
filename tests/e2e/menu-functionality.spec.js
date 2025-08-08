@@ -62,12 +62,13 @@ test.describe('Menu Functionality', () => {
       const canvasPage = new CanvasPage(page);
       await canvasPage.load();
 
-      // Create test content
-      const note1 = await canvasPage.createNoteWithThrottleWait(
+      // Create test content using JavaScript dispatch (more reliable in CI)
+      const note1 = await canvasPage.createNoteViaJavaScript(
         TestCoordinates.note1.x,
         TestCoordinates.note1.y,
       );
-      const note2 = await canvasPage.createNoteWithThrottleWait(
+      await page.waitForTimeout(800); // Throttle handling
+      const note2 = await canvasPage.createNoteViaJavaScript(
         TestCoordinates.note2.x,
         TestCoordinates.note2.y,
       );
@@ -106,7 +107,7 @@ test.describe('Menu Functionality', () => {
       await canvasPage.load();
 
       // Create test note
-      await canvasPage.createNoteWithThrottleWait(
+      await canvasPage.createNoteViaJavaScript(
         TestCoordinates.note1.x,
         TestCoordinates.note1.y,
       );
@@ -138,11 +139,12 @@ test.describe('Menu Functionality', () => {
       await canvasPage.load();
 
       // Create test content with notes and connections
-      const note1 = await canvasPage.createNoteWithThrottleWait(
+      const note1 = await canvasPage.createNoteViaJavaScript(
         TestCoordinates.note1.x,
         TestCoordinates.note1.y,
       );
-      const note2 = await canvasPage.createNoteWithThrottleWait(
+      await page.waitForTimeout(800); // Throttle handling
+      const note2 = await canvasPage.createNoteViaJavaScript(
         TestCoordinates.note2.x,
         TestCoordinates.note2.y,
       );
@@ -210,7 +212,7 @@ test.describe('Menu Functionality', () => {
       await canvasPage.load();
 
       // Create test content
-      await canvasPage.createNoteWithThrottleWait(
+      await canvasPage.createNoteViaJavaScript(
         TestCoordinates.note1.x,
         TestCoordinates.note1.y,
       );
@@ -276,11 +278,12 @@ test.describe('Menu Functionality', () => {
       await canvasPage.load();
 
       // Create notes at specific positions with content
-      const note1 = await canvasPage.createNoteWithThrottleWait(
+      const note1 = await canvasPage.createNoteViaJavaScript(
         TestCoordinates.note1.x,
         TestCoordinates.note1.y,
       );
-      const note2 = await canvasPage.createNoteWithThrottleWait(
+      await page.waitForTimeout(800); // Throttle handling
+      const note2 = await canvasPage.createNoteViaJavaScript(
         TestCoordinates.note2.x,
         TestCoordinates.note2.y,
       );

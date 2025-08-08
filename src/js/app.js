@@ -19,6 +19,8 @@ import {
   initializeDataStore,
 } from './data/dataStore.js';
 import { NoteEventService } from './services/noteEventService.js';
+import { ColorPickerEvents } from './features/colorPicker/colorPickerEvents.js';
+import { NoteColorApplication } from './features/note/noteColorApplication.js';
 
 async function initializeApp() {
   log('Initializing app...');
@@ -34,6 +36,8 @@ async function initializeApp() {
   // Initialize dependency injection and event bus
   initializeDataStore();
   NoteEventService.initialize();
+  ColorPickerEvents.initialize();
+  NoteColorApplication.initialize();
   ConnectionService.setConnectionManager(connectionManager);
   ConnectionService.setDataStoreUpdateCallback(updateConnectionInDataStore);
 

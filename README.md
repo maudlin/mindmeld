@@ -22,6 +22,7 @@ Visit `http://localhost:8080` to begin mind mapping.
 ## Key Features
 
 - **Dynamic Note Creation**: Double-click to create notes anywhere on the canvas
+- **Color-Coded Notes**: 4-color palette (yellow, pink, green, blue) with intuitive selection-based picker
 - **Intelligent Connections**: Visual connections with directional arrows and real-time updates
 - **Multi-Canvas Templates**: Standard Canvas, Hero's Journey, and custom templates
 - **Advanced Selection**: Multi-select with group operations
@@ -67,7 +68,7 @@ Mind maps are stored as JSON with this structure:
 {
   "data": {
     "n": [
-      { "i": "1", "p": [100, 200], "c": "Note content" }
+      { "i": "1", "p": [100, 200], "c": "Note content", "cl": "pink" }
     ],
     "c": [
       ["1", "2", 1]
@@ -76,8 +77,9 @@ Mind maps are stored as JSON with this structure:
 }
 ```
 
-- **n**: Notes array (id, position, content)
+- **n**: Notes array (id, position, content, color)
 - **c**: Connections array (from, to, type)
+- **cl**: Color field (optional) - "yellow", "pink", "green", or "blue"
 - **Connection types**: 0=none, 1=from→to, 2=to→from, 3=bidirectional
 
 ## License

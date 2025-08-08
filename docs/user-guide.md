@@ -20,6 +20,13 @@ MindMeld is a powerful, browser-based mind mapping application that helps you or
 - **Type** to add or modify note content
 - **Press Enter** to save your changes
 
+### Coloring Notes
+- **Color Picker**: Located at the top center of the screen with 4 color options
+- **Available Colors**: Yellow (default), Pink, Green, and Blue
+- **Apply Color**: Select notes and click a color in the picker to apply instantly
+- **Visual Selection**: The picker automatically shows the color of your selected note
+- **Keyboard Navigation**: Use Tab and arrow keys to navigate colors, Enter or Space to select
+
 ### Connecting Notes
 1. **Hover** over a note to reveal connection points (ghost connectors)
 2. **Click and drag** from a connection point to another note
@@ -84,14 +91,20 @@ Choose from different canvas layouts to structure your mind maps:
 ### Effective Mind Mapping
 1. **Start Central**: Begin with a central idea and branch outward
 2. **Use Keywords**: Keep notes concise with key concepts
-3. **Color and Layout**: Use different canvas templates for different purposes
-4. **Regular Saves**: Export important mind maps as backups
+3. **Color Coding**: Use colors to categorize ideas, priorities, or themes
+   - Yellow: Main ideas or neutral content
+   - Pink: Important points or highlights
+   - Green: Positive outcomes or go-ahead items
+   - Blue: Information, data, or reference material
+4. **Color and Layout**: Use different canvas templates for different purposes
+5. **Regular Saves**: Export important mind maps as backups
 
 ### Organization Strategies
 - **Hierarchical**: Use connections to show parent-child relationships
-- **Categorical**: Group related ideas in clusters
+- **Categorical**: Group related ideas in clusters using color coding
 - **Sequential**: Arrange ideas in logical flow or timeline
 - **Web Structure**: Create interconnected idea networks
+- **Color-Based**: Organize by color themes (e.g., blue for data, green for actions)
 
 ### Performance Tips
 - **Browser Compatibility**: Works best in modern browsers (Chrome, Firefox, Safari, Edge)
