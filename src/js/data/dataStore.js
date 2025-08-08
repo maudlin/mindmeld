@@ -259,8 +259,16 @@ export function clearAllNotesAndConnections() {
   // Remove all connections from the DOM
   document.querySelectorAll('g[data-start]').forEach((conn) => conn.remove());
 
-  // Clear the state
-  appState.setState({ notes: [], connections: [], zoomLevel: 5 });
+  // Clear the state with colorState included
+  appState.setState({
+    notes: [],
+    connections: [],
+    zoomLevel: 5,
+    colorState: {
+      currentColor: 'yellow',
+      notes: {},
+    },
+  });
 
   console.log('All notes and connections cleared');
 }

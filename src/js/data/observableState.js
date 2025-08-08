@@ -47,6 +47,15 @@ class ObservableState {
     const storedState = localStorage.getItem(STORAGE_KEY);
     if (storedState) {
       const parsedState = JSON.parse(storedState);
+
+      // Ensure colorState exists for backward compatibility
+      if (!parsedState.colorState) {
+        parsedState.colorState = {
+          currentColor: 'yellow',
+          notes: {},
+        };
+      }
+
       this.state = parsedState;
       console.log('State loaded from localStorage', parsedState);
       return true;

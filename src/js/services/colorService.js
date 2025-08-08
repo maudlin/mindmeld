@@ -40,7 +40,12 @@ export class ColorService {
    * @returns {string} Current color scheme
    */
   static getCurrentColor() {
-    return appState.getState().colorState.currentColor;
+    const state = appState.getState();
+    // Backward compatibility: ensure colorState exists
+    if (!state.colorState) {
+      return 'yellow'; // Default color
+    }
+    return state.colorState.currentColor;
   }
 
   /**
@@ -83,9 +88,15 @@ export class ColorService {
    * @returns {string} Color scheme or default
    */
   static getNoteColor(noteId) {
-    const colorState = appState.getState().colorState;
-    // eslint-disable-next-line security/detect-object-injection
-    return colorState.notes[noteId]?.colorScheme || this.getCurrentColor();
+    const state = appState.getState();
+    // Backward compatibility: ensure colorState exists
+    if (!state.colorState) {
+      return 'yellow'; // Default color
+    }
+
+    return (
+      state.colorState.notes[noteId]?.colorScheme || this.getCurrentColor()
+    );
   }
 
   /**
@@ -130,7 +141,12 @@ export class ColorService {
    * @returns {Object} Note colors mapping
    */
   static getAllNoteColors() {
-    return appState.getState().colorState.notes;
+    const state = appState.getState();
+    // Backward compatibility: ensure colorState exists
+    if (!state.colorState) {
+      return {};
+    }
+    return state.colorState.notes;
   }
 
   /**

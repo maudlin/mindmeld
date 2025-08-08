@@ -72,7 +72,15 @@ function verifyLoadedState(loadedState) {
 // Clear state from localStorage
 export function clearStateFromStorage() {
   appState.clearLocalStorage();
-  appState.setState({ notes: [], connections: [], zoomLevel: 5 });
+  appState.setState({
+    notes: [],
+    connections: [],
+    zoomLevel: 5,
+    colorState: {
+      currentColor: 'yellow',
+      notes: {},
+    },
+  });
   clearAllNotesAndConnections();
   log('State cleared from storage and reset');
 }

@@ -47,6 +47,10 @@ describe('Clear State Functionality', () => {
         notes: [],
         connections: [],
         zoomLevel: 5,
+        colorState: {
+          currentColor: 'yellow',
+          notes: {},
+        },
       });
       expect(clearAllNotesAndConnections).toHaveBeenCalled();
     });
@@ -71,6 +75,10 @@ describe('Clear State Functionality', () => {
         notes: [],
         connections: [],
         zoomLevel: 5,
+        colorState: {
+          currentColor: 'yellow',
+          notes: {},
+        },
       });
       expect(clearAllNotesAndConnections).toHaveBeenCalled();
     });
@@ -87,6 +95,10 @@ describe('Clear State Functionality', () => {
         notes: [],
         connections: [],
         zoomLevel: 5,
+        colorState: {
+          currentColor: 'yellow',
+          notes: {},
+        },
       });
       expect(clearAllNotesAndConnections).toHaveBeenCalled();
     });
@@ -193,6 +205,10 @@ describe('Clear State Functionality', () => {
         notes: [],
         connections: [],
         zoomLevel: 5,
+        colorState: {
+          currentColor: 'yellow',
+          notes: {},
+        },
       });
 
       // Should clear DOM representation
@@ -216,6 +232,10 @@ describe('Clear State Functionality', () => {
           notes: [],
           connections: [],
           zoomLevel: 5,
+          colorState: {
+            currentColor: 'yellow',
+            notes: {},
+          },
         });
       });
     });
