@@ -63,7 +63,12 @@ export class ColorService {
 
     const ids = Array.isArray(noteIds) ? noteIds : [noteIds];
     const currentState = appState.getState();
-    const updatedNoteColors = { ...currentState.colorState.notes };
+    // Backward compatibility: ensure colorState exists
+    const currentColorState = currentState.colorState || {
+      currentColor: 'yellow',
+      notes: {},
+    };
+    const updatedNoteColors = { ...currentColorState.notes };
 
     ids.forEach((noteId) => {
       // eslint-disable-next-line security/detect-object-injection
@@ -72,7 +77,7 @@ export class ColorService {
 
     appState.setState({
       colorState: {
-        ...currentState.colorState,
+        ...currentColorState,
         notes: updatedNoteColors,
       },
     });
@@ -105,13 +110,18 @@ export class ColorService {
    */
   static removeNoteColor(noteId) {
     const currentState = appState.getState();
-    const updatedNoteColors = { ...currentState.colorState.notes };
+    // Backward compatibility: ensure colorState exists
+    const currentColorState = currentState.colorState || {
+      currentColor: 'yellow',
+      notes: {},
+    };
+    const updatedNoteColors = { ...currentColorState.notes };
     // eslint-disable-next-line security/detect-object-injection
     delete updatedNoteColors[noteId];
 
     appState.setState({
       colorState: {
-        ...currentState.colorState,
+        ...currentColorState,
         notes: updatedNoteColors,
       },
     });
@@ -155,9 +165,14 @@ export class ColorService {
    */
   static setAllNoteColors(noteColors) {
     const currentState = appState.getState();
+    // Backward compatibility: ensure colorState exists
+    const currentColorState = currentState.colorState || {
+      currentColor: 'yellow',
+      notes: {},
+    };
     appState.setState({
       colorState: {
-        ...currentState.colorState,
+        ...currentColorState,
         notes: noteColors || {},
       },
     });
