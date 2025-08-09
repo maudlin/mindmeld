@@ -119,6 +119,9 @@ describe('StorageManager', () => {
         .mockReturnValueOnce({ notes: [], connections: [] }) // Initial empty check
         .mockReturnValueOnce(loadedState); // Loaded state
 
+      // Mock getCurrentState to return the same loaded state for verification
+      mockDataStore.getCurrentState.mockReturnValue(loadedState);
+
       const result = freshStorageManager.loadStateFromStorage();
 
       expect(result).toBe(true);
@@ -135,8 +138,10 @@ describe('StorageManager', () => {
       );
 
       // Load once to set the flag
-      mockAppState.getState.mockReturnValue({ notes: [], connections: [] });
+      const initialState = { notes: [], connections: [] };
+      mockAppState.getState.mockReturnValue(initialState);
       mockAppState.loadFromLocalStorage.mockReturnValue(true);
+      mockDataStore.getCurrentState.mockReturnValue(initialState);
       freshStorageManager.loadStateFromStorage();
 
       // Clear mocks and try to load again
@@ -282,8 +287,10 @@ describe('StorageManager', () => {
     });
 
     it('should attempt to load state when state is empty', () => {
-      mockAppState.getState.mockReturnValue({ notes: [], connections: [] });
+      const emptyState = { notes: [], connections: [] };
+      mockAppState.getState.mockReturnValue(emptyState);
       mockAppState.loadFromLocalStorage.mockReturnValue(true);
+      mockDataStore.getCurrentState.mockReturnValue(emptyState);
 
       storageManager.initializeStateManagement();
 
@@ -362,8 +369,13 @@ describe('StorageManager', () => {
   });
 
   describe('event integration', () => {
+    beforeEach(() => {
+      const emptyState = { notes: [], connections: [] };
+      mockAppState.getState.mockReturnValue(emptyState);
+      mockDataStore.getCurrentState.mockReturnValue(emptyState);
+    });
+
     it('should handle state.save events through event bus', () => {
-      mockAppState.getState.mockReturnValue({ notes: [], connections: [] });
       storageManager.initializeStateManagement();
 
       // Find the state.save event handler
@@ -376,15 +388,12 @@ describe('StorageManager', () => {
     });
 
     it('should use debounced save for frequent content changes', () => {
-      const mockDebouncedSave = jest.fn();
-      mockUtils.debounce.mockReturnValue(mockDebouncedSave);
-
-      storageManager.setupStateListeners();
-
-      expect(mockUtils.debounce).toHaveBeenCalledWith(
-        expect.any(Function),
-        300,
-      );
+      // The debounce function is called at module initialization
+      // Check that it has been called at least once with the expected parameters
+      const debounceCalls = mockUtils.debounce.mock.calls;
+      const debounceCallWith300 = debounceCalls.find((call) => call[1] === 300);
+      expect(debounceCallWith300).toBeTruthy();
+      expect(typeof debounceCallWith300[0]).toBe('function');
     });
   });
 
