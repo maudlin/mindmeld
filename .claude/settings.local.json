@@ -6,7 +6,22 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "mcp__sse-server__createJiraIssue",
-      "mcp__sse-server__getJiraIssue"
+      "mcp__sse-server__getJiraIssue",
+      "Bash(mkdir:*)",
+      "Bash(npm test)",
+      "Bash(npx prettier:*)",
+      "Bash(npm run test:unit:*)",
+      "Bash(npx jest:*)",
+      "mcp__sse-server__addCommentToJiraIssue",
+      "mcp__sse-server__getAccessibleAtlassianResources",
+      "mcp__sse-server__getTransitionsForJiraIssue",
+      "mcp__sse-server__transitionJiraIssue",
+      "Bash(find:*)",
+      "Bash(npm run test:*)",
+      "Bash(git checkout:*)",
+      "Bash(git branch:*)",
+      "Bash(npm test:*)",
+      "mcp__sse-server__searchJiraIssuesUsingJql"
     ],
     "deny": []
   }

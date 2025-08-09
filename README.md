@@ -44,13 +44,13 @@ Visit `http://localhost:8080` to begin mind mapping.
 ### Technical Documentation
 - **[CI/CD Guide](docs/ci-cd.md)** - GitHub Actions workflows and deployment
 - **[Architecture Health](docs/architecture-health.md)** - Code quality monitoring and metrics
-- **[Technical Debt](docs/technical-debt.md)** - Current improvements and roadmap
 
 ## Architecture
 
 Event-driven design with zero circular dependencies. Service layer with dependency injection.
 
-**Health**: 96/100 (EXCELLENT) | Details: [Architecture Health](docs/architecture-health.md)
+**Health**: Run `npm run health-check` | **Tests**: Run `npm test`  
+Details: [Developer Guide](docs/developer-guide.md)
 
 ## Development
 

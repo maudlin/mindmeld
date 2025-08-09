@@ -8,6 +8,7 @@ This project includes automated tools to monitor and maintain architectural qual
 - ✅ **Circular Dependencies** - Critical architectural anti-pattern
 - ✅ **Module Complexity** - Dependencies per module
 - ✅ **Code Duplication** - DRY principle violations  
+- ✅ **Test Coverage** - Run `npm run test:coverage` for current status
 - ✅ **Unused Dependencies** - Package bloat
 - ✅ **Outdated Dependencies** - Security and maintenance
 - ✅ **Security Vulnerabilities** - npm audit results
@@ -39,6 +40,9 @@ npm run analyze:complexity
 
 # Code duplication detection
 npm run analyze:duplication
+
+# Test coverage analysis
+npm run test:coverage
 
 # Dependency health
 npm run deps:check
