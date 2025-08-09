@@ -2,7 +2,9 @@
 
 ## Overview
 
-MindMeld uses unit tests (Jest) for core logic and end-to-end tests (Playwright) for user workflows. Because we follow clean architecture principles, most code is easily testable without complex mocking.
+MindMeld uses unit tests (Jest) for core logic and end-to-end tests (Playwright) for user workflows. Our event-driven architecture makes most code easily testable with minimal mocking.
+
+**Current Status**: Run `npm test` to see test results and `npm run test:coverage` for coverage.
 
 ## Test Philosophy
 
@@ -19,13 +21,21 @@ Commands: See [Scripts Reference](scripts.md) for all testing commands
 
 ```
 tests/
-├── unit/          # Jest unit tests
-│   ├── services/  # Service layer tests (colorService.test.js)
-│   ├── features/  # Feature tests (colorPicker.basic.test.js)
-│   ├── integration/ # Integration tests (colorPicker.integration.test.js)
-│   └── helpers/   # Test utilities (colorTestUtils.js)
-└── e2e/           # Playwright E2E tests
-    └── helpers/   # Shared utilities (CanvasPage.js)
+├── unit/                    # Jest unit tests
+│   ├── core/               # Core system tests (eventBus, errorHandling)
+│   ├── services/           # Service layer tests (comprehensive coverage)
+│   ├── factories/          # Pure function tests (noteFactory, etc.)
+│   ├── features/           # Feature module tests
+│   │   ├── connection/     # Connection system tests
+│   │   ├── colorPicker/    # Color picker component tests
+│   │   ├── zoom/           # Zoom manager tests
+│   │   └── note/           # Note creation tests
+│   ├── data/               # Data layer tests (storageManager, etc.)
+│   ├── utils/              # Utility function tests
+│   ├── integration/        # Cross-component integration tests
+│   └── helpers/            # Test utilities (colorTestUtils.js)
+└── e2e/                    # Playwright E2E tests
+    └── helpers/            # Shared utilities (CanvasPage.js)
 ```
 
 ## Unit Testing (Jest)
@@ -81,12 +91,21 @@ Configuration in `playwright.config.js`. Tests in `tests/e2e/`.
 
 ## Key Testing Patterns
 
-**Event Bus**: Test event emission/handling in unit tests  
-**Service Layer**: Test business logic with mocked dependencies (`colorService.test.js`)  
-**Feature Modules**: Test component behavior with DOM utilities (`colorPicker.basic.test.js`)  
-**Integration**: Test cross-component behavior (`colorPicker.integration.test.js`)  
-**Menu Functions**: E2E test complete export/import workflows (including color data)  
-**Canvas Templates**: E2E test template switching and verification
+### **Unit Test Patterns**
+
+**Event Bus**: Comprehensive event emission/handling with error isolation  
+**Service Layer**: Business logic with dependency injection patterns  
+**Connection System**: Complete SVG-based connection testing with DOM integration  
+**Factory Functions**: Pure function testing for note creation and DOM manipulation  
+**Storage Manager**: Event-driven data persistence and state management  
+**Error Handling**: Comprehensive edge cases, failure recovery, and cascade prevention  
+
+### **E2E Testing Patterns**
+
+**Feature Modules**: Complete component behavior testing (`colorPicker.basic.test.js`)  
+**Integration**: Cross-component behavior validation (`colorPicker.integration.test.js`)  
+**Menu Functions**: Complete export/import workflows (including color data)  
+**Canvas Templates**: Template switching and verification workflows
 
 ## Test Utilities
 

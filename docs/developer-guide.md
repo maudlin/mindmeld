@@ -11,14 +11,15 @@ npm install
 npm start
 ```
 
-**Test it works:** `npm test && npm run test:e2e`
+**Test it works:** `npm test && npm run test:e2e` (all should pass)
 
 ## Architecture Overview
 
 **Event-driven**: Components communicate via central event bus (`src/js/core/eventBus.js`)  
 **Service layer**: Clean separation with dependency injection (`src/js/services/`)  
 **Factory pattern**: Pure, testable functions (`src/js/factories/`)  
-**Zero circular deps**: Maintained via automated health checks
+**Zero circular deps**: Maintained via automated health checks  
+**Test coverage**: Run `npm run test:coverage` for current status
 
 ```
 src/js/
@@ -38,9 +39,23 @@ src/js/
 
 ## Testing & CI
 
-**Testing**: See [Testing Guide](testing.md)  
-**CI/CD**: See [CI/CD Guide](ci-cd.md)  
+**Testing**: See [Testing Guide](testing.md) | Run `npm test` for current status  
+**CI/CD**: See [CI/CD Guide](ci-cd.md) | All tests must pass in CI  
 **Commands**: See [Scripts Reference](scripts.md)
+
+## Architecture Health
+
+Monitor architectural quality with these commands:
+
+```bash
+npm run health-check        # Full architecture assessment
+npm run analyze:circular    # Circular dependency detection (critical)
+npm run analyze:complexity  # Module complexity analysis
+npm run test:coverage       # Current test coverage
+npm run deps:check          # Dependency health check
+```
+
+**Health monitoring runs automatically** on PRs and weekly. All circular dependencies must be resolved before merging.
 
 ## Contributing
 

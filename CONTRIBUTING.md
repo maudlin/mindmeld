@@ -24,9 +24,10 @@ Commands: See [Scripts Reference](docs/scripts.md)
 
 ## Testing
 
-New features need tests. Bug fixes need regression tests.  
-Use `CanvasPage` helper for E2E tests.  
-Details: [Testing Guide](docs/testing.md)
+**Requirements**: New features need tests. Bug fixes need regression tests.  
+**E2E Testing**: Use `CanvasPage` helper for consistent E2E tests  
+
+See [Testing Guide](docs/testing.md) for patterns and [Developer Guide](docs/developer-guide.md) for architecture.
 
 ## Documentation
 
