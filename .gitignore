@@ -9,6 +9,9 @@ npm-debug.log
 .DS_Store
 *.local
 
+# Claude Code settings (contains sensitive permissions data)
+.claude/settings.local.json
+
 # Logs
 logs/
 *.log
