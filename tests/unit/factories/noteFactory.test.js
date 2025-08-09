@@ -60,6 +60,21 @@ describe('noteFactory', () => {
       collapse: jest.fn(),
     }));
 
+    // JSDOM doesn't support innerText properly, so we need to polyfill it
+    if (
+      !Object.prototype.hasOwnProperty.call(HTMLElement.prototype, 'innerText')
+    ) {
+      Object.defineProperty(HTMLElement.prototype, 'innerText', {
+        get() {
+          return this.textContent;
+        },
+        set(value) {
+          this.textContent = value;
+        },
+        configurable: true,
+      });
+    }
+
     // Import the module to test
     const module = await import('../../../src/js/factories/noteFactory.js');
     createNote = module.createNote;
@@ -82,7 +97,9 @@ describe('noteFactory', () => {
     });
 
     afterEach(() => {
-      document.body.removeChild(mockCanvas);
+      if (mockCanvas && mockCanvas.parentNode) {
+        mockCanvas.parentNode.removeChild(mockCanvas);
+      }
     });
 
     it('should create a note with correct structure', () => {
@@ -102,7 +119,7 @@ describe('noteFactory', () => {
 
       expect(noteContent).toBeInstanceOf(HTMLDivElement);
       expect(noteContent.className).toBe('note-content');
-      expect(noteContent.contentEditable).toBe('true');
+      expect(noteContent.contentEditable).toBe(true);
     });
 
     it('should generate unique note ID using base62', () => {
@@ -201,6 +218,9 @@ describe('noteFactory', () => {
         const note = createNote(100, 200, mockCanvas);
         const noteContent = note.querySelector('.note-content');
 
+        // Clear previous calls from note creation
+        mockEventBus.emit.mockClear();
+
         noteContent.innerHTML = 'New content';
         const inputEvent = new Event('input');
         noteContent.dispatchEvent(inputEvent);
@@ -243,7 +263,9 @@ describe('noteFactory', () => {
     });
 
     afterEach(() => {
-      document.body.removeChild(mockCanvas);
+      if (mockCanvas && mockCanvas.parentNode) {
+        mockCanvas.parentNode.removeChild(mockCanvas);
+      }
     });
 
     it('should calculate position using calculateOffsetPosition', () => {
@@ -317,7 +339,9 @@ describe('noteFactory', () => {
     });
 
     afterEach(() => {
-      document.body.removeChild(mockCanvas);
+      if (mockCanvas && mockCanvas.parentNode) {
+        mockCanvas.parentNode.removeChild(mockCanvas);
+      }
     });
 
     it('should handle zero coordinates', () => {

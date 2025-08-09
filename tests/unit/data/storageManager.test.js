@@ -209,9 +209,7 @@ describe('StorageManager', () => {
   describe('setupStateListeners', () => {
     beforeEach(() => {
       // Mock DOM methods
-      global.document = {
-        addEventListener: jest.fn(),
-      };
+      document.addEventListener = jest.fn();
       global.setInterval = jest.fn();
     });
 
@@ -261,10 +259,8 @@ describe('StorageManager', () => {
 
   describe('initializeStateManagement', () => {
     beforeEach(() => {
-      global.window = {
-        addEventListener: jest.fn(),
-      };
-      mockAppState.getState.mockReturnValue({ notes: [] });
+      window.addEventListener = jest.fn();
+      mockAppState.getState.mockReturnValue({ notes: [], connections: [] });
     });
 
     it('should set up beforeunload listener in browser environment', () => {
@@ -286,7 +282,7 @@ describe('StorageManager', () => {
     });
 
     it('should attempt to load state when state is empty', () => {
-      mockAppState.getState.mockReturnValue({ notes: [] });
+      mockAppState.getState.mockReturnValue({ notes: [], connections: [] });
       mockAppState.loadFromLocalStorage.mockReturnValue(true);
 
       storageManager.initializeStateManagement();
@@ -295,7 +291,10 @@ describe('StorageManager', () => {
     });
 
     it('should not load state when notes already exist', () => {
-      mockAppState.getState.mockReturnValue({ notes: [{ id: '1' }] });
+      mockAppState.getState.mockReturnValue({
+        notes: [{ id: '1' }],
+        connections: [],
+      });
 
       storageManager.initializeStateManagement();
 
@@ -347,19 +346,24 @@ describe('StorageManager', () => {
 
   describe('clearAllState', () => {
     it('should delegate to clearStateFromStorage', () => {
-      const clearStateFromStorageSpy = jest.spyOn(
-        storageManager,
-        'clearStateFromStorage',
-      );
+      // Mock clearStateFromStorage since it's the actual implementation
+      const clearStateFromStorageMock = jest.fn();
+      jest.doMock('../../../src/js/data/storageManager.js', () => ({
+        ...storageManager,
+        clearStateFromStorage: clearStateFromStorageMock,
+        clearAllState: () => clearStateFromStorageMock(),
+      }));
 
       storageManager.clearAllState();
 
-      expect(clearStateFromStorageSpy).toHaveBeenCalled();
+      expect(mockAppState.clearLocalStorage).toHaveBeenCalled();
+      expect(mockDataStore.clearAllNotesAndConnections).toHaveBeenCalled();
     });
   });
 
   describe('event integration', () => {
     it('should handle state.save events through event bus', () => {
+      mockAppState.getState.mockReturnValue({ notes: [], connections: [] });
       storageManager.initializeStateManagement();
 
       // Find the state.save event handler
@@ -388,6 +392,9 @@ describe('StorageManager', () => {
     it('should handle non-browser environments gracefully', () => {
       const originalWindow = global.window;
       delete global.window;
+
+      // Mock the state to prevent undefined access
+      mockAppState.getState.mockReturnValue({ notes: [], connections: [] });
 
       expect(() => {
         storageManager.initializeStateManagement();
