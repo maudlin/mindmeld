@@ -311,11 +311,11 @@ export class DesktopAdapter extends BaseAdapter {
           left: note.style.left,
           top: note.style.top,
         });
+
+        // Update connections for each individual note (ensures all connectors move)
+        this.throttledUpdateConnections(note);
       },
     );
-
-    // Update connections for the group (throttled, like legacy system)
-    this.throttledUpdateConnections(this.dragState.note);
 
     this.hasStateChanged = true;
 
@@ -379,8 +379,10 @@ export class DesktopAdapter extends BaseAdapter {
     document.body.classList.remove('dragging');
 
     if (this.dragState?.note) {
-      // Final connection update (immediate, not throttled)
-      connectionManager.updateConnections(this.dragState.note, this.canvas);
+      // Final connection update for all moved notes (immediate, not throttled)
+      this.selectedNotesOffsets.forEach(({ note }) => {
+        connectionManager.updateConnections(note, this.canvas);
+      });
 
       // Save state if changes were made
       if (this.hasStateChanged) {
