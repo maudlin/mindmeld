@@ -193,6 +193,10 @@ export class DesktopAdapter extends BaseAdapter {
    */
   startNoteDrag(event, note) {
     this.isDragging = true;
+
+    // Prevent text selection during drag operations
+    document.body.classList.add('dragging');
+
     this.dragState = {
       note: note,
       pointerId: event.pointerId,
@@ -235,6 +239,9 @@ export class DesktopAdapter extends BaseAdapter {
    */
   startSelectionBox(event) {
     this.isDrawingSelectionBox = true;
+
+    // Prevent text selection during drag operations
+    document.body.classList.add('dragging');
 
     const { left: startX, top: startY } = calculateOffsetPosition(
       this.canvas,
@@ -304,11 +311,11 @@ export class DesktopAdapter extends BaseAdapter {
           left: note.style.left,
           top: note.style.top,
         });
-
-        // Update connections
-        this.throttledUpdateConnections(note);
       },
     );
+
+    // Update connections for the group (throttled, like legacy system)
+    this.throttledUpdateConnections(this.dragState.note);
 
     this.hasStateChanged = true;
 
@@ -368,8 +375,11 @@ export class DesktopAdapter extends BaseAdapter {
    * End note dragging operation
    */
   endNoteDrag(event) {
+    // Remove dragging class to re-enable text selection
+    document.body.classList.remove('dragging');
+
     if (this.dragState?.note) {
-      // Final connection update
+      // Final connection update (immediate, not throttled)
       connectionManager.updateConnections(this.dragState.note, this.canvas);
 
       // Save state if changes were made
@@ -395,6 +405,9 @@ export class DesktopAdapter extends BaseAdapter {
    * End selection box operation
    */
   endSelectionBox() {
+    // Remove dragging class to re-enable text selection
+    document.body.classList.remove('dragging');
+
     this.emit('selection.boxEnd');
     this.clearSelectionBox();
 
@@ -577,13 +590,16 @@ export class DesktopAdapter extends BaseAdapter {
 
     notes.forEach((note) => {
       const noteRect = note.getBoundingClientRect();
-      const isWithinBox =
-        noteRect.left >= boxRect.left &&
-        noteRect.right <= boxRect.right &&
-        noteRect.top >= boxRect.top &&
-        noteRect.bottom <= boxRect.bottom;
 
-      if (isWithinBox) {
+      // Use intersection-based selection instead of containment
+      // This is more user-friendly and matches typical selection behavior
+      const intersects =
+        noteRect.left < boxRect.right &&
+        noteRect.right > boxRect.left &&
+        noteRect.top < boxRect.bottom &&
+        noteRect.bottom > boxRect.top;
+
+      if (intersects) {
         NoteManager.selectNote(note);
       } else {
         NoteManager.deselectNote(note);

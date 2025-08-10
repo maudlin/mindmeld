@@ -177,13 +177,16 @@ function selectNotesWithinBox() {
 
   notes.forEach((note) => {
     const noteRect = note.getBoundingClientRect();
-    const isSelected =
-      noteRect.left >= boxRect.left &&
-      noteRect.right <= boxRect.right &&
-      noteRect.top >= boxRect.top &&
-      noteRect.bottom <= boxRect.bottom;
 
-    if (isSelected) {
+    // Use intersection-based selection instead of containment
+    // This is more user-friendly and matches typical selection behavior
+    const intersects =
+      noteRect.left < boxRect.right &&
+      noteRect.right > boxRect.left &&
+      noteRect.top < boxRect.bottom &&
+      noteRect.bottom > boxRect.top;
+
+    if (intersects) {
       NoteManager.selectNote(note);
     } else {
       NoteManager.deselectNote(note);
