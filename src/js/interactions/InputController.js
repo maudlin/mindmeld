@@ -1,5 +1,7 @@
 // src/js/interactions/InputController.js
 
+import { initializeConnectionDrawing } from '../features/connection/connection.js';
+
 /**
  * Central controller for input adapters
  * Handles capability detection, dynamic adapter loading, and adapter lifecycle
@@ -51,6 +53,12 @@ export class InputController {
         throw new Error(
           `Failed to initialize ${mode} adapter: ${initError.message}`,
         );
+      }
+
+      // Initialize connection drawing system (required for ghost connector interactions)
+      const canvas = document.getElementById('canvas');
+      if (canvas) {
+        initializeConnectionDrawing(canvas);
       }
 
       // Only destroy old adapter after new one is successfully initialized
