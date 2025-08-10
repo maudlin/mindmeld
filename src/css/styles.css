@@ -175,6 +175,7 @@ html {
   transform: translate(-50%, -50%);
   transform-origin: top left;
   background-size: 20px 20px; /* Adjust the grid size */
+  touch-action: none; /* Prevent browser default touch gestures for custom pointer handling */
 }
 
 #canvas-wrapper {

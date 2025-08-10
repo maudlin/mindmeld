@@ -21,6 +21,9 @@ import {
 import { NoteEventService } from './services/noteEventService.js';
 import { ColorPickerEvents } from './features/colorPicker/colorPickerEvents.js';
 import { NoteColorApplication } from './features/note/noteColorApplication.js';
+import { InputController } from './interactions/InputController.js';
+import { CapabilityDetector } from './interactions/capabilities/detector.js';
+import { eventBus } from './core/eventBus.js';
 
 async function initializeApp() {
   log('Initializing app...');
@@ -44,7 +47,7 @@ async function initializeApp() {
   await canvasManager.loadModules();
   setupUI(elements);
   initializeCanvas(elements);
-  setupEventListeners(elements);
+  await setupEventListeners(elements);
 
   loadStateFromStorage(elements.canvas);
 
@@ -57,9 +60,25 @@ async function initializeApp() {
   window.addEventListener('beforeunload', saveStateToStorage);
 }
 
-function setupEventListeners(elements) {
-  setupCanvasEvents(elements.canvas);
-  setupDocumentEvents();
+async function setupEventListeners(elements) {
+  // Initialize new input controller system
+  const capabilityDetector = new CapabilityDetector();
+  const inputController = new InputController(eventBus, capabilityDetector);
+
+  try {
+    await inputController.initialize();
+    log('InputController initialized successfully');
+  } catch (error) {
+    console.error(
+      'Failed to initialize InputController, falling back to legacy event system:',
+      error,
+    );
+    // Fallback to legacy system
+    setupCanvasEvents(elements.canvas);
+    setupDocumentEvents();
+  }
+
+  // Keep context menu prevention
   document.addEventListener('contextmenu', (event) => event.preventDefault());
 }
 
