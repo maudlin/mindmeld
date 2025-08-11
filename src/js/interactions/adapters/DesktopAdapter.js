@@ -314,9 +314,9 @@ export class DesktopAdapter extends BaseAdapter {
       },
     );
 
-    // Update connections for each individual note during drag (throttled for performance)
+    // Update connections for each individual note during drag (immediate for smooth movement)
     this.selectedNotesOffsets.forEach(({ note }) => {
-      this.throttledUpdateConnections(note);
+      connectionManager.updateConnections(note);
     });
 
     this.hasStateChanged = true;
