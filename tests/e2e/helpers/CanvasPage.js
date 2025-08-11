@@ -442,6 +442,178 @@ export class CanvasPage {
       }
     }
   }
+
+  // ========================================
+  // STATE-BASED WAITING METHODS (Phase 1)
+  // Replaces timeout-based waits with robust state checking
+  // ========================================
+
+  /**
+   * Wait for application to be ready (not throttled)
+   * Replaces: waitForTimeout(600) for note creation
+   */
+  async waitForAppReady() {
+    return this.page.waitForFunction(
+      () => {
+        return (
+          !window.mindMeldTestState?.isThrottled &&
+          window.mindMeldTestState?.ready !== false
+        );
+      },
+      { timeout: 10000 },
+    );
+  }
+
+  /**
+   * Create note when application is ready (replaces createNoteWithThrottleWait)
+   * No more arbitrary 600ms waits
+   */
+  async createNoteWhenReady(x, y) {
+    await this.waitForAppReady();
+    return this.createNoteAt(x, y);
+  }
+
+  /**
+   * Wait for specific note count to be reached
+   * Replaces: waitForTimeout() after note creation
+   */
+  async waitForNoteCount(expectedCount) {
+    return this.page.waitForFunction(
+      (count) => {
+        const notes = document.querySelectorAll('.note');
+        return notes.length === count;
+      },
+      expectedCount,
+      { timeout: 8000 },
+    );
+  }
+
+  /**
+   * Wait for connection to be fully rendered
+   * Replaces: waitForTimeout() after connection creation
+   */
+  async waitForConnection(fromNoteId, toNoteId) {
+    return this.page.waitForFunction(
+      ([from, to]) => {
+        const path = document.querySelector(
+          `path[data-start="${from}"][data-end="${to}"]`,
+        );
+        const line = document.querySelector(
+          `line[data-start="${from}"][data-end="${to}"]`,
+        );
+        return (
+          (path && path.getAttribute('d') && path.getAttribute('d') !== '') ||
+          (line && line.getAttribute('x1') && line.getAttribute('x2'))
+        );
+      },
+      [fromNoteId, toNoteId],
+      { timeout: 8000 },
+    );
+  }
+
+  /**
+   * Wait for specific connection count
+   * Replaces: waitForTimeout() after multiple connections
+   */
+  async waitForConnectionCount(expectedCount) {
+    return this.page.waitForFunction(
+      (count) => {
+        const connections = document.querySelectorAll(
+          'path[data-start], line[data-start]',
+        );
+        return connections.length === count;
+      },
+      expectedCount,
+      { timeout: 8000 },
+    );
+  }
+
+  /**
+   * Wait for template switch to complete
+   * Replaces: waitForTimeout() after template changes
+   */
+  async waitForTemplateLoaded(templateName) {
+    const templateClassMap = {
+      'Standard Canvas': 'standard-canvas',
+      "Hero's Journey": 'heros-journey',
+      'Now/Next/Future': 'now-next-future',
+      'Wardley Map': 'wardley-map',
+    };
+
+    const expectedClass = templateClassMap[templateName];
+    if (!expectedClass) {
+      throw new Error(`Unknown template: ${templateName}`);
+    }
+
+    return this.page.waitForFunction(
+      (className) => {
+        const layout = document.querySelector('.background-layout');
+        return layout && layout.classList.contains(className);
+      },
+      expectedClass,
+      { timeout: 10000 },
+    );
+  }
+
+  /**
+   * Wait for canvas to be stable (no ongoing animations or updates)
+   * Replaces: waitForTimeout() for general stabilization
+   */
+  async waitForCanvasStable() {
+    return this.page.waitForFunction(
+      () => {
+        // Check if there are any ongoing CSS transitions or animations
+        const canvas = document.getElementById('canvas');
+        if (!canvas) return false;
+
+        const computedStyle = window.getComputedStyle(canvas);
+        const hasTransitions =
+          computedStyle.transition !== 'none' ||
+          computedStyle.animation !== 'none';
+
+        // Check if app state indicates stability
+        return (
+          !hasTransitions &&
+          !window.mindMeldTestState?.isAnimating &&
+          !window.mindMeldTestState?.isThrottled
+        );
+      },
+      { timeout: 8000 },
+    );
+  }
+
+  /**
+   * Enhanced note creation with state-based waiting
+   * Combines creation + state verification
+   */
+  async createNoteAndWait(x, y, expectedCount = null) {
+    const noteCountBefore = await this.notes.count();
+    await this.waitForAppReady();
+
+    const note = await this.createNoteAt(x, y);
+
+    // Wait for the new note count if specified, otherwise just +1
+    const targetCount = expectedCount || noteCountBefore + 1;
+    await this.waitForNoteCount(targetCount);
+
+    return note;
+  }
+
+  /**
+   * Enhanced connection creation with state-based waiting
+   */
+  async connectNotesAndWait(sourceNote, targetNote) {
+    await this.connectNotes(sourceNote, targetNote);
+
+    // Get note IDs for waiting
+    const sourceId = await sourceNote.getAttribute('id');
+    const targetId = await targetNote.getAttribute('id');
+
+    // Wait for the specific connection to be rendered
+    await this.waitForConnection(sourceId, targetId);
+
+    return { from: sourceId, to: targetId };
+  }
 }
 
 // Common test coordinates for consistency
