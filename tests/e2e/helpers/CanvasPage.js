@@ -39,7 +39,7 @@ export class CanvasPage {
     // CI-specific warmup period for application stability
     if (this.isCI) {
       await this.page.waitForLoadState('domcontentloaded');
-      await this.page.waitForTimeout(1500); // Extra warmup in CI
+      await this.waitForAppReady(); // Extra warmup in CI
     }
   }
 
@@ -49,11 +49,11 @@ export class CanvasPage {
 
     // Ensure we're clicking on the canvas area, not other UI elements
     await this.canvas.click(); // Focus canvas first
-    await this.page.waitForTimeout(100); // Small delay to ensure focus
+    await this.waitForAppReady(); // Wait for focus to be ready
 
     // Use a more reliable double-click approach
     await this.page.mouse.click(x, y);
-    await this.page.waitForTimeout(50);
+    await this.page.waitForFunction(() => document.readyState === 'complete');
     await this.page.mouse.click(x, y);
 
     // Wait for new note to be created with more specific conditions
@@ -84,9 +84,8 @@ export class CanvasPage {
   async createNoteWithThrottleWait(x, y) {
     const note = await this.createNoteAt(x, y);
 
-    // Wait for the 500ms throttle to complete plus buffer time
-    // This is simpler and more reliable than checking for throttle indicators
-    await this.page.waitForTimeout(800);
+    // Wait for throttle to complete using state-based approach
+    await this.waitForAppReady();
 
     return note;
   }
@@ -288,8 +287,8 @@ export class CanvasPage {
         { timeout: 3000 }, // Increased timeout
       )
       .catch(() => {
-        // Fallback: Just wait a bit if transform detection fails
-        return this.page.waitForTimeout(500);
+        // Fallback: Wait for app stability if transform detection fails
+        return this.waitForAppReady();
       });
   }
 
@@ -613,6 +612,50 @@ export class CanvasPage {
     await this.waitForConnection(sourceId, targetId);
 
     return { from: sourceId, to: targetId };
+  }
+
+  /**
+   * Wait for canvas to be completely empty after clearing
+   */
+  async waitForCanvasEmpty() {
+    return this.page.waitForFunction(
+      () => {
+        const notes = document.querySelectorAll('.note');
+        const connections = document.querySelectorAll(
+          'g[data-start][data-end]',
+        );
+        return notes.length === 0 && connections.length === 0;
+      },
+      { timeout: 10000 },
+    );
+  }
+
+  /**
+   * Wait for export operation to complete
+   */
+  async waitForExportReady() {
+    return this.page.waitForFunction(
+      () => {
+        return document.readyState === 'complete';
+      },
+      { timeout: 15000 },
+    );
+  }
+
+  /**
+   * Wait for a single note to be fully created and rendered
+   */
+  async waitForNoteCreated() {
+    return this.page.waitForFunction(
+      () => {
+        const notes = document.querySelectorAll('.note');
+        const lastNote = notes[notes.length - 1];
+        return (
+          lastNote && lastNote.offsetWidth > 0 && lastNote.offsetHeight > 0
+        );
+      },
+      { timeout: 10000 },
+    );
   }
 }
 

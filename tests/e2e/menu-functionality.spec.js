@@ -67,7 +67,7 @@ test.describe('Menu Functionality', () => {
         TestCoordinates.note1.x,
         TestCoordinates.note1.y,
       );
-      await page.waitForTimeout(800); // Throttle handling
+      await canvasPage.waitForAppReady();
       const note2 = await canvasPage.createNoteViaJavaScript(
         TestCoordinates.note2.x,
         TestCoordinates.note2.y,
@@ -90,7 +90,7 @@ test.describe('Menu Functionality', () => {
 
       // Click clear canvas button
       await page.click('#clear-canvas-button');
-      await page.waitForTimeout(500);
+      await canvasPage.waitForAppReady();
 
       // Verify everything is cleared
       await expect(canvasPage.notes).toHaveCount(0);
@@ -124,7 +124,7 @@ test.describe('Menu Functionality', () => {
 
       // Click clear canvas button
       await page.click('#clear-canvas-button');
-      await page.waitForTimeout(500);
+      await canvasPage.waitForAppReady();
 
       // Verify content is preserved
       await expect(canvasPage.notes).toHaveCount(1);
@@ -143,7 +143,7 @@ test.describe('Menu Functionality', () => {
         TestCoordinates.note1.x,
         TestCoordinates.note1.y,
       );
-      await page.waitForTimeout(800); // Throttle handling
+      await canvasPage.waitForAppReady();
       const note2 = await canvasPage.createNoteViaJavaScript(
         TestCoordinates.note2.x,
         TestCoordinates.note2.y,
@@ -172,7 +172,7 @@ test.describe('Menu Functionality', () => {
       });
 
       await page.click('#export-to-clipboard-button');
-      await page.waitForTimeout(1000);
+      await canvasPage.waitForExportReady();
 
       // Verify export button functionality (the click should trigger some response)
       // In headless browsers, clipboard access is limited, so we just verify the button works
@@ -202,7 +202,7 @@ test.describe('Menu Functionality', () => {
 
       // Click the button (it will likely fail gracefully due to empty clipboard in test)
       await importButton.click();
-      await page.waitForTimeout(1000);
+      await canvasPage.waitForExportReady();
 
       // Button should remain functional even if clipboard is empty
     });
@@ -282,7 +282,7 @@ test.describe('Menu Functionality', () => {
         TestCoordinates.note1.x,
         TestCoordinates.note1.y,
       );
-      await page.waitForTimeout(800); // Throttle handling
+      await canvasPage.waitForAppReady();
       const note2 = await canvasPage.createNoteViaJavaScript(
         TestCoordinates.note2.x,
         TestCoordinates.note2.y,

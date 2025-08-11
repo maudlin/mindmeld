@@ -14,8 +14,8 @@ test.describe('MindMeld Note Connections', () => {
       TestCoordinates.note1.y,
     );
 
-    // Wait for throttle and create second note
-    await page.waitForTimeout(800);
+    // Wait for app to be ready and create second note
+    await canvasPage.waitForAppReady();
     const note2 = await canvasPage.createNoteViaJavaScript(
       TestCoordinates.note2.x,
       TestCoordinates.note2.y,

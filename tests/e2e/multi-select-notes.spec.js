@@ -12,12 +12,12 @@ test.describe('MindMeld Multi-Select Notes', () => {
 
     // Create notes using standard test coordinates
     const note1 = await canvasPage.createNoteViaJavaScript(500, 300);
-    await page.waitForTimeout(800); // Throttle handling
+    await canvasPage.waitForAppReady();
     const note2 = await canvasPage.createNoteViaJavaScript(
       TestCoordinates.note2.x,
       TestCoordinates.note2.y,
     );
-    await page.waitForTimeout(800); // Throttle handling
+    await canvasPage.waitForAppReady();
     const note3 = await canvasPage.createNoteViaJavaScript(600, 500);
 
     // Verify all three notes are created
@@ -55,11 +55,11 @@ test.describe('MindMeld Multi-Select Notes', () => {
 
     // Create notes in a pattern using standard coordinates
     const note1 = await canvasPage.createNoteViaJavaScript(300, 300);
-    await page.waitForTimeout(800); // Throttle handling
+    await canvasPage.waitForAppReady();
     const note2 = await canvasPage.createNoteViaJavaScript(500, 300);
-    await page.waitForTimeout(800); // Throttle handling
+    await canvasPage.waitForAppReady();
     const note3 = await canvasPage.createNoteViaJavaScript(400, 450);
-    await page.waitForTimeout(800); // Throttle handling
+    await canvasPage.waitForAppReady();
     const note4 = await canvasPage.createNoteViaJavaScript(600, 450);
 
     // Get initial positions
@@ -118,11 +118,11 @@ test.describe('MindMeld Multi-Select Notes', () => {
 
     // Create notes in different areas using helper method
     const note1 = await canvasPage.createNoteViaJavaScript(200, 200); // Top-left
-    await page.waitForTimeout(800); // Throttle handling
+    await canvasPage.waitForAppReady();
     const note2 = await canvasPage.createNoteViaJavaScript(400, 200); // Top-right
-    await page.waitForTimeout(800); // Throttle handling
+    await canvasPage.waitForAppReady();
     const note3 = await canvasPage.createNoteViaJavaScript(200, 400); // Bottom-left
-    await page.waitForTimeout(800); // Throttle handling
+    await canvasPage.waitForAppReady();
     const note4 = await canvasPage.createNoteViaJavaScript(400, 400); // Bottom-right
 
     // Create selection box that only covers top two notes
