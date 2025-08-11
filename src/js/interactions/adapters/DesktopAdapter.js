@@ -314,8 +314,10 @@ export class DesktopAdapter extends BaseAdapter {
       },
     );
 
-    // Update connections for the group (throttled, like legacy system)
-    this.throttledUpdateConnections(this.dragState.note);
+    // Update connections for each individual note during drag (throttled for performance)
+    this.selectedNotesOffsets.forEach(({ note }) => {
+      this.throttledUpdateConnections(note);
+    });
 
     this.hasStateChanged = true;
 
@@ -379,12 +381,10 @@ export class DesktopAdapter extends BaseAdapter {
     document.body.classList.remove('dragging');
 
     if (this.dragState?.note) {
-
       // Final connection update for all moved notes (immediate, not throttled)
       this.selectedNotesOffsets.forEach(({ note }) => {
         connectionManager.updateConnections(note, this.canvas);
       });
-
 
       // Save state if changes were made
       if (this.hasStateChanged) {
