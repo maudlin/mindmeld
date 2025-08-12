@@ -106,6 +106,7 @@ test.describe('Menu Functionality', () => {
     }) => {
       const canvasPage = new CanvasPage(page);
       await canvasPage.load();
+      await page.waitForTimeout(1000); // Extra stability for this specific test
 
       // Create test note
       await canvasPage.createNote(
