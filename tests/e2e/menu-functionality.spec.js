@@ -135,7 +135,7 @@ test.describe('Menu Functionality', () => {
   });
 
   test.describe('Import/Export Functionality', () => {
-    test('Should export to clipboard button be accessible and functional', async ({
+    test('Should export to clipboard button be accessible and functional @smoke', async ({
       page,
     }) => {
       const canvasPage = new CanvasPage(page);

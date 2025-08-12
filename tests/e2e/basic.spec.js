@@ -2,7 +2,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('MindMeld Basic Functionality', () => {
-  test('Page loads successfully', async ({ page }) => {
+  test('Page loads successfully @smoke @critical', async ({ page }) => {
     console.log('Starting page load test');
 
     const steps = [

@@ -53,6 +53,12 @@ Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven s
 - **Code**: GitHub repository
 - **Tickets**: Managed in Jira
 
+## Task Management
+- **New Tasks**: Create Jira tickets for all development work
+- **Related Tasks**: Group multiple related tasks under Jira epics
+- **Work Progress**: Move tickets to "In Progress" when starting work
+- **Task Completion**: Move tickets to "Done" only after user confirmation
+
 ## Common Issues
 - **"Notes at same position"**: Missing throttle delay between creations
 - **"Browser context closed"**: Use CanvasPage helpers, not direct DOM

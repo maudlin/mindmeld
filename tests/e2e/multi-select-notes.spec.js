@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { CanvasPage, TestCoordinates } from './helpers/CanvasPage.js';
 
 test.describe('MindMeld Multi-Select Notes', () => {
-  test('Create multiple notes and select them with selection box', async ({
+  test('Create multiple notes and select them with selection box @smoke', async ({
     page,
   }) => {
     const canvasPage = new CanvasPage(page);
