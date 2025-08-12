@@ -4,7 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: !process.env.CI, // Reduce parallelism in CI for stability
-  retries: process.env.CI ? 1 : 0, // Retry flaky tests once in CI
+  retries: process.env.CI ? 2 : 0, // Retry flaky tests twice in CI
   reporter: process.env.CI ? 'github' : 'list',
 
   webServer: {

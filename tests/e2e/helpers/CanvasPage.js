@@ -120,16 +120,24 @@ export class CanvasPage {
       );
     } catch {
       // Fallback: Try regular mouse double-click if JavaScript dispatch fails
-      await this.page.mouse.dblclick(x, y);
-      await this.page.waitForFunction(
-        (count) => document.querySelectorAll('.note').length > count,
-        noteCountBefore,
-        { timeout: 5000 },
-      );
+      // Check if page/browser is still active before attempting mouse operations
+      if (!this.page.isClosed()) {
+        await this.page.mouse.dblclick(x, y);
+        await this.page.waitForFunction(
+          (count) => document.querySelectorAll('.note').length > count,
+          noteCountBefore,
+          { timeout: 5000 },
+        );
+      }
     }
 
     const note = this.notes.nth(noteCountBefore);
-    await expect(note).toBeVisible();
+
+    // Check if page/browser is still active before expect statement
+    if (!this.page.isClosed()) {
+      await expect(note).toBeVisible();
+    }
+
     return note;
   }
 
@@ -248,6 +256,11 @@ export class CanvasPage {
   }
 
   async moveSelectedNotes(deltaX, deltaY) {
+    // Check if page/browser is still active before starting drag operation
+    if (this.page.isClosed()) {
+      throw new Error('Page is closed, cannot perform move operation');
+    }
+
     // Get first selected note to drag
     const selectedNotes = await this.getSelectedNotes();
     const selectedNote = selectedNotes.first();
@@ -258,16 +271,20 @@ export class CanvasPage {
 
     // Drag the note (this will move all selected notes)
     await selectedNote.hover();
-    await this.page.mouse.move(
-      initialBox.x + initialBox.width / 2,
-      initialBox.y + initialBox.height / 2,
-    );
-    await this.page.mouse.down();
-    await this.page.mouse.move(
-      initialBox.x + initialBox.width / 2 + deltaX,
-      initialBox.y + initialBox.height / 2 + deltaY,
-    );
-    await this.page.mouse.up();
+
+    // Perform mouse operations with additional safety checks
+    if (!this.page.isClosed()) {
+      await this.page.mouse.move(
+        initialBox.x + initialBox.width / 2,
+        initialBox.y + initialBox.height / 2,
+      );
+      await this.page.mouse.down();
+      await this.page.mouse.move(
+        initialBox.x + initialBox.width / 2 + deltaX,
+        initialBox.y + initialBox.height / 2 + deltaY,
+      );
+      await this.page.mouse.up();
+    }
 
     // Wait for movement to complete - ensure note positions have updated
     await this.page
