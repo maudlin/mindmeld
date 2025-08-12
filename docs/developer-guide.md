@@ -15,6 +15,7 @@ npm start
 
 ## Architecture Overview
 
+**Bootstrap Architecture**: Clean initialization system with specialized modules  
 **Event-driven**: Components communicate via central event bus (`src/js/core/eventBus.js`)  
 **Service layer**: Clean separation with dependency injection (`src/js/services/`)  
 **Factory pattern**: Pure, testable functions (`src/js/factories/`)  
@@ -23,11 +24,20 @@ npm start
 
 ```
 src/js/
-├── core/          # Event bus, core logic  
-├── services/      # Service layer (noteService, colorService)
-├── factories/     # Pure factory functions
-├── features/      # Feature modules (colorPicker, note, connection)
-└── data/          # Data management (with color persistence)
+├── app.js                    # Main entry point (2 dependencies)
+├── core/
+│   ├── bootstrap/           # Bootstrap system architecture
+│   │   ├── AppBootstrap.js  # Main orchestrator
+│   │   ├── DataBootstrap.js # Event bus, data store, state
+│   │   ├── ServiceBootstrap.js # Business logic services
+│   │   ├── UIBootstrap.js   # Canvas, UI components
+│   │   └── InteractionBootstrap.js # Input, gestures, events
+│   ├── eventBus.js          # Central communication hub
+│   └── ...                  # Other core systems
+├── services/                # Service layer (noteService, colorService)
+├── factories/               # Pure factory functions
+├── features/                # Feature modules (colorPicker, note, connection)
+└── data/                    # Data management (with color persistence)
 ```
 
 ## Standards
@@ -79,6 +89,13 @@ npm run version:major   # Breaking changes (0.8.0 → 1.0.0)
 
 ## What's Where
 
+- **Application Entry**: `src/js/app.js` - Main entry point (2 dependencies only)
+- **Bootstrap System**: `src/js/core/bootstrap/` - Application initialization architecture
+  - `AppBootstrap.js` - Main orchestrator with dependency chain management
+  - `DataBootstrap.js` - Event bus, data store, state management initialization
+  - `ServiceBootstrap.js` - Business logic services initialization
+  - `UIBootstrap.js` - Canvas management and UI initialization
+  - `InteractionBootstrap.js` - Input systems, gestures, event handling
 - **Event Bus**: `src/js/core/eventBus.js` - Central communication hub
 - **Services**: `src/js/services/` - Business logic layer
   - `colorService.js` - Color state management and validation

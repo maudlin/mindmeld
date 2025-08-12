@@ -1,9 +1,14 @@
-// tests/unit/interactions/gestures/GestureRecognizer.test.js
-// Consolidated gesture recognition tests focusing on core behaviors
+/**
+ * Touch Gesture Recognition Behavior Tests
+ *
+ * Tests the gesture recognition system that interprets touch interactions
+ * and converts them to semantic events (tap, drag, pinch, long-press).
+ * Focus on gesture detection accuracy, state management, and event emission.
+ */
 
 import { GestureRecognizer } from '../../../../src/js/interactions/gestures/GestureRecognizer.js';
 
-// Helper functions moved to top for reuse
+// Helper functions for creating mock touch events
 const createMockTouch = (id, x, y) => ({
   identifier: id,
   clientX: x,
@@ -22,7 +27,7 @@ const createTouchEvent = (type, touches) => ({
   targetTouches: touches,
 });
 
-describe('GestureRecognizer', () => {
+describe('Touch Gesture Recognition Behavior', () => {
   let gestureRecognizer, mockEventBus, mockElement;
 
   beforeEach(() => {
@@ -43,7 +48,7 @@ describe('GestureRecognizer', () => {
     gestureRecognizer?.destroy();
   });
 
-  describe('Initialization and Cleanup', () => {
+  describe('Recognizer Lifecycle', () => {
     it('initializes correctly and manages event listeners', () => {
       expect(gestureRecognizer.currentState).toBe('idle');
       expect(gestureRecognizer.eventBus).toBe(mockEventBus);
@@ -72,7 +77,7 @@ describe('GestureRecognizer', () => {
     });
   });
 
-  describe('Basic Gesture Recognition', () => {
+  describe('Single Touch Gestures', () => {
     it('recognizes single tap after delay', async () => {
       const touch = createMockTouch(1, 100, 200);
 
@@ -118,7 +123,7 @@ describe('GestureRecognizer', () => {
     });
   });
 
-  describe('Double Tap Recognition', () => {
+  describe('Double Tap Detection', () => {
     it('recognizes double tap when taps are close in time and space', () => {
       const touch1 = createMockTouch(1, 100, 200);
       const touch2 = createMockTouch(2, 102, 201); // Close to first tap
@@ -172,7 +177,7 @@ describe('GestureRecognizer', () => {
     });
   });
 
-  describe('Long Press and Advanced Gestures', () => {
+  describe('Long Press Recognition', () => {
     it('recognizes long press after threshold delay', async () => {
       const touch = createMockTouch(1, 100, 200);
 
@@ -216,7 +221,7 @@ describe('GestureRecognizer', () => {
     });
   });
 
-  describe('Drag Gesture Sequence', () => {
+  describe('Drag Interaction Flow', () => {
     it('handles complete drag sequence from start to end', () => {
       const touches = [
         createMockTouch(1, 100, 200), // start
@@ -267,7 +272,7 @@ describe('GestureRecognizer', () => {
     });
   });
 
-  describe('Multi-Touch Pinch Gesture', () => {
+  describe('Pinch Zoom Recognition', () => {
     it('recognizes pinch zoom sequence with two fingers', () => {
       const touch1 = createMockTouch(1, 100, 200);
       const touch2 = createMockTouch(2, 200, 300);
@@ -319,7 +324,7 @@ describe('GestureRecognizer', () => {
     });
   });
 
-  describe('State Machine and Edge Cases', () => {
+  describe('State Management', () => {
     it('handles state transitions and edge cases correctly', () => {
       const touch1 = createMockTouch(1, 100, 200);
       const touch2 = createMockTouch(2, 200, 300);
@@ -343,7 +348,7 @@ describe('GestureRecognizer', () => {
     });
   });
 
-  describe('Event Handling', () => {
+  describe('Touch Event Processing', () => {
     it('prevents default behavior on touch events', () => {
       const mockEvent = {
         preventDefault: jest.fn(),
@@ -364,7 +369,7 @@ describe('GestureRecognizer', () => {
     });
   });
 
-  describe('Additional Edge Cases', () => {
+  describe('Edge Case Handling', () => {
     it('handles touchcancel, multiple touches, and cleanup', () => {
       // touchcancel should behave like touchend
       const touch = createMockTouch(1, 100, 200);

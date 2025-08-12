@@ -232,7 +232,65 @@ else
 fi
 echo ""
 
-# 6. Architecture-Specific Checks
+# 6. Bootstrap Architecture Validation
+print_section "Bootstrap Architecture Health"
+check_bootstrap_architecture() {
+    local bootstrap_score=100
+    local issues=0
+    
+    # Check if bootstrap files exist
+    if [ ! -f "src/js/core/bootstrap/AppBootstrap.js" ]; then
+        echo -e "${RED}❌ AppBootstrap.js missing${NC}"
+        bootstrap_score=$((bootstrap_score - 30))
+        issues=$((issues + 1))
+    else
+        echo -e "${GREEN}✅ AppBootstrap.js found${NC}"
+    fi
+    
+    # Check for required bootstrap modules
+    required_bootstraps=("DataBootstrap.js" "ServiceBootstrap.js" "UIBootstrap.js" "InteractionBootstrap.js")
+    for bootstrap in "${required_bootstraps[@]}"; do
+        if [ ! -f "src/js/core/bootstrap/$bootstrap" ]; then
+            echo -e "${YELLOW}⚠️  $bootstrap missing${NC}"
+            bootstrap_score=$((bootstrap_score - 15))
+            issues=$((issues + 1))
+        else
+            echo -e "${GREEN}✅ $bootstrap found${NC}"
+        fi
+    done
+    
+    # Check app.js dependency count (bootstrap pattern should keep this low)
+    if [ -f "src/js/app.js" ]; then
+        app_deps=$(grep -c "^import " "src/js/app.js" 2>/dev/null || echo 0)
+        if [ "$app_deps" -le 3 ]; then
+            echo -e "${GREEN}✅ app.js dependency count optimal: $app_deps${NC}"
+        elif [ "$app_deps" -le 8 ]; then
+            echo -e "${YELLOW}⚠️  app.js dependency count: $app_deps (consider bootstrap refactoring)${NC}"
+            bootstrap_score=$((bootstrap_score - 10))
+        else
+            echo -e "${RED}❌ app.js dependency count too high: $app_deps${NC}"
+            echo "   Consider implementing bootstrap architecture pattern"
+            bootstrap_score=$((bootstrap_score - 20))
+        fi
+    fi
+    
+    # Check for proper initialization sequence
+    if [ -f "src/js/core/bootstrap/AppBootstrap.js" ]; then
+        if grep -q "DataBootstrap\|ServiceBootstrap\|UIBootstrap\|InteractionBootstrap" "src/js/core/bootstrap/AppBootstrap.js"; then
+            echo -e "${GREEN}✅ Bootstrap sequence properly configured${NC}"
+        else
+            echo -e "${YELLOW}⚠️  Bootstrap sequence may not be properly configured${NC}"
+            bootstrap_score=$((bootstrap_score - 10))
+        fi
+    fi
+    
+    echo $bootstrap_score
+}
+
+BOOTSTRAP_SCORE=$(check_bootstrap_architecture | tail -1)
+echo ""
+
+# 7. Architecture-Specific Checks
 print_section "Architecture Layer Violations"
 check_layer_violations() {
     local violations=0
@@ -269,7 +327,7 @@ check_layer_violations() {
     fi
 }
 
-LAYER_SCORE=$(check_layer_violations)
+LAYER_SCORE=$(check_layer_violations | tail -1)
 echo ""
 
 # Check for domain boundary violations
@@ -323,7 +381,7 @@ check_domain_boundaries() {
     fi
 }
 
-DOMAIN_SCORE=$(check_domain_boundaries)
+DOMAIN_SCORE=$(check_domain_boundaries | tail -1)
 echo ""
 
 # Check for API contract stability
@@ -355,7 +413,7 @@ check_api_stability() {
     fi
 }
 
-API_SCORE=$(check_api_stability)
+API_SCORE=$(check_api_stability | tail -1)
 echo ""
 
 # 7. Codebase Metrics (Updated with contextual thresholds)
@@ -426,25 +484,28 @@ echo ""
 # Overall Health Score (Weighted Average)
 print_section "Overall Architecture Health"
 
-# Calculate weighted scores
-ARCHITECTURE_WEIGHT=30
-COMPLEXITY_WEIGHT=25
-QUALITY_WEIGHT=20
+# Calculate weighted scores (adjusted for bootstrap architecture)
+ARCHITECTURE_WEIGHT=25
+BOOTSTRAP_WEIGHT=15  # New: Bootstrap architecture health
+COMPLEXITY_WEIGHT=20
+QUALITY_WEIGHT=15
 SECURITY_WEIGHT=15
 MISC_WEIGHT=10  # Layer violations, API stability, etc.
 
 # Calculate component scores
 ARCH_COMPONENT=$(( (CIRCULAR_SCORE * ARCHITECTURE_WEIGHT) / 100 ))
+BOOTSTRAP_COMPONENT=$(( (BOOTSTRAP_SCORE * BOOTSTRAP_WEIGHT) / 100 ))
 COMPLEXITY_COMPONENT=$(( (COMPLEXITY_SCORE * COMPLEXITY_WEIGHT) / 100 ))
 QUALITY_COMPONENT=$(( (DUPLICATION_SCORE * QUALITY_WEIGHT) / 100 ))
 SECURITY_COMPONENT=$(( (SECURITY_SCORE * SECURITY_WEIGHT) / 100 ))
 MISC_COMPONENT=$(( ((LAYER_SCORE + DOMAIN_SCORE + API_SCORE) * MISC_WEIGHT) / 300 ))
 
 # Final weighted score
-HEALTH_SCORE=$(( ARCH_COMPONENT + COMPLEXITY_COMPONENT + QUALITY_COMPONENT + SECURITY_COMPONENT + MISC_COMPONENT ))
+HEALTH_SCORE=$(( ARCH_COMPONENT + BOOTSTRAP_COMPONENT + COMPLEXITY_COMPONENT + QUALITY_COMPONENT + SECURITY_COMPONENT + MISC_COMPONENT ))
 
 echo "📊 Component Scores:"
 echo "   Architecture (Circular Deps): $CIRCULAR_SCORE/100 (weight: $ARCHITECTURE_WEIGHT%)"
+echo "   Bootstrap Architecture: $BOOTSTRAP_SCORE/100 (weight: $BOOTSTRAP_WEIGHT%)"
 echo "   Complexity: $COMPLEXITY_SCORE/100 (weight: $COMPLEXITY_WEIGHT%)"
 echo "   Code Quality: $DUPLICATION_SCORE/100 (weight: $QUALITY_WEIGHT%)"
 echo "   Security: $SECURITY_SCORE/100 (weight: $SECURITY_WEIGHT%)"

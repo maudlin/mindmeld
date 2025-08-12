@@ -12,6 +12,52 @@ MindMeld uses unit tests (Jest) for core logic and end-to-end tests (Playwright)
 **E2E Tests**: Complete user workflows, UI interactions, browser integration  
 **Integration Tests**: Event bus communication, service coordination
 
+## Test Naming and Structure Standards
+
+### File Naming Convention
+- **Unit tests**: `[component].[context].test.js` (e.g., `connectionManager.behavior.test.js`, `colorPicker.integration.test.js`)
+- **E2E tests**: `[feature-name].spec.js` with kebab-case (e.g., `note-operations.spec.js`)
+
+### Test Structure Pattern
+```javascript
+/**
+ * [Component] [Test Type] Tests
+ * 
+ * [Brief description of behaviors being tested]
+ * Focus on [specific testing aspects]
+ */
+
+describe('[Component] [Human-Readable Context]', () => {
+  describe('[Feature Category]', () => {
+    it('[behavioral description without "should"]', () => {
+      // Test implementation
+    });
+  });
+});
+```
+
+### Naming Guidelines
+- **Describe blocks**: Use human-readable titles that explain *what* is being tested
+- **Test descriptions**: Focus on user-observable behaviors, avoid "should" prefix
+- **Documentation**: Include file-level comments explaining test purpose and focus
+
+**Example**:
+```javascript
+/**
+ * Connection Manager Behavior Tests
+ * 
+ * Tests user-observable connection creation, management, and cleanup behaviors.
+ * Focus on visual feedback, state consistency, and drag interaction flows.
+ */
+
+describe('Connection Manager Behavior', () => {
+  describe('Visual Connection Creation', () => {
+    it('creates visible line between notes when dragged', () => {});
+    it('provides immediate visual feedback during creation', () => {});
+  });
+});
+```
+
 ## Quick Start
 
 Run tests: `npm test && npm run test:e2e`  
