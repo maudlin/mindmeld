@@ -61,14 +61,15 @@ test.describe('Menu Functionality', () => {
     }) => {
       const canvasPage = new CanvasPage(page);
       await canvasPage.load();
+      await page.waitForTimeout(1000); // Extra stability for this specific test
 
-      // Create test content using JavaScript dispatch (more reliable in CI)
-      const note1 = await canvasPage.createNoteViaJavaScript(
+      // Create test content
+      const note1 = await canvasPage.createNote(
         TestCoordinates.note1.x,
         TestCoordinates.note1.y,
       );
-      await canvasPage.waitForAppReady();
-      const note2 = await canvasPage.createNoteViaJavaScript(
+      await page.waitForTimeout(800);
+      const note2 = await canvasPage.createNote(
         TestCoordinates.note2.x,
         TestCoordinates.note2.y,
       );
@@ -90,7 +91,7 @@ test.describe('Menu Functionality', () => {
 
       // Click clear canvas button
       await page.click('#clear-canvas-button');
-      await canvasPage.waitForAppReady();
+      await page.waitForTimeout(800);
 
       // Verify everything is cleared
       await expect(canvasPage.notes).toHaveCount(0);
@@ -107,10 +108,11 @@ test.describe('Menu Functionality', () => {
       await canvasPage.load();
 
       // Create test note
-      await canvasPage.createNoteViaJavaScript(
+      await canvasPage.createNote(
         TestCoordinates.note1.x,
         TestCoordinates.note1.y,
       );
+      await page.waitForTimeout(500); // Allow note to settle
 
       await expect(canvasPage.notes).toHaveCount(1);
 
@@ -124,7 +126,7 @@ test.describe('Menu Functionality', () => {
 
       // Click clear canvas button
       await page.click('#clear-canvas-button');
-      await canvasPage.waitForAppReady();
+      await page.waitForTimeout(800);
 
       // Verify content is preserved
       await expect(canvasPage.notes).toHaveCount(1);
@@ -137,14 +139,15 @@ test.describe('Menu Functionality', () => {
     }) => {
       const canvasPage = new CanvasPage(page);
       await canvasPage.load();
+      await page.waitForTimeout(1000); // Extra stability for this specific test
 
       // Create test content with notes and connections
-      const note1 = await canvasPage.createNoteViaJavaScript(
+      const note1 = await canvasPage.createNote(
         TestCoordinates.note1.x,
         TestCoordinates.note1.y,
       );
-      await canvasPage.waitForAppReady();
-      const note2 = await canvasPage.createNoteViaJavaScript(
+      await page.waitForTimeout(800);
+      const note2 = await canvasPage.createNote(
         TestCoordinates.note2.x,
         TestCoordinates.note2.y,
       );
@@ -212,7 +215,7 @@ test.describe('Menu Functionality', () => {
       await canvasPage.load();
 
       // Create test content
-      await canvasPage.createNoteViaJavaScript(
+      await canvasPage.createNote(
         TestCoordinates.note1.x,
         TestCoordinates.note1.y,
       );
@@ -278,12 +281,12 @@ test.describe('Menu Functionality', () => {
       await canvasPage.load();
 
       // Create notes at specific positions with content
-      const note1 = await canvasPage.createNoteViaJavaScript(
+      const note1 = await canvasPage.createNote(
         TestCoordinates.note1.x,
         TestCoordinates.note1.y,
       );
-      await canvasPage.waitForAppReady();
-      const note2 = await canvasPage.createNoteViaJavaScript(
+      await page.waitForTimeout(800);
+      const note2 = await canvasPage.createNote(
         TestCoordinates.note2.x,
         TestCoordinates.note2.y,
       );

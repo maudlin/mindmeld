@@ -8,15 +8,15 @@ test.describe('MindMeld Note Connections', () => {
     // Load the application
     await canvasPage.load();
 
-    // Create first note using JavaScript dispatch (more reliable in CI)
-    const note1 = await canvasPage.createNoteViaJavaScript(
+    // Create first note
+    const note1 = await canvasPage.createNote(
       TestCoordinates.note1.x,
       TestCoordinates.note1.y,
     );
 
-    // Wait for app to be ready and create second note
-    await canvasPage.waitForAppReady();
-    const note2 = await canvasPage.createNoteViaJavaScript(
+    // Wait for throttle and create second note
+    await page.waitForTimeout(800);
+    const note2 = await canvasPage.createNote(
       TestCoordinates.note2.x,
       TestCoordinates.note2.y,
     );

@@ -90,16 +90,31 @@ export class CanvasPage {
     return note;
   }
 
-  // Alternative note creation method - delegate to simple createNote
-  async createNoteViaJavaScript(x, y) {
-    return this.createNote(x, y);
-  }
-
   // Simple note creation for basic operations (legacy compatibility)
   async createNote(x = 640, y = 388) {
+    const noteCountBefore = await this.notes.count();
+
+    // Ensure canvas is focused and ready for interaction
+    await this.canvas.click();
+    await this.page.waitForLoadState('domcontentloaded');
+
     await this.page.mouse.dblclick(x, y);
-    await expect(this.note).toBeVisible();
-    return this.note;
+
+    // Wait for the new note to be created with fallback
+    try {
+      await this.page.waitForFunction(
+        (count) => document.querySelectorAll('.note').length > count,
+        noteCountBefore,
+        { timeout: 5000 },
+      );
+    } catch {
+      // Fallback: wait a bit and try to find any visible note
+      await this.page.waitForTimeout(1000);
+    }
+
+    const newNote = this.notes.nth(noteCountBefore);
+    await expect(newNote).toBeVisible();
+    return newNote;
   }
 
   // Note selection
