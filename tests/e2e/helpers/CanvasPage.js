@@ -90,55 +90,9 @@ export class CanvasPage {
     return note;
   }
 
-  // Alternative note creation method using JavaScript events (for problematic environments)
+  // Alternative note creation method - delegate to simple createNote
   async createNoteViaJavaScript(x, y) {
-    const noteCountBefore = await this.notes.count();
-
-    // Create note via JavaScript dispatch instead of mouse events
-    await this.page.evaluate(
-      ({ x, y }) => {
-        const canvas = document.getElementById('canvas');
-        if (canvas) {
-          const event = new MouseEvent('dblclick', {
-            clientX: x,
-            clientY: y,
-            bubbles: true,
-            cancelable: true,
-          });
-          canvas.dispatchEvent(event);
-        }
-      },
-      { x, y },
-    );
-
-    // Wait for note creation with fallback
-    try {
-      await this.page.waitForFunction(
-        (count) => document.querySelectorAll('.note').length > count,
-        noteCountBefore,
-        { timeout: 10000 }, // Increased timeout
-      );
-    } catch {
-      // Fallback: Try regular mouse double-click if JavaScript dispatch fails
-      // Check if page/browser is still active before attempting mouse operations
-      if (!this.page.isClosed()) {
-        await this.page.mouse.dblclick(x, y);
-        await this.page.waitForFunction(
-          (count) => document.querySelectorAll('.note').length > count,
-          noteCountBefore,
-          { timeout: 5000 },
-        );
-      }
-    }
-
-    const note = this.notes.nth(noteCountBefore);
-
-    // Check if page/browser is still active before expect statement
-    if (!this.page.isClosed()) {
-      await expect(note).toBeVisible();
-    }
-
-    return note;
+    return this.createNote(x, y);
   }
 
   // Simple note creation for basic operations (legacy compatibility)
@@ -476,15 +430,14 @@ export class CanvasPage {
    * Replaces: waitForTimeout(600) for note creation
    */
   async waitForAppReady() {
-    return this.page.waitForFunction(
-      () => {
-        return (
-          !window.mindMeldTestState?.isThrottled &&
-          window.mindMeldTestState?.ready !== false
-        );
-      },
-      { timeout: 10000 },
-    );
+    // Simple fallback approach - wait for DOM and a short delay for stability
+    // The mindMeldTestState approach was causing browser instability
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForFunction(() => document.readyState === 'complete', {
+      timeout: 5000,
+    });
+    // Small delay for any async operations to settle
+    await this.page.waitForTimeout(200);
   }
 
   /**
@@ -595,11 +548,7 @@ export class CanvasPage {
           computedStyle.animation !== 'none';
 
         // Check if app state indicates stability
-        return (
-          !hasTransitions &&
-          !window.mindMeldTestState?.isAnimating &&
-          !window.mindMeldTestState?.isThrottled
-        );
+        return !hasTransitions;
       },
       { timeout: 8000 },
     );
