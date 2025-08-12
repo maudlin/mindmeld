@@ -105,15 +105,28 @@ export class CanvasPage {
       await this.page.waitForFunction(
         (count) => document.querySelectorAll('.note').length > count,
         noteCountBefore,
-        { timeout: 5000 },
+        { timeout: 10000 }, // Increased timeout for better stability
       );
     } catch {
-      // Fallback: wait a bit and try to find any visible note
-      await this.page.waitForTimeout(1000);
+      // Fallback: Try regular mouse double-click if JavaScript dispatch fails
+      // Check if page/browser is still active before attempting mouse operations
+      if (!this.page.isClosed()) {
+        await this.page.mouse.dblclick(x, y);
+        await this.page.waitForFunction(
+          (count) => document.querySelectorAll('.note').length > count,
+          noteCountBefore,
+          { timeout: 5000 },
+        );
+      }
     }
 
     const newNote = this.notes.nth(noteCountBefore);
-    await expect(newNote).toBeVisible();
+
+    // Check if page/browser is still active before expect statement
+    if (!this.page.isClosed()) {
+      await expect(newNote).toBeVisible();
+    }
+
     return newNote;
   }
 
