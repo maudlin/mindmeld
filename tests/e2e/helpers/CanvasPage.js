@@ -228,19 +228,26 @@ export class CanvasPage {
 
   // Multi-select operations
   async createSelectionBox(startX, startY, endX, endY) {
+    // Check if page/browser is still active before starting selection
+    if (this.page.isClosed()) {
+      throw new Error('Page is closed, cannot create selection box');
+    }
+
     // Clear any existing selections first
-    await this.page.mouse.click(100, 100); // Click on empty area
-    await this.page.waitForLoadState('domcontentloaded');
+    if (!this.page.isClosed()) {
+      await this.page.mouse.click(100, 100); // Click on empty area
+      await this.page.waitForLoadState('domcontentloaded');
 
-    // Start dragging from empty canvas area using absolute coordinates
-    await this.page.mouse.move(startX, startY);
-    await this.page.mouse.down({ button: 'left' });
+      // Start dragging from empty canvas area using absolute coordinates
+      await this.page.mouse.move(startX, startY);
+      await this.page.mouse.down({ button: 'left' });
 
-    // Drag to create selection box
-    await this.page.mouse.move(endX, endY, { steps: 10 });
+      // Drag to create selection box
+      await this.page.mouse.move(endX, endY, { steps: 10 });
 
-    // Release mouse to complete selection
-    await this.page.mouse.up({ button: 'left' });
+      // Release mouse to complete selection
+      await this.page.mouse.up({ button: 'left' });
+    }
 
     // Wait for selection to be processed - check for selected notes
     await this.page.waitForFunction(
