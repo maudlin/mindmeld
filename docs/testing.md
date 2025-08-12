@@ -113,18 +113,47 @@ test('updates active color swatch', () => {
 
 Tests complete user workflows across Chrome, Firefox, and Safari. Use the `CanvasPage` helper for consistent interactions.
 
+### Critical E2E Patterns
+
+**Note Creation**: Always use `createNote()` and respect throttling
 ```javascript
-// Use Page Object Model
 const canvasPage = new CanvasPage(page);
-await canvasPage.createNoteAt(400, 300);
 
-// Test complete workflows, not individual clicks
+// ✅ CORRECT: Reliable pattern for multiple notes
+const note1 = await canvasPage.createNote(400, 300);
+await page.waitForTimeout(800); // Respect app throttling
+const note2 = await canvasPage.createNote(600, 300);
+
+// ❌ WRONG: Will fail due to throttling
+const note1 = await canvasPage.createNote(400, 300);  
+const note2 = await canvasPage.createNote(600, 300); // Too fast!
+```
+
+**Stability in CI**: Some tests need extra warmup time
+```javascript
+// For tests that create content immediately after page load
+const canvasPage = new CanvasPage(page);
+await canvasPage.load();
+await page.waitForTimeout(1000); // CI stability - only if needed
+
+// Then proceed with test operations
+const note = await canvasPage.createNote(400, 300);
+```
+
+**Complete Workflows**: Test user journeys, not individual clicks
+```javascript
 test('creates, connects, and deletes notes', async ({ page }) => {
-  // Full user journey
+  const canvasPage = new CanvasPage(page);
+  
+  // Create test content with proper throttling
+  const note1 = await canvasPage.createNote(400, 300);
+  await page.waitForTimeout(800);
+  const note2 = await canvasPage.createNote(600, 300);
+  
+  // Test the actual feature
+  await canvasPage.connectNotes(note1, note2);
+  await expect(page.locator('.connection')).toBeVisible();
 });
-
-// Built-in waits prevent flaky tests
-await expect(noteElement).toBeVisible();
 ```
 
 ### Playwright Setup
@@ -166,8 +195,14 @@ Configuration in `playwright.config.js`. Tests in `tests/e2e/`.
 
 ## Debugging
 
-**Timing issues**: Use `await expect().toBeVisible()` not arbitrary waits  
-**Flaky tests**: Check element selection and event handling  
-**Performance**: Run specific test files for faster feedback
+**Timing issues**: Use `await expect().toBeVisible()` not arbitrary waits (except for throttling)  
+**Flaky tests**: Usually caused by missing throttle delays between note operations  
+**Performance**: Run specific test files for faster feedback  
+**CI failures**: Check if local tests pass - CI failures often need stability delays
+
+**Common Issues**:
+- **"Notes created at same position"**: Missing `waitForTimeout(800)` between creations
+- **"Browser context closed"**: Avoid direct DOM manipulation, use helper methods  
+- **Tests pass locally, fail in CI**: Add `waitForTimeout(1000)` after page load
 
 For complete testing details, see [`tests/README.md`](../tests/README.md).
