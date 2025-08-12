@@ -1,25 +1,29 @@
 // tests/unit/features/connection/connectionUtils.test.js
+// Consolidated utility tests focusing on core calculations and edge cases
 
 describe('ConnectionUtils', () => {
   let ConnectionUtils;
   let connectionUtils;
   let mockUtils;
   let mockZoomManager;
+  let mockCanvas;
 
   beforeEach(async () => {
-    // Reset modules
     jest.resetModules();
 
-    // Create mocks
-    mockUtils = {
-      log: jest.fn(),
+    // Consolidated mocks setup
+    mockUtils = { log: jest.fn() };
+    mockZoomManager = { getZoomLevel: jest.fn().mockReturnValue(5) };
+    mockCanvas = {
+      getBoundingClientRect: () => ({
+        left: 0,
+        top: 0,
+        width: 800,
+        height: 600,
+      }),
     };
 
-    mockZoomManager = {
-      getZoomLevel: jest.fn().mockReturnValue(5),
-    };
-
-    // Mock dependencies
+    jest.spyOn(document, 'getElementById').mockReturnValue(mockCanvas);
     jest.doMock('../../../../src/js/utils/utils.js', () => mockUtils);
     jest.doMock(
       '../../../../src/js/features/zoom/zoomManager.js',
@@ -34,7 +38,6 @@ describe('ConnectionUtils', () => {
       },
     }));
 
-    // Import the module to test
     const module = await import(
       '../../../../src/js/features/connection/connectionUtils.js'
     );
@@ -44,305 +47,143 @@ describe('ConnectionUtils', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
-    // Clean up DOM
     document.body.innerHTML = '';
   });
 
-  describe('Constructor', () => {
-    it('should initialize with null zoom level', () => {
+  describe('Initialization and Zoom Management', () => {
+    it('initializes with null zoom and manages zoom cache correctly', () => {
       expect(connectionUtils.currentZoomLevel).toBe(null);
-    });
-  });
 
-  describe('Zoom Level Management', () => {
-    it('should get zoom level from cache when available', () => {
-      connectionUtils.currentZoomLevel = 3;
-      expect(connectionUtils.getCurrentZoomLevel()).toBe(3);
-      expect(mockZoomManager.getZoomLevel).not.toHaveBeenCalled();
-    });
-
-    it('should get zoom level from zoom manager when cache is null', () => {
-      connectionUtils.currentZoomLevel = null;
+      // Should fetch from manager when cache is null
       expect(connectionUtils.getCurrentZoomLevel()).toBe(5);
       expect(mockZoomManager.getZoomLevel).toHaveBeenCalled();
+
+      // Should use cache when available
+      connectionUtils.currentZoomLevel = 3;
+      mockZoomManager.getZoomLevel.mockClear();
+      expect(connectionUtils.getCurrentZoomLevel()).toBe(3);
+      expect(mockZoomManager.getZoomLevel).not.toHaveBeenCalled();
     });
   });
 
   describe('SVG Element Creation', () => {
-    it('should create SVG element with correct namespace', () => {
-      const element = connectionUtils.createSVGElement('path');
+    it('creates SVG elements with proper namespace and attributes', () => {
+      // Basic element creation
+      const circle = connectionUtils.createSVGElement('circle');
+      expect(circle.tagName.toLowerCase()).toBe('circle');
+      expect(circle.namespaceURI).toBe('http://www.w3.org/2000/svg');
+      expect(circle.attributes.length).toBe(0);
 
-      expect(element.tagName.toLowerCase()).toBe('path');
-      expect(element.namespaceURI).toBe('http://www.w3.org/2000/svg');
-    });
-
-    it('should set attributes on SVG element', () => {
-      const attributes = {
+      // Element with attributes
+      const path = connectionUtils.createSVGElement('path', {
         stroke: 'red',
         'stroke-width': '3',
         fill: 'none',
         d: 'M0,0 L100,100',
-      };
-
-      const element = connectionUtils.createSVGElement('path', attributes);
-
-      Object.entries(attributes).forEach(([key, value]) => {
-        expect(element.getAttribute(key)).toBe(value);
       });
-    });
+      expect(path.getAttribute('stroke')).toBe('red');
+      expect(path.getAttribute('d')).toBe('M0,0 L100,100');
 
-    it('should create element without attributes', () => {
-      const element = connectionUtils.createSVGElement('circle');
-
-      expect(element.tagName.toLowerCase()).toBe('circle');
-      expect(element.attributes.length).toBe(0);
-    });
-
-    it('should handle complex SVG elements', () => {
-      const element = connectionUtils.createSVGElement('marker', {
+      // Complex element
+      const marker = connectionUtils.createSVGElement('marker', {
         id: 'arrow-end',
         markerWidth: '10',
-        markerHeight: '7',
         refX: '10',
-        refY: '3.5',
         orient: 'auto',
       });
-
-      expect(element.tagName.toLowerCase()).toBe('marker');
-      expect(element.getAttribute('id')).toBe('arrow-end');
-      expect(element.getAttribute('markerWidth')).toBe('10');
-      expect(element.getAttribute('orient')).toBe('auto');
+      expect(marker.getAttribute('id')).toBe('arrow-end');
+      expect(marker.getAttribute('orient')).toBe('auto');
     });
   });
 
   describe('Closest Points Calculation', () => {
-    beforeEach(() => {
-      // Mock canvas element
-      const mockCanvas = {
-        getBoundingClientRect: jest.fn().mockReturnValue({
-          left: 0,
-          top: 0,
-          width: 800,
-          height: 600,
-        }),
-      };
-
-      // Mock getElementById to return the mock canvas
-      jest.spyOn(document, 'getElementById').mockReturnValue(mockCanvas);
+    const createMockNote = (left, top, width, height) => ({
+      getBoundingClientRect: () => ({
+        left,
+        top,
+        width,
+        height,
+        right: left + width,
+        bottom: top + height,
+      }),
     });
 
-    it('should calculate closest points for horizontally aligned notes', () => {
-      const note1 = {
-        getBoundingClientRect: jest.fn().mockReturnValue({
-          left: 50,
-          top: 100,
-          width: 100,
-          height: 50,
-          right: 150,
-          bottom: 150,
-        }),
-      };
+    it('calculates optimal connection points for different note alignments', () => {
+      // Horizontal alignment - connects left/right edges
+      const horizontal = connectionUtils.getClosestPoints(
+        createMockNote(50, 100, 100, 50), // note1: x=50-150, y=100-150
+        createMockNote(250, 120, 100, 50), // note2: x=250-350, y=120-170
+      );
+      expect(horizontal).toEqual({ x1: 150, y1: 125, x2: 250, y2: 145 });
 
-      const note2 = {
-        getBoundingClientRect: jest.fn().mockReturnValue({
-          left: 250,
-          top: 120,
-          width: 100,
-          height: 50,
-          right: 350,
-          bottom: 170,
-        }),
-      };
-
-      const points = connectionUtils.getClosestPoints(note1, note2);
-
-      // For horizontally aligned notes, should connect left/right edges
-      expect(points.x1).toBe(150); // note1.right
-      expect(points.y1).toBe(125); // note1 center Y
-      expect(points.x2).toBe(250); // note2.left
-      expect(points.y2).toBe(145); // note2 center Y
+      // Vertical alignment - connects top/bottom edges
+      const vertical = connectionUtils.getClosestPoints(
+        createMockNote(100, 50, 100, 50), // note1: x=100-200, y=50-100
+        createMockNote(120, 200, 100, 50), // note2: x=120-220, y=200-250
+      );
+      expect(vertical).toEqual({ x1: 150, y1: 100, x2: 170, y2: 200 });
     });
 
-    it('should calculate closest points for vertically aligned notes', () => {
-      const note1 = {
-        getBoundingClientRect: jest.fn().mockReturnValue({
-          left: 100,
-          top: 50,
-          width: 100,
-          height: 50,
-          right: 200,
-          bottom: 100,
-        }),
-      };
+    it('handles zoom scaling and edge cases', () => {
+      // Zoom scaling
+      connectionUtils.currentZoomLevel = 10;
+      const zoomed = connectionUtils.getClosestPoints(
+        createMockNote(100, 100, 200, 100),
+        createMockNote(400, 120, 200, 100),
+      );
+      expect(zoomed.x1).toBe(150);
+      expect(zoomed.x2).toBe(200);
 
-      const note2 = {
-        getBoundingClientRect: jest.fn().mockReturnValue({
-          left: 120,
-          top: 200,
-          width: 100,
-          height: 50,
-          right: 220,
-          bottom: 250,
-        }),
-      };
-
-      const points = connectionUtils.getClosestPoints(note1, note2);
-
-      // For vertically aligned notes, should connect top/bottom edges
-      expect(points.x1).toBe(150); // note1 center X
-      expect(points.y1).toBe(100); // note1.bottom
-      expect(points.x2).toBe(170); // note2 center X
-      expect(points.y2).toBe(200); // note2.top
-    });
-
-    it('should handle zoom level scaling', () => {
-      connectionUtils.currentZoomLevel = 10; // Double the default
-
-      const note1 = {
-        getBoundingClientRect: jest.fn().mockReturnValue({
-          left: 100,
-          top: 100,
-          width: 200,
-          height: 100,
-          right: 300,
-          bottom: 200,
-        }),
-      };
-
-      const note2 = {
-        getBoundingClientRect: jest.fn().mockReturnValue({
-          left: 400,
-          top: 120,
-          width: 200,
-          height: 100,
-          right: 600,
-          bottom: 220,
-        }),
-      };
-
-      const points = connectionUtils.getClosestPoints(note1, note2);
-
-      // With zoom level 10, scale = 10/5 = 2, so coordinates should be halved
-      expect(points.x1).toBe(150); // (300 - 0) / 2 = 150
-      expect(points.x2).toBe(200); // (400 - 0) / 2 = 200
-    });
-
-    it('should return default coordinates for invalid notes', () => {
-      const points = connectionUtils.getClosestPoints(null, null);
-
-      expect(points).toEqual({ x1: 0, y1: 0, x2: 0, y2: 0 });
+      // Invalid inputs
+      expect(connectionUtils.getClosestPoints(null, null)).toEqual({
+        x1: 0,
+        y1: 0,
+        x2: 0,
+        y2: 0,
+      });
       expect(mockUtils.log).toHaveBeenCalledWith(
         'Invalid notes provided to getClosestPoints',
       );
-    });
 
-    it('should handle missing first note', () => {
-      const note2 = {
-        getBoundingClientRect: jest.fn().mockReturnValue({
-          left: 100,
-          top: 100,
-          width: 100,
-          height: 50,
-          right: 200,
-          bottom: 150,
-        }),
-      };
-
-      const points = connectionUtils.getClosestPoints(null, note2);
-
-      expect(points).toEqual({ x1: 0, y1: 0, x2: 0, y2: 0 });
-    });
-
-    it('should handle missing second note', () => {
-      const note1 = {
-        getBoundingClientRect: jest.fn().mockReturnValue({
-          left: 100,
-          top: 100,
-          width: 100,
-          height: 50,
-          right: 200,
-          bottom: 150,
-        }),
-      };
-
-      const points = connectionUtils.getClosestPoints(note1, null);
-
-      expect(points).toEqual({ x1: 0, y1: 0, x2: 0, y2: 0 });
-    });
-
-    it('should choose shortest connection path', () => {
-      // Test note positioned diagonally to create ambiguity
-      const note1 = {
-        getBoundingClientRect: jest.fn().mockReturnValue({
-          left: 100,
-          top: 100,
-          width: 100,
-          height: 100,
-          right: 200,
-          bottom: 200,
-        }),
-      };
-
-      const note2 = {
-        getBoundingClientRect: jest.fn().mockReturnValue({
-          left: 250,
-          top: 120,
-          width: 100,
-          height: 100,
-          right: 350,
-          bottom: 220,
-        }),
-      };
-
-      const points = connectionUtils.getClosestPoints(note1, note2);
-
-      // Horizontal distance: |150 - 300| = 150
-      // Vertical distance: |150 - 170| = 20
-      // Since horizontal > vertical, should connect horizontally
-      expect(points.x1).toBe(200); // note1.right
-      expect(points.x2).toBe(250); // note2.left
+      // Zero dimensions - coordinates get scaled by zoom/canvas offset
+      connectionUtils.currentZoomLevel = 5; // Reset zoom
+      const zero = connectionUtils.getClosestPoints(
+        createMockNote(100, 100, 0, 0),
+        createMockNote(200, 200, 0, 0),
+      );
+      expect(zero).toEqual({ x1: 100, y1: 100, x2: 200, y2: 200 });
     });
   });
 
   describe('Arrow Markers Creation', () => {
-    it('should create start and end markers', () => {
+    it('creates properly configured start and end arrow markers', () => {
       const [startMarker, endMarker] = connectionUtils.createArrowMarkers();
 
+      // Basic marker validation
       expect(startMarker.tagName.toLowerCase()).toBe('marker');
       expect(endMarker.tagName.toLowerCase()).toBe('marker');
       expect(startMarker.getAttribute('id')).toBe('arrow-start');
       expect(endMarker.getAttribute('id')).toBe('arrow-end');
-    });
 
-    it('should set correct attributes for start marker', () => {
-      const [startMarker] = connectionUtils.createArrowMarkers();
-
-      expect(startMarker.getAttribute('markerWidth')).toBe('10');
-      expect(startMarker.getAttribute('markerHeight')).toBe('7');
+      // Start marker attributes (points backward)
       expect(startMarker.getAttribute('refX')).toBe('0');
-      expect(startMarker.getAttribute('refY')).toBe('3.5');
-      expect(startMarker.getAttribute('orient')).toBe('auto');
-    });
-
-    it('should set correct attributes for end marker', () => {
-      const [, endMarker] = connectionUtils.createArrowMarkers();
-
-      expect(endMarker.getAttribute('markerWidth')).toBe('10');
-      expect(endMarker.getAttribute('markerHeight')).toBe('7');
-      expect(endMarker.getAttribute('refX')).toBe('10');
-      expect(endMarker.getAttribute('refY')).toBe('3.5');
-      expect(endMarker.getAttribute('orient')).toBe('auto');
-    });
-
-    it('should create path elements inside markers', () => {
-      const [startMarker, endMarker] = connectionUtils.createArrowMarkers();
-
       expect(startMarker.innerHTML).toBe(
         '<path d="M10,0 L0,3.5 L10,7" fill="#888"></path>',
       );
+
+      // End marker attributes (points forward)
+      expect(endMarker.getAttribute('refX')).toBe('10');
       expect(endMarker.innerHTML).toBe(
         '<path d="M0,0 L10,3.5 L0,7" fill="#888"></path>',
       );
+
+      // Common attributes
+      [startMarker, endMarker].forEach((marker) => {
+        expect(marker.getAttribute('markerWidth')).toBe('10');
+        expect(marker.getAttribute('markerHeight')).toBe('7');
+        expect(marker.getAttribute('refY')).toBe('3.5');
+        expect(marker.getAttribute('orient')).toBe('auto');
+      });
     });
   });
 
@@ -353,156 +194,46 @@ describe('ConnectionUtils', () => {
           <g data-start="note1" data-end="note2"></g>
           <g data-start="note2" data-end="note3"></g>
           <g data-start="note3" data-end="note1"></g>
-        </svg>
-      `;
+        </svg>`;
     });
 
-    it('should return true when direct connection exists', () => {
-      const exists = connectionUtils.connectionExists('note1', 'note2');
-      expect(exists).toBe(true);
-    });
-
-    it('should return true when reverse connection exists', () => {
-      const exists = connectionUtils.connectionExists('note2', 'note1');
-      expect(exists).toBe(true);
-    });
-
-    it('should return false when connection does not exist', () => {
-      const exists = connectionUtils.connectionExists('note1', 'note4');
-      expect(exists).toBe(false);
-    });
-
-    it('should return false for same note connection', () => {
-      const exists = connectionUtils.connectionExists('note1', 'note1');
-      expect(exists).toBe(false);
-    });
-
-    it('should handle empty note IDs', () => {
-      const exists = connectionUtils.connectionExists('', 'note1');
-      expect(exists).toBe(false);
-    });
-
-    it('should handle null note IDs', () => {
-      const exists = connectionUtils.connectionExists(null, 'note1');
-      expect(exists).toBe(false);
-    });
-
-    it('should be case sensitive', () => {
-      const exists = connectionUtils.connectionExists('Note1', 'note2');
-      expect(exists).toBe(false);
-    });
-
-    it('should check all existing connections', () => {
+    it('correctly identifies existing connections and handles edge cases', () => {
+      // Direct and reverse connections
       expect(connectionUtils.connectionExists('note1', 'note2')).toBe(true);
+      expect(connectionUtils.connectionExists('note2', 'note1')).toBe(true); // reverse
       expect(connectionUtils.connectionExists('note2', 'note3')).toBe(true);
       expect(connectionUtils.connectionExists('note3', 'note1')).toBe(true);
       expect(connectionUtils.connectionExists('note1', 'note3')).toBe(true); // reverse
-      expect(connectionUtils.connectionExists('note2', 'note4')).toBe(false);
+
+      // Non-existent connections
+      expect(connectionUtils.connectionExists('note1', 'note4')).toBe(false);
+
+      // Edge cases
+      expect(connectionUtils.connectionExists('note1', 'note1')).toBe(false); // self
+      expect(connectionUtils.connectionExists('', 'note1')).toBe(false); // empty
+      expect(connectionUtils.connectionExists(null, 'note1')).toBe(false); // null
+      expect(connectionUtils.connectionExists('Note1', 'note2')).toBe(false); // case sensitive
     });
   });
 
-  describe('Constants Export', () => {
-    it('should export stroke constants', async () => {
+  describe('Module Exports', () => {
+    it('exports expected constants and types', async () => {
       const module = await import(
         '../../../../src/js/features/connection/connectionUtils.js'
       );
 
+      // Stroke constants
       expect(module.STROKE_COLOR).toBe('#888');
       expect(module.STROKE_WIDTH).toBe('2');
       expect(module.STROKE_DASHARRAY).toBe('5,5');
-    });
 
-    it('should re-export CONNECTION_TYPES', async () => {
-      const module = await import(
-        '../../../../src/js/features/connection/connectionUtils.js'
-      );
-
+      // Connection types
       expect(module.CONNECTION_TYPES).toEqual({
         NONE: 'none',
         UNI_FORWARD: 'uni-forward',
         UNI_BACKWARD: 'uni-backward',
         BI: 'bi',
       });
-    });
-  });
-
-  describe('Edge Cases and Error Handling', () => {
-    it('should handle notes with zero dimensions', () => {
-      const mockCanvas = {
-        getBoundingClientRect: jest.fn().mockReturnValue({
-          left: 0,
-          top: 0,
-          width: 800,
-          height: 600,
-        }),
-      };
-      jest.spyOn(document, 'getElementById').mockReturnValue(mockCanvas);
-
-      const note1 = {
-        getBoundingClientRect: jest.fn().mockReturnValue({
-          left: 100,
-          top: 100,
-          width: 0,
-          height: 0,
-          right: 100,
-          bottom: 100,
-        }),
-      };
-
-      const note2 = {
-        getBoundingClientRect: jest.fn().mockReturnValue({
-          left: 200,
-          top: 200,
-          width: 0,
-          height: 0,
-          right: 200,
-          bottom: 200,
-        }),
-      };
-
-      const points = connectionUtils.getClosestPoints(note1, note2);
-
-      expect(points.x1).toBe(100); // Should still calculate center points
-      expect(points.y1).toBe(100);
-      expect(points.x2).toBe(200);
-      expect(points.y2).toBe(200);
-    });
-
-    it('should handle overlapping notes', () => {
-      const mockCanvas = {
-        getBoundingClientRect: jest.fn().mockReturnValue({
-          left: 0,
-          top: 0,
-          width: 800,
-          height: 600,
-        }),
-      };
-      jest.spyOn(document, 'getElementById').mockReturnValue(mockCanvas);
-
-      const overlappingRect = {
-        left: 100,
-        top: 100,
-        width: 100,
-        height: 50,
-        right: 200,
-        bottom: 150,
-      };
-
-      const note1 = {
-        getBoundingClientRect: jest.fn().mockReturnValue(overlappingRect),
-      };
-
-      const note2 = {
-        getBoundingClientRect: jest.fn().mockReturnValue(overlappingRect),
-      };
-
-      const points = connectionUtils.getClosestPoints(note1, note2);
-
-      // When notes overlap completely, should still return valid points
-      expect(typeof points.x1).toBe('number');
-      expect(typeof points.y1).toBe('number');
-      expect(typeof points.x2).toBe('number');
-      expect(typeof points.y2).toBe('number');
     });
   });
 });

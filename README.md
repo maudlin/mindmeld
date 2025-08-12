@@ -47,7 +47,10 @@ Visit `http://localhost:8080` to begin mind mapping.
 
 ## Architecture
 
-Event-driven design with zero circular dependencies. Service layer with dependency injection.
+**Bootstrap Architecture**: Clean application initialization with specialized modules  
+**Event-driven design**: Zero circular dependencies with central EventBus  
+**Service layer**: Dependency injection with clear separation of concerns  
+**Modular bootstrap**: DataBootstrap → ServiceBootstrap → UIBootstrap → InteractionBootstrap
 
 **Health**: Run `npm run health-check` | **Tests**: Run `npm test`  
 Details: [Developer Guide](docs/developer-guide.md)

@@ -63,11 +63,9 @@ test.describe('Canvas Template Switching', () => {
     await canvasPage.load();
 
     // Create a note first
-    await page.mouse.dblclick(400, 300);
-    await page.waitForTimeout(100);
+    const note = await canvasPage.createNote(400, 300);
 
     // Verify note was created
-    const note = page.locator('.note').first();
     await expect(note).toBeVisible();
 
     // Get initial note position

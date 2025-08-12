@@ -197,6 +197,9 @@ export class DesktopAdapter extends BaseAdapter {
     // Prevent text selection during drag operations
     document.body.classList.add('dragging');
 
+    // Enable drag-optimized connection updates
+    connectionManager.setDragState(true);
+
     this.dragState = {
       note: note,
       pointerId: event.pointerId,
@@ -379,6 +382,9 @@ export class DesktopAdapter extends BaseAdapter {
   endNoteDrag(event) {
     // Remove dragging class to re-enable text selection
     document.body.classList.remove('dragging');
+
+    // Disable drag-optimized connection updates
+    connectionManager.setDragState(false);
 
     if (this.dragState?.note) {
       // Final connection update for all moved notes (immediate, not throttled)

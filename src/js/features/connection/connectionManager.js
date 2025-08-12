@@ -76,6 +76,10 @@ export class ConnectionManager {
     this.currentZoomLevel = getZoomLevel();
   }
 
+  setDragState(isDragging) {
+    this.connectionUpdate.setDragState(isDragging);
+  }
+
   getCurrentZoomLevel() {
     return this.currentZoomLevel !== null
       ? this.currentZoomLevel

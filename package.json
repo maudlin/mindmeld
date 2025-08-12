@@ -1,6 +1,6 @@
 {
   "name": "mindmeld",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "description": "A web-based mind mapping tool",
   "main": "src/js/app.js",
   "type": "module",
@@ -41,6 +41,7 @@
     "@babel/core": "^7.28.0",
     "@babel/preset-env": "^7.28.0",
     "@eslint/js": "^9.31.0",
+    "@jest/globals": "^30.0.5",
     "@playwright/test": "^1.54.1",
     "depcheck": "^1.4.7",
     "eslint": "^9.31.0",

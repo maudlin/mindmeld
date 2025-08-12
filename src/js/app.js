@@ -1,85 +1,65 @@
-// app.js
+/**
+ * MindMeld Application Entry Point
+ *
+ * Orchestrates application initialization using the bootstrap system.
+ * Maintains clean separation of concerns and robust error handling.
+ */
+
 import { log } from './utils/utils.js';
+import { AppBootstrap } from './core/bootstrap/AppBootstrap.js';
+
 log('app.js loaded');
-import { setupCanvasEvents, setupDocumentEvents } from './core/event.js';
-import { DOM_SELECTORS } from './core/constants.js';
-import { canvasManager } from './core/canvasManager.js';
-import {
-  loadStateFromStorage,
-  saveStateToStorage,
-  initializeStateManagement,
-  shouldRestoreState,
-} from './data/storageManager.js';
-import { setupUI } from './core/uiSetup.js';
-import { initializeCanvas } from './core/canvasInitialization.js';
-import { ConnectionService } from './services/connectionService.js';
-import { connectionManager } from './features/connection/connectionManager.js';
-import {
-  updateConnectionInDataStore,
-  initializeDataStore,
-} from './data/dataStore.js';
-import { NoteEventService } from './services/noteEventService.js';
-import { ColorPickerEvents } from './features/colorPicker/colorPickerEvents.js';
-import { NoteColorApplication } from './features/note/noteColorApplication.js';
-import { InputController } from './interactions/InputController.js';
-import { CapabilityDetector } from './interactions/capabilities/detector.js';
-import { eventBus } from './core/eventBus.js';
 
 async function initializeApp() {
-  log('Initializing app...');
-  const elements = {
-    canvasContainer: document.getElementById('canvas-container'),
-    svgContainer: document.getElementById('svg-container'),
-    canvas: document.querySelector(DOM_SELECTORS.CANVAS),
-    zoomDisplay: document.getElementById('zoom-display'),
-    canvasStyleDropdown: document.getElementById('canvas-style-dropdown'),
-    menu: document.getElementById('menu'),
-  };
+  log('Initializing MindMeld application...');
 
-  // Initialize dependency injection and event bus
-  initializeDataStore();
-  NoteEventService.initialize();
-  ColorPickerEvents.initialize();
-  NoteColorApplication.initialize();
-  ConnectionService.setConnectionManager(connectionManager);
-  ConnectionService.setDataStoreUpdateCallback(updateConnectionInDataStore);
-
-  await canvasManager.loadModules();
-  setupUI(elements);
-  initializeCanvas(elements);
-  await setupEventListeners(elements);
-
-  loadStateFromStorage(elements.canvas);
-
-  if (shouldRestoreState()) {
-    loadStateFromStorage();
-  }
-
-  initializeStateManagement();
-
-  window.addEventListener('beforeunload', saveStateToStorage);
-}
-
-async function setupEventListeners(elements) {
-  // Initialize new input controller system
-  const capabilityDetector = new CapabilityDetector();
-  const inputController = new InputController(eventBus, capabilityDetector);
+  const appBootstrap = new AppBootstrap();
 
   try {
-    await inputController.initialize();
-    log('InputController initialized successfully');
-  } catch (error) {
-    console.error(
-      'Failed to initialize InputController, falling back to legacy event system:',
-      error,
-    );
-    // Fallback to legacy system
-    setupCanvasEvents(elements.canvas);
-    setupDocumentEvents();
-  }
+    const result = await appBootstrap.initialize();
 
-  // Keep context menu prevention
-  document.addEventListener('contextmenu', (event) => event.preventDefault());
+    log('MindMeld application initialized successfully');
+    log('Initialization result:', result);
+
+    // Store bootstrap instance globally for potential cleanup during development/testing
+    if (typeof window !== 'undefined') {
+      window.__mindmeld_bootstrap = appBootstrap;
+    }
+  } catch (error) {
+    console.error('MindMeld application failed to initialize:', error);
+
+    // Show user-friendly error message
+    showInitializationError();
+  }
 }
 
+function showInitializationError() {
+  // Create a simple error display for users
+  const errorDiv = document.createElement('div');
+  errorDiv.style.cssText = `
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: #ff6b6b; color: white; padding: 20px; border-radius: 8px;
+    font-family: system-ui, sans-serif; text-align: center; z-index: 9999;
+    max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  `;
+
+  errorDiv.innerHTML = `
+    <h3 style="margin: 0 0 10px 0;">Application Error</h3>
+    <p style="margin: 0 0 15px 0;">MindMeld failed to initialize properly.</p>
+    <p style="margin: 0; font-size: 0.9em; opacity: 0.9;">
+      Please refresh the page to try again.
+    </p>
+  `;
+
+  document.body.appendChild(errorDiv);
+
+  // Auto-remove after 10 seconds
+  setTimeout(() => {
+    if (errorDiv.parentNode) {
+      errorDiv.parentNode.removeChild(errorDiv);
+    }
+  }, 10000);
+}
+
+// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', initializeApp);

@@ -6,7 +6,8 @@ This project includes automated tools to monitor and maintain architectural qual
 
 ### **What it Monitors:**
 - ✅ **Circular Dependencies** - Critical architectural anti-pattern
-- ✅ **Module Complexity** - Dependencies per module
+- ✅ **Module Complexity** - Dependencies per module (app.js now has 2 deps vs previous 16!)
+- ✅ **Bootstrap Architecture** - Proper initialization sequence and dependency chains
 - ✅ **Code Duplication** - DRY principle violations  
 - ✅ **Test Coverage** - Run `npm run test:coverage` for current status
 - ✅ **Unused Dependencies** - Package bloat
@@ -84,8 +85,11 @@ npm run analyze:circular
 **Action Required:**
 1. **Stop feature development** until resolved
 2. Review `TODO.md` for specific remediation steps
-3. Implement dependency injection patterns
-4. Verify fix: `npm run analyze:circular` should show 0 results
+3. Implement dependency injection patterns or bootstrap architecture
+4. Consider using specialized bootstrap modules for complex initialization
+5. Verify fix: `npm run analyze:circular` should show 0 results
+
+**Note**: The new bootstrap architecture pattern helps prevent circular dependencies by enforcing clear initialization sequences.
 
 ### **Security Vulnerabilities**
 ```bash

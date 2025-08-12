@@ -1,13 +1,14 @@
 /**
- * Event Bus Core Functionality Tests
+ * Event Bus Behavior Tests
  *
  * Tests the central event communication system that enables
  * decoupled communication between MindMeld components.
+ * Focus on event emission, listener management, and error isolation.
  */
 
 import { EventBus, eventBus } from '../../../src/js/core/eventBus.js';
 
-describe('EventBus Core Functionality', () => {
+describe('Event Bus Behavior', () => {
   let testEventBus;
 
   beforeEach(() => {
@@ -19,8 +20,8 @@ describe('EventBus Core Functionality', () => {
     eventBus.events = {};
   });
 
-  describe('Basic Event Operations', () => {
-    test('should emit and receive events correctly', () => {
+  describe('Event Communication', () => {
+    it('delivers events to registered listeners correctly', () => {
       const mockCallback = jest.fn();
       testEventBus.on('test.event', mockCallback);
 
@@ -30,7 +31,7 @@ describe('EventBus Core Functionality', () => {
       expect(mockCallback).toHaveBeenCalledTimes(1);
     });
 
-    test('should handle multiple listeners for same event', () => {
+    it('notifies all listeners when multiple are registered for same event', () => {
       const callback1 = jest.fn();
       const callback2 = jest.fn();
       const callback3 = jest.fn();
@@ -49,13 +50,13 @@ describe('EventBus Core Functionality', () => {
       expect(callback3).toHaveBeenCalledTimes(1);
     });
 
-    test('should not fail when emitting events with no listeners', () => {
+    it('handles events with no listeners without errors', () => {
       expect(() => {
         testEventBus.emit('nonexistent.event', 'data');
       }).not.toThrow();
     });
 
-    test('should handle events with no data payload', () => {
+    it('handles events without data payloads correctly', () => {
       const mockCallback = jest.fn();
       testEventBus.on('no.data.event', mockCallback);
 
@@ -66,8 +67,8 @@ describe('EventBus Core Functionality', () => {
     });
   });
 
-  describe('Event Listener Management', () => {
-    test('should successfully remove specific event listeners', () => {
+  describe('Listener Lifecycle Management', () => {
+    it('removes specific event listeners while preserving others', () => {
       const callback1 = jest.fn();
       const callback2 = jest.fn();
 
@@ -82,7 +83,7 @@ describe('EventBus Core Functionality', () => {
       expect(callback2).toHaveBeenCalledWith('data');
     });
 
-    test('should handle removing listeners from non-existent events', () => {
+    it('handles removal of listeners from non-existent events gracefully', () => {
       const callback = jest.fn();
 
       expect(() => {
@@ -90,7 +91,7 @@ describe('EventBus Core Functionality', () => {
       }).not.toThrow();
     });
 
-    test('should handle removing non-existent callbacks', () => {
+    it('handles removal of non-existent callbacks without affecting existing ones', () => {
       const callback1 = jest.fn();
       const callback2 = jest.fn();
 
@@ -106,8 +107,8 @@ describe('EventBus Core Functionality', () => {
     });
   });
 
-  describe('Once-Only Event Handling', () => {
-    test('should execute once listeners only one time', () => {
+  describe('One-Time Event Handling', () => {
+    it('executes once listeners exactly one time across multiple emissions', () => {
       const mockCallback = jest.fn();
       testEventBus.once('once.test', mockCallback);
 
@@ -119,7 +120,7 @@ describe('EventBus Core Functionality', () => {
       expect(mockCallback).toHaveBeenCalledWith('first');
     });
 
-    test('should automatically remove once listeners after execution', () => {
+    it('automatically cleans up once listeners after execution', () => {
       const mockCallback = jest.fn();
       testEventBus.once('cleanup.test', mockCallback);
 
@@ -134,7 +135,7 @@ describe('EventBus Core Functionality', () => {
       expect(mockCallback).toHaveBeenCalledTimes(1);
     });
 
-    test('should handle multiple once listeners on same event', () => {
+    it('handles multiple once listeners on same event independently', () => {
       const callback1 = jest.fn();
       const callback2 = jest.fn();
 
@@ -154,8 +155,8 @@ describe('EventBus Core Functionality', () => {
     });
   });
 
-  describe('Error Handling and Edge Cases', () => {
-    test('should handle errors in one listener without affecting others', () => {
+  describe('Error Isolation and Recovery', () => {
+    it('prevents listener errors from affecting other listeners', () => {
       const errorCallback = jest.fn(() => {
         throw new Error('Test error');
       });
@@ -185,7 +186,7 @@ describe('EventBus Core Functionality', () => {
       consoleSpy.mockRestore();
     });
 
-    test('should handle complex data payloads correctly', () => {
+    it('preserves complex data payloads through event delivery', () => {
       const mockCallback = jest.fn();
       const complexData = {
         nested: {
@@ -206,7 +207,7 @@ describe('EventBus Core Functionality', () => {
       expect(mockCallback).toHaveBeenCalledTimes(1);
     });
 
-    test('should maintain event listener order', () => {
+    it('maintains consistent listener execution order', () => {
       const callOrder = [];
       const callback1 = jest.fn(() => callOrder.push('first'));
       const callback2 = jest.fn(() => callOrder.push('second'));
@@ -222,8 +223,8 @@ describe('EventBus Core Functionality', () => {
     });
   });
 
-  describe('Event Naming and Namespacing', () => {
-    test('should handle dot-separated event names (namespacing)', () => {
+  describe('Event Naming and Organization', () => {
+    it('treats namespaced events as independent channels', () => {
       const noteCallback = jest.fn();
       const connectionCallback = jest.fn();
 
@@ -239,7 +240,7 @@ describe('EventBus Core Functionality', () => {
       expect(connectionCallback).toHaveBeenCalledTimes(1);
     });
 
-    test('should treat different event names as completely separate', () => {
+    it('isolates similar event names completely', () => {
       const callback1 = jest.fn();
       const callback2 = jest.fn();
 
@@ -253,12 +254,12 @@ describe('EventBus Core Functionality', () => {
     });
   });
 
-  describe('Global Event Bus Instance', () => {
-    test('should provide a global eventBus instance', () => {
+  describe('Global Singleton Behavior', () => {
+    it('provides consistent singleton instance', () => {
       expect(eventBus).toBeInstanceOf(EventBus);
     });
 
-    test('should maintain state across multiple references to global instance', () => {
+    it('maintains state across multiple references', () => {
       const callback = jest.fn();
 
       eventBus.on('global.test', callback);
@@ -267,7 +268,7 @@ describe('EventBus Core Functionality', () => {
       expect(callback).toHaveBeenCalledWith('global-data');
     });
 
-    test('should allow global instance to be cleaned up', () => {
+    it('allows global instance cleanup for testing', () => {
       const callback = jest.fn();
 
       eventBus.on('cleanup.global.test', callback);
@@ -279,8 +280,8 @@ describe('EventBus Core Functionality', () => {
     });
   });
 
-  describe('Performance and Memory', () => {
-    test('should handle large numbers of listeners efficiently', () => {
+  describe('Performance and Memory Management', () => {
+    it('handles large numbers of listeners efficiently', () => {
       const callbacks = [];
       const numCallbacks = 1000;
 
@@ -305,7 +306,7 @@ describe('EventBus Core Functionality', () => {
       expect(endTime - startTime).toBeLessThan(100);
     });
 
-    test('should properly clean up event arrays when all listeners removed', () => {
+    it('cleans up event arrays when all listeners are removed', () => {
       const callback1 = jest.fn();
       const callback2 = jest.fn();
 

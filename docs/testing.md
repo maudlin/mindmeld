@@ -12,6 +12,52 @@ MindMeld uses unit tests (Jest) for core logic and end-to-end tests (Playwright)
 **E2E Tests**: Complete user workflows, UI interactions, browser integration  
 **Integration Tests**: Event bus communication, service coordination
 
+## Test Naming and Structure Standards
+
+### File Naming Convention
+- **Unit tests**: `[component].[context].test.js` (e.g., `connectionManager.behavior.test.js`, `colorPicker.integration.test.js`)
+- **E2E tests**: `[feature-name].spec.js` with kebab-case (e.g., `note-operations.spec.js`)
+
+### Test Structure Pattern
+```javascript
+/**
+ * [Component] [Test Type] Tests
+ * 
+ * [Brief description of behaviors being tested]
+ * Focus on [specific testing aspects]
+ */
+
+describe('[Component] [Human-Readable Context]', () => {
+  describe('[Feature Category]', () => {
+    it('[behavioral description without "should"]', () => {
+      // Test implementation
+    });
+  });
+});
+```
+
+### Naming Guidelines
+- **Describe blocks**: Use human-readable titles that explain *what* is being tested
+- **Test descriptions**: Focus on user-observable behaviors, avoid "should" prefix
+- **Documentation**: Include file-level comments explaining test purpose and focus
+
+**Example**:
+```javascript
+/**
+ * Connection Manager Behavior Tests
+ * 
+ * Tests user-observable connection creation, management, and cleanup behaviors.
+ * Focus on visual feedback, state consistency, and drag interaction flows.
+ */
+
+describe('Connection Manager Behavior', () => {
+  describe('Visual Connection Creation', () => {
+    it('creates visible line between notes when dragged', () => {});
+    it('provides immediate visual feedback during creation', () => {});
+  });
+});
+```
+
 ## Quick Start
 
 Run tests: `npm test && npm run test:e2e`  
@@ -67,18 +113,47 @@ test('updates active color swatch', () => {
 
 Tests complete user workflows across Chrome, Firefox, and Safari. Use the `CanvasPage` helper for consistent interactions.
 
+### Critical E2E Patterns
+
+**Note Creation**: Always use `createNote()` and respect throttling
 ```javascript
-// Use Page Object Model
 const canvasPage = new CanvasPage(page);
-await canvasPage.createNoteAt(400, 300);
 
-// Test complete workflows, not individual clicks
+// ✅ CORRECT: Reliable pattern for multiple notes
+const note1 = await canvasPage.createNote(400, 300);
+await page.waitForTimeout(800); // Respect app throttling
+const note2 = await canvasPage.createNote(600, 300);
+
+// ❌ WRONG: Will fail due to throttling
+const note1 = await canvasPage.createNote(400, 300);  
+const note2 = await canvasPage.createNote(600, 300); // Too fast!
+```
+
+**Stability in CI**: Some tests need extra warmup time
+```javascript
+// For tests that create content immediately after page load
+const canvasPage = new CanvasPage(page);
+await canvasPage.load();
+await page.waitForTimeout(1000); // CI stability - only if needed
+
+// Then proceed with test operations
+const note = await canvasPage.createNote(400, 300);
+```
+
+**Complete Workflows**: Test user journeys, not individual clicks
+```javascript
 test('creates, connects, and deletes notes', async ({ page }) => {
-  // Full user journey
+  const canvasPage = new CanvasPage(page);
+  
+  // Create test content with proper throttling
+  const note1 = await canvasPage.createNote(400, 300);
+  await page.waitForTimeout(800);
+  const note2 = await canvasPage.createNote(600, 300);
+  
+  // Test the actual feature
+  await canvasPage.connectNotes(note1, note2);
+  await expect(page.locator('.connection')).toBeVisible();
 });
-
-// Built-in waits prevent flaky tests
-await expect(noteElement).toBeVisible();
 ```
 
 ### Playwright Setup
@@ -120,8 +195,14 @@ Configuration in `playwright.config.js`. Tests in `tests/e2e/`.
 
 ## Debugging
 
-**Timing issues**: Use `await expect().toBeVisible()` not arbitrary waits  
-**Flaky tests**: Check element selection and event handling  
-**Performance**: Run specific test files for faster feedback
+**Timing issues**: Use `await expect().toBeVisible()` not arbitrary waits (except for throttling)  
+**Flaky tests**: Usually caused by missing throttle delays between note operations  
+**Performance**: Run specific test files for faster feedback  
+**CI failures**: Check if local tests pass - CI failures often need stability delays
+
+**Common Issues**:
+- **"Notes created at same position"**: Missing `waitForTimeout(800)` between creations
+- **"Browser context closed"**: Avoid direct DOM manipulation, use helper methods  
+- **Tests pass locally, fail in CI**: Add `waitForTimeout(1000)` after page load
 
 For complete testing details, see [`tests/README.md`](../tests/README.md).

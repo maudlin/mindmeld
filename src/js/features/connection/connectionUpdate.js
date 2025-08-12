@@ -3,6 +3,11 @@
 export class ConnectionUpdate {
   constructor(connectionManager) {
     this.connectionManager = connectionManager;
+    this.isDragging = false; // Track drag state for optimized updates
+  }
+
+  setDragState(isDragging) {
+    this.isDragging = isDragging;
   }
 
   updateConnections(noteOrGroup) {
@@ -32,8 +37,8 @@ export class ConnectionUpdate {
         const hotspotX = (points.x1 + points.x2) / 2;
         const hotspotY = (points.y1 + points.y2) / 2;
 
-        // Batch DOM updates
-        requestAnimationFrame(() => {
+        // Optimize DOM updates based on drag state
+        const updateDOM = () => {
           hotspot.setAttribute('cx', hotspotX);
           hotspot.setAttribute('cy', hotspotY);
           contextMenuElement.setAttribute(
@@ -50,7 +55,15 @@ export class ConnectionUpdate {
             backgroundLine.setAttribute('x2', hotspotX);
             backgroundLine.setAttribute('y2', hotspotY + 10);
           }
-        });
+        };
+
+        // During drag: immediate updates for smooth animation
+        // During idle: batched updates for better performance
+        if (this.isDragging) {
+          updateDOM();
+        } else {
+          requestAnimationFrame(updateDOM);
+        }
 
         group.appendChild(contextMenuElement);
       } else {

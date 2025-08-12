@@ -1,21 +1,37 @@
-// tests/unit/interactions/gestures/GestureRecognizer.test.js
+/**
+ * Touch Gesture Recognition Behavior Tests
+ *
+ * Tests the gesture recognition system that interprets touch interactions
+ * and converts them to semantic events (tap, drag, pinch, long-press).
+ * Focus on gesture detection accuracy, state management, and event emission.
+ */
 
 import { GestureRecognizer } from '../../../../src/js/interactions/gestures/GestureRecognizer.js';
 
-describe('GestureRecognizer', () => {
-  let gestureRecognizer;
-  let mockEventBus;
-  let mockElement;
+// Helper functions for creating mock touch events
+const createMockTouch = (id, x, y) => ({
+  identifier: id,
+  clientX: x,
+  clientY: y,
+  target: null,
+  screenX: x,
+  screenY: y,
+  pageX: x,
+  pageY: y,
+});
+const createTouchEvent = (type, touches) => ({
+  type,
+  preventDefault: jest.fn(),
+  changedTouches: touches,
+  touches,
+  targetTouches: touches,
+});
+
+describe('Touch Gesture Recognition Behavior', () => {
+  let gestureRecognizer, mockEventBus, mockElement;
 
   beforeEach(() => {
-    // Create mock event bus
-    mockEventBus = {
-      emit: jest.fn(),
-      on: jest.fn(),
-      off: jest.fn(),
-    };
-
-    // Create mock DOM element
+    mockEventBus = { emit: jest.fn(), on: jest.fn(), off: jest.fn() };
     mockElement = {
       addEventListener: jest.fn(),
       removeEventListener: jest.fn(),
@@ -24,87 +40,58 @@ describe('GestureRecognizer', () => {
     gestureRecognizer = new GestureRecognizer(mockEventBus);
     gestureRecognizer.initialize(mockElement);
 
-    // Mock Date.now for consistent timing
     jest.spyOn(Date, 'now').mockReturnValue(1000);
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
-    if (gestureRecognizer) {
-      gestureRecognizer.destroy();
-    }
+    gestureRecognizer?.destroy();
   });
 
-  describe('Initialization and Cleanup', () => {
-    it('should initialize with correct state', () => {
+  describe('Recognizer Lifecycle', () => {
+    it('initializes correctly and manages event listeners', () => {
       expect(gestureRecognizer.currentState).toBe('idle');
       expect(gestureRecognizer.eventBus).toBe(mockEventBus);
-    });
 
-    it('should add event listeners on initialization', () => {
-      expect(mockElement.addEventListener).toHaveBeenCalledWith(
-        'touchstart',
-        expect.any(Function),
-        { passive: false },
+      // Verify all touch event listeners are added
+      ['touchstart', 'touchmove', 'touchend', 'touchcancel'].forEach(
+        (event) => {
+          expect(mockElement.addEventListener).toHaveBeenCalledWith(
+            event,
+            expect.any(Function),
+            { passive: false },
+          );
+        },
       );
-      expect(mockElement.addEventListener).toHaveBeenCalledWith(
-        'touchmove',
-        expect.any(Function),
-        { passive: false },
-      );
-      expect(mockElement.addEventListener).toHaveBeenCalledWith(
-        'touchend',
-        expect.any(Function),
-        { passive: false },
-      );
-      expect(mockElement.addEventListener).toHaveBeenCalledWith(
-        'touchcancel',
-        expect.any(Function),
-        { passive: false },
-      );
-    });
 
-    it('should remove event listeners on destroy', () => {
+      // Verify cleanup removes listeners
       gestureRecognizer.destroy();
-
-      expect(mockElement.removeEventListener).toHaveBeenCalledWith(
-        'touchstart',
-        expect.any(Function),
-      );
-      expect(mockElement.removeEventListener).toHaveBeenCalledWith(
-        'touchmove',
-        expect.any(Function),
-      );
-      expect(mockElement.removeEventListener).toHaveBeenCalledWith(
-        'touchend',
-        expect.any(Function),
-      );
-      expect(mockElement.removeEventListener).toHaveBeenCalledWith(
-        'touchcancel',
-        expect.any(Function),
+      ['touchstart', 'touchmove', 'touchend', 'touchcancel'].forEach(
+        (event) => {
+          expect(mockElement.removeEventListener).toHaveBeenCalledWith(
+            event,
+            expect.any(Function),
+          );
+        },
       );
     });
   });
 
-  describe('Single Tap Gesture', () => {
-    it('should recognize single tap gesture', () => {
-      return new Promise((resolve) => {
-        const touch = createMockTouch(1, 100, 200);
+  describe('Single Touch Gestures', () => {
+    it('recognizes single tap after delay', async () => {
+      const touch = createMockTouch(1, 100, 200);
 
-        // Touch start
-        const startEvent = createTouchEvent('touchstart', [touch]);
-        gestureRecognizer.handleTouchStart(startEvent);
+      gestureRecognizer.handleTouchStart(
+        createTouchEvent('touchstart', [touch]),
+      );
+      expect(gestureRecognizer.currentState).toBe('singleTouch');
 
-        expect(gestureRecognizer.currentState).toBe('singleTouch');
+      Date.now.mockReturnValue(1100);
+      gestureRecognizer.handleTouchEnd(createTouchEvent('touchend', [touch]));
+      expect(gestureRecognizer.currentState).toBe('potentialTap');
 
-        // Touch end immediately (within tap threshold)
-        Date.now.mockReturnValue(1100); // 100ms later
-        const endEvent = createTouchEvent('touchend', [touch]);
-        gestureRecognizer.handleTouchEnd(endEvent);
-
-        expect(gestureRecognizer.currentState).toBe('potentialTap');
-
-        // After double-tap delay, should emit single tap
+      // Wait for double-tap timeout
+      await new Promise((resolve) => {
         setTimeout(() => {
           expect(mockEventBus.emit).toHaveBeenCalledWith('note.select', {
             x: 100,
@@ -117,19 +104,17 @@ describe('GestureRecognizer', () => {
       });
     });
 
-    it('should not recognize tap with too much movement', () => {
+    it('transitions to drag when movement exceeds threshold', () => {
       const touch1 = createMockTouch(1, 100, 200);
-      const touch2 = createMockTouch(1, 150, 250); // Moved 50+ pixels
+      const touch2 = createMockTouch(1, 150, 250); // 50+ pixel movement
 
-      // Touch start
-      const startEvent = createTouchEvent('touchstart', [touch1]);
-      gestureRecognizer.handleTouchStart(startEvent);
+      gestureRecognizer.handleTouchStart(
+        createTouchEvent('touchstart', [touch1]),
+      );
+      gestureRecognizer.handleTouchMove(
+        createTouchEvent('touchmove', [touch2]),
+      );
 
-      // Move significantly
-      const moveEvent = createTouchEvent('touchmove', [touch2]);
-      gestureRecognizer.handleTouchMove(moveEvent);
-
-      // Should transition to dragging, not tap
       expect(gestureRecognizer.currentState).toBe('dragging');
       expect(mockEventBus.emit).toHaveBeenCalledWith(
         'note.dragStart',
@@ -138,65 +123,52 @@ describe('GestureRecognizer', () => {
     });
   });
 
-  describe('Double Tap Gesture', () => {
-    it('should recognize double tap gesture', () => {
-      const touch = createMockTouch(1, 100, 200);
-
-      // First tap
-      gestureRecognizer.handleTouchStart(
-        createTouchEvent('touchstart', [touch]),
-      );
-      Date.now.mockReturnValue(1100);
-      gestureRecognizer.handleTouchEnd(createTouchEvent('touchend', [touch]));
-
-      expect(gestureRecognizer.currentState).toBe('potentialTap');
-
-      // Second tap within double-tap delay
-      Date.now.mockReturnValue(1150);
-      const touch2 = createMockTouch(2, 102, 201); // Very close to first tap
-      gestureRecognizer.handleTouchStart(
-        createTouchEvent('touchstart', [touch2]),
-      );
-
-      expect(gestureRecognizer.currentState).toBe('potentialDoubleTap');
-
-      // Complete second tap
-      Date.now.mockReturnValue(1200);
-      gestureRecognizer.handleTouchEnd(createTouchEvent('touchend', [touch2]));
-
-      expect(mockEventBus.emit).toHaveBeenCalledWith('note.createAtPosition', {
-        canvas: mockElement,
-        event: {
-          clientX: 102,
-          clientY: 201,
-          type: 'doubletap',
-        },
-        _gesture: 'doubletap',
-      });
-    });
-
-    it('should not recognize double tap if taps are too far apart', () => {
+  describe('Double Tap Detection', () => {
+    it('recognizes double tap when taps are close in time and space', () => {
       const touch1 = createMockTouch(1, 100, 200);
-      const touch2 = createMockTouch(2, 150, 250); // Too far from first tap
+      const touch2 = createMockTouch(2, 102, 201); // Close to first tap
 
       // First tap
       gestureRecognizer.handleTouchStart(
         createTouchEvent('touchstart', [touch1]),
       );
+      Date.now.mockReturnValue(1100);
       gestureRecognizer.handleTouchEnd(createTouchEvent('touchend', [touch1]));
+      expect(gestureRecognizer.currentState).toBe('potentialTap');
 
-      // Second tap too far away
+      // Second tap within delay
+      Date.now.mockReturnValue(1150);
+      gestureRecognizer.handleTouchStart(
+        createTouchEvent('touchstart', [touch2]),
+      );
+      expect(gestureRecognizer.currentState).toBe('potentialDoubleTap');
+
+      Date.now.mockReturnValue(1200);
+      gestureRecognizer.handleTouchEnd(createTouchEvent('touchend', [touch2]));
+
+      expect(mockEventBus.emit).toHaveBeenCalledWith('note.createAtPosition', {
+        canvas: mockElement,
+        event: { clientX: 102, clientY: 201, type: 'doubletap' },
+        _gesture: 'doubletap',
+      });
+    });
+
+    it('falls back to single tap when taps are too far apart', () => {
+      const touch1 = createMockTouch(1, 100, 200);
+      const touch2 = createMockTouch(2, 150, 250); // Too far apart
+
+      gestureRecognizer.handleTouchStart(
+        createTouchEvent('touchstart', [touch1]),
+      );
+      gestureRecognizer.handleTouchEnd(createTouchEvent('touchend', [touch1]));
       gestureRecognizer.handleTouchStart(
         createTouchEvent('touchstart', [touch2]),
       );
       gestureRecognizer.handleTouchEnd(createTouchEvent('touchend', [touch2]));
 
-      // Should emit single tap, not double tap
       expect(mockEventBus.emit).toHaveBeenCalledWith(
         'note.select',
-        expect.objectContaining({
-          type: 'tap',
-        }),
+        expect.objectContaining({ type: 'tap' }),
       );
       expect(mockEventBus.emit).not.toHaveBeenCalledWith(
         'note.createAtPosition',
@@ -205,19 +177,16 @@ describe('GestureRecognizer', () => {
     });
   });
 
-  describe('Long Press Gesture', () => {
-    it('should recognize long press gesture', () => {
-      return new Promise((resolve) => {
-        const touch = createMockTouch(1, 100, 200);
+  describe('Long Press Recognition', () => {
+    it('recognizes long press after threshold delay', async () => {
+      const touch = createMockTouch(1, 100, 200);
 
-        // Touch start
-        gestureRecognizer.handleTouchStart(
-          createTouchEvent('touchstart', [touch]),
-        );
+      gestureRecognizer.handleTouchStart(
+        createTouchEvent('touchstart', [touch]),
+      );
+      expect(gestureRecognizer.currentState).toBe('singleTouch');
 
-        expect(gestureRecognizer.currentState).toBe('singleTouch');
-
-        // Wait for long press threshold
+      await new Promise((resolve) => {
         setTimeout(() => {
           expect(gestureRecognizer.currentState).toBe('longPressing');
           expect(mockEventBus.emit).toHaveBeenCalledWith('contextmenu.show', {
@@ -231,21 +200,18 @@ describe('GestureRecognizer', () => {
       });
     });
 
-    it('should cancel long press on movement', () => {
+    it('cancels long press on movement and starts drag', () => {
       const touch1 = createMockTouch(1, 100, 200);
-      const touch2 = createMockTouch(1, 120, 220); // Significant movement
+      const touch2 = createMockTouch(1, 120, 220);
 
-      // Touch start
       gestureRecognizer.handleTouchStart(
         createTouchEvent('touchstart', [touch1]),
       );
 
-      // Move before long press triggers
       setTimeout(() => {
         gestureRecognizer.handleTouchMove(
           createTouchEvent('touchmove', [touch2]),
         );
-
         expect(gestureRecognizer.currentState).toBe('dragging');
         expect(mockEventBus.emit).not.toHaveBeenCalledWith(
           'contextmenu.show',
@@ -255,19 +221,20 @@ describe('GestureRecognizer', () => {
     });
   });
 
-  describe('Drag Gesture', () => {
-    it('should recognize drag gesture', () => {
-      const touch1 = createMockTouch(1, 100, 200);
-      const touch2 = createMockTouch(1, 120, 220); // 20+ pixel movement
+  describe('Drag Interaction Flow', () => {
+    it('handles complete drag sequence from start to end', () => {
+      const touches = [
+        createMockTouch(1, 100, 200), // start
+        createMockTouch(1, 120, 220), // move 1
+        createMockTouch(1, 140, 240), // move 2
+      ];
 
-      // Touch start
+      // Start drag
       gestureRecognizer.handleTouchStart(
-        createTouchEvent('touchstart', [touch1]),
+        createTouchEvent('touchstart', [touches[0]]),
       );
-
-      // Move significantly to trigger drag
       gestureRecognizer.handleTouchMove(
-        createTouchEvent('touchmove', [touch2]),
+        createTouchEvent('touchmove', [touches[1]]),
       );
 
       expect(gestureRecognizer.currentState).toBe('dragging');
@@ -279,23 +246,22 @@ describe('GestureRecognizer', () => {
         _gesture: 'drag',
       });
 
-      // Continue dragging
-      const touch3 = createMockTouch(1, 140, 240);
+      // Continue drag
       gestureRecognizer.handleTouchMove(
-        createTouchEvent('touchmove', [touch3]),
+        createTouchEvent('touchmove', [touches[2]]),
       );
-
       expect(mockEventBus.emit).toHaveBeenCalledWith('note.dragUpdate', {
         x: 140,
         y: 240,
-        deltaX: 20, // 140 - 120
-        deltaY: 20, // 240 - 220
+        deltaX: 20,
+        deltaY: 20,
         _gesture: 'drag',
       });
 
       // End drag
-      gestureRecognizer.handleTouchEnd(createTouchEvent('touchend', [touch3]));
-
+      gestureRecognizer.handleTouchEnd(
+        createTouchEvent('touchend', [touches[2]]),
+      );
       expect(mockEventBus.emit).toHaveBeenCalledWith('note.dragEnd', {
         x: 140,
         y: 240,
@@ -306,33 +272,22 @@ describe('GestureRecognizer', () => {
     });
   });
 
-  describe('Pinch Gesture', () => {
-    it('should recognize pinch gesture', () => {
+  describe('Pinch Zoom Recognition', () => {
+    it('recognizes pinch zoom sequence with two fingers', () => {
       const touch1 = createMockTouch(1, 100, 200);
-      const touch2 = createMockTouch(2, 200, 300); // Distance = ~141 pixels
+      const touch2 = createMockTouch(2, 200, 300);
 
-      // Two fingers down
+      // Start pinch
       gestureRecognizer.handleTouchStart(
         createTouchEvent('touchstart', [touch1, touch2]),
       );
       expect(gestureRecognizer.currentState).toBe('multiTouch');
 
-      // Move fingers significantly apart to trigger pinch (need 20+ pixel change)
-      const touch1Moved = createMockTouch(1, 50, 150); // Moved further from center
-      const touch2Moved = createMockTouch(2, 250, 350); // Moved further from center
+      // Move fingers apart to trigger pinch
+      const touch1Moved = createMockTouch(1, 50, 150);
+      const touch2Moved = createMockTouch(2, 250, 350);
       gestureRecognizer.handleTouchMove(
         createTouchEvent('touchmove', [touch1Moved, touch2Moved]),
-      );
-
-      // Debug: log current state and distance values
-      console.log('Current state:', gestureRecognizer.currentState);
-      console.log(
-        'Initial pinch distance:',
-        gestureRecognizer.initialPinchDistance,
-      );
-      console.log(
-        'Current touch distance:',
-        gestureRecognizer.touchState.getTouchDistance(),
       );
 
       expect(gestureRecognizer.currentState).toBe('pinching');
@@ -364,46 +319,43 @@ describe('GestureRecognizer', () => {
       );
       expect(mockEventBus.emit).toHaveBeenCalledWith(
         'zoom.end',
-        expect.objectContaining({
-          _gesture: 'pinch',
-        }),
+        expect.objectContaining({ _gesture: 'pinch' }),
       );
     });
   });
 
-  describe('State Machine Transitions', () => {
-    it('should handle state transitions correctly', () => {
-      const touch = createMockTouch(1, 100, 200);
+  describe('State Management', () => {
+    it('handles state transitions and edge cases correctly', () => {
+      const touch1 = createMockTouch(1, 100, 200);
+      const touch2 = createMockTouch(2, 200, 300);
 
-      // Idle -> SingleTouch
+      // Basic state flow: idle -> singleTouch -> multiTouch -> idle
       expect(gestureRecognizer.currentState).toBe('idle');
       gestureRecognizer.handleTouchStart(
-        createTouchEvent('touchstart', [touch]),
+        createTouchEvent('touchstart', [touch1]),
       );
       expect(gestureRecognizer.currentState).toBe('singleTouch');
 
-      // Add second touch: SingleTouch -> MultiTouch
-      const touch2 = createMockTouch(2, 200, 300);
       gestureRecognizer.handleTouchStart(
         createTouchEvent('touchstart', [touch2]),
       );
       expect(gestureRecognizer.currentState).toBe('multiTouch');
 
-      // Remove all touches: MultiTouch -> Idle
       gestureRecognizer.handleTouchEnd(
-        createTouchEvent('touchend', [touch, touch2]),
+        createTouchEvent('touchend', [touch1, touch2]),
       );
       expect(gestureRecognizer.currentState).toBe('idle');
     });
   });
 
-  describe('Event Prevention', () => {
-    it('should prevent default on all touch events', () => {
+  describe('Touch Event Processing', () => {
+    it('prevents default behavior on touch events', () => {
       const mockEvent = {
         preventDefault: jest.fn(),
         changedTouches: [createMockTouch(1, 100, 200)],
       };
 
+      // All handlers should prevent default
       gestureRecognizer.handleTouchStart(mockEvent);
       expect(mockEvent.preventDefault).toHaveBeenCalled();
 
@@ -417,71 +369,40 @@ describe('GestureRecognizer', () => {
     });
   });
 
-  describe('Edge Cases', () => {
-    it('should handle touchcancel as touchend', () => {
+  describe('Edge Case Handling', () => {
+    it('handles touchcancel, multiple touches, and cleanup', () => {
+      // touchcancel should behave like touchend
       const touch = createMockTouch(1, 100, 200);
-
       gestureRecognizer.handleTouchStart(
         createTouchEvent('touchstart', [touch]),
       );
       expect(gestureRecognizer.currentState).toBe('singleTouch');
-
       gestureRecognizer.handleTouchCancel(
         createTouchEvent('touchcancel', [touch]),
       );
       expect(gestureRecognizer.currentState).toBe('potentialTap');
-    });
 
-    it('should handle multiple simultaneous touch events', () => {
-      const touch1 = createMockTouch(1, 100, 200);
-      const touch2 = createMockTouch(2, 200, 300);
-      const touch3 = createMockTouch(3, 300, 400);
+      // Reset for multiple touches test
+      gestureRecognizer.destroy();
+      gestureRecognizer = new GestureRecognizer(mockEventBus);
+      gestureRecognizer.initialize(mockElement);
 
-      // Start with multiple touches at once
+      // Multiple simultaneous touches
+      const touches = [
+        createMockTouch(1, 100, 200),
+        createMockTouch(2, 200, 300),
+        createMockTouch(3, 300, 400),
+      ];
       gestureRecognizer.handleTouchStart(
-        createTouchEvent('touchstart', [touch1, touch2, touch3]),
+        createTouchEvent('touchstart', touches),
       );
-
       expect(gestureRecognizer.currentState).toBe('multiTouch');
       expect(gestureRecognizer.touchState.getTouchCount()).toBe(3);
-    });
 
-    it('should reset properly after destroy', () => {
-      const touch = createMockTouch(1, 100, 200);
-
-      gestureRecognizer.handleTouchStart(
-        createTouchEvent('touchstart', [touch]),
-      );
-      expect(gestureRecognizer.currentState).toBe('singleTouch');
-
+      // Proper cleanup on destroy
       gestureRecognizer.destroy();
-
       expect(gestureRecognizer.currentState).toBe('idle');
       expect(gestureRecognizer.touchState.getTouchCount()).toBe(0);
     });
   });
 });
-
-// Helper functions
-function createMockTouch(identifier, clientX, clientY) {
-  return {
-    identifier,
-    clientX,
-    clientY,
-    target: null,
-    screenX: clientX,
-    screenY: clientY,
-    pageX: clientX,
-    pageY: clientY,
-  };
-}
-
-function createTouchEvent(type, touches) {
-  return {
-    type,
-    preventDefault: jest.fn(),
-    changedTouches: touches,
-    touches: touches,
-    targetTouches: touches,
-  };
-}
