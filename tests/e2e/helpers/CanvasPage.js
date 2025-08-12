@@ -90,7 +90,6 @@ export class CanvasPage {
     return note;
   }
 
-
   // Simple note creation for basic operations (legacy compatibility)
   async createNote(x = 640, y = 388) {
     const noteCountBefore = await this.notes.count();
