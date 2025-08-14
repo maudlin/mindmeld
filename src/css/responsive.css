@@ -323,20 +323,20 @@
 /* Transparency preference support */
 @media (prefers-reduced-transparency: reduce) {
   .dropdown,
-  #overlay,
   .adaptive-tooltip,
   .ghost-connector {
     backdrop-filter: none;
-    background: solid;
+    background-color: rgb(255, 255, 255);
   }
 
   .note {
-    background-color: opaque;
+    background-color: rgb(255, 255, 255);
   }
 
   /* Remove semi-transparent overlays */
   #overlay {
     background: rgb(0, 0, 0); /* Solid black instead of rgba */
+    backdrop-filter: none;
   }
 }
 
