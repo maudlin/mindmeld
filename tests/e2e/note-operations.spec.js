@@ -50,7 +50,9 @@ class CanvasPage {
 
 // Usage in Test
 test.describe('MindMeld Operations', () => {
-  test('Create, edit, move, and delete a note', async ({ page }) => {
+  test('Create, edit, move, and delete a note @smoke @critical', async ({
+    page,
+  }) => {
     const canvasPage = new CanvasPage(page);
 
     await canvasPage.load();

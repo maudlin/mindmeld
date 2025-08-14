@@ -60,7 +60,9 @@ describe('Connection Manager Behavior', () => {
 
 ## Quick Start
 
-Run tests: `npm test && npm run test:e2e`  
+**All tests**: `npm test && npm run test:e2e`  
+**Quick feedback**: `npm run test:e2e:smoke` (tagged core workflows)  
+**Critical only**: `npm run test:e2e:critical` (essential user flows)  
 Commands: See [Scripts Reference](scripts.md) for all testing commands
 
 ## Test Structure
@@ -112,6 +114,29 @@ test('updates active color swatch', () => {
 ## End-to-End Testing (Playwright)
 
 Tests complete user workflows across Chrome, Firefox, and Safari. Use the `CanvasPage` helper for consistent interactions.
+
+### Test Categories & Commands
+
+**Full Test Suite** (CI default - runs all 21 tests):
+```bash
+npm run test:e2e                    # All E2E tests (~2 minutes)
+```
+
+**Quick Feedback** (local development):
+```bash
+npm run test:e2e:smoke              # ~5 tagged core workflows (~30 seconds)
+npm run test:e2e:critical           # ~3 essential user flows (~20 seconds)
+```
+
+**Test Tags**:
+- `@critical` - Essential user flows (page load, note operations, connections)
+- `@smoke` - Core workflows for quick validation
+- No tags - Full regression tests
+
+**Usage Strategy**:
+- **CI/GitHub**: Full suite (browser install is the bottleneck anyway)
+- **Local Development**: Use smoke tests for rapid iteration
+- **Pre-commit**: Critical tests for essential validation
 
 ### Critical E2E Patterns
 

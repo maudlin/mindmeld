@@ -2,7 +2,9 @@ import { test, expect } from '@playwright/test';
 import { CanvasPage, TestCoordinates } from './helpers/CanvasPage.js';
 
 test.describe('MindMeld Note Connections', () => {
-  test('Create two notes and connect them', async ({ page }) => {
+  test('Create two notes and connect them @smoke @critical', async ({
+    page,
+  }) => {
     const canvasPage = new CanvasPage(page);
 
     // Load the application
