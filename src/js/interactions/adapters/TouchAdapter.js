@@ -7,7 +7,6 @@ import { NoteManager } from '../../core/event.js';
 import { getZoomLevel } from '../../features/zoom/zoomManager.js';
 import { connectionManager } from '../../features/connection/connectionManager.js';
 import { appState } from '../../data/observableState.js';
-import { eventBus } from '../../core/eventBus.js';
 
 /**
  * Touch input adapter for mobile and tablet interactions
@@ -509,7 +508,7 @@ export class TouchAdapter extends BaseAdapter {
         note.style.top = `${noteShiftY}px`;
 
         // Update data store via event bus
-        eventBus.emit('note.updated', {
+        this.emit('note.updated', {
           id: note.id,
           left: note.style.left,
           top: note.style.top,
