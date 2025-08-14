@@ -49,6 +49,11 @@ export class TouchAdapter extends BaseAdapter {
    * Initialize touch-specific event listeners
    */
   async initializeEventListeners() {
+    // Ensure eventBus is available
+    if (!this.eventBus) {
+      throw new Error('EventBus not initialized - call init() first');
+    }
+
     // Get canvas element
     this.canvas = document.getElementById('canvas');
     if (!this.canvas) {
