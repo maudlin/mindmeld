@@ -45,7 +45,63 @@ src/js/
 **Code style**: ES6+, ESLint, Prettier  
 **Naming**: camelCase files/functions, PascalCase classes, events as `noun.verb`  
 **Git**: Branch as `feature/description`, conventional commits, use PR template  
-**Security**: ESLint security plugins catch vulnerabilities  
+**Security**: ESLint security plugins catch vulnerabilities
+
+## Git Workflow & Branch Protection
+
+**Branch Protection**: The `main` branch has comprehensive protection enabled:
+- ✅ **Requires PR reviews** (1 approver minimum)
+- ✅ **Requires up-to-date branches** (prevents the merge conflict scenario)
+- ✅ **Requires linear history** (enforces clean commit history)
+- ✅ **Dismisses stale reviews** on new commits
+- ✅ **Requires conversation resolution** before merge
+
+### Workflow Best Practices
+
+**Starting New Work:**
+1. **Always branch from latest main**: `git checkout main && git pull && git checkout -b feature/your-feature`
+2. **Check for conflicting PRs**: Review open PRs that might modify similar files
+3. **Use descriptive branch names**: `feature/MM-123-smoke-test-categorization`
+
+**Creating Pull Requests:**
+1. **Use PR template**: Automatically provided, includes dependency checks
+2. **Verify independence**: Ensure your PR can be merged without dependencies
+3. **Mark dependencies**: If your work depends on other open PRs, mark them clearly
+
+**Handling Dependencies:**
+- ✅ **Sequential approach**: Wait for infrastructure PRs to merge before starting overlapping work
+- ✅ **Communication**: Coordinate with team when working on related areas
+- ❌ **Avoid parallel overlapping work**: Prevents the complex rebase scenarios
+
+**Branch Protection Benefits:**
+- **Prevents merge conflicts**: "Require up-to-date branches" forces automatic conflict resolution
+- **Maintains history quality**: Linear history requirement keeps commits clean
+- **Ensures review**: All changes get proper code review before merge
+
+### Common Scenarios
+
+**Scenario 1: Your PR conflicts with main**
+```bash
+# Branch protection will require you to update before merge
+git checkout your-branch
+git rebase origin/main  # Resolve any conflicts
+git push --force-with-lease origin your-branch
+```
+
+**Scenario 2: Working on dependent features**
+1. Wait for base PR to merge to main
+2. Branch from updated main for dependent work
+3. This prevents the "wrong base branch" problem
+
+**Scenario 3: Emergency hotfixes**
+1. Still follow protection rules (no direct pushes to main)
+2. Create hotfix PR with expedited review
+3. Branch protection ensures quality even in emergencies
+
+### Troubleshooting & Advanced Scenarios
+
+For complex rebase situations, dependency detection, and branch protection issues, see:  
+📖 **[Git Workflow Troubleshooting Guide](git-workflow-troubleshooting.md)**
 
 ## Testing & CI
 
