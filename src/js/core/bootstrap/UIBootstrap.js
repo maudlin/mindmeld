@@ -11,10 +11,12 @@ import { setupUI } from '../uiSetup.js';
 import { initializeCanvas } from '../canvasInitialization.js';
 import { DOM_SELECTORS } from '../constants.js';
 import { log } from '../../utils/utils.js';
+import { AdaptiveHelp } from '../../accessibility/adaptiveHelp.js';
 
 export class UIBootstrap extends BaseBootstrap {
   constructor() {
     super('UIBootstrap');
+    this.adaptiveHelp = null;
   }
 
   async initialize() {
@@ -25,12 +27,14 @@ export class UIBootstrap extends BaseBootstrap {
     await this.initializeCanvasSystem();
     await this.setupUserInterface(elements);
     await this.initializeCanvasView(elements);
+    await this.setupAccessibilityFeatures();
 
     return {
       elements,
       canvasSystemReady: true,
       userInterfaceReady: true,
       canvasViewReady: true,
+      accessibilityReady: true,
     };
   }
 
@@ -79,8 +83,19 @@ export class UIBootstrap extends BaseBootstrap {
     }
   }
 
+  async setupAccessibilityFeatures() {
+    try {
+      this.adaptiveHelp = new AdaptiveHelp();
+      this.adaptiveHelp.initialize();
+      log('UIBootstrap: Adaptive accessibility features initialized');
+    } catch (error) {
+      throw new Error(`Accessibility setup failed: ${error.message}`);
+    }
+  }
+
   async cleanup() {
     await super.cleanup();
+    this.adaptiveHelp = null;
     log('UIBootstrap: UI components cleaned up');
   }
 }
