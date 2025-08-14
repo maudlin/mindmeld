@@ -168,9 +168,12 @@ export class AdaptiveHelp {
       delete: 'Select note and press Delete key',
     };
 
-    // Safe: gesture parameter is validated by the calling code and comes from controlled sources
-    // eslint-disable-next-line security/detect-object-injection
-    return gestureHelp[gesture] || 'Gesture not recognized';
+    // Validate gesture parameter before using for object property access
+    const allowedGestures = Object.keys(gestureHelp);
+    if (typeof gesture === 'string' && allowedGestures.includes(gesture)) {
+      return gestureHelp[gesture];
+    }
+    return 'Gesture not recognized';
   }
 
   /**
