@@ -7,7 +7,6 @@ import { NoteManager } from '../../core/event.js';
 import { getZoomLevel } from '../../features/zoom/zoomManager.js';
 import { connectionManager } from '../../features/connection/connectionManager.js';
 import { appState } from '../../data/observableState.js';
-import { eventBus } from '../../core/eventBus.js';
 
 /**
  * Touch input adapter for mobile and tablet interactions
@@ -49,6 +48,11 @@ export class TouchAdapter extends BaseAdapter {
    * Initialize touch-specific event listeners
    */
   async initializeEventListeners() {
+    // Ensure eventBus is available
+    if (!this.eventBus) {
+      throw new Error('EventBus not initialized - call init() first');
+    }
+
     // Get canvas element
     this.canvas = document.getElementById('canvas');
     if (!this.canvas) {
@@ -504,7 +508,7 @@ export class TouchAdapter extends BaseAdapter {
         note.style.top = `${noteShiftY}px`;
 
         // Update data store via event bus
-        eventBus.emit('note.updated', {
+        this.emit('note.updated', {
           id: note.id,
           left: note.style.left,
           top: note.style.top,
