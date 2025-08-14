@@ -22,7 +22,7 @@ gh pr list --state open --json number,title,files
 These files/directories are frequently modified and require coordination:
 
 **High-Risk Areas:**
-- `tests/e2e/helpers/CanvasPage.js` - Core testing infrastructure
+- Core testing infrastructure files (e.g., helpers, page objects)
 - `package.json` - Scripts and dependencies  
 - `docs/testing.md` - Test documentation
 - `CLAUDE.md` - Development context
