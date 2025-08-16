@@ -356,16 +356,18 @@ body.dragging * {
   pointer-events: auto;
 }
 
-/* Color Picker Container - Expanded to accommodate glow effects */
+/* Color Picker Container - Expanded to accommodate glow effects and kebab button */
 .color-picker-palette {
   position: relative;
-  width: 140px;
+  width: 180px;
   height: 41px;
   background: rgba(217, 217, 217, 0);
   border: 1px solid rgba(103, 103, 103, 0.25);
   border-radius: 20px;
   box-shadow: 2px 2px 4px 0px rgba(0, 0, 0, 0.25);
   box-sizing: border-box;
+  display: flex;
+  align-items: center;
 }
 
 /* Color Swatches - Normalized dimensions with proper spacing for glow effects */
@@ -376,31 +378,31 @@ body.dragging * {
   border-radius: 50%;
   cursor: pointer;
   transition: box-shadow 0.2s ease;
-  top: 7.5px;
+  top: 5px;
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 /* Individual Color Positions - More spacing to prevent glow overlap */
 .color-swatch[data-color='yellow'] {
-  left: 8px;
+  left: 7px;
   background: var(--note-color-yellow-bg);
   border-color: var(--note-color-yellow-border);
 }
 
 .color-swatch[data-color='pink'] {
-  left: 40px;
+  left: 39px;
   background: var(--note-color-pink-bg);
   border-color: var(--note-color-pink-border);
 }
 
 .color-swatch[data-color='green'] {
-  left: 72px;
+  left: 71px;
   background: var(--note-color-green-bg);
   border-color: var(--note-color-green-border);
 }
 
 .color-swatch[data-color='blue'] {
-  left: 104px;
+  left: 103px;
   background: var(--note-color-blue-bg);
   border-color: var(--note-color-blue-border);
 }
@@ -451,6 +453,161 @@ body.dragging * {
 /* Ensure keyboard navigation works */
 .color-swatch:focus:not(:focus-visible) {
   outline: none;
+}
+
+/* Kebab Menu Button */
+.kebab-menu-button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.kebab-menu-button svg {
+  width: 14px;
+  height: 14px;
+  fill: rgba(103, 103, 103, 0.8);
+  transition: fill 0.2s ease;
+}
+
+.kebab-menu-button:hover {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.kebab-menu-button:hover svg {
+  fill: rgba(103, 103, 103, 1);
+}
+
+.kebab-menu-button:focus {
+  outline: 2px solid #4a90e2;
+  outline-offset: 2px;
+}
+
+.kebab-menu-button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.kebab-menu-button:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+/* Kebab Context Menu */
+.kebab-context-menu {
+  position: absolute;
+  width: 280px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(18, 20, 22, 0.14), 0 2px 8px rgba(18, 20, 22, 0.08);
+  padding: 6px;
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
+  pointer-events: none;
+  transition: opacity 0.16s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.16s cubic-bezier(0.22, 0.61, 0.36, 1);
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  z-index: 1001;
+  font-family: var(--font-family);
+}
+
+.kebab-context-menu.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.kebab-menu-handle {
+  display: none;
+  width: 40px;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+  margin: 8px auto 12px;
+  touch-action: none;
+}
+
+.kebab-menu-group {
+  margin: 6px 0;
+}
+
+.kebab-menu-subtitle {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: rgba(21, 23, 26, 0.55);
+  padding: 6px 10px;
+  font-weight: 600;
+}
+
+.kebab-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14.5px;
+  letter-spacing: 0.2px;
+  color: var(--ink, #15171a);
+  transition: background-color 0.15s ease;
+}
+
+.kebab-menu-item:hover {
+  background: rgba(18, 20, 22, 0.05);
+}
+
+.kebab-menu-item:active {
+  background: rgba(18, 20, 22, 0.1);
+  transform: scale(0.98);
+}
+
+.kebab-menu-kbd {
+  font-size: 11px;
+  color: rgba(21, 23, 26, 0.55);
+  font-weight: 400;
+}
+
+.kebab-menu-divider {
+  height: 1px;
+  background: rgba(18, 20, 22, 0.08);
+  margin: 4px 6px;
+  border-radius: 1px;
+}
+
+/* Mobile: turn into a bottom sheet with drag handle */
+@media (max-width: 720px) {
+  .kebab-context-menu {
+    position: fixed;
+    inset: auto 0 0 0;
+    width: 100%;
+    right: auto;
+    top: auto;
+    border-radius: 16px 16px 0 0;
+    transform: translateY(12px);
+    max-height: 85vh;
+  }
+  
+  .kebab-context-menu.open {
+    transform: translateY(0);
+  }
+  
+  .kebab-menu-handle {
+    display: block;
+  }
 }
 
 /* Connector Styles */
@@ -697,282 +854,6 @@ svg text {
   pointer-events: none;
 }
 
-/* ==========================================================================
-   RESPONSIVE & MOBILE DESIGN
-   ========================================================================== */
-
-/* ==========================================================================
-   INPUT CAPABILITY MEDIA QUERIES
-   Based on device input capabilities rather than just screen size
-   ========================================================================== */
-
-/* Touch-first devices (mobile phones, tablets without precise pointing) */
-@media (hover: none) and (pointer: coarse) {
-  /* Touch-Friendly Tap Targets - Minimum 44px as per accessibility guidelines */
-  .menu-button,
-  .menu-link,
-  .dropdown button,
-  .dropdown a {
-    min-height: 44px;
-    padding: 12px 16px;
-    font-size: 0.75rem;
-  }
-
-  /* Touch-friendly color picker - maintain proportional layout */
-  .color-picker-palette {
-    width: 180px;
-    height: 50px;
-    border-radius: 25px;
-  }
-
-  .color-swatch {
-    width: 32px;
-    height: 32px;
-    top: 9px;
-  }
-
-  .color-swatch[data-color='yellow'] {
-    left: 12px;
-  }
-  .color-swatch[data-color='pink'] {
-    left: 50px;
-  }
-  .color-swatch[data-color='green'] {
-    left: 88px;
-  }
-  .color-swatch[data-color='blue'] {
-    left: 126px;
-  }
-
-  /* Touch-friendly notes */
-  .note {
-    min-width: 44px;
-    min-height: 44px;
-    padding: 12px;
-  }
-
-  /* Larger ghost connectors for touch */
-  .ghost-connector {
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(112, 181, 255, 0.8);
-    background-color: rgba(112, 181, 255, 0.3);
-  }
-
-  .ghost-connector.top,
-  .ghost-connector.bottom {
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
-  .ghost-connector.top {
-    top: -10px;
-  }
-  .ghost-connector.bottom {
-    bottom: -10px;
-  }
-
-  .ghost-connector.left,
-  .ghost-connector.right {
-    top: 50%;
-    transform: translateY(-50%);
-  }
-
-  .ghost-connector.left {
-    left: -10px;
-  }
-  .ghost-connector.right {
-    right: -10px;
-  }
-
-  /* Always show ghost connectors on touch devices */
-  .note .ghost-connector {
-    display: block;
-  }
-
-  /* Mobile navigation adjustments */
-  #navbar {
-    padding: 0.75rem 1rem;
-  }
-
-  #logo {
-    font-size: 1.1rem;
-  }
-
-  #logo-icon {
-    width: 28px;
-    height: 28px;
-  }
-
-  /* Dropdown positioning for touch */
-  .dropdown {
-    min-width: 180px;
-    right: -10px; /* Account for finger positioning */
-  }
-
-  /* Help text adjustments for mobile */
-  #help-text {
-    display: none; /* Hide on touch devices to save space */
-  }
-
-  /* Zoom display positioning */
-  #zoom-display {
-    bottom: 20px;
-    right: 20px;
-    font-size: 32px;
-  }
-
-  /* Touch-specific visual feedback */
-  .note.touch-active {
-    transform: scale(1.05);
-    transition: transform 0.1s ease;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
-  }
-
-  /* Context menu touch optimization */
-  .context-menu-item text {
-    font-size: 16px;
-    font-weight: 600;
-  }
-}
-
-/* Hybrid devices (tablets with both touch and precise pointing) */
-@media (any-pointer: coarse) and (any-pointer: fine) {
-  /* Slightly larger tap targets for hybrid comfort */
-  .menu-button,
-  .menu-link,
-  .dropdown button,
-  .dropdown a {
-    min-height: 36px;
-    padding: 8px 12px;
-  }
-
-  .color-swatch {
-    width: 28px;
-    height: 28px;
-  }
-
-  .ghost-connector {
-    width: 14px;
-    height: 14px;
-  }
-
-  /* Show connectors on hover for precision, always for coarse */
-  .note:hover .ghost-connector,
-  .note.touch-device .ghost-connector {
-    display: block;
-  }
-}
-
-/* Desktop-first devices (precise pointing with hover) */
-@media (hover: hover) and (pointer: fine) {
-  /* Keep current desktop styling - no changes needed */
-  /* This ensures desktop experience remains unchanged */
-}
-
-/* ==========================================================================
-   SCREEN SIZE RESPONSIVE LAYOUT
-   ========================================================================== */
-
-/* Mobile phones (portrait) */
-@media screen and (max-width: 480px) {
-  /* Compact navigation */
-  #navbar {
-    padding: 0.5rem 0.75rem;
-    flex-wrap: wrap;
-  }
-
-  #menu {
-    flex-direction: row;
-    gap: 0.5rem;
-  }
-
-  .menu-item {
-    margin-left: 0.5rem;
-  }
-
-  /* Adjust canvas container for mobile */
-  #canvas-container {
-    height: calc(100vh - 50px);
-  }
-
-  /* Mobile color picker positioning - maintain center alignment */
-  #color-picker-container {
-    top: 60px;
-    /* Keep centered: left: 50% and transform: translateX(-50%) from base styles */
-  }
-
-  /* Overlay responsive */
-  #overlay-content {
-    margin: 1rem;
-    padding: 1.5rem;
-    max-width: calc(100vw - 2rem);
-  }
-
-  #overlay h1 {
-    font-size: 1.5rem;
-  }
-  #overlay h2 {
-    font-size: 1.25rem;
-  }
-  #overlay p {
-    font-size: 0.9rem;
-  }
-}
-
-/* Tablets (portrait) */
-@media screen and (max-width: 768px) and (min-width: 481px) {
-  /* Tablet-optimized spacing */
-  #navbar {
-    padding: 0.625rem 1rem;
-  }
-
-  .menu-item {
-    margin-left: 0.75rem;
-  }
-
-  /* Canvas adjustments */
-  #canvas-container {
-    height: calc(100vh - 45px);
-  }
-
-  /* Color picker center positioning for tablets */
-  #color-picker-container {
-    top: 70px;
-  }
-}
-
-/* Landscape mobile and small tablets */
-@media screen and (max-height: 500px) and (orientation: landscape) {
-  /* Compact header for landscape */
-  #navbar {
-    padding: 0.375rem 1rem;
-  }
-
-  #logo {
-    font-size: 1rem;
-  }
-
-  #logo-icon {
-    width: 24px;
-    height: 24px;
-  }
-
-  /* Maximize canvas space */
-  #canvas-container {
-    height: calc(100vh - 35px);
-  }
-
-  /* Hide zoom display in landscape mobile */
-  #zoom-display {
-    display: none;
-  }
-
-  /* Compact color picker */
-  #color-picker-container {
-    top: 40px;
-  }
-}
 
 /* ==========================================================================
    USER PREFERENCE SUPPORT & ACCESSIBILITY FEATURES
@@ -981,7 +862,6 @@ svg text {
 /* Respect user's motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .note,
-  .note.touch-active,
   .color-swatch,
   .menu-button,
   .dropdown button,
@@ -991,9 +871,6 @@ svg text {
   }
 
   /* Disable momentum scrolling animations */
-  .note.touch-active {
-    transform: none !important;
-  }
 
   /* Disable all CSS transforms that create motion */
   .ghost-connector,
@@ -1125,89 +1002,6 @@ svg text {
   }
 }
 
-/* ==========================================================================
-   TOUCH-SPECIFIC ENHANCEMENTS
-   ========================================================================== */
-
-/* Touch ripple effect for buttons */
-@media (hover: none) and (pointer: coarse) {
-  .menu-button,
-  .dropdown button,
-  .color-swatch {
-    position: relative;
-    overflow: hidden;
-  }
-
-  .menu-button::after,
-  .dropdown button::after,
-  .color-swatch::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.5);
-    transform: translate(-50%, -50%);
-    transition:
-      width 0.3s,
-      height 0.3s;
-    pointer-events: none;
-  }
-
-  .menu-button:active::after,
-  .dropdown button:active::after,
-  .color-swatch:active::after {
-    width: 100px;
-    height: 100px;
-  }
-}
-
-/* ==========================================================================
-   PERFORMANCE OPTIMIZATIONS FOR MOBILE
-   ========================================================================== */
-
-/* Optimize animations for mobile */
-@media (hover: none) and (pointer: coarse) {
-  /* Use transform instead of changing layout properties */
-  .note {
-    will-change: transform;
-    transform: translateZ(0); /* Force hardware acceleration */
-    contain: layout style paint; /* CSS containment for better performance */
-  }
-
-  /* Optimize connection lines for touch */
-  line.connection-line {
-    stroke-width: 3px; /* Thicker for easier touch interaction */
-    vector-effect: non-scaling-stroke; /* Maintain stroke width during zoom */
-  }
-
-  .connector-hotspot {
-    stroke-width: 3px;
-    r: 6; /* Larger radius for touch targets */
-  }
-
-  /* Optimize touch event handling */
-  #canvas {
-    touch-action: none; /* Already set, but ensure it's applied */
-    transform: translateZ(0); /* Force GPU layer */
-  }
-
-  /* Reduce animation complexity on mobile */
-  .note,
-  .color-swatch,
-  .menu-button {
-    transition-duration: 0.15s; /* Faster transitions */
-  }
-
-  /* Optimize scrolling performance */
-  #canvas-container {
-    -webkit-overflow-scrolling: touch;
-    overflow: hidden;
-    contain: strict; /* Contain layout, style, paint, and size */
-  }
-}
 
 /* Optimize for high-DPI displays */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
@@ -1239,25 +1033,6 @@ svg text {
   }
 }
 
-/* ==========================================================================
-   KEYBOARD NAVIGATION SUPPORT
-   ========================================================================== */
-
-/* Enhanced focus indicators for touch devices with external keyboards */
-@media (hover: none) and (pointer: coarse) {
-  .note:focus,
-  .color-swatch:focus,
-  .menu-button:focus,
-  .dropdown button:focus {
-    outline: 3px solid #2563eb;
-    outline-offset: 2px;
-  }
-
-  /* Ensure focus is visible on dark backgrounds */
-  .note:focus {
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.5);
-  }
-}
 
 /* ==========================================================================
    ADAPTIVE TOOLTIPS & HELP SYSTEM

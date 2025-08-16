@@ -108,6 +108,79 @@
           tabindex="0"
           aria-label="Select blue color"
         ></div>
+        <button
+          class="kebab-menu-button"
+          id="kebab-menu-button"
+          aria-haspopup="true"
+          aria-controls="kebab-context-menu"
+          aria-expanded="false"
+          aria-label="Open menu"
+          tabindex="0"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 7a1.75 1.75 0 110-3.5A1.75 1.75 0 0112 7zm0 6a1.75 1.75 0 110-3.5A1.75 1.75 0 0112 13zm0 6a1.75 1.75 0 110-3.5A1.75 1.75 0 0112 19z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Kebab Context Menu -->
+    <div
+      class="kebab-context-menu"
+      id="kebab-context-menu"
+      role="menu"
+      aria-label="Canvas menu"
+      aria-hidden="true"
+    >
+      <div class="kebab-menu-handle" aria-hidden="true"></div>
+      
+      <div class="kebab-menu-group">
+        <div class="kebab-menu-subtitle">Canvas</div>
+        <div class="kebab-menu-item" role="menuitem" data-action="clear-canvas">
+          <span>Clear Canvas</span>
+          <span class="kebab-menu-kbd">Del</span>
+        </div>
+      </div>
+      <div class="kebab-menu-divider"></div>
+
+      <div class="kebab-menu-group">
+        <div class="kebab-menu-subtitle">File</div>
+        <div class="kebab-menu-item" role="menuitem" data-action="import-file">
+          <span>Import from File</span>
+          <span class="kebab-menu-kbd">Ctrl/Cmd I</span>
+        </div>
+        <div class="kebab-menu-item" role="menuitem" data-action="export-file">
+          <span>Export to File</span>
+          <span class="kebab-menu-kbd">Ctrl/Cmd E</span>
+        </div>
+        <div class="kebab-menu-item" role="menuitem" data-action="copy-clipboard">
+          <span>Copy to Clipboard</span>
+        </div>
+        <div class="kebab-menu-item" role="menuitem" data-action="paste-clipboard">
+          <span>Paste from Clipboard</span>
+        </div>
+      </div>
+      <div class="kebab-menu-divider"></div>
+
+      <div class="kebab-menu-group">
+        <div class="kebab-menu-subtitle">Templates</div>
+        <div class="kebab-menu-item" role="menuitem" data-action="change-template">
+          <span>Change Template</span>
+        </div>
+      </div>
+      <div class="kebab-menu-divider"></div>
+
+      <div class="kebab-menu-group">
+        <div class="kebab-menu-subtitle">Help</div>
+        <div class="kebab-menu-item" role="menuitem" data-action="instructions">
+          <span>Instructions</span>
+        </div>
+        <div class="kebab-menu-item" role="menuitem" data-action="about">
+          <span>About</span>
+        </div>
+        <div class="kebab-menu-item" role="menuitem" data-action="changelog">
+          <span>Changelog</span>
+        </div>
       </div>
     </div>
 
@@ -130,7 +203,7 @@
       select notes<br />
       <strong>Pan & Zoom:</strong> right click &amp; drag to pan, scroll to
       zoom<br />
-      <strong><span id="version">v0.10.0 (2025-08-14)</span></strong>
+      <strong><span id="version">v0.10.0 (2025-08-15)</span></strong>
     </div>
     <div id="zoom-display">5x</div>
     <div id="overlay" class="hidden">
