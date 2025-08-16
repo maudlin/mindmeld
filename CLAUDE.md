@@ -22,6 +22,7 @@ Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven s
 - camelCase for files/functions, PascalCase for classes
 - Events named as `noun.verb` (e.g., `note.created`)
 - Clean dependency injection patterns
+- **Mobile patterns**: Use `src/js/utils/mobileInteractions.js` for touch-friendly UI
 
 ## Architecture
 - **Bootstrap system**: `src/js/core/bootstrap/` - initialization modules
@@ -46,6 +47,7 @@ Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven s
 - **/docs folder**: Comprehensive guides including:
   - `testing.md`: Complete testing patterns and debugging
   - `developer-guide.md`: Architecture and contribution guidelines
+  - `mobile-interaction-patterns.md`: Touch-friendly UI patterns and utilities
   - `ci-e2e-troubleshooting.md`: CI/CD troubleshooting guide
   - Additional specialized documentation
 

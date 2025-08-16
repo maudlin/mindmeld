@@ -7,7 +7,7 @@ test.describe('Canvas Template Switching', () => {
 
     // Step 1: Load and verify default template
     await canvasPage.load();
-    await expect(canvasPage.canvasStyleMenuButton).toBeVisible();
+    await expect(canvasPage.kebabMenuButton).toBeVisible();
 
     // Verify Standard Canvas is the default
     await canvasPage.verifyTemplate('Standard Canvas');
@@ -52,8 +52,8 @@ test.describe('Canvas Template Switching', () => {
       await canvasPage.switchToTemplate(templateName);
       await canvasPage.verifyTemplate(templateName);
 
-      // Verify dropdown is still accessible after each switch
-      await expect(canvasPage.canvasStyleMenuButton).toBeVisible();
+      // Verify kebab menu is still accessible after each switch
+      await expect(canvasPage.kebabMenuButton).toBeVisible();
     }
   });
 

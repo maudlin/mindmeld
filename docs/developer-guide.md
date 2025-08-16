@@ -161,8 +161,14 @@ npm run version:major   # Breaking changes (0.8.0 → 1.0.0)
   - `colorPicker/` - Color selection interface and events
   - `note/` - Note creation, editing, and color application
   - `connection/` - Connection drawing and management
+- **Mobile Interactions**: `src/js/utils/mobileInteractions.js` - Touch-friendly UI patterns
+  - `setupMobileDropdown()` - Convert hover menus to touch-friendly dropdowns
+  - `setupMobileModal()` - Consistent modal/overlay behavior with backdrop close
+  - `setupTouchFeedback()` - Visual feedback for touch interactions
+  - `isTouchDevice()` & `getViewportInfo()` - Device detection utilities
 - **Data Layer**: `src/js/data/` - State management and persistence
   - Export/import includes color data via `cl` field
 - **Health Monitoring**: [Architecture Health](architecture-health.md)
 - **User Features**: [User Guide](user-guide.md)
 - **Canvas Templates**: [Canvas Templates](canvas-templates.md)
+- **Mobile Patterns**: [Mobile Interaction Patterns](mobile-interaction-patterns.md)

@@ -4,20 +4,29 @@ import { canvasManager } from './canvasManager.js';
 import { exportToJSON, importFromJSON } from '../data/dataStore.js';
 import { clearAllState } from '../data/storageManager.js';
 import { setupZoomAndPan, setFixedZoom } from '../features/zoom/zoomManager.js';
+import { notificationManager } from '../services/notificationManager.js';
+import { setupMobileDropdown } from '../utils/mobileInteractions.js';
 
 export function setupUI(elements) {
   populateCanvasStyleDropdown(elements);
   setupExportImport(elements.menu, elements.canvas);
   setupClearCanvas(elements.menu, elements.canvas);
+  setupDismissButton();
+  setupMobileDropdownBehavior();
 }
 
 function populateCanvasStyleDropdown(elements) {
-  canvasManager.getAvailableModules().forEach((moduleName) => {
-    const button = createDropdownButton(moduleName, () =>
-      switchCanvas(moduleName, elements),
-    );
-    elements.canvasStyleDropdown.appendChild(button);
-  });
+  const dropdown =
+    elements.canvasStyleDropdown ||
+    document.getElementById('canvas-style-dropdown');
+  if (dropdown) {
+    canvasManager.getAvailableModules().forEach((moduleName) => {
+      const button = createDropdownButton(moduleName, () =>
+        switchCanvas(moduleName, elements),
+      );
+      dropdown.appendChild(button);
+    });
+  }
 }
 
 function createDropdownButton(text, onClick) {
@@ -52,19 +61,23 @@ function switchCanvas(moduleName, elements) {
     );
   } catch (error) {
     console.error(`Error switching to canvas ${moduleName}:`, error);
-    alert(`Failed to switch to ${moduleName}. Please try again.`);
+    notificationManager.error(
+      `Failed to switch to ${moduleName}. Please try again.`,
+    );
   }
 }
 
 function setupExportImport(menu, canvas) {
   // Export to file button
-  const exportToFileButton = menu.querySelector('#export-to-file-button');
+  const exportToFileButton = document.getElementById('export-to-file-button');
   if (exportToFileButton) {
     exportToFileButton.addEventListener('click', handleExportToFile);
   }
 
   // Import from file button
-  const importFromFileButton = menu.querySelector('#import-from-file-button');
+  const importFromFileButton = document.getElementById(
+    'import-from-file-button',
+  );
   if (importFromFileButton) {
     importFromFileButton.addEventListener('click', () =>
       handleImportFromFile(canvas),
@@ -72,16 +85,16 @@ function setupExportImport(menu, canvas) {
   }
 
   // Export to clipboard button
-  const exportToClipboardButton = menu.querySelector(
-    '#export-to-clipboard-button',
+  const exportToClipboardButton = document.getElementById(
+    'export-to-clipboard-button',
   );
   if (exportToClipboardButton) {
     exportToClipboardButton.addEventListener('click', handleExportToClipboard);
   }
 
   // Import from clipboard button
-  const importFromClipboardButton = menu.querySelector(
-    '#import-from-clipboard-button',
+  const importFromClipboardButton = document.getElementById(
+    'import-from-clipboard-button',
   );
   if (importFromClipboardButton) {
     importFromClipboardButton.addEventListener('click', () =>
@@ -99,6 +112,11 @@ function handleExportToFile() {
   a.download = 'mindmap_export.json';
   a.click();
   URL.revokeObjectURL(url);
+
+  // Show info notification that download was initiated (not completed)
+  notificationManager.info(
+    "Download started - check your browser's download area",
+  );
 }
 
 function handleImportFromFile(canvas) {
@@ -111,9 +129,12 @@ function handleImportFromFile(canvas) {
     reader.onload = (e) => {
       try {
         importFromJSON(e.target.result, canvas);
+        notificationManager.success('Mind map imported successfully!');
       } catch (error) {
         console.error('Error importing file:', error);
-        alert("Error importing file. Please make sure it's a valid JSON file.");
+        notificationManager.error(
+          "Error importing file. Please make sure it's a valid JSON file.",
+        );
       }
     };
     reader.readAsText(file);
@@ -126,11 +147,13 @@ function handleExportToClipboard() {
   navigator.clipboard
     .writeText(json)
     .then(() => {
-      alert('Mind map exported to clipboard!');
+      notificationManager.success('Mind map exported to clipboard!');
     })
     .catch((error) => {
       console.error('Error copying to clipboard:', error);
-      alert('Failed to copy to clipboard. Please try again.');
+      notificationManager.error(
+        'Failed to copy to clipboard. Please try again.',
+      );
     });
 }
 
@@ -140,27 +163,59 @@ function handleImportFromClipboard(canvas) {
     .then((text) => {
       try {
         importFromJSON(text, canvas);
-        alert('Mind map imported from clipboard!');
+        notificationManager.success('Mind map imported from clipboard!');
       } catch (error) {
         console.error('Error importing from clipboard:', error);
-        alert(
+        notificationManager.error(
           'Error importing from clipboard. Please make sure the clipboard contains valid JSON data.',
         );
       }
     })
     .catch((error) => {
       console.error('Error reading from clipboard:', error);
-      alert('Failed to read from clipboard. Please try again.');
+      notificationManager.error(
+        'Failed to read from clipboard. Please try again.',
+      );
     });
 }
 
 function setupClearCanvas(menu, canvas) {
-  const clearButton = menu.querySelector('#clear-canvas-button');
+  const clearButton = document.getElementById('clear-canvas-button');
   if (clearButton) {
-    clearButton.addEventListener('click', () => {
-      if (confirm('Are you sure you want to clear the canvas?')) {
+    clearButton.addEventListener('click', async () => {
+      const confirmed = await notificationManager.confirm(
+        'Are you sure you want to clear the canvas?',
+      );
+      if (confirmed) {
         clearAllState(canvas);
+        notificationManager.success('Canvas cleared successfully!');
       }
     });
   }
+}
+
+function setupDismissButton() {
+  const dismissButton = document.getElementById('dismiss-button');
+  const overlay = document.getElementById('overlay');
+
+  if (dismissButton && overlay) {
+    dismissButton.addEventListener('click', () => {
+      overlay.classList.add('hidden');
+    });
+  }
+}
+
+function setupMobileDropdownBehavior() {
+  // Use shared mobile dropdown utility for consistent behavior
+  setupMobileDropdown('.menu-item', {
+    dropdownSelector: '.dropdown',
+    preventDefaultClick: true,
+    singleDropdown: true,
+    onOpen: (dropdown) => {
+      log('Dropdown opened:', dropdown);
+    },
+    onClose: (dropdown) => {
+      log('Dropdown closed:', dropdown);
+    },
+  });
 }
