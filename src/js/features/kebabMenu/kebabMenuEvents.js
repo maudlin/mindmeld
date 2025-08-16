@@ -110,17 +110,61 @@ export class KebabMenuEvents {
   }
 
   /**
-   * Change template - this will need to be enhanced to show template options
+   * Change template - show the canvas style dropdown temporarily
    */
   changeTemplate() {
-    // For now, we'll navigate to the canvas style dropdown
     const dropdown = document.getElementById('canvas-style-dropdown');
     if (dropdown) {
-      // Trigger the dropdown to show available templates
-      const parentItem = dropdown.closest('.menu-item');
-      if (parentItem) {
-        parentItem.querySelector('.menu-button')?.click();
-      }
+      // Temporarily show the dropdown
+      const parentContainer = dropdown.parentElement;
+      const originalDisplay = parentContainer.style.display;
+
+      // Make dropdown visible and position it appropriately
+      parentContainer.style.display = 'block';
+      parentContainer.style.position = 'fixed';
+      parentContainer.style.top = '50%';
+      parentContainer.style.left = '50%';
+      parentContainer.style.transform = 'translate(-50%, -50%)';
+      parentContainer.style.zIndex = '2000';
+      parentContainer.style.backgroundColor = 'white';
+      parentContainer.style.border = '1px solid #ccc';
+      parentContainer.style.borderRadius = '8px';
+      parentContainer.style.padding = '16px';
+      parentContainer.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+
+      // Add a close button or click-away functionality
+      const closeDropdown = () => {
+        parentContainer.style.display = originalDisplay;
+        parentContainer.style.position = '';
+        parentContainer.style.top = '';
+        parentContainer.style.left = '';
+        parentContainer.style.transform = '';
+        parentContainer.style.zIndex = '';
+        parentContainer.style.backgroundColor = '';
+        parentContainer.style.border = '';
+        parentContainer.style.borderRadius = '';
+        parentContainer.style.padding = '';
+        parentContainer.style.boxShadow = '';
+        document.removeEventListener('click', outsideClickHandler);
+      };
+
+      // Click-away handler
+      const outsideClickHandler = (e) => {
+        if (!dropdown.contains(e.target)) {
+          closeDropdown();
+        }
+      };
+
+      // Add click-away after a short delay to avoid immediate closure
+      setTimeout(() => {
+        document.addEventListener('click', outsideClickHandler);
+      }, 100);
+
+      // Also close when a template is selected
+      const templateButtons = dropdown.querySelectorAll('button');
+      templateButtons.forEach((button) => {
+        button.addEventListener('click', closeDropdown, { once: true });
+      });
     }
   }
 

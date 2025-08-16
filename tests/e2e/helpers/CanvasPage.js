@@ -25,10 +25,10 @@ export class CanvasPage {
 
     // Canvas style dropdown elements
     this.canvasStyleDropdown = page.locator('#canvas-style-dropdown');
-    this.canvasStyleMenuButton = page.locator('text="Canvas Style"');
-    this.canvasStyleMenuItem = page
-      .locator('.menu-item')
-      .filter({ hasText: 'Canvas Style' });
+    this.canvasStyleMenuButton = page.locator(
+      '.kebab-menu-item[data-action="change-template"]',
+    );
+    this.kebabMenuButton = page.locator('#kebab-menu-button');
   }
 
   // Common application loading
@@ -307,10 +307,14 @@ export class CanvasPage {
 
   // Canvas template switching operations
   async switchToTemplate(templateName) {
-    // Hover over Canvas Style menu item to reveal dropdown
-    await this.canvasStyleMenuItem.hover();
+    // Open kebab menu
+    await this.kebabMenuButton.click();
+    await expect(this.page.locator('#kebab-context-menu.open')).toBeVisible();
 
-    // Wait for dropdown menu to appear and become visible
+    // Click change template option
+    await this.canvasStyleMenuButton.click();
+
+    // Wait for dropdown to become visible (it will be positioned in center)
     await expect(this.canvasStyleDropdown).toBeVisible();
 
     // Click the specific template option
