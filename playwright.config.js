@@ -21,6 +21,7 @@ export default defineConfig({
     headless: true,
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
+    hasTouch: true, // Enable touch support for mobile tests
 
     // Capture evidence of failures in CI
     video: process.env.CI ? 'retain-on-failure' : 'off',

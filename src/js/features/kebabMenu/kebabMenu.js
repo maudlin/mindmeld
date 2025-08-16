@@ -39,6 +39,15 @@ export class KebabMenu {
       this.isOpen ? this.closeMenu() : this.openMenu();
     });
 
+    // Button keyboard support
+    this.button.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+        this.isOpen ? this.closeMenu() : this.openMenu();
+      }
+    });
+
     // Menu item clicks
     this.menu.addEventListener('click', (e) => {
       const menuItem = e.target.closest('.kebab-menu-item');
@@ -127,9 +136,15 @@ export class KebabMenu {
   openMenu() {
     this.positionMenu();
     this.menu.classList.add('open');
-    this.menu.removeAttribute('aria-hidden');
+    this.menu.setAttribute('aria-hidden', 'false');
     this.button.setAttribute('aria-expanded', 'true');
     this.isOpen = true;
+
+    // Focus first menu item for keyboard accessibility
+    const firstMenuItem = this.menu.querySelector('.kebab-menu-item');
+    if (firstMenuItem) {
+      firstMenuItem.focus();
+    }
   }
 
   /**
@@ -141,6 +156,9 @@ export class KebabMenu {
     this.button.setAttribute('aria-expanded', 'false');
     this.menu.style.transform = '';
     this.isOpen = false;
+
+    // Return focus to button for keyboard accessibility
+    this.button.focus();
   }
 
   /**

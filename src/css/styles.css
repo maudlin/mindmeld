@@ -118,7 +118,7 @@ html {
   box-shadow:
     0 10px 15px -3px rgba(0, 0, 0, 0.1),
     0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  z-index: 10;
+  z-index: 1100;
   padding: 0;
 }
 
@@ -1077,6 +1077,329 @@ svg text {
     bottom: 5px;
     left: 5px;
     max-width: calc(100vw - 10px);
+  }
+}
+
+/* ==========================================================================
+   NOTIFICATION SYSTEM
+   ========================================================================== */
+
+/* Toast Notification Container */
+.notification-toast-container {
+  position: fixed;
+  top: 80px; /* Below navbar */
+  right: 20px;
+  z-index: 2000;
+  pointer-events: none;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Toast Notification */
+.notification-toast {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  pointer-events: auto;
+  transform: translateX(calc(100% + 20px));
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  min-width: 300px;
+  position: relative;
+}
+
+.notification-toast.show {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.notification-toast.dismissing {
+  transform: translateX(calc(100% + 20px));
+  opacity: 0;
+}
+
+/* Toast Content */
+.notification-toast-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.notification-toast-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.notification-toast-message {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #374151;
+  font-weight: 500;
+}
+
+.notification-toast-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  color: #9CA3AF;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.notification-toast-close:hover {
+  color: #374151;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Toast Types */
+.notification-toast-success .notification-toast-icon {
+  background: #10B981;
+}
+
+.notification-toast-error .notification-toast-icon {
+  background: #EF4444;
+}
+
+.notification-toast-warning .notification-toast-icon {
+  background: #F59E0B;
+}
+
+.notification-toast-info .notification-toast-icon {
+  background: #3B82F6;
+}
+
+/* Modal Overlay */
+.notification-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 2001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.notification-modal-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Modal */
+.notification-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2), 0 8px 16px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  width: 100%;
+  transform: scale(1);
+  transition: transform 0.2s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.notification-modal-overlay.hidden .notification-modal {
+  transform: scale(0.95);
+}
+
+.notification-modal-content {
+  padding: 24px;
+}
+
+.notification-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.notification-modal-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.notification-modal-icon-warning,
+.notification-modal-icon-danger {
+  background: #F59E0B;
+}
+
+.notification-modal-icon-info {
+  background: #3B82F6;
+}
+
+.notification-modal-icon-question {
+  background: #6B7280;
+}
+
+.notification-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.notification-modal-message {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #6B7280;
+  margin-bottom: 24px;
+}
+
+.notification-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.notification-modal-button {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  min-width: 80px;
+}
+
+.notification-modal-button:focus {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+}
+
+.notification-modal-button-cancel {
+  background: #F9FAFB;
+  color: #374151;
+  border-color: #D1D5DB;
+}
+
+.notification-modal-button-cancel:hover {
+  background: #F3F4F6;
+  border-color: #9CA3AF;
+}
+
+.notification-modal-button-confirm {
+  background: #3B82F6;
+  color: #ffffff;
+}
+
+.notification-modal-button-confirm:hover {
+  background: #2563EB;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 480px) {
+  .notification-toast-container {
+    left: 20px;
+    right: 20px;
+    max-width: none;
+  }
+
+  .notification-toast {
+    min-width: 0;
+  }
+
+  .notification-modal {
+    margin: 0;
+    border-radius: 12px;
+  }
+
+  .notification-modal-content {
+    padding: 20px;
+  }
+
+  .notification-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .notification-modal-button {
+    width: 100%;
+  }
+}
+
+/* Accessibility - Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .notification-toast,
+  .notification-modal-overlay,
+  .notification-modal {
+    transition: none !important;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .notification-toast {
+    background: #1F2937;
+    color: #F9FAFB;
+  }
+
+  .notification-toast-message {
+    color: #F9FAFB;
+  }
+
+  .notification-toast-close {
+    color: #9CA3AF;
+  }
+
+  .notification-toast-close:hover {
+    color: #F9FAFB;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .notification-modal {
+    background: #1F2937;
+  }
+
+  .notification-modal-title {
+    color: #F9FAFB;
+  }
+
+  .notification-modal-message {
+    color: #D1D5DB;
+  }
+
+  .notification-modal-button-cancel {
+    background: #374151;
+    color: #F9FAFB;
+    border-color: #4B5563;
+  }
+
+  .notification-modal-button-cancel:hover {
+    background: #4B5563;
   }
 }
 
