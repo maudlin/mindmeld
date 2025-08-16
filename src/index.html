@@ -55,7 +55,7 @@
         </li>
       </ul>
       <!-- Hidden elements for kebab menu functionality -->
-      <div style="display: none;">
+      <div style="display: none">
         <button id="import-from-file-button">Import from File</button>
         <button id="export-to-file-button">Export to File</button>
         <button id="export-to-clipboard-button">Copy to Clipboard</button>
@@ -106,7 +106,9 @@
           tabindex="0"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 7a1.75 1.75 0 110-3.5A1.75 1.75 0 0112 7zm0 6a1.75 1.75 0 110-3.5A1.75 1.75 0 0112 13zm0 6a1.75 1.75 0 110-3.5A1.75 1.75 0 0112 19z"/>
+            <path
+              d="M12 7a1.75 1.75 0 110-3.5A1.75 1.75 0 0112 7zm0 6a1.75 1.75 0 110-3.5A1.75 1.75 0 0112 13zm0 6a1.75 1.75 0 110-3.5A1.75 1.75 0 0112 19z"
+            />
           </svg>
         </button>
       </div>
@@ -121,10 +123,15 @@
       aria-hidden="true"
     >
       <div class="kebab-menu-handle" aria-hidden="true"></div>
-      
+
       <div class="kebab-menu-group">
         <div class="kebab-menu-subtitle">Canvas</div>
-        <div class="kebab-menu-item" role="menuitem" data-action="clear-canvas" tabindex="0">
+        <div
+          class="kebab-menu-item"
+          role="menuitem"
+          data-action="clear-canvas"
+          tabindex="0"
+        >
           <span>Clear Canvas</span>
           <span class="kebab-menu-kbd">Del</span>
         </div>
@@ -133,18 +140,38 @@
 
       <div class="kebab-menu-group">
         <div class="kebab-menu-subtitle">File</div>
-        <div class="kebab-menu-item" role="menuitem" data-action="import-file" tabindex="0">
+        <div
+          class="kebab-menu-item"
+          role="menuitem"
+          data-action="import-file"
+          tabindex="0"
+        >
           <span>Import from File</span>
           <span class="kebab-menu-kbd">Ctrl/Cmd I</span>
         </div>
-        <div class="kebab-menu-item" role="menuitem" data-action="export-file" tabindex="0">
+        <div
+          class="kebab-menu-item"
+          role="menuitem"
+          data-action="export-file"
+          tabindex="0"
+        >
           <span>Export to File</span>
           <span class="kebab-menu-kbd">Ctrl/Cmd E</span>
         </div>
-        <div class="kebab-menu-item" role="menuitem" data-action="copy-clipboard" tabindex="0">
+        <div
+          class="kebab-menu-item"
+          role="menuitem"
+          data-action="copy-clipboard"
+          tabindex="0"
+        >
           <span>Copy to Clipboard</span>
         </div>
-        <div class="kebab-menu-item" role="menuitem" data-action="paste-clipboard" tabindex="0">
+        <div
+          class="kebab-menu-item"
+          role="menuitem"
+          data-action="paste-clipboard"
+          tabindex="0"
+        >
           <span>Paste from Clipboard</span>
         </div>
       </div>
@@ -152,7 +179,12 @@
 
       <div class="kebab-menu-group">
         <div class="kebab-menu-subtitle">Templates</div>
-        <div class="kebab-menu-item" role="menuitem" data-action="change-template" tabindex="0">
+        <div
+          class="kebab-menu-item"
+          role="menuitem"
+          data-action="change-template"
+          tabindex="0"
+        >
           <span>Change Template</span>
         </div>
       </div>

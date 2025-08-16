@@ -508,16 +508,24 @@ body.dragging * {
   width: 280px;
   background: #fbfbfb;
   border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(18, 20, 22, 0.14), 0 2px 8px rgba(18, 20, 22, 0.08);
+  box-shadow:
+    0 10px 30px rgba(18, 20, 22, 0.14),
+    0 2px 8px rgba(18, 20, 22, 0.08);
   padding: 6px;
   opacity: 0;
   transform: translateY(-6px) scale(0.98);
   pointer-events: none;
-  transition: opacity 0.16s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.16s cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition:
+    opacity 0.16s cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 0.16s cubic-bezier(0.22, 0.61, 0.36, 1);
   max-height: calc(100vh - 48px);
   overflow: auto;
   z-index: 1001;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
 }
 
 .kebab-context-menu.open {
@@ -598,11 +606,11 @@ body.dragging * {
     transform: translateY(12px);
     max-height: 85vh;
   }
-  
+
   .kebab-context-menu.open {
     transform: translateY(0);
   }
-  
+
   .kebab-menu-handle {
     display: block;
   }
@@ -852,7 +860,6 @@ svg text {
   pointer-events: none;
 }
 
-
 /* ==========================================================================
    USER PREFERENCE SUPPORT & ACCESSIBILITY FEATURES
    ========================================================================== */
@@ -1000,7 +1007,6 @@ svg text {
   }
 }
 
-
 /* Optimize for high-DPI displays */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
   .note {
@@ -1030,7 +1036,6 @@ svg text {
     scroll-behavior: auto !important;
   }
 }
-
 
 /* ==========================================================================
    ADAPTIVE TOOLTIPS & HELP SYSTEM
@@ -1101,13 +1106,19 @@ svg text {
 .notification-toast {
   background: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.15),
+    0 4px 10px rgba(0, 0, 0, 0.1);
   padding: 16px;
   pointer-events: auto;
   transform: translateX(calc(100% + 20px));
   opacity: 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   min-width: 300px;
   position: relative;
 }
@@ -1158,11 +1169,13 @@ svg text {
   border: none;
   font-size: 18px;
   line-height: 1;
-  color: #9CA3AF;
+  color: #9ca3af;
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
-  transition: color 0.2s ease, background-color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .notification-toast-close:hover {
@@ -1172,19 +1185,19 @@ svg text {
 
 /* Toast Types */
 .notification-toast-success .notification-toast-icon {
-  background: #10B981;
+  background: #10b981;
 }
 
 .notification-toast-error .notification-toast-icon {
-  background: #EF4444;
+  background: #ef4444;
 }
 
 .notification-toast-warning .notification-toast-icon {
-  background: #F59E0B;
+  background: #f59e0b;
 }
 
 .notification-toast-info .notification-toast-icon {
-  background: #3B82F6;
+  background: #3b82f6;
 }
 
 /* Modal Overlay */
@@ -1214,12 +1227,18 @@ svg text {
 .notification-modal {
   background: #ffffff;
   border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2), 0 8px 16px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.2),
+    0 8px 16px rgba(0, 0, 0, 0.1);
   max-width: 400px;
   width: 100%;
   transform: scale(1);
   transition: transform 0.2s ease;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
 }
 
 .notification-modal-overlay.hidden .notification-modal {
@@ -1252,15 +1271,15 @@ svg text {
 
 .notification-modal-icon-warning,
 .notification-modal-icon-danger {
-  background: #F59E0B;
+  background: #f59e0b;
 }
 
 .notification-modal-icon-info {
-  background: #3B82F6;
+  background: #3b82f6;
 }
 
 .notification-modal-icon-question {
-  background: #6B7280;
+  background: #6b7280;
 }
 
 .notification-modal-title {
@@ -1274,7 +1293,7 @@ svg text {
 .notification-modal-message {
   font-size: 14px;
   line-height: 1.5;
-  color: #6B7280;
+  color: #6b7280;
   margin-bottom: 24px;
 }
 
@@ -1289,7 +1308,11 @@ svg text {
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   cursor: pointer;
   transition: all 0.2s ease;
   border: 1px solid transparent;
@@ -1297,28 +1320,28 @@ svg text {
 }
 
 .notification-modal-button:focus {
-  outline: 2px solid #3B82F6;
+  outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
 
 .notification-modal-button-cancel {
-  background: #F9FAFB;
+  background: #f9fafb;
   color: #374151;
-  border-color: #D1D5DB;
+  border-color: #d1d5db;
 }
 
 .notification-modal-button-cancel:hover {
-  background: #F3F4F6;
-  border-color: #9CA3AF;
+  background: #f3f4f6;
+  border-color: #9ca3af;
 }
 
 .notification-modal-button-confirm {
-  background: #3B82F6;
+  background: #3b82f6;
   color: #ffffff;
 }
 
 .notification-modal-button-confirm:hover {
-  background: #2563EB;
+  background: #2563eb;
 }
 
 /* Mobile Responsiveness */
@@ -1363,43 +1386,43 @@ svg text {
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
   .notification-toast {
-    background: #1F2937;
-    color: #F9FAFB;
+    background: #1f2937;
+    color: #f9fafb;
   }
 
   .notification-toast-message {
-    color: #F9FAFB;
+    color: #f9fafb;
   }
 
   .notification-toast-close {
-    color: #9CA3AF;
+    color: #9ca3af;
   }
 
   .notification-toast-close:hover {
-    color: #F9FAFB;
+    color: #f9fafb;
     background-color: rgba(255, 255, 255, 0.1);
   }
 
   .notification-modal {
-    background: #1F2937;
+    background: #1f2937;
   }
 
   .notification-modal-title {
-    color: #F9FAFB;
+    color: #f9fafb;
   }
 
   .notification-modal-message {
-    color: #D1D5DB;
+    color: #d1d5db;
   }
 
   .notification-modal-button-cancel {
     background: #374151;
-    color: #F9FAFB;
-    border-color: #4B5563;
+    color: #f9fafb;
+    border-color: #4b5563;
   }
 
   .notification-modal-button-cancel:hover {
-    background: #4B5563;
+    background: #4b5563;
   }
 }
 
