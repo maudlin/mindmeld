@@ -222,15 +222,6 @@ export class KebabMenu {
       case 'change-template':
         this.dispatchAction('change-template');
         break;
-      case 'instructions':
-        this.dispatchAction('show-instructions');
-        break;
-      case 'about':
-        this.dispatchAction('show-about');
-        break;
-      case 'changelog':
-        this.dispatchAction('show-changelog');
-        break;
       default:
         console.warn(`Unknown kebab menu action: ${action}`);
     }

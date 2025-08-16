@@ -16,6 +16,16 @@ export class KebabMenuEvents {
     document.addEventListener('kebab-menu-action', (e) => {
       this.handleAction(e.detail.action);
     });
+
+    // Handle navbar instructions button
+    const instructionsButton = document.getElementById(
+      'show-instructions-button',
+    );
+    if (instructionsButton) {
+      instructionsButton.addEventListener('click', () => {
+        this.showInstructions();
+      });
+    }
   }
 
   /**
@@ -41,15 +51,6 @@ export class KebabMenuEvents {
         break;
       case 'change-template':
         this.changeTemplate();
-        break;
-      case 'show-instructions':
-        this.showInstructions();
-        break;
-      case 'show-about':
-        this.showAbout();
-        break;
-      case 'show-changelog':
-        this.showChangelog();
         break;
       default:
         console.warn(`Unhandled kebab menu action: ${action}`);
@@ -131,19 +132,5 @@ export class KebabMenuEvents {
     if (overlay) {
       overlay.classList.remove('hidden');
     }
-  }
-
-  /**
-   * Show about page
-   */
-  showAbout() {
-    window.open('about.html', '_blank');
-  }
-
-  /**
-   * Show changelog page
-   */
-  showChangelog() {
-    window.open('changelog.html', '_blank');
   }
 }

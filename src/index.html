@@ -16,6 +16,10 @@
       rel="stylesheet"
     />
     <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
       rel="icon"
       type="image/png"
       href="img/icon16.png"
@@ -44,37 +48,21 @@
             <li>
               <a href="changelog.html">What's New</a>
             </li>
-          </ul>
-        </li>
-        <li class="menu-item">
-          <button class="menu-button">Import/Export</button>
-          <ul class="dropdown">
             <li>
-              <button id="import-from-file-button">Import from File</button>
-            </li>
-            <li><button id="export-to-file-button">Export to File</button></li>
-            <li>
-              <button id="export-to-clipboard-button">Copy to Clipboard</button>
-            </li>
-            <li>
-              <button id="import-from-clipboard-button">
-                Paste from Clipboard
-              </button>
+              <button id="show-instructions-button">Instructions</button>
             </li>
           </ul>
-        </li>
-        <li class="menu-item">
-          <button class="menu-button">Canvas Style</button>
-          <ul class="dropdown" id="canvas-style-dropdown">
-            <!-- <li><button>Standard Canvas</button></li> -->
-          </ul>
-        </li>
-        <li class="menu-item">
-          <button class="menu-button" id="clear-canvas-button">
-            Clear Canvas
-          </button>
         </li>
       </ul>
+      <!-- Hidden elements for kebab menu functionality -->
+      <div style="display: none;">
+        <button id="import-from-file-button">Import from File</button>
+        <button id="export-to-file-button">Export to File</button>
+        <button id="export-to-clipboard-button">Copy to Clipboard</button>
+        <button id="import-from-clipboard-button">Paste from Clipboard</button>
+        <button id="clear-canvas-button">Clear Canvas</button>
+        <div id="canvas-style-dropdown"></div>
+      </div>
     </nav>
 
     <!-- Color Picker UI - Fixed top-center position -->
@@ -166,20 +154,6 @@
         <div class="kebab-menu-subtitle">Templates</div>
         <div class="kebab-menu-item" role="menuitem" data-action="change-template">
           <span>Change Template</span>
-        </div>
-      </div>
-      <div class="kebab-menu-divider"></div>
-
-      <div class="kebab-menu-group">
-        <div class="kebab-menu-subtitle">Help</div>
-        <div class="kebab-menu-item" role="menuitem" data-action="instructions">
-          <span>Instructions</span>
-        </div>
-        <div class="kebab-menu-item" role="menuitem" data-action="about">
-          <span>About</span>
-        </div>
-        <div class="kebab-menu-item" role="menuitem" data-action="changelog">
-          <span>Changelog</span>
         </div>
       </div>
     </div>

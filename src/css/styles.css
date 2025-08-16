@@ -356,18 +356,29 @@ body.dragging * {
   pointer-events: auto;
 }
 
-/* Color Picker Container - Expanded to accommodate glow effects and kebab button */
+/* Color Picker Container */
 .color-picker-palette {
   position: relative;
-  width: 180px;
-  height: 41px;
-  background: rgba(217, 217, 217, 0);
+  width: 174px;
+  height: 37px;
+  background: rgba(255, 255, 255, 0.582);
   border: 1px solid rgba(103, 103, 103, 0.25);
   border-radius: 20px;
   box-shadow: 2px 2px 4px 0px rgba(0, 0, 0, 0.25);
   box-sizing: border-box;
   display: flex;
   align-items: center;
+}
+
+/* Separator line between colors and kebab menu */
+.color-picker-palette::after {
+  content: '';
+  position: absolute;
+  left: 135px;
+  top: 10px;
+  width: 1px;
+  height: 16px;
+  background: rgba(177, 177, 177, 0.4);
 }
 
 /* Color Swatches - Normalized dimensions with proper spacing for glow effects */
@@ -455,40 +466,31 @@ body.dragging * {
   outline: none;
 }
 
-/* Kebab Menu Button */
+/* Kebab Menu Button - Matches color swatch styling exactly */
 .kebab-menu-button {
   position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
   width: 26px;
   height: 26px;
-  border: none;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.95);
   cursor: pointer;
+  transition: box-shadow 0.2s ease;
+  top: 5px;
+  left: 140px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .kebab-menu-button svg {
-  width: 14px;
-  height: 14px;
-  fill: rgba(103, 103, 103, 0.8);
-  transition: fill 0.2s ease;
+  width: 12px;
+  height: 12px;
+  fill: rgba(124, 124, 124, 0.6);
 }
 
 .kebab-menu-button:hover {
-  background: rgba(255, 255, 255, 1);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  transform: translateY(-50%) scale(1.05);
-}
-
-.kebab-menu-button:hover svg {
-  fill: rgba(103, 103, 103, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .kebab-menu-button:focus {
@@ -500,15 +502,11 @@ body.dragging * {
   outline: none;
 }
 
-.kebab-menu-button:active {
-  transform: translateY(-50%) scale(0.95);
-}
-
 /* Kebab Context Menu */
 .kebab-context-menu {
   position: absolute;
   width: 280px;
-  background: #ffffff;
+  background: #fbfbfb;
   border-radius: 14px;
   box-shadow: 0 10px 30px rgba(18, 20, 22, 0.14), 0 2px 8px rgba(18, 20, 22, 0.08);
   padding: 6px;
@@ -519,7 +517,7 @@ body.dragging * {
   max-height: calc(100vh - 48px);
   overflow: auto;
   z-index: 1001;
-  font-family: var(--font-family);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .kebab-context-menu.open {

@@ -12,12 +12,17 @@ export function setupUI(elements) {
 }
 
 function populateCanvasStyleDropdown(elements) {
-  canvasManager.getAvailableModules().forEach((moduleName) => {
-    const button = createDropdownButton(moduleName, () =>
-      switchCanvas(moduleName, elements),
-    );
-    elements.canvasStyleDropdown.appendChild(button);
-  });
+  const dropdown =
+    elements.canvasStyleDropdown ||
+    document.getElementById('canvas-style-dropdown');
+  if (dropdown) {
+    canvasManager.getAvailableModules().forEach((moduleName) => {
+      const button = createDropdownButton(moduleName, () =>
+        switchCanvas(moduleName, elements),
+      );
+      dropdown.appendChild(button);
+    });
+  }
 }
 
 function createDropdownButton(text, onClick) {
@@ -58,13 +63,15 @@ function switchCanvas(moduleName, elements) {
 
 function setupExportImport(menu, canvas) {
   // Export to file button
-  const exportToFileButton = menu.querySelector('#export-to-file-button');
+  const exportToFileButton = document.getElementById('export-to-file-button');
   if (exportToFileButton) {
     exportToFileButton.addEventListener('click', handleExportToFile);
   }
 
   // Import from file button
-  const importFromFileButton = menu.querySelector('#import-from-file-button');
+  const importFromFileButton = document.getElementById(
+    'import-from-file-button',
+  );
   if (importFromFileButton) {
     importFromFileButton.addEventListener('click', () =>
       handleImportFromFile(canvas),
@@ -72,16 +79,16 @@ function setupExportImport(menu, canvas) {
   }
 
   // Export to clipboard button
-  const exportToClipboardButton = menu.querySelector(
-    '#export-to-clipboard-button',
+  const exportToClipboardButton = document.getElementById(
+    'export-to-clipboard-button',
   );
   if (exportToClipboardButton) {
     exportToClipboardButton.addEventListener('click', handleExportToClipboard);
   }
 
   // Import from clipboard button
-  const importFromClipboardButton = menu.querySelector(
-    '#import-from-clipboard-button',
+  const importFromClipboardButton = document.getElementById(
+    'import-from-clipboard-button',
   );
   if (importFromClipboardButton) {
     importFromClipboardButton.addEventListener('click', () =>
@@ -155,7 +162,7 @@ function handleImportFromClipboard(canvas) {
 }
 
 function setupClearCanvas(menu, canvas) {
-  const clearButton = menu.querySelector('#clear-canvas-button');
+  const clearButton = document.getElementById('clear-canvas-button');
   if (clearButton) {
     clearButton.addEventListener('click', () => {
       if (confirm('Are you sure you want to clear the canvas?')) {
