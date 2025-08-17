@@ -66,9 +66,6 @@ export class NoteColorApplication {
   static applyColorToNewNote(noteId) {
     // Skip color application during note restoration to preserve stored colors
     if (window.noteRestorationInProgress) {
-      console.log(
-        `Skipping color application for note ${noteId} during restoration`,
-      );
       return;
     }
 

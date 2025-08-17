@@ -7,13 +7,11 @@
 
 import { BaseBootstrap } from './BaseBootstrap.js';
 import { eventBus } from '../eventBus.js';
-import { initializeDataStore } from '../../data/dataStore.js';
 import {
-  loadStateFromStorage,
-  saveStateToStorage,
-  initializeStateManagement,
-  shouldRestoreState,
-} from '../../data/storageManager.js';
+  initializeDataStore,
+  updateNotesAndConnections,
+} from '../../data/dataStore.js';
+import { appState } from '../../data/observableState.js';
 import { log } from '../../utils/utils.js';
 
 export class DataBootstrap extends BaseBootstrap {
@@ -63,7 +61,14 @@ export class DataBootstrap extends BaseBootstrap {
 
   async initializeStateManagement() {
     try {
-      initializeStateManagement();
+      // Set up beforeunload event for final save
+      if (typeof window !== 'undefined') {
+        window.addEventListener('beforeunload', () => {
+          // observableState automatically saves, but ensure any pending saves complete
+          appState.saveToLocalStorage();
+        });
+      }
+
       log('DataBootstrap: State management initialized');
     } catch (error) {
       console.error('DataBootstrap: State management setup failed:', error);
@@ -73,22 +78,38 @@ export class DataBootstrap extends BaseBootstrap {
   }
 
   setupPersistence() {
-    // Set up automatic state saving before page unload
-    window.addEventListener('beforeunload', saveStateToStorage);
+    // observableState handles automatic persistence, no additional setup needed
     log('DataBootstrap: Persistence handlers configured');
   }
 
-  async restoreState(canvas) {
+  async restoreState() {
     if (this.stateRestored) {
       log('DataBootstrap: State already restored, skipping');
       return;
     }
 
     try {
-      if (shouldRestoreState()) {
-        loadStateFromStorage(canvas);
-        this.stateRestored = true;
-        log('DataBootstrap: State restored from storage');
+      // Check if we should restore state (has localStorage and current state is empty)
+      const currentState = appState.getState();
+      const hasStoredState = localStorage.getItem('mindmeld_state');
+
+      if (hasStoredState && currentState.notes.length === 0) {
+        // Load state from localStorage using observableState
+        const restored = appState.loadFromLocalStorage();
+
+        if (restored) {
+          const loadedState = appState.getState();
+          console.log('DataBootstrap: Loaded state from storage:', loadedState);
+          console.log('Loaded colorState:', loadedState.colorState);
+
+          // Apply the loaded state to the UI
+          updateNotesAndConnections(loadedState);
+
+          this.stateRestored = true;
+          log('DataBootstrap: State restored from storage');
+        } else {
+          log('DataBootstrap: Failed to load state from storage');
+        }
       } else {
         log('DataBootstrap: No state to restore or restoration disabled');
       }
@@ -103,7 +124,6 @@ export class DataBootstrap extends BaseBootstrap {
 
   async cleanup() {
     await super.cleanup();
-    window.removeEventListener('beforeunload', saveStateToStorage);
     this.stateRestored = false;
   }
 }

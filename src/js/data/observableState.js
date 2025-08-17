@@ -43,16 +43,12 @@ class ObservableState {
 
   saveToLocalStorage() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
-    console.log('State saved to localStorage', this.state);
-    console.log('Saved state string:', JSON.stringify(this.state));
   }
 
   loadFromLocalStorage() {
     const storedState = localStorage.getItem(STORAGE_KEY);
-    console.log('Raw localStorage content:', storedState);
     if (storedState) {
       const parsedState = JSON.parse(storedState);
-      console.log('Parsed state from localStorage:', parsedState);
 
       // Ensure colorState exists for backward compatibility
       if (!parsedState.colorState) {
@@ -63,16 +59,13 @@ class ObservableState {
       }
 
       this.state = parsedState;
-      console.log('State loaded and set in observableState', this.state);
       return true;
     }
-    console.log('No state found in localStorage');
     return false;
   }
 
   clearLocalStorage() {
     localStorage.removeItem(STORAGE_KEY);
-    console.log('Local storage cleared');
   }
 }
 
