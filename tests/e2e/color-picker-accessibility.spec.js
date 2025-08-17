@@ -177,7 +177,7 @@ test.describe('Color Picker - Accessibility', () => {
 
       // Verify the color was applied (visual confirmation)
       await expect(swatch).toHaveClass(/active/);
-      await expect(note).toHaveClass(new RegExp(`note-${color}`));
+      await expect(note).toHaveClass(new RegExp(`color-${color}`));
 
       // Small delay for any announcements
       await page.waitForTimeout(300);
