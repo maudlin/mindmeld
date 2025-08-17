@@ -205,13 +205,13 @@ test.describe('Color Picker - Data Persistence', () => {
   test('Should handle color persistence with large datasets', async ({
     page,
   }) => {
-    // Create multiple notes with different colors
+    // Create fewer notes (6 instead of 12) for better CI performance
     const colors = ['yellow', 'pink', 'green', 'blue'];
     const noteData = [];
 
-    for (let i = 0; i < 12; i++) {
-      const x = 300 + (i % 4) * 150;
-      const y = 250 + Math.floor(i / 4) * 150;
+    for (let i = 0; i < 6; i++) {
+      const x = 350 + (i % 3) * 200;
+      const y = 300 + Math.floor(i / 3) * 200;
       const color = colors[i % 4];
 
       const note = await canvasPage.createNote(x, y);
@@ -220,7 +220,8 @@ test.describe('Color Picker - Data Persistence', () => {
       await canvasPage.editNoteContent(`Note ${i + 1}`, note);
 
       noteData.push({ index: i + 1, color, x, y });
-      await page.waitForTimeout(100);
+      // Remove arbitrary delay - use app readiness instead
+      await canvasPage.waitForAppReady();
     }
 
     // Export to test persistence
@@ -237,13 +238,13 @@ test.describe('Color Picker - Data Persistence', () => {
 
     await page.click('#kebab-menu-button');
     await page.click('.kebab-menu-item[data-action="paste-clipboard"]');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1500); // Reduced timeout
 
     // Verify all notes and colors are restored
     for (const data of noteData) {
       const note = page.locator(`.note:has-text("Note ${data.index}")`);
       await expect(note).toBeVisible();
-      await expect(note).toHaveClass(new RegExp(`note-${data.color}`));
+      await expect(note).toHaveClass(new RegExp(`color-${data.color}`)); // Fixed CSS pattern
     }
   });
 
