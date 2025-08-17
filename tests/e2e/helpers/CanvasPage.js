@@ -29,6 +29,14 @@ export class CanvasPage {
       '.kebab-menu-item[data-action="change-template"]',
     );
     this.kebabMenuButton = page.locator('#kebab-menu-button');
+
+    // Color picker elements
+    this.colorPickerContainer = page.locator('#color-picker-container');
+    this.colorSwatches = page.locator('.color-swatch');
+    this.yellowSwatch = page.locator('.color-swatch[data-color="yellow"]');
+    this.pinkSwatch = page.locator('.color-swatch[data-color="pink"]');
+    this.greenSwatch = page.locator('.color-swatch[data-color="green"]');
+    this.blueSwatch = page.locator('.color-swatch[data-color="blue"]');
   }
 
   // Common application loading
@@ -661,6 +669,193 @@ export class CanvasPage {
       },
       { timeout: 10000 },
     );
+  }
+
+  // ========================================
+  // COLOR PICKER HELPER METHODS
+  // ========================================
+
+  /**
+   * Select a color from the color picker
+   * @param {string} color - Color name ('yellow', 'pink', 'green', 'blue')
+   */
+  async selectColor(color) {
+    const validColors = ['yellow', 'pink', 'green', 'blue'];
+    if (!validColors.includes(color)) {
+      throw new Error(
+        `Invalid color: ${color}. Valid colors: ${validColors.join(', ')}`,
+      );
+    }
+
+    const swatch = this.page.locator(`.color-swatch[data-color="${color}"]`);
+    await swatch.click();
+    await expect(swatch).toHaveClass(/active/);
+  }
+
+  /**
+   * Get the currently active color from the color picker
+   * @returns {string} The active color name
+   */
+  async getActiveColor() {
+    const activeSwatch = this.page.locator('.color-swatch.active');
+    const color = await activeSwatch.getAttribute('data-color');
+    return color;
+  }
+
+  /**
+   * Verify that the color picker is visible and has all swatches
+   */
+  async verifyColorPickerVisible() {
+    await expect(this.colorPickerContainer).toBeVisible();
+    await expect(this.colorSwatches).toHaveCount(4);
+    await expect(this.yellowSwatch).toBeVisible();
+    await expect(this.pinkSwatch).toBeVisible();
+    await expect(this.greenSwatch).toBeVisible();
+    await expect(this.blueSwatch).toBeVisible();
+  }
+
+  /**
+   * Verify that a note has a specific color
+   * @param {Locator} note - The note element
+   * @param {string} color - Expected color name
+   */
+  async verifyNoteColor(note, color) {
+    await expect(note).toHaveClass(new RegExp(`color-${color}`));
+  }
+
+  /**
+   * Create a note with a specific color
+   * @param {number} x - X coordinate
+   * @param {number} y - Y coordinate
+   * @param {string} color - Color name
+   * @returns {Locator} The created note
+   */
+  async createNoteWithColor(x, y, color) {
+    await this.selectColor(color);
+    const note = await this.createNote(x, y);
+    await this.verifyNoteColor(note, color);
+    return note;
+  }
+
+  /**
+   * Apply color to an existing note
+   * @param {Locator} note - The note element
+   * @param {string} color - Color to apply
+   */
+  async applyColorToNote(note, color) {
+    await this.selectNote(note);
+    await this.selectColor(color);
+    await this.verifyNoteColor(note, color);
+  }
+
+  /**
+   * Apply color to multiple selected notes
+   * @param {string} color - Color to apply
+   */
+  async applyColorToSelectedNotes(color) {
+    await this.selectColor(color);
+
+    // Verify all selected notes have the new color
+    const selectedNotes = await this.getSelectedNotes();
+    const count = await selectedNotes.count();
+
+    for (let i = 0; i < count; i++) {
+      const note = selectedNotes.nth(i);
+      await this.verifyNoteColor(note, color);
+    }
+  }
+
+  /**
+   * Navigate color picker using keyboard
+   * @param {string} direction - 'next', 'previous', 'first', 'last'
+   */
+  async navigateColorPicker(direction) {
+    switch (direction) {
+      case 'next':
+        await this.page.keyboard.press('ArrowRight');
+        break;
+      case 'previous':
+        await this.page.keyboard.press('ArrowLeft');
+        break;
+      case 'first':
+        await this.page.keyboard.press('Home');
+        break;
+      case 'last':
+        await this.page.keyboard.press('End');
+        break;
+      default:
+        throw new Error(`Invalid direction: ${direction}`);
+    }
+  }
+
+  /**
+   * Select color using keyboard
+   * @param {string} key - 'Enter' or 'Space'
+   */
+  async selectColorWithKeyboard(key = 'Enter') {
+    if (key === 'Enter') {
+      await this.page.keyboard.press('Enter');
+    } else if (key === 'Space') {
+      await this.page.keyboard.press('Space');
+    } else {
+      throw new Error(`Invalid key: ${key}. Use 'Enter' or 'Space'`);
+    }
+  }
+
+  /**
+   * Focus a specific color swatch
+   * @param {string} color - Color name to focus
+   */
+  async focusColorSwatch(color) {
+    const swatch = this.page.locator(`.color-swatch[data-color="${color}"]`);
+    await swatch.focus();
+    await expect(swatch).toBeFocused();
+  }
+
+  /**
+   * Verify color picker accessibility attributes
+   */
+  async verifyColorPickerAccessibility() {
+    const swatches = this.colorSwatches;
+    const count = await swatches.count();
+
+    for (let i = 0; i < count; i++) {
+      const swatch = swatches.nth(i);
+
+      // Verify ARIA attributes
+      await expect(swatch).toHaveAttribute('role', 'button');
+      await expect(swatch).toHaveAttribute('tabindex', '0');
+
+      // Verify aria-label exists and describes the color
+      const ariaLabel = await swatch.getAttribute('aria-label');
+      expect(ariaLabel).not.toBeNull();
+      expect(ariaLabel).toMatch(/select.*color/i);
+    }
+  }
+
+  /**
+   * Test color hover effects
+   * @param {string} color - Color to hover
+   */
+  async testColorHover(color) {
+    const swatch = this.page.locator(`.color-swatch[data-color="${color}"]`);
+
+    // Hover and verify hover state
+    await swatch.hover();
+    await expect(swatch).toHaveClass(/hover/);
+
+    // Move away and verify hover state is removed
+    await this.page.mouse.move(0, 0);
+    await expect(swatch).not.toHaveClass(/hover/);
+  }
+
+  /**
+   * Wait for color application to complete
+   * @param {string} color - Expected color
+   */
+  async waitForColorApplication(color) {
+    const swatch = this.page.locator(`.color-swatch[data-color="${color}"]`);
+    await expect(swatch).toHaveClass(/active/);
   }
 }
 
