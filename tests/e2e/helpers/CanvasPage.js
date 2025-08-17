@@ -828,7 +828,8 @@ export class CanvasPage {
 
       // Verify aria-label exists and describes the color
       const ariaLabel = swatch;
-      await expect(ariaLabel).toHaveAttribute('aria-label');
+      const ariaLabel = await swatch.getAttribute('aria-label');
+      expect(ariaLabel).not.toBeNull();
       expect(ariaLabel).toMatch(/select.*color/i);
     }
   }
