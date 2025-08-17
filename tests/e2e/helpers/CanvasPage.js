@@ -827,7 +827,6 @@ export class CanvasPage {
       await expect(swatch).toHaveAttribute('tabindex', '0');
 
       // Verify aria-label exists and describes the color
-      const ariaLabel = swatch;
       const ariaLabel = await swatch.getAttribute('aria-label');
       expect(ariaLabel).not.toBeNull();
       expect(ariaLabel).toMatch(/select.*color/i);

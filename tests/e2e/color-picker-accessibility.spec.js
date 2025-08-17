@@ -121,7 +121,6 @@ test.describe('Color Picker - Accessibility', () => {
       await expect(swatch).toHaveAttribute('tabindex', '0');
 
       // Should have aria-label describing the color
-      const ariaLabel = swatch;
       const ariaLabel = await swatch.getAttribute('aria-label');
       await expect(swatch).toHaveAttribute('aria-label');
       expect(ariaLabel).toMatch(/select.*color/i);
