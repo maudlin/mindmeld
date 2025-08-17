@@ -122,7 +122,8 @@ test.describe('Color Picker - Accessibility', () => {
 
       // Should have aria-label describing the color
       const ariaLabel = swatch;
-      await expect(ariaLabel).toHaveAttribute('aria-label');
+      const ariaLabel = await swatch.getAttribute('aria-label');
+      await expect(swatch).toHaveAttribute('aria-label');
       expect(ariaLabel).toMatch(/select.*color/i);
     }
   });
