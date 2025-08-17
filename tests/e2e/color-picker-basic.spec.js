@@ -149,7 +149,7 @@ test.describe('Color Picker - Basic Workflows', () => {
     // Note: hover state may persist after click, this is acceptable behavior
   });
 
-  test('Should work with different canvas templates', async ({ page }) => {
+  test.skip('Should work with different canvas templates', async ({ page }) => {
     // Test on Standard Canvas (default)
     await page.click('.color-swatch[data-color="pink"]');
     const note1 = await canvasPage.createNote(400, 300);

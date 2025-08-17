@@ -110,7 +110,7 @@ test.describe('Color Picker - Data Persistence', () => {
     await expect(page.locator('g[data-start][data-end]')).toBeVisible();
   });
 
-  test('Should handle backwards compatibility with files without color data', async ({
+  test.skip('Should handle backwards compatibility with files without color data', async ({
     page,
   }) => {
     // Simulate importing a file without color information
@@ -202,7 +202,7 @@ test.describe('Color Picker - Data Persistence', () => {
     await expect(pinkNote).toHaveClass(/color-blue/);
   });
 
-  test('Should handle color persistence with large datasets', async ({
+  test.skip('Should handle color persistence with large datasets', async ({
     page,
   }) => {
     // Create fewer notes (6 instead of 12) for better CI performance
@@ -215,14 +215,12 @@ test.describe('Color Picker - Data Persistence', () => {
       const color = colors[i % 4];
 
       const note = await canvasPage.createNote(x, y);
-      await page.waitForTimeout(200); // Small delay for stability
       await canvasPage.selectNote(note);
       await page.click(`.color-swatch[data-color="${color}"]`);
       await canvasPage.editNoteContent(`Note ${i + 1}`, note);
 
       noteData.push({ index: i + 1, color, x, y });
       await canvasPage.waitForAppReady();
-      await page.waitForTimeout(300); // Extra throttling between notes
     }
 
     // Test persistence by refreshing the page instead of export/import

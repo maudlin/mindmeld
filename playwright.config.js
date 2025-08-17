@@ -52,5 +52,33 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    // CI Project: Fast, essential tests only for GitHub Actions
+    {
+      name: 'ci',
+      testMatch: [
+        'tests/e2e/basic.spec.js',
+        'tests/e2e/note-operations.spec.js',
+        'tests/e2e/menu-functionality.spec.js',
+        'tests/e2e/color-picker-basic.spec.js',
+      ],
+      grep: /@smoke|@critical/,
+      use: {
+        ...devices['Desktop Chrome'],
+        // Optimized for CI speed and stability
+        actionTimeout: 10000,
+        navigationTimeout: 20000,
+      },
+    },
+    // Dev Project: Full test suite for local development
+    {
+      name: 'dev',
+      testMatch: 'tests/e2e/**/*.spec.js',
+      use: {
+        ...devices['Desktop Chrome'],
+        // More relaxed timeouts for local testing
+        actionTimeout: 15000,
+        navigationTimeout: 30000,
+      },
+    },
   ],
 });

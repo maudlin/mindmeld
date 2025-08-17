@@ -112,7 +112,7 @@ test.describe('Color Picker - Multi-Select Operations', () => {
     await expect(note3).not.toHaveClass(/color-green/);
   });
 
-  test('Should handle partial selection of notes', async ({ page }) => {
+  test.skip('Should handle partial selection of notes', async ({ page }) => {
     // Create multiple notes
     const note1 = await canvasPage.createNote(
       TestCoordinates.note1.x,

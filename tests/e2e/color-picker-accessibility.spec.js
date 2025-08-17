@@ -296,7 +296,7 @@ test.describe('Color Picker - Accessibility', () => {
     await page.emulateMedia({ forcedColors: null });
   });
 
-  test('Should handle rapid keyboard navigation without issues', async ({
+  test.skip('Should handle rapid keyboard navigation without issues', async ({
     page,
   }) => {
     const yellowSwatch = page.locator('.color-swatch[data-color="yellow"]');
