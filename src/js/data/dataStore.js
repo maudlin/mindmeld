@@ -14,6 +14,14 @@ import { eventBus } from '../core/eventBus.js';
 
 export function addNote(note) {
   const currentNotes = appState.getState().notes;
+
+  // Prevent duplicate notes during state restoration
+  const existingNote = currentNotes.find((n) => n.id === note.id);
+  if (existingNote) {
+    log(`Note ${note.id} already exists in state, skipping duplicate addition`);
+    return note;
+  }
+
   appState.setState({ notes: [...currentNotes, note] });
   return note;
 }
@@ -41,15 +49,38 @@ export function getNotes() {
 
 export function updateNotesAndConnections(state) {
   const canvas = document.querySelector('#canvas');
+  console.log('updateNotesAndConnections called with state:', state);
 
-  // Clear existing notes and connections
+  // Clear existing notes and connections from DOM only
   NoteService.clearAllNotes();
   document.querySelectorAll('g[data-start]').forEach((conn) => conn.remove());
+
+  // Preserve the loaded colorState during restoration
+  const loadedColorState = state.colorState || {
+    currentColor: 'yellow',
+    notes: {},
+  };
+  console.log(
+    'Preserving loaded colorState during restoration:',
+    loadedColorState,
+  );
+
+  // Temporarily disable color application during restoration
+  console.log(
+    'Setting restoration mode to prevent automatic color application',
+  );
+  window.noteRestorationInProgress = true;
 
   // Create notes
   state.notes.forEach((noteData) => {
     NoteService.createNoteFromData(noteData, canvas);
   });
+
+  // Re-enable color application
+  console.log(
+    'Restoration mode disabled, colors will now be applied from stored state',
+  );
+  window.noteRestorationInProgress = false;
 
   // Create connections
   state.connections.forEach((conn) => {
@@ -58,6 +89,14 @@ export function updateNotesAndConnections(state) {
 
   // Update all connections
   ConnectionService.updateConnections();
+
+  // Ensure colorState is preserved in appState after all operations
+  const currentState = appState.getState();
+  appState.setState({
+    ...currentState,
+    colorState: loadedColorState,
+  });
+  console.log('ColorState restored after note creation:', loadedColorState);
 
   console.log(
     `Updated ${state.notes.length} notes and ${state.connections.length} connections`,
@@ -103,6 +142,9 @@ const debouncedUpdateConnection = debounce((startId, endId, type) => {
 }, 300);
 
 export function updateConnectionInDataStore(startId, endId, type) {
+  console.log('updateConnectionInDataStore called:', { startId, endId, type });
+  const currentState = appState.getState();
+  console.log('Current state before connection update:', currentState);
   log('Queueing connection update:', { startId, endId, type });
   debouncedUpdateConnection(startId, endId, type);
 }
@@ -259,16 +301,23 @@ export function clearAllNotesAndConnections() {
   // Remove all connections from the DOM
   document.querySelectorAll('g[data-start]').forEach((conn) => conn.remove());
 
-  // Clear the state with colorState included
+  // Get current state to preserve colorState during restoration
+  const currentState = appState.getState();
+  console.log(
+    'Clearing notes/connections, preserving existing colorState:',
+    currentState.colorState,
+  );
+
+  // Clear notes and connections but preserve colorState if it exists
   appState.setState({
     notes: [],
     connections: [],
     zoomLevel: 5,
-    colorState: {
+    colorState: currentState.colorState || {
       currentColor: 'yellow',
       notes: {},
     },
   });
 
-  console.log('All notes and connections cleared');
+  console.log('All notes and connections cleared, colorState preserved');
 }

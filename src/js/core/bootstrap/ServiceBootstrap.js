@@ -75,8 +75,14 @@ export class ServiceBootstrap extends BaseBootstrap {
 
   async initializeColorServices() {
     try {
+      console.log('ServiceBootstrap: Starting color services initialization');
+      console.log('ColorPickerEvents available:', typeof ColorPickerEvents);
+
       ColorPickerEvents.initialize();
+      console.log('ServiceBootstrap: ColorPickerEvents initialized');
+
       NoteColorApplication.initialize();
+      console.log('ServiceBootstrap: NoteColorApplication initialized');
 
       log('ServiceBootstrap: Color services initialized');
     } catch (error) {
@@ -84,6 +90,7 @@ export class ServiceBootstrap extends BaseBootstrap {
         'ServiceBootstrap: Color service initialization failed:',
         error,
       );
+      console.error('Error details:', error.message, error.stack);
       // Color services are not critical - continue without them
       log('ServiceBootstrap: Continuing without color services');
     }

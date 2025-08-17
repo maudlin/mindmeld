@@ -35,6 +35,7 @@ export class NoteColorApplication {
 
     // Apply colors when notes are imported/loaded
     eventBus.on('notes.loaded', () => {
+      console.log('NoteColorApplication: Received notes.loaded event');
       this.applyColorsToAllNotes();
     });
 
@@ -63,6 +64,14 @@ export class NoteColorApplication {
    * @param {string} noteId - Note ID
    */
   static applyColorToNewNote(noteId) {
+    // Skip color application during note restoration to preserve stored colors
+    if (window.noteRestorationInProgress) {
+      console.log(
+        `Skipping color application for note ${noteId} during restoration`,
+      );
+      return;
+    }
+
     const currentColor = ColorService.getCurrentColor();
     const noteElement = document.getElementById(noteId);
 
@@ -155,8 +164,12 @@ export class NoteColorApplication {
    * Apply colors to all existing notes (used on load/import)
    */
   static applyColorsToAllNotes() {
+    console.log('NoteColorApplication.applyColorsToAllNotes called');
     const allNotes = document.querySelectorAll('.note');
     const allNoteColors = ColorService.getAllNoteColors();
+
+    console.log('Found notes for color application:', allNotes.length);
+    console.log('Available note colors:', allNoteColors);
 
     allNotes.forEach((noteElement) => {
       const noteId = noteElement.id;
@@ -164,6 +177,7 @@ export class NoteColorApplication {
       const noteColor =
         // eslint-disable-next-line security/detect-object-injection
         allNoteColors[noteId]?.colorScheme || ColorService.getCurrentColor();
+      console.log(`Applying color ${noteColor} to note ${noteId}`);
       this.applyColorClassesToNote(noteElement, noteColor);
     });
 

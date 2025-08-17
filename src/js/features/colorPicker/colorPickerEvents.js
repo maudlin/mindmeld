@@ -32,6 +32,10 @@ export class ColorPickerEvents {
    */
   static setupColorSwatchEvents() {
     const swatches = document.querySelectorAll('.color-swatch');
+    console.log(
+      'ColorPickerEvents.setupColorSwatchEvents - found swatches:',
+      swatches.length,
+    );
 
     swatches.forEach((swatch) => {
       // Click event
@@ -74,8 +78,10 @@ export class ColorPickerEvents {
    * @param {Event} event - Click or touch event
    */
   static handleColorSelection(event) {
+    console.log('ColorPickerEvents.handleColorSelection called', event);
     const swatch = event.target;
     const color = swatch.getAttribute('data-color');
+    console.log('Selected color:', color, 'from swatch:', swatch);
 
     if (!color) {
       log('No color found on swatch');
@@ -86,6 +92,7 @@ export class ColorPickerEvents {
     this.updateActiveColorSwatch(color);
 
     // Apply color logic based on current state
+    console.log('Calling ColorService.applyColorToSelectedNotes with:', color);
     ColorService.applyColorToSelectedNotes(color);
 
     // Emit selection event

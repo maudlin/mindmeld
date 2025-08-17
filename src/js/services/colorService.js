@@ -63,6 +63,11 @@ export class ColorService {
 
     const ids = Array.isArray(noteIds) ? noteIds : [noteIds];
     const currentState = appState.getState();
+    console.log(
+      'ColorService.setNoteColor - current state before update:',
+      currentState,
+    );
+
     // Backward compatibility: ensure colorState exists
     const currentColorState = currentState.colorState || {
       currentColor: 'yellow',
@@ -75,12 +80,21 @@ export class ColorService {
       updatedNoteColors[noteId] = { colorScheme: color };
     });
 
-    appState.setState({
+    const newState = {
       colorState: {
         ...currentColorState,
         notes: updatedNoteColors,
       },
-    });
+    };
+
+    console.log('ColorService.setNoteColor - setting new state:', newState);
+    appState.setState(newState);
+
+    const stateAfterUpdate = appState.getState();
+    console.log(
+      'ColorService.setNoteColor - state after update:',
+      stateAfterUpdate,
+    );
 
     eventBus.emit('note.color.changed', { noteIds: ids, color });
     log(`Color ${color} applied to notes:`, ids);
@@ -135,14 +149,24 @@ export class ColorService {
    * @param {string} color - Color scheme name
    */
   static applyColorToSelectedNotes(color) {
+    console.log(
+      'ColorService.applyColorToSelectedNotes called with color:',
+      color,
+    );
     const selectedNotes = document.querySelectorAll('.note.selected');
+    console.log('Selected notes found:', selectedNotes.length, selectedNotes);
     const selectedIds = Array.from(selectedNotes).map((note) => note.id);
+    console.log('Selected note IDs:', selectedIds);
 
     if (selectedIds.length > 0) {
+      console.log('Calling setNoteColor for selected notes');
       this.setNoteColor(selectedIds, color);
+    } else {
+      console.log('No notes selected, only setting current color');
     }
 
     // Also set as current color for new notes
+    console.log('Setting current color to:', color);
     this.setCurrentColor(color);
   }
 
