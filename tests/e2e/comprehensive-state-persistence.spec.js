@@ -46,7 +46,9 @@ test.describe('Comprehensive State Persistence', () => {
     await note2Content.fill('Test Note 2');
 
     const note3 = await canvasPage.createNote(400, 350);
-    // Note3 should remain default yellow
+    await canvasPage.selectNote(note3);
+    await page.click('.color-swatch[data-color="yellow"]');
+    await expect(note3).toHaveClass(/color-yellow/);
 
     // Add content to note3
     const note3Content = note3.locator('.note-content');
@@ -55,10 +57,16 @@ test.describe('Comprehensive State Persistence', () => {
 
     // Step 2: Create connections between notes
     // Connect note1 to note2
-    await canvasPage.dragConnection(note1, note2);
+    await canvasPage.connectNotes(note1, note2);
+
+    // Wait for first connection to be processed
+    await page.waitForTimeout(800);
 
     // Connect note2 to note3
-    await canvasPage.dragConnection(note2, note3);
+    await canvasPage.connectNotes(note2, note3);
+
+    // Wait for second connection to be processed
+    await page.waitForTimeout(800);
 
     // Verify connections exist
     const connections = page.locator('g[data-start]');
