@@ -15,6 +15,8 @@ import { NoteColorApplication } from '../../features/note/noteColorApplication.j
 import { KebabMenu } from '../../features/kebabMenu/kebabMenu.js';
 import { KebabMenuEvents } from '../../features/kebabMenu/kebabMenuEvents.js';
 import { notificationManager } from '../../services/notificationManager.js';
+import { ZoomStateService } from '../../services/zoomStateService.js';
+import { CanvasStateService } from '../../services/canvasStateService.js';
 import { log } from '../../utils/utils.js';
 
 export class ServiceBootstrap extends BaseBootstrap {
@@ -28,6 +30,7 @@ export class ServiceBootstrap extends BaseBootstrap {
     await this.initializeNoteServices();
     await this.initializeConnectionServices();
     await this.initializeColorServices();
+    await this.initializeStateServices();
     await this.initializeMenuServices();
 
     return {
@@ -35,6 +38,7 @@ export class ServiceBootstrap extends BaseBootstrap {
       noteServiceReady: true,
       connectionServiceReady: true,
       colorServicesReady: true,
+      stateServicesReady: true,
       menuServicesReady: true,
     };
   }
@@ -85,6 +89,21 @@ export class ServiceBootstrap extends BaseBootstrap {
       );
       // Color services are not critical - continue without them
       log('ServiceBootstrap: Continuing without color services');
+    }
+  }
+
+  async initializeStateServices() {
+    try {
+      ZoomStateService.initialize();
+      CanvasStateService.initialize();
+      log('ServiceBootstrap: State services initialized');
+    } catch (error) {
+      console.error(
+        'ServiceBootstrap: State service initialization failed:',
+        error,
+      );
+      // State services are not critical - continue without them
+      log('ServiceBootstrap: Continuing without state services');
     }
   }
 

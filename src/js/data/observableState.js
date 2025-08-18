@@ -58,6 +58,11 @@ class ObservableState {
         };
       }
 
+      // Ensure canvasType exists for backward compatibility
+      if (!parsedState.canvasType) {
+        parsedState.canvasType = 'Standard Canvas';
+      }
+
       this.state = parsedState;
       return true;
     }
@@ -73,6 +78,7 @@ export const appState = new ObservableState({
   notes: [],
   connections: [],
   zoomLevel: 5,
+  canvasType: 'Standard Canvas', // Canvas template/type selection
   colorState: {
     currentColor: 'yellow', // Global state for new notes
     notes: {}, // Individual note colors: { noteId: { colorScheme: 'blue' } }
