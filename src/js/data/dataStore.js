@@ -10,6 +10,7 @@ import {
 import { NoteService } from '../services/noteService.js';
 import { ConnectionService } from '../services/connectionService.js';
 import { ColorService } from '../services/colorService.js';
+import { CanvasStateService } from '../services/canvasStateService.js';
 import { eventBus } from '../core/eventBus.js';
 
 export function addNote(note) {
@@ -164,7 +165,7 @@ export function getCurrentState() {
 }
 
 export function exportToJSON() {
-  const { notes, connections } = appState.getState();
+  const { notes, connections, canvasType } = appState.getState();
   const allNoteColors = ColorService.getAllNoteColors();
 
   const compressedData = {
@@ -192,10 +193,16 @@ export function exportToJSON() {
       CONNECTION_TYPE_MAP[conn.type] || 0,
     ]),
   };
+
+  // Add canvas type if not default (Standard Canvas)
+  if (canvasType && canvasType !== 'Standard Canvas') {
+    compressedData.ct = canvasType;
+  }
+
   return JSON.stringify({ data: compressedData }, null, 2);
 }
 
-export function importFromJSON(jsonData, canvas) {
+export async function importFromJSON(jsonData, canvas) {
   try {
     const { data } = JSON.parse(jsonData);
     log('Parsed JSON data:', {
@@ -218,6 +225,18 @@ export function importFromJSON(jsonData, canvas) {
     // Import colors if any exist
     if (Object.keys(noteColors).length > 0) {
       ColorService.setAllNoteColors(noteColors);
+    }
+
+    // Handle canvas type import
+    let importedCanvasType = 'Standard Canvas'; // Default
+    if (data.ct && CanvasStateService.isValidCanvasType(data.ct)) {
+      importedCanvasType = data.ct;
+      log('Importing canvas type:', importedCanvasType);
+    } else if (data.ct) {
+      log(
+        'Invalid canvas type in import, defaulting to Standard Canvas:',
+        data.ct,
+      );
     }
 
     // Create notes
@@ -256,8 +275,11 @@ export function importFromJSON(jsonData, canvas) {
       return { from: fromId, to: toId, type };
     });
 
-    // Update appState
-    appState.setState({ notes, connections });
+    // Update appState with imported canvas type
+    appState.setState({ notes, connections, canvasType: importedCanvasType });
+
+    // Apply imported canvas type to the canvas
+    await CanvasStateService.setCanvasType(importedCanvasType, canvas);
 
     // Update all connections
     log('Updating all connections');
