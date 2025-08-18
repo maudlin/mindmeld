@@ -1,5 +1,8 @@
 // observableState.js
-import { STORAGE_KEY, BACKUP_INTERVAL } from '../core/constants.js';
+import { STORAGE_KEY } from '../core/constants.js';
+
+// Separate debounce delay for state saving (much shorter than backup interval)
+const SAVE_DEBOUNCE_DELAY = 300; // 300ms debounce for responsive saving
 
 class ObservableState {
   constructor(initialState = {}) {
@@ -35,12 +38,11 @@ class ObservableState {
     }
     this.saveTimeout = setTimeout(() => {
       this.saveToLocalStorage();
-    }, BACKUP_INTERVAL);
+    }, SAVE_DEBOUNCE_DELAY);
   }
 
   saveToLocalStorage() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
-    console.log('State saved to localStorage', this.state);
   }
 
   loadFromLocalStorage() {
@@ -57,16 +59,13 @@ class ObservableState {
       }
 
       this.state = parsedState;
-      console.log('State loaded from localStorage', parsedState);
       return true;
     }
-    console.log('No state found in localStorage');
     return false;
   }
 
   clearLocalStorage() {
     localStorage.removeItem(STORAGE_KEY);
-    console.log('Local storage cleared');
   }
 }
 
@@ -79,3 +78,8 @@ export const appState = new ObservableState({
     notes: {}, // Individual note colors: { noteId: { colorScheme: 'blue' } }
   },
 });
+
+// Debug: expose appState globally for testing
+if (typeof window !== 'undefined') {
+  window.appStateDebug = appState;
+}

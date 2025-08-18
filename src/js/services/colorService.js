@@ -63,6 +63,7 @@ export class ColorService {
 
     const ids = Array.isArray(noteIds) ? noteIds : [noteIds];
     const currentState = appState.getState();
+
     // Backward compatibility: ensure colorState exists
     const currentColorState = currentState.colorState || {
       currentColor: 'yellow',
@@ -75,12 +76,14 @@ export class ColorService {
       updatedNoteColors[noteId] = { colorScheme: color };
     });
 
-    appState.setState({
+    const newState = {
       colorState: {
         ...currentColorState,
         notes: updatedNoteColors,
       },
-    });
+    };
+
+    appState.setState(newState);
 
     eventBus.emit('note.color.changed', { noteIds: ids, color });
     log(`Color ${color} applied to notes:`, ids);

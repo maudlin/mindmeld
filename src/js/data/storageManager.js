@@ -45,9 +45,15 @@ export function loadStateFromStorage() {
   if (appState.loadFromLocalStorage()) {
     const loadedState = appState.getState();
     // log('Loaded state:', JSON.stringify(loadedState, null, 2));
+
     clearAllNotesAndConnections(); // Clear existing notes and connections before applying loaded state
     updateNotesAndConnections(loadedState);
     stateLoaded = true;
+
+    // Emit notes.loaded event for color application (same as import process)
+    eventBus.emit('notes.loaded');
+    log('Emitted notes.loaded event for color restoration');
+
     // log('State loaded from storage and applied');
     verifyLoadedState(loadedState);
     return true;
@@ -116,6 +122,10 @@ export function initializeStateManagement() {
 
   // Set up event bus listeners
   eventBus.on('state.save', saveStateToStorage);
+
+  // Listen for color change events
+  eventBus.on('note.color.changed', saveStateToStorage);
+  eventBus.on('note.color.removed', saveStateToStorage);
 
   // Only attempt to load state if it hasn't been loaded before
   // and the current state is empty

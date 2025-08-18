@@ -77,7 +77,6 @@ export class ServiceBootstrap extends BaseBootstrap {
     try {
       ColorPickerEvents.initialize();
       NoteColorApplication.initialize();
-
       log('ServiceBootstrap: Color services initialized');
     } catch (error) {
       console.error(
