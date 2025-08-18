@@ -12,6 +12,7 @@ import {
   updateNotesAndConnections,
 } from '../../data/dataStore.js';
 import { appState } from '../../data/observableState.js';
+import { ZoomStateService } from '../../services/zoomStateService.js';
 import { log } from '../../utils/utils.js';
 
 export class DataBootstrap extends BaseBootstrap {
@@ -104,6 +105,12 @@ export class DataBootstrap extends BaseBootstrap {
 
           // Apply the loaded state to the UI
           updateNotesAndConnections(loadedState);
+
+          // Restore zoom level to zoomManager
+          ZoomStateService.restoreZoomLevel();
+
+          // Note: Canvas type restoration will be handled after UI is initialized
+          // since it requires canvas element to be available
 
           this.stateRestored = true;
           log('DataBootstrap: State restored from storage');

@@ -10,6 +10,7 @@ import { canvasManager } from '../canvasManager.js';
 import { setupUI } from '../uiSetup.js';
 import { initializeCanvas } from '../canvasInitialization.js';
 import { DOM_SELECTORS } from '../constants.js';
+import { CanvasStateService } from '../../services/canvasStateService.js';
 import { log } from '../../utils/utils.js';
 import { AdaptiveHelp } from '../../accessibility/adaptiveHelp.js';
 
@@ -77,6 +78,10 @@ export class UIBootstrap extends BaseBootstrap {
   async initializeCanvasView(elements) {
     try {
       initializeCanvas(elements);
+
+      // Restore canvas type state after canvas is available
+      await CanvasStateService.restoreCanvasType(elements.canvas);
+
       log('UIBootstrap: Canvas view initialized');
     } catch (error) {
       throw new Error(`Canvas initialization failed: ${error.message}`);

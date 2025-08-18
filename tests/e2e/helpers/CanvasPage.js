@@ -189,11 +189,18 @@ export class CanvasPage {
     const ghostConnector = sourceNote.locator('.ghost-connector.right');
     await expect(ghostConnector).toBeVisible();
 
+    // Get note IDs before dragging
+    const sourceId = await sourceNote.getAttribute('id');
+    const targetId = await targetNote.getAttribute('id');
+
     // Use dragTo method instead of manual mouse movements
     await ghostConnector.dragTo(targetNote);
 
-    // Wait for connection to be created in the SVG container
-    await expect(this.svgContainer.locator('g[data-start]')).toBeVisible({
+    // Wait for the specific connection to be created in the SVG container
+    const specificConnection = this.svgContainer.locator(
+      `g[data-start="${sourceId}"][data-end="${targetId}"]`,
+    );
+    await expect(specificConnection).toBeVisible({
       timeout: 2000,
     });
   }

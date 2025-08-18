@@ -46,7 +46,9 @@ test.describe('Comprehensive State Persistence', () => {
     await note2Content.fill('Test Note 2');
 
     const note3 = await canvasPage.createNote(400, 350);
-    // Note3 should remain default yellow
+    await canvasPage.selectNote(note3);
+    await page.click('.color-swatch[data-color="yellow"]');
+    await expect(note3).toHaveClass(/color-yellow/);
 
     // Add content to note3
     const note3Content = note3.locator('.note-content');
@@ -55,10 +57,16 @@ test.describe('Comprehensive State Persistence', () => {
 
     // Step 2: Create connections between notes
     // Connect note1 to note2
-    await canvasPage.dragConnection(note1, note2);
+    await canvasPage.connectNotes(note1, note2);
+
+    // Wait for first connection to be processed
+    await page.waitForTimeout(800);
 
     // Connect note2 to note3
-    await canvasPage.dragConnection(note2, note3);
+    await canvasPage.connectNotes(note2, note3);
+
+    // Wait for second connection to be processed
+    await page.waitForTimeout(800);
 
     // Verify connections exist
     const connections = page.locator('g[data-start]');
@@ -184,6 +192,132 @@ test.describe('Comprehensive State Persistence', () => {
     expect(yellowCastedNotes[0].content).toBe('Test Note 3');
   });
 
+  test('Should persist zoom level across page refresh', async ({ page }) => {
+    // Create a note to have some content
+    await canvasPage.createNote(400, 300);
+
+    // Change zoom level using ZoomStateService
+    await page.evaluate(() => {
+      // Use globally exposed ZoomStateService
+      window.stateServicesDebug.ZoomStateService.setZoomLevel(3);
+    });
+
+    // Wait for state save
+    await page.waitForTimeout(500);
+
+    // Verify zoom is saved in localStorage
+    const preRefreshState = await page.evaluate(() => {
+      const state = JSON.parse(localStorage.getItem('mindmeld_state'));
+      return {
+        zoomLevel: state.zoomLevel,
+        hasZoomField: 'zoomLevel' in state,
+      };
+    });
+
+    expect(preRefreshState.hasZoomField).toBe(true);
+    expect(preRefreshState.zoomLevel).toBe(3);
+
+    // Refresh and verify zoom is restored
+    await page.reload();
+    await expect(canvasPage.canvas).toBeVisible();
+    await page.waitForTimeout(800); // Wait for bootstrap to complete
+
+    const postRefreshZoom = await page.evaluate(() => {
+      return window.appStateDebug.getState().zoomLevel;
+    });
+
+    expect(postRefreshZoom).toBe(3);
+  });
+
+  test('Should persist canvas type across page refresh', async ({ page }) => {
+    // Create a note to have some content
+    await canvasPage.createNote(400, 300);
+
+    // Change canvas type using CanvasStateService
+    await page.evaluate(async () => {
+      // Use globally exposed CanvasStateService
+      const canvas = document.querySelector('.canvas');
+      await window.stateServicesDebug.CanvasStateService.setCanvasType(
+        "Hero's Journey",
+        canvas,
+      );
+    });
+
+    // Wait for state save
+    await page.waitForTimeout(500);
+
+    // Verify canvas type is saved in localStorage
+    const preRefreshState = await page.evaluate(() => {
+      const state = JSON.parse(localStorage.getItem('mindmeld_state'));
+      return {
+        canvasType: state.canvasType,
+        hasCanvasTypeField: 'canvasType' in state,
+      };
+    });
+
+    expect(preRefreshState.hasCanvasTypeField).toBe(true);
+    expect(preRefreshState.canvasType).toBe("Hero's Journey");
+
+    // Refresh and verify canvas type is restored
+    await page.reload();
+    await expect(canvasPage.canvas).toBeVisible();
+    await page.waitForTimeout(800); // Wait for bootstrap to complete
+
+    const postRefreshCanvasType = await page.evaluate(() => {
+      return window.appStateDebug.getState().canvasType;
+    });
+
+    expect(postRefreshCanvasType).toBe("Hero's Journey");
+  });
+
+  test('Should persist zoom and canvas type together', async ({ page }) => {
+    // Create a note to have some content
+    await canvasPage.createNote(400, 300);
+
+    // Change both zoom level and canvas type
+    await page.evaluate(async () => {
+      // Set zoom level
+      window.stateServicesDebug.ZoomStateService.setZoomLevel(2);
+
+      // Set canvas type
+      const canvas = document.querySelector('.canvas');
+      await window.stateServicesDebug.CanvasStateService.setCanvasType(
+        'Wardley Map',
+        canvas,
+      );
+    });
+
+    // Wait for state save
+    await page.waitForTimeout(500);
+
+    // Verify both are saved
+    const preRefreshState = await page.evaluate(() => {
+      const state = JSON.parse(localStorage.getItem('mindmeld_state'));
+      return {
+        zoomLevel: state.zoomLevel,
+        canvasType: state.canvasType,
+      };
+    });
+
+    expect(preRefreshState.zoomLevel).toBe(2);
+    expect(preRefreshState.canvasType).toBe('Wardley Map');
+
+    // Refresh and verify both are restored
+    await page.reload();
+    await expect(canvasPage.canvas).toBeVisible();
+    await page.waitForTimeout(800);
+
+    const postRefreshState = await page.evaluate(() => {
+      return {
+        zoomLevel: window.appStateDebug.getState().zoomLevel,
+        canvasType: window.appStateDebug.getState().canvasType,
+      };
+    });
+
+    expect(postRefreshState.zoomLevel).toBe(2);
+    expect(postRefreshState.canvasType).toBe('Wardley Map');
+  });
+
   test('Should handle state persistence with zoom and pan', async ({
     page,
   }) => {
@@ -232,6 +366,7 @@ test.describe('Comprehensive State Persistence', () => {
     expect(initialState.notes).toHaveLength(0);
     expect(initialState.connections).toHaveLength(0);
     expect(initialState.zoomLevel).toBe(5);
+    expect(initialState.canvasType).toBe('Standard Canvas');
     expect(initialState.colorState.currentColor).toBe('yellow');
     expect(initialState.colorState.notes).toEqual({});
   });
