@@ -96,6 +96,15 @@ export class ServiceBootstrap extends BaseBootstrap {
     try {
       ZoomStateService.initialize();
       CanvasStateService.initialize();
+
+      // Debug: expose state services globally for E2E testing
+      if (typeof window !== 'undefined') {
+        window.stateServicesDebug = {
+          ZoomStateService,
+          CanvasStateService,
+        };
+      }
+
       log('ServiceBootstrap: State services initialized');
     } catch (error) {
       console.error(
