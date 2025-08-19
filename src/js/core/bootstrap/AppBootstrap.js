@@ -45,9 +45,8 @@ export class AppBootstrap {
       const uiResult = await this.uiBootstrap.safeInitialize();
 
       // Phase 4: Interaction layer
-      const interactionResult = await this.interactionBootstrap.safeInitialize(
-        uiResult.elements,
-      );
+      const interactionResult =
+        await this.interactionBootstrap.safeInitialize();
 
       // Phase 5: State restoration (after all systems are ready)
       await this.dataBootstrap.restoreState(uiResult.elements.canvas);

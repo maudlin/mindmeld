@@ -6,6 +6,16 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 
 **🌐 Live Demo**: [mind-meld.co](https://mind-meld.co/)
 
+## Prerequisites
+
+For development:
+- Node.js LTS (v18+ recommended)
+- npm
+- Note: Playwright installs Chromium automatically on first install in non-production environments.
+
+For hosting/deployment:
+- None required beyond a static file host. The app is plain HTML/CSS/JS served from the `src/` directory and can be hosted on any static server or CDN (e.g., GitHub Pages, Netlify, Vercel static, Nginx).
+
 ## Quick Start
 
 ```bash
@@ -87,4 +97,4 @@ Mind maps are stored as JSON with this structure:
 
 ## License
 
-Licensed under the same terms as the project. See project repository for details.
+ISC License. See [LICENSE](LICENSE) for details.

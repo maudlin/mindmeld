@@ -84,10 +84,10 @@ npm run analyze:circular
 
 **Action Required:**
 1. **Stop feature development** until resolved
-2. Review `TODO.md` for specific remediation steps
-3. Implement dependency injection patterns or bootstrap architecture
-4. Consider using specialized bootstrap modules for complex initialization
-5. Verify fix: `npm run analyze:circular` should show 0 results
+2. Implement dependency injection patterns or bootstrap architecture
+3. Consider using specialized bootstrap modules for complex initialization
+4. Verify fix: `npm run analyze:circular` should show 0 results
+5. If unsure, see the patterns in [Developer Guide](developer-guide.md) and existing bootstrap modules.
 
 **Note**: The new bootstrap architecture pattern helps prevent circular dependencies by enforcing clear initialization sequences.
 
@@ -115,4 +115,4 @@ npm audit fix
 
 ---
 
-*See [Technical Debt](technical-debt.md) for detailed remediation steps*
+*See [Developer Guide](developer-guide.md) for architecture patterns and remediation approaches.*

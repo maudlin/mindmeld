@@ -162,6 +162,8 @@ class CanvasPage {
 
 ### 4. **Early Detection Strategies**
 
+Note on throttling: The application enforces a 500ms throttle on note creation; use ~600ms locally and 800–1000ms in CI between creations.
+
 #### Local CI Simulation
 ```bash
 # Run tests in "CI mode" locally

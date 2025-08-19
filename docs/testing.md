@@ -6,6 +6,8 @@ MindMeld uses unit tests (Jest) for core logic and end-to-end tests (Playwright)
 
 **Current Status**: Run `npm test` to see test results and `npm run test:coverage` for coverage.
 
+Note on throttling: The app enforces a 500ms double-click throttle for note creation. In tests, wait ~600ms between creations locally and 800–1000ms in CI for stability.
+
 ## Test Philosophy
 
 **Unit Tests**: Core algorithms, data transformations, utility functions  

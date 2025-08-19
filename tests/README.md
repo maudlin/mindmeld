@@ -176,11 +176,11 @@ const throttledHandleDoubleClick = throttle((event) => {
 }, 500); // 500ms throttle
 ```
 
-**Solution**: Always wait at least 600ms between rapid note creation operations
+**Solution**: Wait ~600ms between creations locally and 800–1000ms in CI to account for timing variability
 
 ```javascript
 await canvasPage.createNoteAt(400, 300);
-await page.waitForTimeout(600); // Wait longer than throttle
+await page.waitForTimeout(600); // Local buffer (~600ms)
 await canvasPage.createNoteAt(700, 300);
 ```
 

@@ -128,6 +128,11 @@ export class DesktopAdapter extends BaseAdapter {
       : target.closest('.note');
 
     if (note && !target.classList.contains('ghost-connector')) {
+      // Early return for delete button clicks - let the button handle its own event
+      if (target.closest('.shared-delete-button--note')) {
+        return; // No interaction handling, no pointer capture, no dragging
+      }
+
       // Don't prevent default for note-content clicks (allows editing)
       if (!target.classList.contains('note-content')) {
         event.preventDefault();

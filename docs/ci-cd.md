@@ -64,18 +64,24 @@ Unit and E2E tests run automatically. See [Testing Guide](testing.md) for detail
 
 ## Security Scanning
 
-### Semgrep Integration
-Automated security analysis with multiple rulesets:
+### Semgrep Integration (CI + Local)
+Automated security analysis with multiple rulesets (runs in CI, and can be run locally):
 
+CI configuration uses common packs:
 ```yaml
 config: >-
   p/security-audit      # General security patterns
-  p/javascript         # JavaScript-specific rules
-  p/owasp-top-ten     # OWASP security standards
+  p/javascript          # JavaScript-specific rules
+  p/owasp-top-ten       # OWASP security standards
+```
+
+Run locally before pushing:
+```bash
+npm run semgrep        # Runs Semgrep locally with the same rulepacks
 ```
 
 ### Security Features
-- **SARIF Upload**: Results integrated with GitHub Security tab
+- **SARIF Upload (CI)**: Results integrated with GitHub Security tab
 - **Continuous Monitoring**: Scans all code changes
 - **Vulnerability Detection**: SQL injection, XSS, object injection
 
@@ -84,6 +90,12 @@ Local security scanning with immediate feedback:
 ```bash
 npm run security      # Run security-focused linting
 npm run security:fix  # Auto-fix security issues
+```
+
+### Pre-push Checks
+The pre-push checks run formatting, linting, tests, and Semgrep locally:
+```bash
+npm run pre-push
 ```
 
 ## Branch Protection
