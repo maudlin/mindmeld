@@ -21,7 +21,9 @@ tests/
 │   ├── note-connections.spec.js      # Note connection functionality
 │   ├── multi-select-notes.spec.js    # Multi-select and group operations
 │   ├── canvas-template-switching.spec.js # Template switching functionality
-│   └── menu-functionality.spec.js    # 🆕 Menu operations and import/export (12 tests)
+│   ├── menu-functionality.spec.js    # 🆕 Menu operations and import/export (12 tests)
+│   ├── touch-canvas-pan-fix.spec.js  # ✨ Touch interaction system tests
+│   └── desktop-zoom-test.spec.js     # ✨ Desktop zoom functionality tests
 └── unit/                             # Unit tests (Jest)
     ├── core/
     │   ├── eventBus.test.js          # 🆕 Event Bus comprehensive tests (20 tests, 100% coverage)
@@ -34,6 +36,12 @@ tests/
     │   │   └── noteCreation.test.js
     │   └── zoom/
     │       └── zoomManager.test.js
+    ├── interactions/                   # ✨ Touch and input adapter tests
+    │   ├── adapters/
+    │   │   ├── DesktopAdapter.test.js   # Desktop interaction tests
+    │   │   └── TouchAdapter.test.js     # Touch interaction tests
+    │   └── gestures/
+    │       └── GestureRecognizer.test.js # Gesture recognition tests
     └── utils/
         └── utils.test.js
 ```
@@ -176,11 +184,11 @@ const throttledHandleDoubleClick = throttle((event) => {
 }, 500); // 500ms throttle
 ```
 
-**Solution**: Always wait at least 600ms between rapid note creation operations
+**Solution**: Wait ~600ms between creations locally and 800–1000ms in CI to account for timing variability
 
 ```javascript
 await canvasPage.createNoteAt(400, 300);
-await page.waitForTimeout(600); // Wait longer than throttle
+await page.waitForTimeout(600); // Local buffer (~600ms)
 await canvasPage.createNoteAt(700, 300);
 ```
 
@@ -520,6 +528,204 @@ Track security improvements over time:
 - Developer security awareness metrics
 - Reduction in production security incidents
 
+## 📱 **Touch Interaction Testing (TouchAdapter System)**
+
+### **Testing Touch Mode Features**
+
+MindMeld's TouchAdapter system requires specific testing patterns for advanced touch interactions. Tests should verify both the legacy touch system and the enhanced TouchAdapter mode.
+
+#### **Touch Mode Test Setup**
+
+```javascript
+// Loading app in Touch Mode
+test('TouchAdapter gesture behavior', async ({ page }) => {
+  await page.goto('http://localhost:8080/?mode=touch');
+  await page.waitForTimeout(1000); // Allow TouchAdapter initialization
+  
+  // Test TouchAdapter-specific interactions
+});
+
+// Verifying TouchAdapter is active
+const isUsingTouchAdapter = await page.evaluate(() => {
+  return new URLSearchParams(window.location.search).get('mode') === 'touch';
+});
+```
+
+#### **Key Touch Interaction Test Patterns**
+
+**Single-Finger Drag Lasso Selection:**
+```javascript
+test('Single-finger drag creates lasso selection', async ({ page }) => {
+  await page.goto('http://localhost:8080/?mode=touch');
+  
+  // Create notes for selection
+  const canvasPage = new CanvasPage(page);
+  const note1 = await canvasPage.createNote(400, 300);
+  await page.waitForTimeout(800);
+  const note2 = await canvasPage.createNote(600, 300);
+  
+  // Test single-finger drag lasso
+  await page.mouse.move(350, 250);
+  await page.mouse.down();
+  await page.mouse.move(650, 350);
+  await page.mouse.up();
+  
+  // Verify selection
+  await expect(page.locator('.note.selected')).toHaveCount(2);
+});
+```
+
+**Press-Hold-Drag Note Movement:**
+```javascript
+test('Press-hold-drag moves notes in touch mode', async ({ page }) => {
+  await page.goto('http://localhost:8080/?mode=touch');
+  
+  const canvasPage = new CanvasPage(page);
+  const note = await canvasPage.createNote(400, 300);
+  
+  // Test press-hold-drag (wait for long-press detection)
+  await page.mouse.move(400, 300);
+  await page.mouse.down();
+  await page.waitForTimeout(500); // Long-press threshold
+  await page.mouse.move(500, 400);
+  await page.mouse.up();
+  
+  // Verify note moved
+  const noteBox = await note.boundingBox();
+  expect(noteBox.x).toBeGreaterThan(450);
+});
+```
+
+**Canvas Panning Conflict Prevention:**
+```javascript
+test('Single touch hold does not move canvas', async ({ page }) => {
+  await page.goto('http://localhost:8080/?mode=touch');
+  
+  const canvas = page.locator('#canvas');
+  
+  // Get initial canvas position
+  const initialTransform = await canvas.evaluate(el => 
+    getComputedStyle(el).transform
+  );
+  
+  // Perform single touch and hold on canvas
+  await page.mouse.move(400, 300);
+  await page.mouse.down();
+  await page.waitForTimeout(600); // Hold longer than long-press
+  await page.mouse.up();
+  
+  // Verify canvas did not move
+  const finalTransform = await canvas.evaluate(el => 
+    getComputedStyle(el).transform
+  );
+  expect(finalTransform).toBe(initialTransform);
+});
+```
+
+#### **Two-Finger Gesture Testing**
+
+**Two-Finger Pan:**
+```javascript
+test('Two-finger drag pans canvas', async ({ page }) => {
+  await page.goto('http://localhost:8080/?mode=touch');
+  
+  // Simulate two-finger pan using mouse events
+  // (Playwright doesn't support native multi-touch, use pointer events)
+  await page.evaluate(() => {
+    const canvas = document.querySelector('#canvas');
+    
+    // Create synthetic two-finger pan
+    const touchStart = new TouchEvent('touchstart', {
+      touches: [
+        { clientX: 400, clientY: 300, identifier: 0 },
+        { clientX: 500, clientY: 300, identifier: 1 }
+      ]
+    });
+    
+    const touchMove = new TouchEvent('touchmove', {
+      touches: [
+        { clientX: 450, clientY: 350, identifier: 0 },
+        { clientX: 550, clientY: 350, identifier: 1 }
+      ]
+    });
+    
+    canvas.dispatchEvent(touchStart);
+    canvas.dispatchEvent(touchMove);
+  });
+});
+```
+
+#### **Touch vs Desktop Mode Isolation**
+
+**Verify Interaction Mode Separation:**
+```javascript
+test.describe('Touch vs Desktop Isolation', () => {
+  test('Desktop mode uses DesktopAdapter', async ({ page }) => {
+    await page.goto('http://localhost:8080'); // No touch mode
+    
+    // Verify DesktopAdapter behaviors
+    // - Right-click drag for canvas pan
+    // - Immediate drag for multi-select lasso
+    // - No long-press requirements
+  });
+  
+  test('Touch mode uses TouchAdapter', async ({ page }) => {
+    await page.goto('http://localhost:8080/?mode=touch');
+    
+    // Verify TouchAdapter behaviors  
+    // - Two-finger drag for canvas pan
+    // - Single-finger drag for lasso
+    // - Long-press for note movement
+  });
+});
+```
+
+#### **Legacy Touch System Testing**
+
+**Mobile Device Legacy Mode:**
+```javascript
+test('Mobile devices without touch mode use legacy system', async ({ page }) => {
+  // Simulate mobile device without ?mode=touch
+  await page.emulate({
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)',
+    viewport: { width: 375, height: 667 }
+  });
+  
+  await page.goto('http://localhost:8080');
+  
+  // Verify legacy touch panning is available
+  // (TouchAdapter should NOT be active)
+});
+```
+
+### **TouchAdapter Unit Testing**
+
+**Test TouchAdapter Gesture State Machine:**
+```javascript
+// tests/unit/interactions/adapters/TouchAdapter.test.js
+describe('TouchAdapter Gesture Recognition', () => {
+  it('detects long-press for note movement', () => {
+    // Test gesture state transitions
+  });
+  
+  it('distinguishes single-finger vs two-finger gestures', () => {
+    // Test multi-touch detection
+  });
+  
+  it('prevents canvas pan conflicts with note interactions', () => {
+    // Test event handling isolation
+  });
+});
+```
+
+### **Common Touch Testing Issues**
+
+- **Gesture Timing**: Allow adequate time for long-press detection (500ms)
+- **Mode Parameter**: Always verify ?mode=touch is set for TouchAdapter tests
+- **Event Simulation**: Use synthetic touch events for complex multi-touch testing
+- **Canvas Conflicts**: Test that legacy and TouchAdapter systems don't interfere
+- **Device Simulation**: Test both desktop and mobile contexts appropriately
+
 ## Configuration Files
 
 ### Playwright Configuration
@@ -631,6 +837,8 @@ When MindMeld adds new canvas functionality:
 2. **Use TestCoordinates** - Don't hardcode positions
 3. **Handle throttling** - Use `createNoteWithThrottleWait()` for rapid note creation
 4. **Follow existing patterns** - Check similar tests for consistency
+5. **Test interaction modes** - Verify both Desktop and Touch modes where applicable
+6. **Check gesture conflicts** - Ensure new features don't interfere with existing gestures
 
 ### **Canvas Template Extensions**
 
@@ -711,6 +919,13 @@ test.describe('My New Feature', () => {
 
     await canvasPage.load();
     // Your test logic using canvasPage methods
+  });
+
+  test('Should work in touch mode', async ({ page }) => {
+    const canvasPage = new CanvasPage(page);
+
+    await canvasPage.testTouchMode(); // Loads with ?mode=touch
+    // Test touch-specific interactions
   });
 });
 ```

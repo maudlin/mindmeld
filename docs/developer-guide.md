@@ -161,6 +161,14 @@ npm run version:major   # Breaking changes (0.8.0 → 1.0.0)
   - `colorPicker/` - Color selection interface and events
   - `note/` - Note creation, editing, and color application
   - `connection/` - Connection drawing and management
+- **Input Adapters**: `src/js/interactions/adapters/` - Platform-specific input handling
+  - `BaseAdapter.js` - Abstract base for input adapters
+  - `DesktopAdapter.js` - Mouse and keyboard interactions
+  - `TouchAdapter.js` - Advanced touch and gesture interactions (Touch Mode)
+  - `InputController.js` - Adapter selection and initialization
+- **Gesture System**: `src/js/interactions/gestures/` - Touch gesture recognition
+  - `GestureRecognizer.js` - Multi-touch gesture detection and state machine
+  - `TouchState.js` - Touch point tracking and management
 - **Mobile Interactions**: `src/js/utils/mobileInteractions.js` - Touch-friendly UI patterns
   - `setupMobileDropdown()` - Convert hover menus to touch-friendly dropdowns
   - `setupMobileModal()` - Consistent modal/overlay behavior with backdrop close

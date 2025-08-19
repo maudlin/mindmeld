@@ -2,7 +2,7 @@
 
 import { BaseAdapter } from './BaseAdapter.js';
 import { GestureRecognizer } from '../gestures/GestureRecognizer.js';
-import { throttle } from '../../utils/utils.js';
+import { throttle, calculateOffsetPosition } from '../../utils/utils.js';
 import { NoteManager } from '../../core/event.js';
 import { getZoomLevel } from '../../features/zoom/zoomManager.js';
 import { connectionManager } from '../../features/connection/connectionManager.js';
@@ -27,21 +27,26 @@ export class TouchAdapter extends BaseAdapter {
     this.selectedNotesOffsets = [];
     this.hasStateChanged = false;
 
+    // Multi-select lasso state (MM-145)
+    this.isDrawingSelectionBox = false;
+    this.selectionBoxState = null;
+    this.selectionBox = null;
+
+    // Two-finger gesture state
+    this.lastPinchCenter = null;
+
     // Touch-specific settings
     this.HIT_TARGET_EXPANSION = 20; // pixels to expand hit targets
-    this.MOMENTUM_DECAY = 0.95;
-    this.MIN_MOMENTUM_VELOCITY = 0.5;
-
-    // Movement tracking for momentum
-    this.lastMoveTime = 0;
-    this.lastVelocity = { x: 0, y: 0 };
-    this.momentumAnimation = null;
 
     // Throttled functions for performance
     this.throttledUpdateConnections = throttle(
       (noteOrGroup) => connectionManager.updateConnections(noteOrGroup),
       16,
     );
+    this.throttledUpdateSelectionBox = throttle(
+      this.updateSelectionBox.bind(this),
+      16,
+    ); // ~60fps
   }
 
   /**
@@ -79,9 +84,6 @@ export class TouchAdapter extends BaseAdapter {
       this.gestureRecognizer.destroy();
       this.gestureRecognizer = null;
     }
-
-    // Clean up momentum animation
-    this.stopMomentum();
 
     // Clean up event listeners
     this.cleanupGestureHandling();
@@ -222,7 +224,7 @@ export class TouchAdapter extends BaseAdapter {
   // Gesture Event Handlers
 
   /**
-   * Handle tap gesture - maps to note selection
+   * Handle tap gesture - maps to note selection and canvas interaction
    */
   handleTap(touch) {
     const { target } = this.getTouchTarget(touch.currentX, touch.currentY);
@@ -235,19 +237,60 @@ export class TouchAdapter extends BaseAdapter {
     if (note) {
       this.handleNoteSelection(note);
     } else if (this.isClickOnCanvas(target)) {
-      // Tap on canvas - clear selections
+      // Tap on canvas - clear selections and cancel operations (MM-145 refined)
       NoteManager.clearSelections();
       this.emit('note.selection.changed');
+
+      // Exit any editing mode
+      const activeElement = document.activeElement;
+      if (activeElement && activeElement.classList.contains('note-content')) {
+        activeElement.blur();
+        this.emit('note.editMode.exit', {
+          content: activeElement,
+          _gesture: 'tap',
+        });
+      }
+
+      // Clear any other active states
+      this.emit('interaction.cancel', { _gesture: 'tap' });
     }
   }
 
   /**
-   * Handle double-tap gesture - maps to note creation
+   * Handle double-tap gesture - maps to note creation or note editing
    */
   handleDoubleTap(touch) {
     const { target } = this.getTouchTarget(touch.currentX, touch.currentY);
 
-    // Only create notes on canvas, not on existing notes
+    // Check if double-tapping on a note - enter edit mode (MM-145 refined)
+    const note = target.classList.contains('note')
+      ? target
+      : target.closest('.note');
+
+    if (note) {
+      // Find the note content element for editing
+      const noteContent = note.querySelector('.note-content');
+      if (noteContent) {
+        // Enter edit mode by focusing the content
+        noteContent.focus();
+
+        // Ensure note is selected
+        if (!note.classList.contains('selected')) {
+          NoteManager.clearSelections();
+          NoteManager.selectNote(note);
+          this.emit('note.selection.changed');
+        }
+
+        this.emit('note.editMode.enter', {
+          note: note,
+          content: noteContent,
+          _gesture: 'doubletap',
+        });
+      }
+      return;
+    }
+
+    // Double-tap on canvas creates new note
     if (this.isClickOnCanvas(target)) {
       this.emit('note.createAtPosition', {
         canvas: this.canvas,
@@ -264,35 +307,62 @@ export class TouchAdapter extends BaseAdapter {
   }
 
   /**
-   * Handle long press gesture - maps to context menu
+   * Handle long press gesture - maps to note movement or context menu
    */
   handleLongPress(touch) {
     const { target } = this.getTouchTarget(touch.currentX, touch.currentY);
 
-    this.emit('contextmenu.show', {
-      x: touch.currentX,
-      y: touch.currentY,
-      target: target,
-      type: 'longpress',
-      _gesture: 'longpress',
-    });
-  }
-
-  /**
-   * Handle drag start - begins note or canvas dragging
-   */
-  handleDragStart(touch) {
-    const { target } = this.getTouchTarget(touch.startX, touch.startY);
-
-    // Check if dragging a note
+    // Check if long-pressing on a note - start note movement (MM-145 refined)
     const note = target.classList.contains('note')
       ? target
       : target.closest('.note');
 
     if (note && !target.classList.contains('ghost-connector')) {
+      // Don't start drag on note content (for editing)
+      if (target.classList.contains('note-content')) {
+        return;
+      }
+
+      // Start note movement - this will be handled by handleDragStart
+      // The gesture recognizer will transition to dragging state
+      return;
+    }
+
+    // Original context menu behavior for other elements (ghost connectors, etc.)
+    if (!this.isClickOnCanvas(target)) {
+      this.emit('contextmenu.show', {
+        x: touch.currentX,
+        y: touch.currentY,
+        target: target,
+        type: 'longpress',
+        _gesture: 'longpress',
+      });
+    }
+
+    // Long press on empty canvas does nothing in refined model
+  }
+
+  /**
+   * Handle drag start - begins note movement or selection box
+   */
+  handleDragStart(touch) {
+    const { target } = this.getTouchTarget(touch.startX, touch.startY);
+
+    // Check if dragging a note (from press-hold or direct drag)
+    const note = target.classList.contains('note')
+      ? target
+      : target.closest('.note');
+
+    if (note && !target.classList.contains('ghost-connector')) {
+      // Don't start drag on note content (for editing)
+      if (target.classList.contains('note-content')) {
+        return;
+      }
+
       this.startNoteDrag(touch, note, target);
     } else if (this.isClickOnCanvas(target)) {
-      this.startCanvasPan(touch);
+      // Single finger drag on canvas = multi-select lasso (MM-145 refined)
+      this.startSelectionBox(touch);
     }
   }
 
@@ -303,13 +373,12 @@ export class TouchAdapter extends BaseAdapter {
     if (this.isDragging && this.dragState) {
       if (this.dragState.type === 'note') {
         this.handleNoteDrag(touch);
-      } else if (this.dragState.type === 'canvas') {
-        this.handleCanvasPan(touch);
       }
+      // Canvas panning removed - now handled by two-finger gestures
+    } else if (this.isDrawingSelectionBox && this.selectionBoxState) {
+      // Handle multi-select lasso dragging (MM-145)
+      this.handleSelectionBoxDrag(touch);
     }
-
-    // Track velocity for momentum
-    this.updateVelocityTracking(touch);
   }
 
   /**
@@ -319,17 +388,21 @@ export class TouchAdapter extends BaseAdapter {
     if (this.isDragging && this.dragState) {
       if (this.dragState.type === 'note') {
         this.endNoteDrag(touch);
-      } else if (this.dragState.type === 'canvas') {
-        this.endCanvasPan(touch);
       }
+      // Canvas panning removed - now handled by two-finger gestures
+    } else if (this.isDrawingSelectionBox) {
+      // Complete multi-select lasso (MM-145)
+      this.endSelectionBox(touch);
     }
   }
 
   /**
-   * Handle pinch start - begins zoom operation
+   * Handle pinch start - begins zoom or pan operation
    */
   handlePinchStart() {
     const center = this.gestureRecognizer.touchState.getCenterPoint();
+    this.lastPinchCenter = center;
+
     this.emit('zoom.start', {
       centerX: center.x,
       centerY: center.y,
@@ -338,28 +411,53 @@ export class TouchAdapter extends BaseAdapter {
   }
 
   /**
-   * Handle pinch move - continues zoom operation
+   * Handle pinch move - continues zoom or pan operation
    */
   handlePinchMove() {
     const currentDistance =
       this.gestureRecognizer.touchState.getTouchDistance();
-    const scale = currentDistance / this.gestureRecognizer.initialPinchDistance;
     const center = this.gestureRecognizer.touchState.getCenterPoint();
 
-    this.emit('zoom.change', {
-      direction: scale > 1 ? 'in' : 'out',
-      scale: scale,
-      centerX: center.x,
-      centerY: center.y,
-      _gesture: 'pinch',
-    });
+    // Calculate scale change for zoom detection
+    const scale = currentDistance / this.gestureRecognizer.initialPinchDistance;
+    const scaleChange = Math.abs(scale - 1.0);
+
+    // If there's significant scaling, handle as zoom
+    if (scaleChange > 0.05) {
+      // 5% threshold
+      this.emit('zoom.change', {
+        direction: scale > 1 ? 'in' : 'out',
+        scale: scale,
+        centerX: center.x,
+        centerY: center.y,
+        _gesture: 'pinch',
+      });
+    } else if (this.lastPinchCenter) {
+      // If no significant scaling, handle as two-finger pan
+      const deltaX = center.x - this.lastPinchCenter.x;
+      const deltaY = center.y - this.lastPinchCenter.y;
+
+      // Only pan if there's meaningful movement
+      if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
+        this.emit('canvas.pan', {
+          deltaX: deltaX,
+          deltaY: deltaY,
+          _gesture: 'two-finger-pan',
+        });
+      }
+    }
+
+    // Store center for next comparison
+    this.lastPinchCenter = center;
   }
 
   /**
-   * Handle pinch end - finishes zoom operation
+   * Handle pinch end - finishes zoom or pan operation
    */
   handlePinchEnd() {
     const center = this.gestureRecognizer.touchState.getCenterPoint();
+    this.lastPinchCenter = null; // Reset for next pinch
+
     this.emit('zoom.end', {
       centerX: center.x,
       centerY: center.y,
@@ -565,119 +663,169 @@ export class TouchAdapter extends BaseAdapter {
   }
 
   /**
-   * Start canvas panning
+   * Start multi-select lasso box drawing (MM-145)
    */
-  startCanvasPan(touch) {
-    this.isDragging = true;
+  startSelectionBox(touch) {
+    this.isDrawingSelectionBox = true;
 
-    this.dragState = {
-      type: 'canvas',
-      startX: touch.startX,
-      startY: touch.startY,
-      lastX: touch.startX,
-      lastY: touch.startY,
-    };
-  }
+    // Prevent text selection during drag operations
+    document.body.classList.add('dragging');
 
-  /**
-   * Handle canvas panning
-   */
-  handleCanvasPan(touch) {
-    if (!this.dragState) return;
-
-    const deltaX = touch.currentX - this.dragState.lastX;
-    const deltaY = touch.currentY - this.dragState.lastY;
-
-    // Emit canvas pan event (maps to existing canvas pan handling)
-    this.emit('canvas.pan', {
-      deltaX: deltaX,
-      deltaY: deltaY,
-      _gesture: 'drag',
+    const { left: startX, top: startY } = calculateOffsetPosition(this.canvas, {
+      clientX: touch.currentX,
+      clientY: touch.currentY,
     });
 
-    // Update tracking
-    this.dragState.lastX = touch.currentX;
-    this.dragState.lastY = touch.currentY;
-  }
-
-  /**
-   * End canvas panning with momentum
-   */
-  endCanvasPan() {
-    // Apply momentum if velocity is sufficient
-    if (
-      Math.abs(this.lastVelocity.x) > this.MIN_MOMENTUM_VELOCITY ||
-      Math.abs(this.lastVelocity.y) > this.MIN_MOMENTUM_VELOCITY
-    ) {
-      this.startMomentum();
-    }
-
-    // Reset state
-    this.isDragging = false;
-    this.dragState = null;
-  }
-
-  /**
-   * Update velocity tracking for momentum
-   */
-  updateVelocityTracking(touch) {
-    const now = Date.now();
-    const timeDelta = now - this.lastMoveTime;
-
-    if (timeDelta > 0 && this.dragState) {
-      const deltaX = touch.currentX - this.dragState.lastX;
-      const deltaY = touch.currentY - this.dragState.lastY;
-
-      this.lastVelocity = {
-        x: deltaX / timeDelta,
-        y: deltaY / timeDelta,
-      };
-    }
-
-    this.lastMoveTime = now;
-  }
-
-  /**
-   * Start momentum animation
-   */
-  startMomentum() {
-    this.stopMomentum();
-
-    const animateMomentum = () => {
-      // Apply momentum decay
-      this.lastVelocity.x *= this.MOMENTUM_DECAY;
-      this.lastVelocity.y *= this.MOMENTUM_DECAY;
-
-      // Continue if velocity is sufficient
-      if (
-        Math.abs(this.lastVelocity.x) > this.MIN_MOMENTUM_VELOCITY ||
-        Math.abs(this.lastVelocity.y) > this.MIN_MOMENTUM_VELOCITY
-      ) {
-        // Apply momentum pan
-        this.emit('canvas.pan', {
-          deltaX: this.lastVelocity.x * 16, // Scale for frame time
-          deltaY: this.lastVelocity.y * 16,
-          _gesture: 'momentum',
-        });
-
-        this.momentumAnimation = requestAnimationFrame(animateMomentum);
-      } else {
-        this.stopMomentum();
-      }
+    this.selectionBoxState = {
+      startX: startX,
+      startY: startY,
+      touchId: touch.identifier,
     };
 
-    this.momentumAnimation = requestAnimationFrame(animateMomentum);
+    // Clear existing selections and create visual selection box
+    NoteManager.clearSelections();
+    this.createSelectionBoxElement(startX, startY);
+
+    this.emit('selection.boxStart', {
+      startX: startX,
+      startY: startY,
+      _gesture: 'longpress-drag',
+    });
   }
 
   /**
-   * Stop momentum animation
+   * Handle selection box drag update
    */
-  stopMomentum() {
-    if (this.momentumAnimation) {
-      cancelAnimationFrame(this.momentumAnimation);
-      this.momentumAnimation = null;
+  handleSelectionBoxDrag(touch) {
+    const { left: currentX, top: currentY } = calculateOffsetPosition(
+      this.canvas,
+      { clientX: touch.currentX, clientY: touch.currentY },
+    );
+
+    this.throttledUpdateSelectionBox(
+      this.selectionBoxState.startX,
+      this.selectionBoxState.startY,
+      currentX,
+      currentY,
+    );
+
+    this.emit('selection.boxUpdate', {
+      startX: this.selectionBoxState.startX,
+      startY: this.selectionBoxState.startY,
+      endX: currentX,
+      endY: currentY,
+      _gesture: 'longpress-drag',
+    });
+
+    // Select notes within the selection box
+    this.selectNotesWithinBox();
+  }
+
+  /**
+   * End selection box operation
+   */
+  endSelectionBox() {
+    // Remove dragging class to re-enable text selection
+    document.body.classList.remove('dragging');
+
+    // Perform final selection before clearing the box
+    this.selectNotesWithinBox();
+
+    // Emit selection changed event
+    this.emit('note.selection.changed');
+
+    this.emit('selection.boxEnd', { _gesture: 'longpress-drag' });
+    this.clearSelectionBox();
+
+    this.isDrawingSelectionBox = false;
+    this.selectionBoxState = null;
+  }
+
+  /**
+   * Create visual selection box element
+   */
+  createSelectionBoxElement(startX, startY) {
+    this.clearSelectionBox();
+
+    this.selectionBox = document.createElement('div');
+    this.selectionBox.id = 'selection-box';
+    Object.assign(this.selectionBox.style, {
+      position: 'absolute',
+      border: '2px dashed rgba(102, 102, 240, 0.8)', // Touch-friendly thicker border
+      backgroundColor: 'rgba(102, 102, 240, 0.1)',
+      left: `${startX}px`,
+      top: `${startY}px`,
+      width: '0px',
+      height: '0px',
+      pointerEvents: 'none', // Don't interfere with touch events
+      borderRadius: '4px', // Slightly rounded for mobile aesthetic
+    });
+
+    this.canvas.appendChild(this.selectionBox);
+  }
+
+  /**
+   * Update selection box visual
+   */
+  updateSelectionBox(startX, startY, currentX, currentY) {
+    if (!this.selectionBox) return;
+
+    const width = currentX - startX;
+    const height = currentY - startY;
+
+    Object.assign(this.selectionBox.style, {
+      width: `${Math.abs(width)}px`,
+      height: `${Math.abs(height)}px`,
+      left: `${Math.min(currentX, startX)}px`,
+      top: `${Math.min(currentY, startY)}px`,
+    });
+  }
+
+  /**
+   * Clear selection box visual
+   */
+  clearSelectionBox() {
+    if (this.selectionBox) {
+      this.selectionBox.remove();
+      this.selectionBox = null;
     }
-    this.lastVelocity = { x: 0, y: 0 };
+  }
+
+  /**
+   * Select notes that fall within the current selection box
+   */
+  selectNotesWithinBox() {
+    if (!this.selectionBox) return;
+
+    const notes = document.querySelectorAll('.note');
+    const boxRect = this.selectionBox.getBoundingClientRect();
+    const canvasRect = this.canvas.getBoundingClientRect();
+
+    console.log('Selection box rect (viewport):', boxRect);
+    console.log('Canvas rect (viewport):', canvasRect);
+    console.log('Found notes:', notes.length);
+
+    notes.forEach((note) => {
+      const noteRect = note.getBoundingClientRect();
+      console.log(`Note ${note.id} rect (viewport):`, noteRect);
+
+      // Use intersection-based selection (touch-friendly)
+      // Both rectangles are now in viewport coordinates
+      const intersects =
+        noteRect.left < boxRect.right &&
+        noteRect.right > boxRect.left &&
+        noteRect.top < boxRect.bottom &&
+        noteRect.bottom > boxRect.top;
+
+      console.log(`Note ${note.id} intersects:`, intersects);
+
+      if (intersects) {
+        console.log(`Selecting note ${note.id}`);
+        NoteManager.selectNote(note);
+      } else {
+        NoteManager.deselectNote(note);
+      }
+    });
   }
 
   /**

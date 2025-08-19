@@ -19,16 +19,22 @@ export class InteractionBootstrap extends BaseBootstrap {
     this.usingLegacyEvents = false;
   }
 
-  async initialize(elements) {
+  async initialize() {
+    // Legacy system removed - elements parameter no longer needed
     // Initialize modern input system with graceful fallback
     const inputSystemReady = await this.initializeInputSystem();
 
     // Set up additional event handling
     this.setupContextMenuPrevention();
 
-    // Set up fallback system if needed
+    // Legacy system removed - modern system should handle all cases
+    // if (!inputSystemReady) {
+    //   await this.initializeLegacyEventSystem(elements);
+    // }
     if (!inputSystemReady) {
-      await this.initializeLegacyEventSystem(elements);
+      throw new Error(
+        'Modern input system failed to initialize - no fallback available',
+      );
     }
 
     return {

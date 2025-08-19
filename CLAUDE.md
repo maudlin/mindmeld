@@ -13,7 +13,7 @@ Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven s
 
 ## Testing Guidelines
 - **E2E Tests**: Always use `createNote()` from CanvasPage helper
-- **Throttling**: Add `await page.waitForTimeout(800)` between note creations
+- **Throttling**: The app enforces a 500ms note-creation throttle. Use ~600ms between creations locally and 800–1000ms in CI.
 - **CI Stability**: Some tests need `await page.waitForTimeout(1000)` after page load
 - **Browser Issues**: Use helper methods, avoid direct DOM manipulation in tests
 

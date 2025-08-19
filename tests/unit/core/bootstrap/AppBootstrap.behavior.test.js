@@ -222,10 +222,10 @@ describe('Application Bootstrap Behavior', () => {
 
       await appBootstrap.initialize();
 
-      // Verify elements are passed to interaction bootstrap
+      // Verify interaction bootstrap is called (elements no longer needed)
       expect(
         appBootstrap.interactionBootstrap.safeInitialize,
-      ).toHaveBeenCalledWith(mockElements);
+      ).toHaveBeenCalledWith();
 
       // Verify canvas is passed to state restoration
       expect(appBootstrap.dataBootstrap.restoreState).toHaveBeenCalledWith(

@@ -6,6 +6,16 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 
 **🌐 Live Demo**: [mind-meld.co](https://mind-meld.co/)
 
+## Prerequisites
+
+For development:
+- Node.js LTS (v18+ recommended)
+- npm
+- Note: Playwright installs Chromium automatically on first install in non-production environments.
+
+For hosting/deployment:
+- None required beyond a static file host. The app is plain HTML/CSS/JS served from the `src/` directory and can be hosted on any static server or CDN (e.g., GitHub Pages, Netlify, Vercel static, Nginx).
+
 ## Quick Start
 
 ```bash
@@ -19,13 +29,26 @@ npm install && npm start
 
 Visit `http://localhost:8080` to begin mind mapping.
 
+### Touch Mode
+For an enhanced mobile experience, add `?mode=touch` to enable refined touch interactions:
+```bash
+http://localhost:8080/?mode=touch
+```
+
+Touch mode features:
+- **Single-finger drag**: Multi-select lasso on canvas
+- **Press-hold-drag**: Move notes and groups
+- **Double-tap**: Create or edit notes
+- **Two-finger gestures**: Pan and zoom canvas
+
 ## Key Features
 
 - **Dynamic Note Creation**: Double-click to create notes anywhere on the canvas
 - **Color-Coded Notes**: 4-color palette (yellow, pink, green, blue) with intuitive selection-based picker
 - **Intelligent Connections**: Visual connections with directional arrows and real-time updates
 - **Multi-Canvas Templates**: Standard Canvas, Hero's Journey, and custom templates
-- **Advanced Selection**: Multi-select with group operations
+- **Advanced Selection**: Multi-select with group operations and touch-optimized lasso selection
+- **Touch-Optimized Interface**: Refined touch interactions for mobile and tablet devices
 - **Data Management**: Export/import mind maps as JSON with full state preservation
 - **Modern Architecture**: Event-driven design with zero circular dependencies
 
@@ -87,4 +110,4 @@ Mind maps are stored as JSON with this structure:
 
 ## License
 
-Licensed under the same terms as the project. See project repository for details.
+ISC License. See [LICENSE](LICENSE) for details.

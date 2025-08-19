@@ -34,10 +34,19 @@ MindMeld is a powerful, browser-based mind mapping application that helps you or
 4. Connections automatically route around other notes
 
 ### Moving and Organizing
+
+**Desktop:**
 - **Click and drag** notes to reposition them
-- **Select multiple notes** by clicking and dragging a selection box around them
+- **Click and drag** a selection box around multiple notes to select them
 - **Move selected notes** together by dragging any selected note
 - **Delete notes** by selecting them and pressing the Delete key
+
+**Touch Mode (`?mode=touch`):**
+- **Press-hold-drag** notes to move them (wait ~500ms, then drag)
+- **Single-finger drag** on empty canvas to create lasso selection
+- **Double-tap** notes to edit content
+- **Single tap** notes to select
+- **Two-finger gestures** for canvas pan and zoom only
 
 ### Canvas Templates
 Choose from different canvas layouts to structure your mind maps:
@@ -56,9 +65,16 @@ Choose from different canvas layouts to structure your mind maps:
 ## Navigation and Controls
 
 ### Zoom and Pan
+
+**Desktop:**
 - **Mouse wheel**: Zoom in and out
-- **Click and drag** empty canvas areas to pan around
+- **Right-click and drag**: Pan around the canvas
 - **Zoom controls**: Use the zoom indicator in the top-right corner
+
+**Mobile/Touch Devices:**
+- **Two-finger pinch**: Zoom in and out
+- **Two-finger drag**: Pan around the canvas  
+- **Touch Mode**: Add `?mode=touch` to the URL for enhanced touch interactions
 
 ### Menu System
 - **About**: Access information about MindMeld and what's new
@@ -68,6 +84,42 @@ Choose from different canvas layouts to structure your mind maps:
   - Clipboard operations: Copy/paste mind maps
 - **Canvas Style**: Switch between different canvas templates
 - **Clear Canvas**: Remove all notes and connections (with confirmation)
+
+## Touch Mode Features
+
+MindMeld includes an enhanced touch mode optimized for mobile and tablet devices. Access it by adding `?mode=touch` to your URL:
+
+```
+https://your-mindmeld-site.com/?mode=touch
+```
+
+### Touch Interaction Model
+
+Touch Mode implements a refined interaction system designed specifically for touch devices:
+
+#### Single-Finger Gestures
+- **Single tap**: Select notes or UI elements
+- **Double-tap on canvas**: Create new notes
+- **Double-tap on notes**: Edit note content
+- **Single-finger drag on empty canvas**: Draw lasso selection box
+- **Press-hold-drag on notes**: Move notes (hold ~500ms, then drag)
+
+#### Two-Finger Gestures
+- **Two-finger pinch**: Zoom in/out
+- **Two-finger drag**: Pan around the canvas
+
+#### Key Differences from Desktop Mode
+- **No hover states**: All interactions use tap/touch patterns
+- **Visual feedback**: Touch elements show immediate visual response
+- **Optimized hit targets**: Larger touch-friendly interaction areas
+- **Gesture priority**: Two-finger gestures override single-finger for canvas navigation
+
+### Touch Mode Best Practices
+1. **Note Movement**: Use press-hold-drag rather than immediate drag
+2. **Multi-Select**: Single-finger drag creates selection lasso
+3. **Canvas Navigation**: Always use two fingers for pan/zoom
+4. **Note Editing**: Double-tap notes to enter edit mode
+5. **Connection Creation**: Tap and drag from connection points (same as desktop)
 
 ## Advanced Features
 

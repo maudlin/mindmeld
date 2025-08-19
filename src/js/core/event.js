@@ -92,6 +92,11 @@ function preventDefault(event) {
 function handleMouseDown(event) {
   if (event.button !== 0) return; // Only handle left mouse button
 
+  // Don't handle if clicking on delete button
+  if (event.target.closest('.shared-delete-button--note')) {
+    return;
+  }
+
   const target = event.target;
   if (
     !target.classList.contains('ghost-connector') &&
