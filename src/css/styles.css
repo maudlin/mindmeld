@@ -880,7 +880,7 @@ line.connection-line {
   border-radius: 50%;
   background-color: rgba(255, 58, 48, 0.5);
   border: none;
-  color: #FFFFFF;
+  color: #ffffff;
   display: none;
   z-index: 10;
   justify-content: center;
@@ -932,7 +932,7 @@ line.connection-line {
 
 .shared-delete-button--connection .shared-delete-button-cross,
 .shared-delete-button--connection svg line {
-  stroke: #FFFFFF;
+  stroke: #ffffff;
   stroke-width: 5; /* Match note button stroke width */
   stroke-linecap: round;
 }
@@ -943,11 +943,11 @@ line.connection-line {
     background-color: rgba(255, 59, 48, 0.9);
     transform: scale(1.1);
   }
-  
+
   .shared-delete-button--note:hover svg {
-    opacity: 1.0;
+    opacity: 1;
   }
-  
+
   .shared-delete-button--connection:hover .shared-delete-button-background {
     fill: rgba(255, 59, 48, 0.9);
   }
@@ -964,7 +964,7 @@ line.connection-line {
 
 /* Focus state for accessibility */
 .shared-delete-button--note:focus {
-  outline: 2px solid #2684FF;
+  outline: 2px solid #2684ff;
   outline-offset: 2px;
 }
 
@@ -1180,5 +1180,3 @@ line.connection-line {
     background: #4b5563;
   }
 }
-
-
