@@ -136,8 +136,8 @@ describe('Capability Detector', () => {
       expect(mode).toBe('desktop');
     });
 
-    it('should prefer desktop mode for hybrid devices by default', () => {
-      // Setup: Device supports both but prefer precision
+    it('should use touch mode for devices with touch capability', () => {
+      // Setup: Device supports both touch and precision - use TouchAdapter for best mobile experience
       global.matchMedia.mockImplementation((query) => {
         if (query === '(any-pointer: fine)') return { matches: true };
         if (query === '(any-pointer: coarse)') return { matches: true };
@@ -151,7 +151,7 @@ describe('Capability Detector', () => {
 
       const mode = detector.getOptimalInputMode();
 
-      expect(mode).toBe('desktop'); // Prefer precision on hybrid
+      expect(mode).toBe('touch'); // TouchAdapter provides best experience for touch devices
     });
   });
 

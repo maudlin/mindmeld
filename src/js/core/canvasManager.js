@@ -86,16 +86,22 @@ export class CanvasManager {
       return;
     }
 
-    // Remove existing background layout
-    const existingBackground = canvas.querySelector('.background-layout');
-    if (existingBackground) {
-      existingBackground.remove();
+    // Remove ALL existing background layout elements to avoid duplicates
+    const existingBackgrounds = canvas.querySelectorAll('.background-layout');
+    if (existingBackgrounds && existingBackgrounds.length > 0) {
+      existingBackgrounds.forEach((el) => el.remove());
+      log(
+        `Removed ${existingBackgrounds.length} existing background layout element(s).`,
+      );
     }
 
-    // Remove existing module-specific styles
-    const existingStyle = document.head.querySelector(`style[id^="style-"]`);
-    if (existingStyle) {
-      existingStyle.remove();
+    // Remove ALL existing module-specific styles (style tags with id starting with "style-")
+    const existingStyles = document.head.querySelectorAll(
+      'style[id^="style-"]',
+    );
+    if (existingStyles && existingStyles.length > 0) {
+      existingStyles.forEach((style) => style.remove());
+      log(`Removed ${existingStyles.length} existing module style tag(s).`);
     }
 
     // Load and apply new CSS
@@ -104,11 +110,21 @@ export class CanvasManager {
       document.head.appendChild(newStyle);
     }
 
-    // Create and append new background layout
+    // Create and append new background layout as the first child of the canvas
     const newBackground = module.createBackgroundLayout();
     canvas.insertBefore(newBackground, canvas.firstChild);
 
-    log(`Switched to ${moduleName} layout`);
+    // Safety check in development: ensure only one background-layout exists
+    if (process && process.env && process.env.NODE_ENV !== 'production') {
+      const count = canvas.querySelectorAll('.background-layout').length;
+      if (count !== 1) {
+        console.warn(
+          `Expected exactly 1 .background-layout after switch, found ${count}`,
+        );
+      }
+    }
+
+    log(`Switched to ${module.name} layout`);
   }
 
   getCurrentModule() {

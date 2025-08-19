@@ -77,7 +77,8 @@ export class UIBootstrap extends BaseBootstrap {
 
   async initializeCanvasView(elements) {
     try {
-      initializeCanvas(elements);
+      // Await initial canvas setup to prevent race conditions during template switching
+      await initializeCanvas(elements);
 
       // Restore canvas type state after canvas is available
       await CanvasStateService.restoreCanvasType(elements.canvas);

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Touch Debug</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .info { background: #f0f0f0; padding: 10px; margin: 5px 0; }
+        .error { background: #ffeeee; padding: 10px; margin: 5px 0; }
+        .success { background: #eeffee; padding: 10px; margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h1>Touch System Diagnostic</h1>
+    <div id="results"></div>
+    
+    <script type="module">
+        const results = document.getElementById('results');
+        
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+        
+        // Check URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('mode');
+        addResult(`URL mode parameter: ${mode || 'none'}`, mode ? 'success' : 'info');
+        
+        // Check device capabilities
+        addResult(`Max touch points: ${navigator.maxTouchPoints}`);
+        addResult(`User agent: ${navigator.userAgent}`);
+        
+        // Check media queries
+        if (window.matchMedia) {
+            const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+            const finePointer = window.matchMedia('(pointer: fine)').matches;
+            const hover = window.matchMedia('(hover: hover)').matches;
+            
+            addResult(`Pointer coarse: ${coarsePointer}`, coarsePointer ? 'success' : 'info');
+            addResult(`Pointer fine: ${finePointer}`, finePointer ? 'success' : 'info');
+            addResult(`Hover: ${hover}`, hover ? 'info' : 'success');
+        }
+        
+        // Try to import CapabilityDetector
+        try {
+            const { CapabilityDetector } = await import('./src/js/interactions/capabilities/detector.js');
+            const detector = new CapabilityDetector();
+            const capabilities = detector.getCapabilities();
+            
+            addResult(`Detected optimal mode: ${capabilities.optimalInputMode}`, 'success');
+            addResult(`Touch first: ${capabilities.isTouchFirst}`, capabilities.isTouchFirst ? 'success' : 'info');
+            addResult(`Desktop first: ${capabilities.isDesktopFirst}`, capabilities.isDesktopFirst ? 'info' : 'success');
+            addResult(`Hybrid device: ${capabilities.isHybridDevice}`);
+            addResult(`Supported modes: ${capabilities.supportedModes.join(', ')}`);
+        } catch (error) {
+            addResult(`Failed to load CapabilityDetector: ${error.message}`, 'error');
+        }
+        
+        // Check if TouchAdapter can be loaded
+        try {
+            const { TouchAdapter } = await import('./src/js/interactions/adapters/TouchAdapter.js');
+            addResult('TouchAdapter can be imported', 'success');
+        } catch (error) {
+            addResult(`Failed to import TouchAdapter: ${error.message}`, 'error');
+        }
+    </script>
+</body>
+</html>

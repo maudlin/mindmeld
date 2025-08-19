@@ -88,10 +88,10 @@ export class CapabilityDetector {
 
   /**
    * Determine the optimal input mode for the device
-   * @returns {string} 'touch', 'desktop', or manual override
+   * @returns {string} 'touch' or 'desktop'
    */
   getOptimalInputMode() {
-    // Check for manual override first
+    // Check for manual override first (for testing/debugging)
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const manualMode = urlParams.get('mode');
@@ -103,18 +103,12 @@ export class CapabilityDetector {
       // URLSearchParams not supported, continue with detection
     }
 
-    // Detect optimal mode based on capabilities
-    // Check hybrid first, then specific modes
-    if (this.isHybridDevice()) {
-      // For hybrid devices, prefer desktop for precision by default
-      return 'desktop';
-    } else if (this.isTouchFirst()) {
+    // Simplified detection: TouchAdapter for all touch-capable devices
+    if (this.isTouchFirst() || (this.hasTouch() && !this.isDesktopFirst())) {
       return 'touch';
-    } else if (this.isDesktopFirst()) {
-      return 'desktop';
     }
 
-    // Fallback to desktop for unknown devices
+    // Desktop for all other devices
     return 'desktop';
   }
 

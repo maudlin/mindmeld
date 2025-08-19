@@ -1,6 +1,6 @@
 // src/js/features/zoom/zoomManager.js
 import config from '../../core/config.js';
-import { isMobileDevice } from '../../utils/deviceUtils.js';
+// isMobileDevice import removed - legacy touch system eliminated
 
 let zoomLevel = config.zoomLevels.default;
 let isPanning = false;
@@ -216,15 +216,8 @@ export function setupZoomAndPan(canvasContainer, canvas, zoomDisplay) {
   setupZoom(canvasContainer, canvas, zoomDisplay);
   setupPan(canvasContainer, canvas);
 
-  // Skip legacy touch panning when TouchAdapter is handling touch interactions (MM-145)
-  // Only skip if explicitly using touch mode AND on a mobile device
-  const isUsingTouchMode =
-    new URLSearchParams(window.location.search).get('mode') === 'touch';
-  const shouldUseLegacyTouchPan = isMobileDevice() && !isUsingTouchMode;
-
-  if (shouldUseLegacyTouchPan) {
-    setupTouchPan(canvasContainer, canvas);
-  }
+  // Legacy touch panning removed - TouchAdapter now handles all mobile touch interactions
+  // Desktop users get mouse/trackpad panning, mobile users get TouchAdapter gesture system
 
   // Prevent default context menu
   canvasContainer.addEventListener('contextmenu', (event) =>
