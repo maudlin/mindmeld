@@ -1,6 +1,6 @@
 {
   "name": "mindmeld",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "A web-based mind mapping tool",
   "main": "src/js/app.js",
   "type": "module",
@@ -34,11 +34,11 @@
     "analyze:duplication": "npx jscpd --min-lines=5 --min-tokens=50 src/",
     "fix": "npm run lint:fix && npm run format:all",
     "dev:setup": "npm run fix && npm run health-check",
-"pre-push": "npm run lint && npm run format:check && npm run test && npm run semgrep",
+    "pre-push": "npm run lint && npm run format:check && npm run test && npm run semgrep",
     "version:patch": "npm version patch --no-git-tag-version && npm run version:sync",
     "version:minor": "npm version minor --no-git-tag-version && npm run version:sync",
     "version:major": "npm version major --no-git-tag-version && npm run version:sync",
-"ci:simulate": "CI=true npm run lint && npm run format:check && npm run test:unit && npm run test:e2e",
+    "ci:simulate": "CI=true npm run lint && npm run format:check && npm run test:unit && npm run test:e2e",
     "semgrep": "npx semgrep --error --config p/security-audit --config p/javascript --config p/owasp-top-ten"
   },
   "author": "",

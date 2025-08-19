@@ -1,18 +1,69 @@
 # Mobile Interaction Patterns
 
-This document outlines consistent mobile-friendly interaction patterns used throughout MindMeld. These patterns ensure a seamless experience across desktop and mobile devices.
+This document outlines the mobile-friendly interaction patterns used throughout MindMeld, including the advanced TouchAdapter system for refined touch interactions.
 
 ## Overview
 
-Mobile devices have different interaction paradigms than desktop:
-- **No hover state**: Touch devices don't have true hover, so hover-based UI must be converted to tap-based
-- **Touch feedback**: Users expect visual feedback when touching elements
-- **Click-away patterns**: Common mobile pattern for closing menus/modals
-- **Escape key support**: Important for keyboard accessibility
+MindMeld provides two interaction modes for mobile devices:
 
-## Available Utilities
+1. **Standard Mode**: Basic mobile compatibility with hover-to-tap conversions
+2. **Touch Mode** (`?mode=touch`): Advanced touch-optimized interaction system
 
-All mobile interaction utilities are located in `src/js/utils/mobileInteractions.js`.
+### Touch Mode Architecture
+
+Touch Mode uses the **TouchAdapter** system (`src/js/interactions/adapters/TouchAdapter.js`) which provides:
+- **Gesture Recognition**: Advanced multi-touch gesture detection
+- **Event Consolidation**: Unified event handling for complex touch interactions  
+- **Canvas Integration**: Direct integration with zoom, pan, and selection systems
+- **Visual Feedback**: Touch-optimized visual responses
+
+## Touch Mode Interactions (TouchAdapter)
+
+### Refined Touch Interaction Model
+
+Touch Mode implements a sophisticated interaction model optimized for touch devices:
+
+#### Core Interaction Patterns
+
+**Single-Finger Gestures:**
+- **Tap**: Select notes, activate UI elements
+- **Double-tap on canvas**: Create new notes  
+- **Double-tap on notes**: Enter edit mode
+- **Long-press**: Prepare for note movement (500ms hold time)
+- **Drag on canvas**: Multi-select lasso selection
+- **Press-hold-drag**: Move notes after long-press detection
+
+**Two-Finger Gestures:**
+- **Pinch**: Zoom in/out with scale detection
+- **Two-finger drag**: Canvas panning
+- **Combined gestures**: Simultaneous zoom and pan
+
+#### Technical Implementation
+
+```javascript
+// TouchAdapter usage (automatically activated in touch mode)
+// Access via URL: ?mode=touch
+
+// The system automatically:
+// 1. Disables legacy touch panning conflicts  
+// 2. Enables advanced gesture recognition
+// 3. Provides visual feedback for touch interactions
+// 4. Integrates with existing zoom/pan systems
+```
+
+#### Gesture State Machine
+
+The TouchAdapter uses a sophisticated state machine for gesture recognition:
+
+1. **Touch Start**: Detect touch points and initialize gesture tracking
+2. **Movement Detection**: Analyze movement patterns for gesture classification
+3. **Long-Press Detection**: Timer-based detection for note movement prep
+4. **Multi-Touch Handling**: Coordinate multiple simultaneous touch points
+5. **Gesture Completion**: Execute appropriate actions based on gesture type
+
+## Standard Mode Utilities
+
+For basic mobile compatibility, these utilities are available in `src/js/utils/mobileInteractions.js`:
 
 ### 1. Mobile Dropdowns (`setupMobileDropdown`)
 

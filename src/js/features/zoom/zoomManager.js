@@ -216,7 +216,13 @@ export function setupZoomAndPan(canvasContainer, canvas, zoomDisplay) {
   setupZoom(canvasContainer, canvas, zoomDisplay);
   setupPan(canvasContainer, canvas);
 
-  if (isMobileDevice()) {
+  // Skip legacy touch panning when TouchAdapter is handling touch interactions (MM-145)
+  // Only skip if explicitly using touch mode AND on a mobile device
+  const isUsingTouchMode =
+    new URLSearchParams(window.location.search).get('mode') === 'touch';
+  const shouldUseLegacyTouchPan = isMobileDevice() && !isUsingTouchMode;
+
+  if (shouldUseLegacyTouchPan) {
     setupTouchPan(canvasContainer, canvas);
   }
 

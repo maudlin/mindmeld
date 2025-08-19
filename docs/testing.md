@@ -80,12 +80,17 @@ tests/
 │   │   ├── colorPicker/    # Color picker component tests
 │   │   ├── zoom/           # Zoom manager tests
 │   │   └── note/           # Note creation tests
+│   ├── interactions/       # Touch and input adapter tests
+│   │   ├── adapters/       # DesktopAdapter and TouchAdapter tests
+│   │   └── gestures/       # GestureRecognizer tests
 │   ├── data/               # Data layer tests (storageManager, etc.)
 │   ├── utils/              # Utility function tests
 │   ├── integration/        # Cross-component integration tests
 │   └── helpers/            # Test utilities (colorTestUtils.js)
 └── e2e/                    # Playwright E2E tests
-    └── helpers/            # Shared utilities (CanvasPage.js)
+    ├── helpers/            # Shared utilities (CanvasPage.js)
+    ├── touch-*.spec.js     # Touch interaction E2E tests
+    └── desktop-*.spec.js   # Desktop interaction E2E tests
 ```
 
 ## Unit Testing (Jest)
@@ -207,11 +212,18 @@ Configuration in `playwright.config.js`. Tests in `tests/e2e/`.
 **Feature Modules**: Complete component behavior testing (`colorPicker.basic.test.js`)  
 **Integration**: Cross-component behavior validation (`colorPicker.integration.test.js`)  
 **Menu Functions**: Complete export/import workflows (including color data)  
-**Canvas Templates**: Template switching and verification workflows
+**Canvas Templates**: Template switching and verification workflows  
+**Touch Interactions**: TouchAdapter system testing with advanced gesture patterns (`touch-*.spec.js`)  
+**Input Adapters**: Platform-specific interaction testing (Desktop vs Touch modes)
 
 ## Test Utilities
 
 **E2E Helpers**: `CanvasPage` and `TestCoordinates` from `tests/e2e/helpers/` for consistent E2E interactions
+
+**Touch Testing**: CanvasPage includes touch-specific methods:
+- `simulateTouchGesture()` - Multi-touch gesture simulation
+- `testTouchMode()` - Load app in touch mode (?mode=touch)
+- `verifyTouchInteraction()` - Touch-specific assertions
 
 **Unit Test Helpers**: `colorTestUtils.js` provides:
 - `createMockEventBus()` - Mock event bus for isolated testing
@@ -231,5 +243,8 @@ Configuration in `playwright.config.js`. Tests in `tests/e2e/`.
 - **"Notes created at same position"**: Missing `waitForTimeout(800)` between creations
 - **"Browser context closed"**: Avoid direct DOM manipulation, use helper methods  
 - **Tests pass locally, fail in CI**: Add `waitForTimeout(1000)` after page load
+- **Touch interactions fail**: Ensure ?mode=touch parameter for TouchAdapter tests
+- **Canvas panning conflicts**: Verify legacy vs TouchAdapter isolation in tests
+- **Gesture timing issues**: Allow adequate time for long-press detection (500ms)
 
 For complete testing details, see [`tests/README.md`](../tests/README.md).

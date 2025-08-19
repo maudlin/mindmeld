@@ -74,8 +74,11 @@ export class ContextMenu {
       deleteButton.container.classList.add('menu-item', 'context-menu-item');
 
       return deleteButton.container;
+    } else if (item.type === 'cycle') {
+      // Use new arrow-based toggle design for cycle button (MM-148)
+      return this.createToggleButton(item);
     } else {
-      // Keep existing style for non-delete items
+      // Keep existing style for any other menu items
       const button = this.createSVGElement('g', {
         class: 'menu-item context-menu-item',
         'data-type': item.type,
@@ -105,6 +108,60 @@ export class ContextMenu {
 
       return button;
     }
+  }
+
+  createToggleButton(item) {
+    // Create container group for the toggle button (MM-148)
+    const button = this.createSVGElement('g', {
+      class: 'menu-item context-menu-item mm-arrow-toggle',
+      'data-type': item.type,
+    });
+
+    // Main circle background
+    const mainCircle = this.createSVGElement('circle', {
+      cx: '0',
+      cy: item.y,
+      r: '9',
+      fill: 'var(--mm-arrow-fill, #8585ecff)',
+      stroke: 'var(--mm-arrow-stroke, transparent)',
+      'stroke-width': '1',
+    });
+    button.appendChild(mainCircle);
+
+    // Left arrow polyline
+    const leftArrow = this.createSVGElement('polyline', {
+      points: '-3,-3 -6,0 -3,3',
+      fill: 'none',
+      stroke: 'var(--mm-arrow-stroke, #FFFFFF)',
+      'stroke-width': '2',
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+      transform: `translate(0, ${item.y})`,
+    });
+    button.appendChild(leftArrow);
+
+    // Right arrow polyline
+    const rightArrow = this.createSVGElement('polyline', {
+      points: '3,-3 6,0 3,3',
+      fill: 'none',
+      stroke: 'var(--mm-arrow-stroke, #FFFFFF)',
+      'stroke-width': '2',
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+      transform: `translate(0, ${item.y})`,
+    });
+    button.appendChild(rightArrow);
+
+    // Inner highlight circle
+    const innerCircle = this.createSVGElement('circle', {
+      cx: '0',
+      cy: item.y,
+      r: '2',
+      fill: 'var(--mm-arrow-fill, #ffffff88)',
+    });
+    button.appendChild(innerCircle);
+
+    return button;
   }
 
   createMenuBackground() {
