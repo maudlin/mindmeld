@@ -3,6 +3,7 @@ import { toBase62, calculateOffsetPosition } from '../utils/utils.js';
 import config from '../core/config.js';
 import { NOTE_CONTENT_LIMIT } from '../core/constants.js';
 import { eventBus } from '../core/eventBus.js';
+import { createDeleteButton } from '../features/note/deleteButton.js';
 
 let nextNoteId = 1;
 let handDrawn = false;
@@ -32,6 +33,9 @@ export function createNote(x, y, canvas, addEventListeners = null) {
 
   note.appendChild(noteContent);
   createGhostConnectors(note);
+  console.log('About to call createDeleteButton for note:', note);
+  createDeleteButton(note);
+  console.log('createDeleteButton call completed');
   canvas.appendChild(note);
 
   note.style.left = `${x}px`;

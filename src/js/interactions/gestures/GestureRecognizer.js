@@ -86,6 +86,15 @@ export class GestureRecognizer {
    * @param {TouchEvent} event - Touch event
    */
   handleTouchStart(event) {
+    // Don't prevent default for delete buttons - they need to work normally
+    if (
+      event.target &&
+      event.target.closest &&
+      event.target.closest('.shared-delete-button--note')
+    ) {
+      return;
+    }
+
     // Prevent default browser behaviors for our custom gestures
     event.preventDefault();
 

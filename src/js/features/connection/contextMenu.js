@@ -1,5 +1,6 @@
 // src/js/features/connection/contextMenu.js
 import { log } from '../../utils/utils.js';
+import { createSVGDeleteButton } from '../../components/deleteButton/deleteButtonFactory.js';
 
 export class ContextMenu {
   constructor(CONNECTION_TYPES, STROKE_COLOR, STROKE_WIDTH) {
@@ -61,34 +62,49 @@ export class ContextMenu {
   }
 
   createMenuItem(item) {
-    const button = this.createSVGElement('g', {
-      class: 'menu-item context-menu-item',
-      'data-type': item.type,
-    });
+    if (item.type === 'delete') {
+      // Use shared delete button component
+      const deleteButton = createSVGDeleteButton({
+        x: 0,
+        y: item.y,
+        onClick: null, // Will be handled by attachClickHandler
+      });
 
-    button.appendChild(
-      this.createSVGElement('circle', {
-        r: '10',
-        cx: '0',
-        cy: item.y,
-        fill: item.type === 'delete' ? 'pink' : 'white',
-        stroke: this.STROKE_COLOR,
-        'stroke-width': this.STROKE_WIDTH,
-      }),
-    );
+      // Add the menu-item class for compatibility
+      deleteButton.container.classList.add('menu-item', 'context-menu-item');
 
-    const text = this.createSVGElement('text', {
-      x: '0',
-      y: item.y,
-      'text-anchor': 'middle',
-      'dominant-baseline': 'central',
-      'font-size': '8',
-      fill: 'black',
-    });
-    text.textContent = item.symbol;
-    button.appendChild(text);
+      return deleteButton.container;
+    } else {
+      // Keep existing style for non-delete items
+      const button = this.createSVGElement('g', {
+        class: 'menu-item context-menu-item',
+        'data-type': item.type,
+      });
 
-    return button;
+      button.appendChild(
+        this.createSVGElement('circle', {
+          r: '10',
+          cx: '0',
+          cy: item.y,
+          fill: 'white',
+          stroke: this.STROKE_COLOR,
+          'stroke-width': this.STROKE_WIDTH,
+        }),
+      );
+
+      const text = this.createSVGElement('text', {
+        x: '0',
+        y: item.y,
+        'text-anchor': 'middle',
+        'dominant-baseline': 'central',
+        'font-size': '8',
+        fill: 'black',
+      });
+      text.textContent = item.symbol;
+      button.appendChild(text);
+
+      return button;
+    }
   }
 
   createMenuBackground() {

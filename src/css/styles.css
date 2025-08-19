@@ -297,6 +297,30 @@ body.dragging * {
   user-select: none !important;
 }
 
+/* Allow delete button to remain clickable even during dragging */
+body.dragging .shared-delete-button--note {
+  pointer-events: auto !important;
+  -webkit-user-select: auto !important;
+  -moz-user-select: auto !important;
+  -ms-user-select: auto !important;
+  user-select: auto !important;
+}
+
+/* Allow modal/notification dialogs to remain interactive during dragging */
+body.dragging .notification,
+body.dragging .modal,
+body.dragging .confirmation-dialog,
+body.dragging .notification-container,
+body.dragging .notification *,
+body.dragging .modal *,
+body.dragging .confirmation-dialog * {
+  pointer-events: auto !important;
+  -webkit-user-select: auto !important;
+  -moz-user-select: auto !important;
+  -ms-user-select: auto !important;
+  user-select: auto !important;
+}
+
 /* Allow text selection in notes only when editing */
 .note[contenteditable='true'] {
   -webkit-user-select: text !important;
@@ -831,374 +855,134 @@ line.connection-line {
   transform: translateY(-50%);
 }
 
-#selection-box {
-  position: absolute;
-  border: 1px dashed #000;
-  background-color: rgba(0, 0, 255, 0.1);
-  pointer-events: none; /* Ensure selection box does not interfere with interactions */
-}
-
-.context-menu {
-  z-index: 1000;
-}
-
-.context-menu-item text {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  font-weight: bold;
-}
-
-/* Prevent text selection in specific elements */
-.help-text,
-.context-menu-item text,
-svg text {
-  user-select: none;
-  pointer-events: none;
-}
-
 /* ==========================================================================
-   USER PREFERENCE SUPPORT & ACCESSIBILITY FEATURES
+   SHARED DELETE BUTTON COMPONENT
    ========================================================================== */
 
-/* Respect user's motion preferences */
-@media (prefers-reduced-motion: reduce) {
-  .note,
-  .color-swatch,
-  .menu-button,
-  .dropdown button,
-  .dropdown a {
-    transition: none !important;
-    animation: none !important;
-  }
-
-  /* Disable momentum scrolling animations */
-
-  /* Disable all CSS transforms that create motion */
-  .ghost-connector,
-  .adaptive-tooltip {
-    transition: none !important;
-  }
+/* Base delete button styling - shared by note and connection delete buttons */
+.shared-delete-button {
+  cursor: pointer;
+  transition: all 120ms ease-out;
+  border: none;
+  outline: none;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* System font preference support */
-@media (prefers-reduced-data: reduce) {
-  /* Use system fonts when data usage should be reduced */
-  :root {
-    --font-family:
-      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
-      Arial, sans-serif;
-    --font-family-alt:
-      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
-      Arial, sans-serif;
-  }
-
-  /* Disable web fonts */
-  @font-face {
-    font-display: none;
-  }
-}
-
-/* Transparency preference support */
-@media (prefers-reduced-transparency: reduce) {
-  .dropdown,
-  .adaptive-tooltip,
-  .ghost-connector {
-    backdrop-filter: none;
-    background-color: rgb(255, 255, 255);
-  }
-
-  .note {
-    background-color: rgb(255, 255, 255);
-  }
-
-  /* Remove semi-transparent overlays */
-  #overlay {
-    background: rgb(0, 0, 0); /* Solid black instead of rgba */
-    backdrop-filter: none;
-  }
-}
-
-/* Font size scaling support */
-@media (min-resolution: 144dpi) {
-  /* Respect system font scaling on high-DPI displays */
-  html {
-    font-size: 16px; /* Base font size */
-  }
-
-  .note-content {
-    font-size: 1rem; /* Use relative units */
-  }
-
-  #help-text {
-    font-size: 0.75rem;
-  }
-}
-
-/* Color scheme preference integration */
-@media (prefers-color-scheme: light) {
-  :root {
-    --accessibility-focus-color: #0066cc;
-    --accessibility-outline-color: #005ce6;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --accessibility-focus-color: #66b3ff;
-    --accessibility-outline-color: #4da6ff;
-  }
-}
-
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-  .note {
-    border-width: 2px;
-    box-shadow: 0 0 0 1px #000;
-  }
-
-  .ghost-connector {
-    border-width: 3px;
-    background-color: rgba(0, 0, 0, 0.1);
-  }
-
-  .color-swatch {
-    border-width: 2px;
-    border-color: #000;
-  }
-
-  .dropdown {
-    border: 2px solid #000;
-  }
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --primary-color: #0f172a;
-    --secondary-color: #f1f5f9;
-    --hover-color: rgba(59, 130, 246, 0.5);
-  }
-
-  #canvas {
-    background: #1e293b radial-gradient(#374151 2px, transparent 2px);
-  }
-
-  #watermark {
-    color: rgba(100, 116, 139, 0.15);
-  }
-
-  .dropdown {
-    background-color: #1e293b;
-    border: 1px solid #374151;
-  }
-
-  .dropdown button,
-  .dropdown a {
-    color: #f1f5f9;
-  }
-
-  .dropdown button:hover,
-  .dropdown a:hover {
-    background-color: #334155;
-  }
-}
-
-/* Optimize for high-DPI displays */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .note {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* Crisp SVG rendering on retina displays */
-  svg {
-    shape-rendering: geometricPrecision;
-  }
-}
-
-/* Battery and performance conscious optimizations */
-@media (prefers-reduced-motion: reduce) {
-  .note,
-  .color-swatch,
-  .menu-button,
-  .dropdown button,
-  .dropdown a {
-    animation: none !important;
-    transition: none !important;
-  }
-
-  /* Disable momentum scrolling when reduced motion is preferred */
-  .momentum-scroll {
-    scroll-behavior: auto !important;
-  }
-}
-
-/* ==========================================================================
-   ADAPTIVE TOOLTIPS & HELP SYSTEM
-   ========================================================================== */
-
-.adaptive-tooltip {
+/* HTML button context (notes) */
+.shared-delete-button--note {
   position: absolute;
-  background: rgba(0, 0, 0, 0.9);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  z-index: 1001;
-  pointer-events: none;
-  white-space: nowrap;
-  top: -40px;
-  left: 50%;
-  transform: translateX(-50%);
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  top: -9px;
+  right: 9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: rgba(255, 58, 48, 0.5);
+  border: none;
+  color: #FFFFFF;
+  display: none;
+  z-index: 10;
+  justify-content: center;
+  align-items: center;
 }
 
-.adaptive-tooltip::after {
+/* Touch target - removed as it may be blocking clicks
+.shared-delete-button--note::before {
   content: '';
   position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-top-color: rgba(0, 0, 0, 0.9);
+  top: -13px;
+  left: -13px;
+  right: -13px;
+  bottom: -13px;
+  z-index: -1;
+}
+*/
+
+.shared-delete-button--note svg {
+  width: 8px;
+  height: 8px;
+  stroke: currentColor;
+  stroke-width: 5;
+  stroke-linecap: round;
+  opacity: 0.9;
+  margin: 0;
+  padding: 0;
+  border: none;
+  display: block;
+  pointer-events: none;
 }
 
-.adaptive-tooltip.show {
-  opacity: 1;
+.shared-delete-button--note svg * {
+  pointer-events: none;
 }
 
-/* Help text responsive behavior */
-@media (max-width: 768px) {
-  #help-text {
-    font-size: 9pt;
-    line-height: 1.4;
-    bottom: 5px;
-    left: 5px;
-    max-width: calc(100vw - 10px);
+/* Show note delete button when note is selected */
+.note.selected .shared-delete-button--note {
+  display: flex;
+  animation: deleteButtonAppear 120ms ease-out;
+}
+
+/* SVG context (connections) */
+.shared-delete-button--connection .shared-delete-button-background {
+  fill: rgba(255, 58, 48, 0.5);
+  stroke: none;
+  transition: fill 120ms ease-out; /* Match note button animations */
+}
+
+.shared-delete-button--connection .shared-delete-button-cross,
+.shared-delete-button--connection svg line {
+  stroke: #FFFFFF;
+  stroke-width: 5; /* Match note button stroke width */
+  stroke-linecap: round;
+}
+
+/* Hover states */
+@media (hover: hover) {
+  .shared-delete-button--note:hover {
+    background-color: rgba(255, 59, 48, 0.9);
+    transform: scale(1.1);
+  }
+  
+  .shared-delete-button--note:hover svg {
+    opacity: 1.0;
+  }
+  
+  .shared-delete-button--connection:hover .shared-delete-button-background {
+    fill: rgba(255, 59, 48, 0.9);
+  }
+}
+
+/* Active states */
+.shared-delete-button--note:active {
+  transform: scale(0.95);
+}
+
+.shared-delete-button--connection:active .shared-delete-button-background {
+  fill: rgba(255, 59, 48, 0.7);
+}
+
+/* Focus state for accessibility */
+.shared-delete-button--note:focus {
+  outline: 2px solid #2684FF;
+  outline-offset: 2px;
+}
+
+/* Appear animation */
+@keyframes deleteButtonAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
 /* ==========================================================================
-   NOTIFICATION SYSTEM
+   NOTIFICATION MODAL SYSTEM
    ========================================================================== */
-
-/* Toast Notification Container */
-.notification-toast-container {
-  position: fixed;
-  top: 80px; /* Below navbar */
-  right: 20px;
-  z-index: 2000;
-  pointer-events: none;
-  max-width: 400px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* Toast Notification */
-.notification-toast {
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow:
-    0 10px 25px rgba(0, 0, 0, 0.15),
-    0 4px 10px rgba(0, 0, 0, 0.1);
-  padding: 16px;
-  pointer-events: auto;
-  transform: translateX(calc(100% + 20px));
-  opacity: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family:
-    'Inter',
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
-  min-width: 300px;
-  position: relative;
-}
-
-.notification-toast.show {
-  transform: translateX(0);
-  opacity: 1;
-}
-
-.notification-toast.dismissing {
-  transform: translateX(calc(100% + 20px));
-  opacity: 0;
-}
-
-/* Toast Content */
-.notification-toast-content {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.notification-toast-icon {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 600;
-  color: #ffffff;
-}
-
-.notification-toast-message {
-  flex: 1;
-  font-size: 14px;
-  line-height: 1.4;
-  color: #374151;
-  font-weight: 500;
-}
-
-.notification-toast-close {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: none;
-  border: none;
-  font-size: 18px;
-  line-height: 1;
-  color: #9ca3af;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.notification-toast-close:hover {
-  color: #374151;
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-/* Toast Types */
-.notification-toast-success .notification-toast-icon {
-  background: #10b981;
-}
-
-.notification-toast-error .notification-toast-icon {
-  background: #ef4444;
-}
-
-.notification-toast-warning .notification-toast-icon {
-  background: #f59e0b;
-}
-
-.notification-toast-info .notification-toast-icon {
-  background: #3b82f6;
-}
 
 /* Modal Overlay */
 .notification-modal-overlay {
@@ -1346,16 +1130,6 @@ svg text {
 
 /* Mobile Responsiveness */
 @media (max-width: 480px) {
-  .notification-toast-container {
-    left: 20px;
-    right: 20px;
-    max-width: none;
-  }
-
-  .notification-toast {
-    min-width: 0;
-  }
-
   .notification-modal {
     margin: 0;
     border-radius: 12px;
@@ -1376,7 +1150,6 @@ svg text {
 
 /* Accessibility - Respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
-  .notification-toast,
   .notification-modal-overlay,
   .notification-modal {
     transition: none !important;
@@ -1385,24 +1158,6 @@ svg text {
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
-  .notification-toast {
-    background: #1f2937;
-    color: #f9fafb;
-  }
-
-  .notification-toast-message {
-    color: #f9fafb;
-  }
-
-  .notification-toast-close {
-    color: #9ca3af;
-  }
-
-  .notification-toast-close:hover {
-    color: #f9fafb;
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-
   .notification-modal {
     background: #1f2937;
   }
@@ -1417,7 +1172,7 @@ svg text {
 
   .notification-modal-button-cancel {
     background: #374151;
-    color: #f9fafb;
+    color: #d1d5db;
     border-color: #4b5563;
   }
 
@@ -1426,31 +1181,4 @@ svg text {
   }
 }
 
-/* ==========================================================================
-   PRINT STYLES
-   ========================================================================== */
 
-@media print {
-  /* Hide interactive elements */
-  #navbar,
-  #color-picker-container,
-  #help-text,
-  #zoom-display,
-  .ghost-connector {
-    display: none !important;
-  }
-
-  /* Optimize notes for print */
-  .note {
-    box-shadow: none;
-    border: 2px solid #000;
-    background: white !important;
-    color: black !important;
-  }
-
-  /* Ensure connections are visible in print */
-  line.connection-line {
-    stroke: #000;
-    stroke-width: 2px;
-  }
-}

@@ -8,9 +8,7 @@ export class NoteEventService {
   static initialize() {
     // Handle note creation from events
     eventBus.on('note.createAtPosition', ({ canvas, event }) => {
-      console.log('Creating note at position:', { canvas, event }); // Debug log
-      const note = createNoteAtPosition(canvas, event, addNoteEventListeners);
-      console.log('Note created:', note); // Debug log
+      createNoteAtPosition(canvas, event, addNoteEventListeners);
     });
 
     // Handle note deletion from events

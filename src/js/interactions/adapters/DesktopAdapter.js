@@ -137,6 +137,8 @@ export class DesktopAdapter extends BaseAdapter {
     } else if (this.isClickOnCanvas(target)) {
       event.preventDefault();
       event.stopPropagation();
+      // Clear selections immediately on canvas click
+      NoteManager.clearSelections();
       this.startSelectionBox(event);
     }
   }
