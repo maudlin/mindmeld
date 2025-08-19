@@ -35,43 +35,76 @@ export class AdaptiveHelp {
     const isTouch = capabilities.isTouchFirst;
     const isHybrid = capabilities.isHybridDevice;
 
-    let helpHTML = '';
+    // Read version and build date from meta tags
+    const versionMeta = document.querySelector('meta[name="app-version"]');
+    const dateMeta = document.querySelector('meta[name="build-date"]');
+    const version = versionMeta ? versionMeta.content : 'dev';
+    const buildDate = dateMeta ? dateMeta.content : '';
 
+    // Clear existing content
+    while (this.helpElement.firstChild)
+      this.helpElement.removeChild(this.helpElement.firstChild);
+
+    const lines = [];
     if (isTouch) {
-      // Touch-first help text
-      helpHTML = `
-        <strong>Create a note:</strong> double-tap on the canvas<br />
-        <strong>Select notes:</strong> tap to select<br />
-        <strong>Color notes:</strong> use the color picker at the top<br />
-        <strong>Connect notes:</strong> drag from one connector to another<br />
-        <strong>Pan & Zoom:</strong> drag to pan, pinch to zoom<br />
-        <strong>Long press:</strong> for context menu<br />
-        <strong><span id="version">v0.10.0 (2025-08-14)</span></strong>
-      `;
+      lines.push(
+        ['Create a note:', 'double-tap on the canvas'],
+        ['Select notes:', 'tap to select'],
+        ['Color notes:', 'use the color picker at the top'],
+        ['Connect notes:', 'drag from one connector to another'],
+        ['Pan & Zoom:', 'drag to pan, pinch to zoom'],
+        ['Long press:', 'for context menu'],
+      );
     } else if (isHybrid) {
-      // Hybrid device help text (both touch and mouse)
-      helpHTML = `
-        <strong>Create a note:</strong> double-click/tap on the canvas<br />
-        <strong>Select notes:</strong> click/tap to select, Shift+click for multiple<br />
-        <strong>Color notes:</strong> use the color picker at the top<br />
-        <strong>Connect notes:</strong> drag from one connector to another<br />
-        <strong>Pan & Zoom:</strong> right-click & drag or touch-drag to pan, scroll or pinch to zoom<br />
-        <strong><span id="version">v0.10.0 (2025-08-14)</span></strong>
-      `;
+      lines.push(
+        ['Create a note:', 'double-click/tap on the canvas'],
+        ['Select notes:', 'click/tap to select, Shift+click for multiple'],
+        ['Color notes:', 'use the color picker at the top'],
+        ['Connect notes:', 'drag from one connector to another'],
+        [
+          'Pan & Zoom:',
+          'right-click & drag or touch-drag to pan, scroll or pinch to zoom',
+        ],
+      );
     } else {
-      // Desktop help text (original)
-      helpHTML = `
-        <strong>Create a note:</strong> double click on the canvas<br />
-        <strong>Select & delete notes:</strong> left click to select a note. Press delete key to delete<br />
-        <strong>Color notes:</strong> use the color picker at the top to apply colors to selected notes<br />
-        <strong>Connect two notes:</strong> drag a line from one blue connector to another<br />
-        <strong>Select multiple notes:</strong> click on the canvas and drag to select notes<br />
-        <strong>Pan & Zoom:</strong> right click & drag to pan, scroll to zoom<br />
-        <strong><span id="version">v0.10.0 (2025-08-14)</span></strong>
-      `;
+      lines.push(
+        ['Create a note:', 'double click on the canvas'],
+        [
+          'Select & delete notes:',
+          'left click to select a note. Press delete key to delete',
+        ],
+        [
+          'Color notes:',
+          'use the color picker at the top to apply colors to selected notes',
+        ],
+        [
+          'Connect two notes:',
+          'drag a line from one blue connector to another',
+        ],
+        [
+          'Select multiple notes:',
+          'click on the canvas and drag to select notes',
+        ],
+        ['Pan & Zoom:', 'right click & drag to pan, scroll to zoom'],
+      );
     }
 
-    this.helpElement.innerHTML = helpHTML;
+    // Build help text DOM
+    for (const [strongText, restText] of lines) {
+      const strongEl = document.createElement('strong');
+      strongEl.textContent = strongText + ' ';
+      this.helpElement.appendChild(strongEl);
+      this.helpElement.appendChild(document.createTextNode(restText));
+      this.helpElement.appendChild(document.createElement('br'));
+    }
+
+    // Version line
+    const versionStrong = document.createElement('strong');
+    const versionSpan = document.createElement('span');
+    versionSpan.id = 'version';
+    versionSpan.textContent = `v${version}${buildDate ? ` (${buildDate})` : ''}`;
+    versionStrong.appendChild(versionSpan);
+    this.helpElement.appendChild(versionStrong);
   }
 
   /**
