@@ -826,11 +826,32 @@ line.connection-line {
   border-radius: 50%;
   display: none; /* Hidden by default */
   cursor: crosshair;
+  transition: all 0.2s ease;
+  z-index: 10; /* Ensure connectors are above other elements */
 }
 
 .note:hover .ghost-connector,
 .note.selected .ghost-connector {
   display: block; /* Show on hover and when selected (for touch devices) */
+}
+
+/* Selected ghost connector state for touch connection creation */
+.ghost-connector.connector-selected {
+  background-color: rgba(112, 181, 255, 0.9); /* More opaque when selected */
+  box-shadow: 
+    0 0 0 2px rgba(255, 255, 255, 0.8), /* White ring */
+    0 0 8px rgba(112, 181, 255, 0.8); /* Blue glow */
+  transform: scale(1.3); /* Slightly larger when selected */
+}
+
+/* Touch-specific connector styling for better visibility */
+@media (pointer: coarse) {
+  .ghost-connector.connector-selected {
+    transform: scale(1.5); /* Even larger on touch devices */
+    box-shadow: 
+      0 0 0 3px rgba(255, 255, 255, 0.9), /* Thicker white ring */
+      0 0 12px rgba(112, 181, 255, 0.9); /* Stronger glow */
+  }
 }
 
 .ghost-connector.top {
