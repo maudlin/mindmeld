@@ -115,7 +115,11 @@ export class CanvasManager {
     canvas.insertBefore(newBackground, canvas.firstChild);
 
     // Safety check in development: ensure only one background-layout exists
-    if (process && process.env && process.env.NODE_ENV !== 'production') {
+    if (
+      typeof process !== 'undefined' &&
+      process.env &&
+      process.env.NODE_ENV !== 'production'
+    ) {
       const count = canvas.querySelectorAll('.background-layout').length;
       if (count !== 1) {
         console.warn(

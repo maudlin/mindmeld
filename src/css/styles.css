@@ -827,8 +827,9 @@ line.connection-line {
   cursor: crosshair;
 }
 
-.note:hover .ghost-connector {
-  display: block; /* Show on hover */
+.note:hover .ghost-connector,
+.note.selected .ghost-connector {
+  display: block; /* Show on hover and when selected (for touch devices) */
 }
 
 .ghost-connector.top {
