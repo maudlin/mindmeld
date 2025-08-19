@@ -198,13 +198,7 @@ export class TouchAdapter extends BaseAdapter {
         box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       }
       
-      /* Touch-friendly ghost connectors only on coarse pointer devices */
-      @media (pointer: coarse) {
-        .ghost-connector {
-          min-width: 44px;
-          min-height: 44px;
-        }
-      }
+      /* Ghost connectors use desktop styling for now - 10px for all devices */
       
       @media (pointer: coarse) {
         .note {
