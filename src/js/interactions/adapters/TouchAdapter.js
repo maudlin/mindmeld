@@ -235,6 +235,7 @@ export class TouchAdapter extends BaseAdapter {
       this.handleNoteSelection(note);
     } else if (this.isClickOnCanvas(target)) {
       // Tap on canvas - clear selections and cancel operations (MM-145 refined)
+      this.clearAllJiggleAnimations();
       NoteManager.clearSelections();
       this.emit('note.selection.changed');
 
@@ -309,7 +310,7 @@ export class TouchAdapter extends BaseAdapter {
   handleLongPress(touch) {
     const { target } = this.getTouchTarget(touch.currentX, touch.currentY);
 
-    // Check if long-pressing on a note - start note movement (MM-145 refined)
+    // Check if long-pressing on a note - indicate ready to move (MM-145 refined)
     const note = target.classList.contains('note')
       ? target
       : target.closest('.note');
@@ -320,8 +321,17 @@ export class TouchAdapter extends BaseAdapter {
         return;
       }
 
-      // Start note movement - this will be handled by handleDragStart
-      // The gesture recognizer will transition to dragging state
+      // Ensure note is selected before indicating ready to move
+      if (!note.classList.contains('selected')) {
+        NoteManager.clearSelections();
+        NoteManager.selectNote(note);
+        this.emit('note.selection.changed');
+      }
+
+      // Add jiggle animation to indicate note is ready to move (mobile only)
+      this.addJiggleAnimation(note);
+
+      // Note: The gesture recognizer will transition to dragging state on movement
       return;
     }
 
@@ -531,6 +541,43 @@ export class TouchAdapter extends BaseAdapter {
   }
 
   /**
+   * Add jiggle animation to selected note to indicate ready-to-drag state
+   */
+  addJiggleAnimation(note) {
+    // Remove any existing jiggle class first
+    note.classList.remove('jiggle');
+
+    // Add jiggle with a small delay for better UX
+    setTimeout(() => {
+      if (note.classList.contains('selected')) {
+        note.classList.add('jiggle');
+
+        // Remove jiggle class after animation completes (2 cycles * 0.3s = 0.6s)
+        setTimeout(() => {
+          note.classList.remove('jiggle');
+        }, 600);
+      }
+    }, 100);
+  }
+
+  /**
+   * Remove jiggle animation from note
+   */
+  removeJiggleAnimation(note) {
+    note.classList.remove('jiggle');
+  }
+
+  /**
+   * Clear jiggle animations from all notes
+   */
+  clearAllJiggleAnimations() {
+    const jiggleNotes = document.querySelectorAll('.note.jiggle');
+    jiggleNotes.forEach((note) => {
+      note.classList.remove('jiggle');
+    });
+  }
+
+  /**
    * Start note dragging operation
    */
   startNoteDrag(touch, note, target) {
@@ -538,6 +585,9 @@ export class TouchAdapter extends BaseAdapter {
     if (target.classList.contains('note-content')) {
       return;
     }
+
+    // Remove jiggle animation when drag starts
+    this.removeJiggleAnimation(note);
 
     this.isDragging = true;
 

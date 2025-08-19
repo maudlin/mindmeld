@@ -754,6 +754,7 @@ line.connection-line {
   display: none !important;
 }
 
+
 /* About Style */
 .override-overflow {
   overflow: auto;
@@ -1180,4 +1181,33 @@ line.connection-line {
   .notification-modal-button-cancel:hover {
     background: #4b5563;
   }
+}
+
+/* ==========================================================================
+   MOBILE JIGGLE ANIMATION FOR SELECTED NOTES
+   ========================================================================== */
+
+/* Jiggle animation for selected notes on touch devices - indicates ready to drag */
+@media (pointer: coarse) {
+  .note.selected.jiggle {
+    animation: noteJiggle 0.3s ease-out 2;
+    animation-fill-mode: forwards;
+  }
+}
+
+@keyframes noteJiggle {
+  0%, 100% { 
+    transform: rotate(0deg) scale(1); 
+  }
+  25% { 
+    transform: rotate(-1.5deg) scale(1.01); 
+  }
+  75% { 
+    transform: rotate(1.5deg) scale(1.01); 
+  }
+}
+
+/* Ensure jiggle doesn't interfere with other interactions */
+.note.jiggle {
+  transform-origin: center center;
 }
