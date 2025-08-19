@@ -103,12 +103,16 @@ export class CapabilityDetector {
       // URLSearchParams not supported, continue with detection
     }
 
-    // Simplified detection: TouchAdapter for all touch-capable devices
-    if (this.isTouchFirst() || (this.hasTouch() && !this.isDesktopFirst())) {
-      return 'touch';
+    // Simplified detection: Prioritize desktop-first devices
+    if (this.isDesktopFirst()) {
+      return 'desktop'; // Desktop devices with fine pointer + hover (even if they have touch)
     }
 
-    // Desktop for all other devices
+    if (this.isTouchFirst()) {
+      return 'touch'; // Pure touch devices (phones, tablets)
+    }
+
+    // Fallback to desktop for unknown devices
     return 'desktop';
   }
 
