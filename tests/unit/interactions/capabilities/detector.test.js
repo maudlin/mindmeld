@@ -136,22 +136,22 @@ describe('Capability Detector', () => {
       expect(mode).toBe('desktop');
     });
 
-    it('should prefer desktop mode for hybrid devices by default', () => {
-      // Setup: Device supports both but prefer precision
+    it('should prioritize desktop mode for desktop devices with touchscreen', () => {
+      // Setup: Desktop with touchscreen (laptop/monitor with touch)
       global.matchMedia.mockImplementation((query) => {
         if (query === '(any-pointer: fine)') return { matches: true };
         if (query === '(any-pointer: coarse)') return { matches: true };
         if (query === '(pointer: fine) and (hover: hover)')
-          return { matches: false };
+          return { matches: true }; // Desktop-first: fine pointer + hover
         if (query === '(pointer: coarse) and (hover: none)')
           return { matches: false };
         return { matches: false };
       });
-      global.navigator.maxTouchPoints = 10;
+      global.navigator.maxTouchPoints = 10; // Has touch but desktop-first
 
       const mode = detector.getOptimalInputMode();
 
-      expect(mode).toBe('desktop'); // Prefer precision on hybrid
+      expect(mode).toBe('desktop'); // Desktop-first devices get DesktopAdapter even with touch
     });
   });
 

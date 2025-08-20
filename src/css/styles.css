@@ -659,97 +659,7 @@ line.connection-line {
   pointer-events: all;
 }
 
-/* Overlay Styles */
-#overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8); /* Darker background for more contrast */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-#overlay-content {
-  background: var(--primary-color);
-  padding: 2rem;
-  border-radius: 12px; /* Slightly larger border radius */
-  text-align: center;
-  font-family: var(--font-family);
-  max-width: 600px; /* Adjusted for more width */
-  color: white; /* White text color for contrast */
-  box-shadow:
-    0 10px 15px rgba(0, 0, 0, 0.1),
-    0 4px 6px rgba(0, 0, 0, 0.1); /* Box shadow for depth */
-}
-
-#overlay h1 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-  color: #fff; /* White color for heading */
-}
-
-#overlay h2 {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-  color: #e5e7eb; /* Tailwind gray-300 for subtitle */
-}
-
-#overlay p {
-  font-size: 1rem;
-  margin-bottom: 1rem;
-  color: #9ca3af; /* Tailwind gray-400 for text */
-}
-
-#overlay h3 {
-  font-size: 1.25rem;
-  margin-top: 1.5rem;
-  margin-bottom: 1rem;
-  color: #fff; /* White color for heading */
-}
-
-#dismiss-button {
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem; /* Larger padding for button */
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 1rem;
-  margin-top: 1rem;
-  cursor: pointer;
-  border-radius: 8px; /* Larger border radius for button */
-}
-
-#dismiss-button:hover {
-  background-color: #45a049;
-}
-
-/* List Styles */
-#overlay ul {
-  list-style: none; /* Remove default list style */
-  padding: 0;
-  margin: 0;
-  margin-bottom: 1rem; /* Add margin to separate from other content */
-}
-
-#overlay li {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-#overlay li:before {
-  content: '✔️'; /* Checkmark icon */
-  margin-right: 0.5rem; /* Space between icon and text */
-  color: #10b981; /* Tailwind green-500 for checkmark */
-}
-
-/* !important is important to ensure overlay disappears */
+/* Hidden utility class (still used by other components) */
 .hidden {
   display: none !important;
 }
@@ -816,6 +726,49 @@ line.connection-line {
   padding-bottom: 1rem;
 }
 
+/* Tagline styling */
+.about-container .tagline {
+  font-size: 1.125rem;
+  color: #68d391; /* text-green-400 */
+  text-align: center;
+  margin-bottom: 2rem;
+  font-style: italic;
+}
+
+/* Quick start section */
+.about-container .quick-start {
+  background-color: #2d3748; /* bg-gray-800 */
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.about-container .quick-start ol {
+  margin-bottom: 0;
+}
+
+.about-container .quick-start li {
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+/* CTA link */
+.about-container .cta-link {
+  display: inline-block;
+  background-color: #4299e1; /* bg-blue-500 */
+  color: white !important;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.about-container .cta-link:hover {
+  background-color: #3182ce; /* bg-blue-600 */
+  text-decoration: none;
+}
+
 /* Ghost Connecting Points */
 .note .ghost-connector {
   position: absolute;
@@ -827,8 +780,24 @@ line.connection-line {
   cursor: crosshair;
 }
 
-.note:hover .ghost-connector {
-  display: block; /* Show on hover */
+.note:hover .ghost-connector,
+.note.selected .ghost-connector {
+  display: block; /* Show on hover and when selected (for touch devices) */
+}
+
+/* Selected ghost connector state for touch connection creation */
+@media (pointer: coarse) {
+  .ghost-connector {
+    transition: all 0.2s ease; /* Only add transitions on touch devices */
+  }
+
+  .ghost-connector.connector-selected {
+    background-color: rgba(112, 181, 255, 0.9); /* More opaque when selected */
+    transform: scale(1.5); /* Larger on touch devices */
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, 0.9),
+      /* Thicker white ring */ 0 0 12px rgba(112, 181, 255, 0.9); /* Stronger glow */
+  }
 }
 
 .ghost-connector.top {
@@ -1179,4 +1148,34 @@ line.connection-line {
   .notification-modal-button-cancel:hover {
     background: #4b5563;
   }
+}
+
+/* ==========================================================================
+   MOBILE JIGGLE ANIMATION FOR SELECTED NOTES
+   ========================================================================== */
+
+/* Jiggle animation for selected notes on touch devices - indicates ready to drag */
+@media (pointer: coarse) {
+  .note.selected.jiggle {
+    animation: noteJiggle 0.3s ease-out 2;
+    animation-fill-mode: forwards;
+  }
+}
+
+@keyframes noteJiggle {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(-1.5deg) scale(1.01);
+  }
+  75% {
+    transform: rotate(1.5deg) scale(1.01);
+  }
+}
+
+/* Ensure jiggle doesn't interfere with other interactions */
+.note.jiggle {
+  transform-origin: center center;
 }

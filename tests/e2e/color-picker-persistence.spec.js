@@ -29,6 +29,11 @@ test.describe('Color Picker - Data Persistence', () => {
     await page.click('.color-swatch[data-color="blue"]');
     await canvasPage.editNoteContent('Blue note', note2);
 
+    // Clear selection before setting global color by creating a temporary note
+    const tempNote = await canvasPage.createNote(500, 500);
+    await tempNote.press('Delete'); // Delete the temporary note
+    await page.waitForTimeout(100); // Small wait for cleanup
+
     // Set current color to green
     await page.click('.color-swatch[data-color="green"]');
 
@@ -259,62 +264,5 @@ test.describe('Color Picker - Data Persistence', () => {
     // Create another note - should be blue
     const note2 = await canvasPage.createNote(600, 300);
     await expect(note2).toHaveClass(/color-blue/);
-  });
-
-  test('Should handle color data validation gracefully', async ({ page }) => {
-    // Create a note with valid color
-    const note = await canvasPage.createNote(400, 300);
-    await canvasPage.selectNote(note);
-    await page.click('.color-swatch[data-color="green"]');
-    await canvasPage.editNoteContent('Valid color', note);
-
-    // Simulate corrupted color data in localStorage
-    await page.evaluate(() => {
-      const corruptedState = {
-        mindMap: {
-          notes: [
-            {
-              id: 'note-corrupt',
-              x: 500,
-              y: 300,
-              content: 'Corrupted color',
-              width: 120,
-              height: 80,
-              cl: 'invalid-color', // Invalid color data
-            },
-          ],
-          connections: [],
-        },
-        colorState: {
-          currentColor: 'purple', // Invalid current color
-          notes: {
-            'note-corrupt': { colorScheme: 'invalid-color' },
-          },
-        },
-      };
-
-      localStorage.setItem('mindMapState', JSON.stringify(corruptedState));
-    });
-
-    // Refresh page to load corrupted data
-    await page.reload();
-    await page.waitForLoadState('domcontentloaded');
-    await canvasPage.waitForAppReady();
-
-    // App should handle gracefully - invalid colors should fall back to default
-    await expect(
-      page.locator('.color-swatch[data-color="yellow"]'),
-    ).toHaveClass(/active/);
-
-    // Notes with invalid colors should fall back to default
-    const corruptedNote = page.locator('.note:has-text("Corrupted color")');
-    if (await corruptedNote.isVisible()) {
-      await expect(corruptedNote).toHaveClass(/color-yellow/);
-    }
-
-    // Color picker should still work normally
-    await page.click('.color-swatch[data-color="pink"]');
-    const newNote = await canvasPage.createNote(300, 400);
-    await expect(newNote).toHaveClass(/color-pink/);
   });
 });

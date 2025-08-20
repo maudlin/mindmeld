@@ -29,17 +29,16 @@ npm install && npm start
 
 Visit `http://localhost:8080` to begin mind mapping.
 
-### Touch Mode
-For an enhanced mobile experience, add `?mode=touch` to enable refined touch interactions:
-```bash
-http://localhost:8080/?mode=touch
-```
+### Mobile & Touch Support
+MindMeld automatically detects your device capabilities and provides optimized interactions:
 
-Touch mode features:
-- **Single-finger drag**: Multi-select lasso on canvas
-- **Press-hold-drag**: Move notes and groups
+**Touch Device Features:**
+- **Long-press and drag**: Move notes with visual "jiggle" feedback
+- **Single-finger drag on canvas**: Multi-select lasso selection
 - **Double-tap**: Create or edit notes
 - **Two-finger gestures**: Pan and zoom canvas
+- **Ghost connector enhancements**: Larger touch targets with visual feedback
+- **Automatic adaptation**: No configuration needed - works seamlessly
 
 ## Key Features
 
@@ -48,24 +47,29 @@ Touch mode features:
 - **Intelligent Connections**: Visual connections with directional arrows and real-time updates
 - **Multi-Canvas Templates**: Standard Canvas, Hero's Journey, and custom templates
 - **Advanced Selection**: Multi-select with group operations and touch-optimized lasso selection
-- **Touch-Optimized Interface**: Refined touch interactions for mobile and tablet devices
+- **Adaptive Touch Interface**: Automatic device detection with optimized mobile interactions
 - **Data Management**: Export/import mind maps as JSON with full state preservation
 - **Modern Architecture**: Event-driven design with zero circular dependencies
 
 ## Documentation
 
+See the full documentation index in docs/README.md.
+
 ### For Users
 - **[User Guide](docs/user-guide.md)** - Complete feature overview and usage instructions
-- **[Canvas Templates](docs/canvas-templates.md)** - Guide to different mind mapping templates
 
 ### For Developers
 - **[Developer Guide](docs/developer-guide.md)** - Architecture, setup, and development workflow
+- **[Canvas Templates](docs/canvas-templates.md)** - How to implement new canvas template modules
 - **[Contributing Guide](CONTRIBUTING.md)** - Code standards, testing, and contribution process
-- **[Testing Guide](docs/testing.md)** - Unit and E2E testing strategy
+- **[Testing Guide](docs/testing.md)** - Philosophy, structure, and patterns
+- **[Testing Environments](docs/testing-environments.md)** - Suites, commands, tags, and when to run which
 - **[Scripts Reference](docs/scripts.md)** - Complete npm scripts documentation
 
 ### Technical Documentation
 - **[CI/CD Guide](docs/ci-cd.md)** - GitHub Actions workflows and deployment
+- **[CI vs Local E2E Troubleshooting](docs/ci-e2e-troubleshooting.md)** - Stabilizing tests across environments
+- **[Git Workflow Troubleshooting](docs/git-workflow-troubleshooting.md)** - Rebases, branch protection, dependency handling
 - **[Architecture Health](docs/architecture-health.md)** - Code quality monitoring and metrics
 
 ## Architecture
@@ -81,11 +85,18 @@ Details: [Developer Guide](docs/developer-guide.md)
 ## Development
 
 ```bash
-npm install && npm start  # Setup and run (port 8080)
+npm install 6
+ npm start  # Setup and run (port 8080)
 ```
 
 Commands: [Scripts Reference](docs/scripts.md) | Setup: [Developer Guide](docs/developer-guide.md)
 
+### Running Tests
+
+- Unit tests: `npm run test:unit`
+- E2E tests: `npm run test:e2e`
+- CI/dev/smoke/critical suites and tag usage: see [Testing Environments](docs/testing-environments.md)
+- Testing philosophy and patterns: see [Testing Guide](docs/testing.md)
 ## Data Format
 
 Mind maps are stored as JSON with this structure:

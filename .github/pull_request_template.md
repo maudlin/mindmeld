@@ -1,6 +1,34 @@
 # Pull Request
 
 ## Summary
+
+- [ ] Feature
+- [ ] Bug fix
+- [ ] Docs update
+- [ ] Test infrastructure
+
+## Checklist
+
+- [ ] Tests added/updated where appropriate
+- [ ] Lint and format pass locally (`npm run lint && npm run format:check`)
+- [ ] Unit tests pass locally (`npm run test:unit`)
+- [ ] E2E tests run locally (choose appropriate suite) — see docs/testing-environments.md
+- [ ] Security checks pass locally (`npm run security`)
+- [ ] Docs updated if needed:
+  - [ ] Scripts or commands changed — update docs/scripts.md
+  - [ ] Test suites/commands changed — update docs/testing-environments.md
+  - [ ] CI stability guidance impacted — update docs/ci-e2e-troubleshooting.md
+  - [ ] Documentation index — update docs/README.md if new docs were added
+
+## Notes for Reviewers
+
+- Related docs: link to any updated docs
+- Dependencies: list any PRs this depends on
+- Screenshots or recordings (if UI changes)
+
+# Pull Request
+
+## Summary
 Brief description of changes and their purpose.
 
 ## Type of Change

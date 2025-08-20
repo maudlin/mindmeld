@@ -177,7 +177,11 @@ export class ConnectionManager {
     const contextMenuElement = event.target.closest('.context-menu');
 
     if (hotspot) {
-      this.contextMenu.show(hotspot);
+      // Only show context menu for permanent connections (not temporary drag connections)
+      const connectionGroup = hotspot.closest('g[data-start][data-end]');
+      if (connectionGroup) {
+        this.contextMenu.show(hotspot);
+      }
     } else if (!contextMenuElement && !this.contextMenu.isMouseOver) {
       this.contextMenu.hide();
     }

@@ -27,6 +27,10 @@ export class TouchAdapter extends BaseAdapter {
     this.selectedNotesOffsets = [];
     this.hasStateChanged = false;
 
+    // Connection creation state
+    this.selectedConnector = null;
+    this.isConnectionMode = false;
+
     // Multi-select lasso state (MM-145)
     this.isDrawingSelectionBox = false;
     this.selectionBoxState = null;
@@ -94,6 +98,9 @@ export class TouchAdapter extends BaseAdapter {
     this.dragState = null;
     this.selectedNotesOffsets = [];
     this.hasStateChanged = false;
+
+    // Clear connection state
+    this.clearConnectionMode();
   }
 
   /**
@@ -198,10 +205,7 @@ export class TouchAdapter extends BaseAdapter {
         box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       }
       
-      .ghost-connector {
-        min-width: 44px;
-        min-height: 44px;
-      }
+      /* Ghost connectors use desktop styling for now - 10px for all devices */
       
       @media (pointer: coarse) {
         .note {
@@ -229,6 +233,12 @@ export class TouchAdapter extends BaseAdapter {
   handleTap(touch) {
     const { target } = this.getTouchTarget(touch.currentX, touch.currentY);
 
+    // Check if tapping on a ghost connector
+    if (target.classList.contains('ghost-connector')) {
+      this.handleGhostConnectorTap(target);
+      return;
+    }
+
     // Check if tapping on a note
     const note = target.classList.contains('note')
       ? target
@@ -238,6 +248,8 @@ export class TouchAdapter extends BaseAdapter {
       this.handleNoteSelection(note);
     } else if (this.isClickOnCanvas(target)) {
       // Tap on canvas - clear selections and cancel operations (MM-145 refined)
+      this.clearAllJiggleAnimations();
+      this.clearConnectionMode();
       NoteManager.clearSelections();
       this.emit('note.selection.changed');
 
@@ -312,7 +324,7 @@ export class TouchAdapter extends BaseAdapter {
   handleLongPress(touch) {
     const { target } = this.getTouchTarget(touch.currentX, touch.currentY);
 
-    // Check if long-pressing on a note - start note movement (MM-145 refined)
+    // Check if long-pressing on a note - indicate ready to move (MM-145 refined)
     const note = target.classList.contains('note')
       ? target
       : target.closest('.note');
@@ -323,8 +335,17 @@ export class TouchAdapter extends BaseAdapter {
         return;
       }
 
-      // Start note movement - this will be handled by handleDragStart
-      // The gesture recognizer will transition to dragging state
+      // Ensure note is selected before indicating ready to move
+      if (!note.classList.contains('selected')) {
+        NoteManager.clearSelections();
+        NoteManager.selectNote(note);
+        this.emit('note.selection.changed');
+      }
+
+      // Add jiggle animation to indicate note is ready to move (mobile only)
+      this.addJiggleAnimation(note);
+
+      // Note: The gesture recognizer will transition to dragging state on movement
       return;
     }
 
@@ -534,6 +555,128 @@ export class TouchAdapter extends BaseAdapter {
   }
 
   /**
+   * Add jiggle animation to selected note to indicate ready-to-drag state
+   */
+  addJiggleAnimation(note) {
+    // Remove any existing jiggle class first
+    note.classList.remove('jiggle');
+
+    // Add jiggle with a small delay for better UX
+    setTimeout(() => {
+      if (note.classList.contains('selected')) {
+        note.classList.add('jiggle');
+
+        // Remove jiggle class after animation completes (2 cycles * 0.3s = 0.6s)
+        setTimeout(() => {
+          note.classList.remove('jiggle');
+        }, 600);
+      }
+    }, 100);
+  }
+
+  /**
+   * Remove jiggle animation from note
+   */
+  removeJiggleAnimation(note) {
+    note.classList.remove('jiggle');
+  }
+
+  /**
+   * Clear jiggle animations from all notes
+   */
+  clearAllJiggleAnimations() {
+    const jiggleNotes = document.querySelectorAll('.note.jiggle');
+    jiggleNotes.forEach((note) => {
+      note.classList.remove('jiggle');
+    });
+  }
+
+  /**
+   * Handle ghost connector tap for touch connection creation
+   */
+  handleGhostConnectorTap(connector) {
+    // If we're already in connection mode and tapping a different connector
+    if (this.isConnectionMode && this.selectedConnector !== connector) {
+      this.completeConnection(connector);
+      return;
+    }
+
+    // If tapping the same connector, deselect it
+    if (this.selectedConnector === connector) {
+      this.clearConnectionMode();
+      return;
+    }
+
+    // Start new connection mode
+    this.startConnectionMode(connector);
+  }
+
+  /**
+   * Start connection creation mode with selected connector
+   */
+  startConnectionMode(connector) {
+    // Clear any existing connection mode
+    this.clearConnectionMode();
+
+    // Set up new connection mode
+    this.selectedConnector = connector;
+    this.isConnectionMode = true;
+
+    // Add visual feedback
+    connector.classList.add('connector-selected');
+
+    // Emit connection mode started event
+    this.emit('connection.modeStarted', {
+      connector: connector,
+      note: connector.closest('.note'),
+      _gesture: 'tap',
+    });
+  }
+
+  /**
+   * Complete connection between selected connector and target connector
+   */
+  completeConnection(targetConnector) {
+    if (!this.selectedConnector || !this.isConnectionMode) return;
+
+    const sourceNote = this.selectedConnector.closest('.note');
+    const targetNote = targetConnector.closest('.note');
+
+    // Don't allow self-connections
+    if (sourceNote === targetNote) {
+      this.clearConnectionMode();
+      return;
+    }
+
+    // Emit connection creation event
+    this.emit('connection.create', {
+      sourceConnector: this.selectedConnector,
+      targetConnector: targetConnector,
+      sourceNote: sourceNote,
+      targetNote: targetNote,
+      _gesture: 'tap',
+    });
+
+    // Clear connection mode
+    this.clearConnectionMode();
+  }
+
+  /**
+   * Clear connection creation mode
+   */
+  clearConnectionMode() {
+    if (this.selectedConnector) {
+      this.selectedConnector.classList.remove('connector-selected');
+      this.selectedConnector = null;
+    }
+
+    if (this.isConnectionMode) {
+      this.isConnectionMode = false;
+      this.emit('connection.modeCancelled', { _gesture: 'tap' });
+    }
+  }
+
+  /**
    * Start note dragging operation
    */
   startNoteDrag(touch, note, target) {
@@ -541,6 +684,12 @@ export class TouchAdapter extends BaseAdapter {
     if (target.classList.contains('note-content')) {
       return;
     }
+
+    // Remove jiggle animation when drag starts
+    this.removeJiggleAnimation(note);
+
+    // Clear connection mode when starting to drag notes
+    this.clearConnectionMode();
 
     this.isDragging = true;
 
@@ -799,28 +948,19 @@ export class TouchAdapter extends BaseAdapter {
 
     const notes = document.querySelectorAll('.note');
     const boxRect = this.selectionBox.getBoundingClientRect();
-    const canvasRect = this.canvas.getBoundingClientRect();
-
-    console.log('Selection box rect (viewport):', boxRect);
-    console.log('Canvas rect (viewport):', canvasRect);
-    console.log('Found notes:', notes.length);
 
     notes.forEach((note) => {
       const noteRect = note.getBoundingClientRect();
-      console.log(`Note ${note.id} rect (viewport):`, noteRect);
 
       // Use intersection-based selection (touch-friendly)
-      // Both rectangles are now in viewport coordinates
+      // Both rectangles are in viewport coordinates
       const intersects =
         noteRect.left < boxRect.right &&
         noteRect.right > boxRect.left &&
         noteRect.top < boxRect.bottom &&
         noteRect.bottom > boxRect.top;
 
-      console.log(`Note ${note.id} intersects:`, intersects);
-
       if (intersects) {
-        console.log(`Selecting note ${note.id}`);
         NoteManager.selectNote(note);
       } else {
         NoteManager.deselectNote(note);

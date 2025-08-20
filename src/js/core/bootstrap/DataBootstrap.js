@@ -114,6 +114,11 @@ export class DataBootstrap extends BaseBootstrap {
 
           this.stateRestored = true;
           log('DataBootstrap: State restored from storage');
+
+          // Emit event to notify components that state has been restored
+          eventBus.emit('app.state.restored', {
+            colorState: loadedState.colorState,
+          });
         } else {
           log('DataBootstrap: Failed to load state from storage');
         }

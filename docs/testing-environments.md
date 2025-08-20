@@ -34,6 +34,14 @@ This project uses different test suites optimized for different environments and
 **Runtime**: ~15 seconds  
 **Tests**: All tests marked with `@critical` tag
 
+## Tags
+
+- `@critical` - Essential user flows (page load, note operations, connections)
+- `@smoke` - Core workflows for quick validation
+- Untagged - Full regression tests
+
+For test philosophy, structure, patterns, helpers, and debugging guidance, see the [Testing Guide](./testing.md).
+
 ## Usage
 
 ### For CI/GitHub Actions

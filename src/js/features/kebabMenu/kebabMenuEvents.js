@@ -169,12 +169,9 @@ export class KebabMenuEvents {
   }
 
   /**
-   * Show instructions - display the overlay with instructions
+   * Show instructions - navigate to the about page
    */
   showInstructions() {
-    const overlay = document.getElementById('overlay');
-    if (overlay) {
-      overlay.classList.remove('hidden');
-    }
+    window.location.href = 'about.html';
   }
 }

@@ -56,7 +56,10 @@ npm run format:check
 ```
 
 ### Stage 3: Testing
-Unit and E2E tests run automatically. See [Testing Guide](testing.md) for details.
+Unit and E2E tests run automatically.
+- Philosophy and patterns: see [Testing Guide](testing.md)
+- Suites, commands, tags, and expected runtimes: see [Testing Environments](testing-environments.md)
+- CI stability tips and Playwright configuration guidance: see [CI vs Local E2E Troubleshooting](ci-e2e-troubleshooting.md)
 
 ### Stage 4: Artifacts
 - **Playwright Reports**: Uploaded for test failures analysis
@@ -109,14 +112,14 @@ npm run pre-push
 ### Development Workflow
 1. **Feature Branch**: Create from main
 2. **Development**: Local testing with `npm test`
-3. **Pre-commit**: Husky hooks run security checks
+3. **Local hooks**: Husky runs linting/format checks and security scans
 4. **Pull Request**: Triggers full CI pipeline
 5. **Review**: Code review and CI validation
 6. **Merge**: Automated changelog generation
 
 ## Local Development CI
 
-### Pre-commit Hooks
+### Local Hooks
 Automated checks using Husky + lint-staged:
 
 ```bash
@@ -129,8 +132,10 @@ Automated checks using Husky + lint-staged:
 
 ### Local CI Validation
 ```bash
-npm run lint && npm run format:check && npm test && npm run test:e2e && npm run security
+npm run lint && npm run format:check && npm run test:unit && npm run test:e2e && npm run security
 ```
+
+For Docker-based or CI=true simulation techniques and environment replication, see [CI vs Local E2E Troubleshooting](ci-e2e-troubleshooting.md).
 
 ## Environment Configuration
 
@@ -165,9 +170,9 @@ Planned enhancements:
 ## Performance Monitoring
 
 ### CI Performance Metrics
-- **Test Execution Time**: ~6-8 seconds for E2E, ~1 second for unit
-- **Parallel Execution**: 10 workers for optimal performance
-- **Resource Usage**: Optimized for GitHub Actions limits
+- Keep the CI E2E suite lean for fast feedback; unit tests should run quickly.
+- Tune parallel execution and resource usage for GitHub Actions limits.
+- For current suite composition and approximate runtimes, see [Testing Environments](testing-environments.md).
 
 ### Architecture Health
 Automated monitoring via `health-check.sh`:
@@ -194,7 +199,9 @@ npm run security
 ```
 
 #### 2. Test Failures
-Run locally with verbose output. Download Playwright reports from GitHub Actions. See [Testing Guide](testing.md) for debugging.
+Run locally with verbose output. Download Playwright reports from GitHub Actions.
+- General debugging patterns: see [Testing Guide](testing.md)
+- CI-specific stability and Playwright configuration tips: see [CI vs Local E2E Troubleshooting](ci-e2e-troubleshooting.md)
 
 #### 3. Security Issues
 ```bash

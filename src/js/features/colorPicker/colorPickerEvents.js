@@ -234,6 +234,24 @@ export class ColorPickerEvents {
     eventBus.on('color.state.reset', () => {
       this.updateActiveColorSwatch('yellow');
     });
+
+    // Listen for app state restoration to update active swatch
+    eventBus.on('app.state.restored', (data) => {
+      if (data.colorState && data.colorState.currentColor) {
+        // Validate the restored color before using it
+        if (ColorService.isValidColor(data.colorState.currentColor)) {
+          this.updateActiveColorSwatch(data.colorState.currentColor);
+        } else {
+          // Invalid color - fallback to default and get current color from service
+          const currentColor = ColorService.getCurrentColor();
+          this.updateActiveColorSwatch(currentColor);
+        }
+      } else {
+        // No color state - fallback to getting current color from service
+        const currentColor = ColorService.getCurrentColor();
+        this.updateActiveColorSwatch(currentColor);
+      }
+    });
   }
 
   /**
