@@ -517,14 +517,13 @@ body.dragging .confirmation-dialog * {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-
 /* Focus styles consistent with color swatches - only show when menu is open */
 .kebab-menu-button:focus,
 .kebab-menu-button:focus-visible {
   outline: none;
 }
 
-.kebab-menu-button[aria-expanded="true"] {
+.kebab-menu-button[aria-expanded='true'] {
   outline: 2px solid #4a90e2;
   outline-offset: 2px;
 }
@@ -798,7 +797,9 @@ line.connection-line {
 
   .ghost-connector.connector-selected {
     background-color: rgba(255, 215, 0, 0.9); /* Yellow tinge when selected */
-    transform: scale(1.8); /* Reduced from 2.25 to avoid delete button overlap */
+    transform: scale(
+      1.8
+    ); /* Reduced from 2.25 to avoid delete button overlap */
     box-shadow:
       0 0 0 3px rgba(255, 255, 255, 0.9),
       /* Thicker white ring */ 0 0 16px rgba(255, 215, 0, 0.8); /* Stronger yellow glow */
