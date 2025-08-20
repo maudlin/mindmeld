@@ -157,28 +157,29 @@ test.describe('Color Picker - Multi-Select Operations', () => {
     await expect(note4).toHaveClass(/color-yellow/);
   });
 
-  test('Should work with click-to-select multiple notes', async ({ page }) => {
+  test('Should work with Shift+click to select multiple notes', async ({ page }) => {
     // Create notes
     const note1 = await canvasPage.createNote(
       TestCoordinates.note1.x,
       TestCoordinates.note1.y,
     );
-    await page.waitForTimeout(200);
     const note2 = await canvasPage.createNote(
       TestCoordinates.note2.x,
       TestCoordinates.note2.y,
     );
-    await page.waitForTimeout(200);
     const note3 = await canvasPage.createNote(
       TestCoordinates.note3.x,
       TestCoordinates.note3.y,
     );
 
-    // Select first note
-    await canvasPage.selectNote(note1);
+    // Select first note by clicking on the note border (not content)
+    await note1.click({ position: { x: 3, y: 3 } });
 
-    // Ctrl+click to add second note to selection
-    await note2.click({ modifiers: ['Control'] });
+    // Shift+click on second note border to add to selection
+    await note2.click({ 
+      modifiers: ['Shift'], 
+      position: { x: 3, y: 3 } 
+    });
 
     // Verify both notes are selected
     await expect(note1).toHaveClass(/selected/);
@@ -214,17 +215,23 @@ test.describe('Color Picker - Multi-Select Operations', () => {
     await canvasPage.selectNote(note2);
     await page.click('.color-swatch[data-color="blue"]');
 
-    // Select both notes
-    await canvasPage.selectNote(note1);
-    await note2.click({ modifiers: ['Control'] });
+    // Select both notes using Shift+click on note borders
+    await note1.click({ position: { x: 3, y: 3 } });
+    await note2.click({ 
+      modifiers: ['Shift'], 
+      position: { x: 3, y: 3 } 
+    });
 
     // Color picker should show current global color (blue from last action)
     await expect(page.locator('.color-swatch[data-color="blue"]')).toHaveClass(
       /active/,
     );
 
-    // Remove note2 from selection (Ctrl+click again)
-    await note2.click({ modifiers: ['Control'] });
+    // Remove note2 from selection (Shift+click again to toggle)
+    await note2.click({ 
+      modifiers: ['Shift'], 
+      position: { x: 3, y: 3 } 
+    });
 
     // Now only note1 is selected, picker should show its color (pink)
     await expect(note1).toHaveClass(/selected/);
@@ -326,8 +333,8 @@ test.describe('Color Picker - Multi-Select Operations', () => {
     await canvasPage.selectNote(note2);
     await page.click('.color-swatch[data-color="blue"]');
 
-    // Clear selection
-    await page.click('#canvas', { position: { x: 100, y: 100 } });
+    // Clear selection using mouse.click (more reliable than page.click)
+    await page.mouse.click(100, 100);
 
     // Select individual notes and verify their colors are preserved
     await canvasPage.selectNote(note1);
@@ -354,8 +361,8 @@ test.describe('Color Picker - Multi-Select Operations', () => {
     await canvasPage.selectNote(note1);
     await page.click('.color-swatch[data-color="green"]');
 
-    // Clear selection
-    await page.click('#canvas', { position: { x: 100, y: 100 } });
+    // Clear selection using mouse.click (more reliable than page.click)
+    await page.mouse.click(100, 100);
 
     // No notes should be selected
     await expect(page.locator('.note.selected')).toHaveCount(0);

@@ -8,7 +8,6 @@
 import { BaseBootstrap } from './BaseBootstrap.js';
 import { InputController } from '../../interactions/InputController.js';
 import { CapabilityDetector } from '../../interactions/capabilities/detector.js';
-import { setupCanvasEvents, setupDocumentEvents } from '../event.js';
 import { eventBus } from '../eventBus.js';
 import { log } from '../../utils/utils.js';
 
@@ -27,10 +26,6 @@ export class InteractionBootstrap extends BaseBootstrap {
     // Set up additional event handling
     this.setupContextMenuPrevention();
 
-    // Legacy system removed - modern system should handle all cases
-    // if (!inputSystemReady) {
-    //   await this.initializeLegacyEventSystem(elements);
-    // }
     if (!inputSystemReady) {
       throw new Error(
         'Modern input system failed to initialize - no fallback available',
@@ -46,39 +41,35 @@ export class InteractionBootstrap extends BaseBootstrap {
 
   async initializeInputSystem() {
     try {
+      console.log('InteractionBootstrap: Starting modern input system initialization');
+      
       const capabilityDetector = new CapabilityDetector();
       this.inputController = new InputController(eventBus, capabilityDetector);
 
       await this.inputController.initialize();
 
+      console.log('InteractionBootstrap: Modern input system initialized successfully');
       log('InteractionBootstrap: Modern input system initialized successfully');
+      
+      // Global debug flag for E2E tests
+      if (typeof window !== 'undefined') {
+        window.mindMeldDebug = {
+          modernInputSystemReady: true,
+          inputController: this.inputController,
+          timestamp: Date.now()
+        };
+      }
+      
       return true;
     } catch (error) {
       console.error(
-        'InteractionBootstrap: Failed to initialize modern input system, will use legacy fallback:',
+        'InteractionBootstrap: Failed to initialize modern input system:',
         error,
       );
       return false;
     }
   }
 
-  async initializeLegacyEventSystem(elements) {
-    try {
-      if (!elements.canvas) {
-        throw new Error('Canvas element required for legacy event system');
-      }
-
-      setupCanvasEvents(elements.canvas);
-      setupDocumentEvents();
-
-      this.usingLegacyEvents = true;
-      log('InteractionBootstrap: Legacy event system initialized as fallback');
-    } catch (error) {
-      throw new Error(
-        `Legacy event system initialization failed: ${error.message}`,
-      );
-    }
-  }
 
   setupContextMenuPrevention() {
     // Prevent context menu across the application

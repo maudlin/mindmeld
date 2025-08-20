@@ -2,7 +2,7 @@
 
 import { BaseAdapter } from './BaseAdapter.js';
 import { calculateOffsetPosition, throttle } from '../../utils/utils.js';
-import { NoteManager } from '../../core/event.js';
+import { noteManager } from '../../services/noteManager.js';
 import { getZoomLevel } from '../../features/zoom/zoomManager.js';
 import { connectionManager } from '../../features/connection/connectionManager.js';
 import { appState } from '../../data/observableState.js';
@@ -69,6 +69,8 @@ export class DesktopAdapter extends BaseAdapter {
       throw new Error('Canvas element not found');
     }
 
+    console.log('DesktopAdapter: Initializing event listeners for canvas:', this.canvas.id);
+
     // Canvas-specific events
     this.canvas.addEventListener('pointerdown', this.boundHandlers.pointerDown);
     this.canvas.addEventListener('dblclick', this.boundHandlers.doubleClick);
@@ -79,6 +81,8 @@ export class DesktopAdapter extends BaseAdapter {
     document.addEventListener('pointerup', this.boundHandlers.pointerUp);
     document.addEventListener('keydown', this.boundHandlers.keyDown);
     document.addEventListener('contextmenu', this.boundHandlers.contextMenu);
+
+    console.log('DesktopAdapter: Event listeners initialized successfully');
   }
 
   /**
@@ -143,7 +147,7 @@ export class DesktopAdapter extends BaseAdapter {
       event.preventDefault();
       event.stopPropagation();
       // Clear selections immediately on canvas click
-      NoteManager.clearSelections();
+      noteManager.clearSelections();
       this.startSelectionBox(event);
     }
   }
@@ -163,8 +167,8 @@ export class DesktopAdapter extends BaseAdapter {
       }
       // Ensure note is selected
       if (!isSelected) {
-        NoteManager.clearSelections();
-        NoteManager.selectNote(note);
+        noteManager.clearSelections();
+        noteManager.selectNote(note);
       }
       return; // Don't start dragging for content editing
     }
@@ -175,19 +179,19 @@ export class DesktopAdapter extends BaseAdapter {
       noteContent.blur();
     }
 
-    // Handle selection using existing NoteManager
+    // Handle selection using noteManager service
     if (event.shiftKey) {
       // Multi-select mode - toggle selection
       if (isSelected) {
-        NoteManager.deselectNote(note);
+        noteManager.deselectNote(note);
       } else {
-        NoteManager.selectNote(note);
+        noteManager.selectNote(note);
       }
     } else {
       // Single select mode
       if (!isSelected) {
-        NoteManager.clearSelections();
-        NoteManager.selectNote(note);
+        noteManager.clearSelections();
+        noteManager.selectNote(note);
       }
     }
 
@@ -218,7 +222,7 @@ export class DesktopAdapter extends BaseAdapter {
     }
 
     // Calculate movement offsets (adapted from movement.js)
-    const selectedNotes = NoteManager.getSelectedNotes();
+    const selectedNotes = noteManager.getSelectedNotes();
     const zoomLevel = getZoomLevel();
     const scale = zoomLevel / 5;
 
@@ -270,7 +274,7 @@ export class DesktopAdapter extends BaseAdapter {
     }
 
     // Clear existing selections and create visual selection box
-    NoteManager.clearSelections();
+    noteManager.clearSelections();
     this.createSelectionBoxElement(startX, startY);
 
     this.emit('selection.boxStart', {
@@ -436,8 +440,11 @@ export class DesktopAdapter extends BaseAdapter {
    * Handle double-click events for note creation
    */
   handleDoubleClick(event) {
+    console.log('DesktopAdapter: Double-click detected on target:', event.target, 'isClickOnCanvas:', this.isClickOnCanvas(event.target));
+    
     // Check if clicking directly on canvas (not on notes)
     if (this.isClickOnCanvas(event.target)) {
+      console.log('DesktopAdapter: Processing double-click for note creation');
       this.throttledHandleDoubleClick(event);
     }
   }
@@ -446,12 +453,15 @@ export class DesktopAdapter extends BaseAdapter {
    * Internal double-click handler (throttled)
    */
   handleDoubleClickInternal(event) {
+    console.log('DesktopAdapter: Emitting note.createAtPosition event');
+    
     this.emit('note.createAtPosition', {
       canvas: this.canvas,
       event: event,
     });
 
     this.emit('state.save');
+    console.log('DesktopAdapter: Note creation event emitted');
   }
 
   /**
@@ -617,9 +627,9 @@ export class DesktopAdapter extends BaseAdapter {
         noteRect.bottom > boxRect.top;
 
       if (intersects) {
-        NoteManager.selectNote(note);
+        noteManager.selectNote(note);
       } else {
-        NoteManager.deselectNote(note);
+        noteManager.deselectNote(note);
       }
     });
   }

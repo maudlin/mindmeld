@@ -8,6 +8,9 @@ export class CanvasPage {
   constructor(page) {
     this.page = page;
     this.isCI = !!process.env.CI;
+    
+    // Throttle tracking for note creation
+    this.lastNoteCreationTime = null;
 
     // Core canvas elements
     this.canvas = page.locator('#canvas');
@@ -40,8 +43,12 @@ export class CanvasPage {
   }
 
   // Common application loading
-  async load() {
-    await this.page.goto('http://localhost:8080');
+  async load(mode = 'desktop') {
+    const url = mode === 'touch' 
+      ? 'http://localhost:8080/?mode=touch' 
+      : 'http://localhost:8080/?mode=desktop';
+    
+    await this.page.goto(url);
     await expect(this.canvas).toBeVisible();
 
     // CI-specific warmup period for application stability
@@ -89,7 +96,13 @@ export class CanvasPage {
   }
 
   // Note creation with automatic throttle handling
+  // Alias for createNote (for backward compatibility)
   async createNoteWithThrottleWait(x = 640, y = 388) {
+    return await this.createNote(x, y);
+  }
+
+  // Primary note creation method - handles 500ms throttle properly
+  async createNote(x = 640, y = 388) {
     // Handle note creation throttle (500ms) - wait 600ms to be safe
     if (this.lastNoteCreationTime) {
       const timeSinceLastCreation = Date.now() - this.lastNoteCreationTime;
@@ -100,57 +113,22 @@ export class CanvasPage {
 
     const noteCountBefore = await this.notes.count();
 
-    // Use the same approach as the working createNote() method
+    // Ensure canvas is focused and ready for interaction
     await this.canvas.click();
     await this.page.waitForLoadState('domcontentloaded');
 
     await this.page.mouse.dblclick(x, y);
     this.lastNoteCreationTime = Date.now(); // Track creation time for throttling
 
-    // Wait for the new note to be created
+    // Wait for the new note to be created with generous timeout for throttled creation
     await this.page.waitForFunction(
       (count) => document.querySelectorAll('.note').length > count,
       noteCountBefore,
-      { timeout: 10000 },
+      { timeout: 10000 }, // Generous timeout to account for throttling
     );
 
     const newNote = this.notes.nth(noteCountBefore);
-    await expect(newNote).toBeVisible();
-    return newNote;
-  }
-
-  // Simple note creation for basic operations (legacy compatibility)
-  async createNote(x = 640, y = 388) {
-    const noteCountBefore = await this.notes.count();
-
-    // Ensure canvas is focused and ready for interaction
-    await this.canvas.click();
-    await this.page.waitForLoadState('domcontentloaded');
-
-    await this.page.mouse.dblclick(x, y);
-
-    // Wait for the new note to be created with fallback
-    try {
-      await this.page.waitForFunction(
-        (count) => document.querySelectorAll('.note').length > count,
-        noteCountBefore,
-        { timeout: 10000 }, // Increased timeout for better stability
-      );
-    } catch {
-      // Fallback: Try regular mouse double-click if JavaScript dispatch fails
-      // Check if page/browser is still active before attempting mouse operations
-      if (!this.page.isClosed()) {
-        await this.page.mouse.dblclick(x, y);
-        await this.page.waitForFunction(
-          (count) => document.querySelectorAll('.note').length > count,
-          noteCountBefore,
-          { timeout: 5000 },
-        );
-      }
-    }
-
-    const newNote = this.notes.nth(noteCountBefore);
-
+    
     // Check if page/browser is still active before expect statement
     if (!this.page.isClosed()) {
       await expect(newNote).toBeVisible();

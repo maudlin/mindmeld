@@ -64,6 +64,21 @@ test.describe('Color Picker - Data Persistence', () => {
   });
 
   test('Should maintain colors in export/import workflow', async ({ page }) => {
+    // Mock clipboard to avoid browser permission issues
+    await page.evaluate(() => {
+      let clipboardData = '';
+      Object.defineProperty(navigator, 'clipboard', {
+        value: {
+          writeText: (text) => {
+            clipboardData = text;
+            return Promise.resolve();
+          },
+          readText: () => Promise.resolve(clipboardData)
+        },
+        writable: true
+      });
+    });
+
     // Create notes with specific colors
     const note1 = await canvasPage.createNote(300, 300);
     await canvasPage.selectNote(note1);
