@@ -48,6 +48,21 @@ export function createHTMLDeleteButton({
       event.stopPropagation();
       onClick(event);
     });
+
+    // Add touch support for mobile devices with passive option
+    button.addEventListener(
+      'touchstart',
+      (event) => {
+        event.stopPropagation();
+      },
+      { passive: true },
+    );
+
+    button.addEventListener('touchend', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onClick(event);
+    });
   }
 
   // Add keyboard handler
@@ -129,6 +144,21 @@ export function createSVGDeleteButton({ x = 0, y = 0, onClick }) {
   // Add click handler only if provided
   if (onClick) {
     container.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onClick(event);
+    });
+
+    // Add touch support for mobile devices
+    container.addEventListener(
+      'touchstart',
+      (event) => {
+        event.stopPropagation();
+      },
+      { passive: true },
+    );
+
+    container.addEventListener('touchend', (event) => {
       event.preventDefault();
       event.stopPropagation();
       onClick(event);

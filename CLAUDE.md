@@ -22,7 +22,8 @@ Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven s
 - camelCase for files/functions, PascalCase for classes
 - Events named as `noun.verb` (e.g., `note.created`)
 - Clean dependency injection patterns
-- **Mobile patterns**: Use `src/js/utils/mobileInteractions.js` for touch-friendly UI
+- Prefer TDD where possible - review existing tests and code before starting to create
+- Document in code, but avoid parenthetical comments (like this that add uneccessary detail)
 
 ## Architecture
 - **Bootstrap system**: `src/js/core/bootstrap/` - initialization modules
@@ -39,7 +40,8 @@ Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven s
 
 ## Key Files
 - `src/js/app.js`: Main entry (minimal dependencies)
-- `tests/e2e/helpers/CanvasPage.js`: E2E test utilities
+- `README.md` : start here for information about the app
+- `docs/README.md` : start here for detailed information about test standards
 - `playwright.config.js`: E2E configuration with CI optimizations
 
 ## Documentation
