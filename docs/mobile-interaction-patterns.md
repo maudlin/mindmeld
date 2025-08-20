@@ -210,6 +210,215 @@ if (viewport.isMobile) {
 }
 ```
 
+## Touch Event Architecture Patterns
+
+Based on real-world debugging experiences, these patterns ensure robust touch interactions:
+
+### Pattern 1: Event Delegation vs Direct Handling
+
+**Principle:** Leverage existing desktop event systems rather than replacing them.
+
+**Example: Connection Context Menu**
+- **Desktop**: `mousemove` over connector-hotspot shows context menu
+- **Touch**: Extend existing `handleClick` to detect connector-hotspot taps
+
+```javascript
+// Good: Extend existing desktop handler
+handleClick(event) {
+  // First check for connector-hotspot (touch equivalent of mousemove)
+  const hotspot = event.target.closest('.connector-hotspot');
+  if (hotspot) {
+    event.preventDefault();
+    this.show(hotspot);
+    return;
+  }
+  
+  // Then handle menu item clicks (existing logic)
+  const menuItem = event.target.closest('.menu-item');
+  if (!menuItem) return;
+  // ... existing logic
+}
+
+// Bad: Separate touch handling that conflicts
+TouchAdapter.handleTap(touch) {
+  if (isConnectionElement(target)) {
+    // This intercepted events before they reached existing handlers
+    this.handleConnectionTap(target); 
+    return; // Prevented event bubbling
+  }
+}
+```
+
+**Why this works:**
+- Reuses existing SVG container event delegation
+- Maintains single source of truth for menu logic
+- No event handler conflicts or race conditions
+
+### Pattern 2: SVG Touch Events
+
+**Problem:** SVG elements often don't receive touch events properly.
+
+**Solution:** Explicit CSS and event handler configuration.
+
+```css
+/* Ensure SVG container allows selective event handling */
+#svg-container {
+  pointer-events: none; /* Container doesn't intercept */
+}
+
+/* Enable events on specific SVG elements */
+#svg-container line,
+#svg-container circle,
+#svg-container path {
+  pointer-events: all; /* Elements can receive events */
+}
+```
+
+```javascript
+// Add touch support to SVG event handlers
+attachClickHandler(element) {
+  element.addEventListener('click', this.handleClick);
+  
+  // Add touch support for mobile devices
+  element.addEventListener('touchstart', (event) => {
+    event.stopPropagation();
+  }, { passive: true });
+  
+  element.addEventListener('touchend', this.handleClick);
+}
+```
+
+### Pattern 3: TouchAdapter Integration Guidelines
+
+**When to use TouchAdapter:**
+- New touch-specific gestures (pinch, long-press, multi-touch)
+- Canvas-level interactions (pan, zoom, selection)
+- Note movement and connection creation
+
+**When NOT to use TouchAdapter:**
+- Extending existing UI element interactions
+- Context menus that already have desktop handlers
+- Button clicks and form interactions
+
+**Example: Proper TouchAdapter boundaries**
+```javascript
+// TouchAdapter handles canvas-level gestures
+handleTap(touch) {
+  // Check for ghost connector (TouchAdapter responsibility)
+  if (target.classList.contains('ghost-connector')) {
+    this.handleGhostConnectorTap(target);
+    return;
+  }
+  
+  // Check for delete buttons - let them handle their own events
+  if (target.classList.contains('shared-delete-button--note')) {
+    return; // Don't interfere with existing button handlers
+  }
+  
+  // Handle note selection (TouchAdapter responsibility)  
+  const note = target.closest('.note');
+  if (note) {
+    this.handleNoteSelection(note);
+  }
+}
+```
+
+## Debugging Touch Interactions
+
+Common issues and debugging techniques learned from real-world troubleshooting:
+
+### 1. Element Detection Issues
+
+**Symptom:** "Touch events aren't reaching the right elements"
+
+**Debug technique:**
+```javascript
+// Add to TouchAdapter or event handlers
+console.log('🔥 Touch target debug:', {
+  target: target,
+  tagName: target?.tagName,
+  className: target?.className,
+  elementFromPoint: document.elementFromPoint(x, y)
+});
+```
+
+**Common causes:**
+- CSS `pointer-events: none` on wrong elements
+- Z-index layering preventing event detection
+- Missing touch event handlers on SVG elements
+
+### 2. Event Handler Conflicts
+
+**Symptom:** "Touch interactions work inconsistently or stop working"
+
+**Debug technique:**
+```javascript
+// Trace event flow through multiple handlers
+handleTap(touch) {
+  console.log('TouchAdapter intercepted tap');
+  // Make sure you're not preventing other handlers
+}
+
+handleClick(event) {
+  console.log('SVG container received click');
+  // Check if event was already handled
+}
+```
+
+**Common causes:**
+- TouchAdapter intercepting events before they reach existing handlers
+- `event.preventDefault()` or `event.stopPropagation()` called too early
+- Multiple event handlers competing for same elements
+
+### 3. Event Bubbling Issues
+
+**Problem:** Touch events don't bubble the same way as expected
+
+**Solution:** Verify event delegation path
+```javascript
+// Test event bubbling path
+element.addEventListener('touchend', (event) => {
+  console.log('Touch event path:', event.composedPath());
+  console.log('Event target:', event.target);
+  console.log('Current target:', event.currentTarget);
+});
+```
+
+## Regression Testing Patterns
+
+Patterns to prevent touch interaction regressions:
+
+### 1. Manual Testing Checklist
+
+When making touch-related changes:
+
+1. Test in browser with `?mode=touch` parameter
+2. Use browser dev tools mobile viewport
+3. Test on actual mobile device
+4. Verify existing desktop interactions still work
+
+### 2. Event Handler Audit
+
+Before adding new touch handlers:
+
+1. Check existing event listeners: `getEventListeners(element)` in dev tools
+2. Verify you're not duplicating existing functionality
+3. Test event bubbling isn't being disrupted
+
+### 3. Common Regression Patterns
+
+**Pattern A: New TouchAdapter code intercepting existing events**
+- **Fix**: Check if existing desktop handlers can be extended instead
+- **Test**: Verify both touch and desktop interactions work
+
+**Pattern B: CSS changes affecting pointer events**
+- **Fix**: Use specific selectors rather than broad `pointer-events` changes
+- **Test**: Verify all interactive elements still respond to touch
+
+**Pattern C: Event handler order dependencies**
+- **Fix**: Use event delegation rather than direct element handlers
+- **Test**: Verify interactions work regardless of handler registration order
+
 ## Design Patterns
 
 ### Pattern 1: Dropdown Menus
