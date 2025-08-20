@@ -3,7 +3,7 @@
 import { BaseAdapter } from './BaseAdapter.js';
 import { GestureRecognizer } from '../gestures/GestureRecognizer.js';
 import { throttle, calculateOffsetPosition } from '../../utils/utils.js';
-import { NoteManager } from '../../core/event.js';
+import { noteManager } from '../../services/noteManager.js';
 import { getZoomLevel } from '../../features/zoom/zoomManager.js';
 import { connectionManager } from '../../features/connection/connectionManager.js';
 import { appState } from '../../data/observableState.js';
@@ -273,7 +273,7 @@ export class TouchAdapter extends BaseAdapter {
       // Tap on canvas - clear selections and cancel operations (MM-145 refined)
       this.clearAllJiggleAnimations();
       this.clearConnectionMode();
-      NoteManager.clearSelections();
+      noteManager.clearSelections();
       this.emit('note.selection.changed');
 
       // Exit any editing mode
@@ -311,8 +311,8 @@ export class TouchAdapter extends BaseAdapter {
 
         // Ensure note is selected
         if (!note.classList.contains('selected')) {
-          NoteManager.clearSelections();
-          NoteManager.selectNote(note);
+          noteManager.clearSelections();
+          noteManager.selectNote(note);
           this.emit('note.selection.changed');
         }
 
@@ -366,8 +366,8 @@ export class TouchAdapter extends BaseAdapter {
 
       // Ensure note is selected before indicating ready to move
       if (!note.classList.contains('selected')) {
-        NoteManager.clearSelections();
-        NoteManager.selectNote(note);
+        noteManager.clearSelections();
+        noteManager.selectNote(note);
         this.emit('note.selection.changed');
       }
 
@@ -576,8 +576,8 @@ export class TouchAdapter extends BaseAdapter {
 
     // Handle selection (touch doesn't support shift-select)
     if (!isSelected) {
-      NoteManager.clearSelections();
-      NoteManager.selectNote(note);
+      noteManager.clearSelections();
+      noteManager.selectNote(note);
     }
 
     this.emit('note.selection.changed');
@@ -796,7 +796,7 @@ export class TouchAdapter extends BaseAdapter {
     };
 
     // Calculate movement offsets (similar to DesktopAdapter)
-    const selectedNotes = NoteManager.getSelectedNotes();
+    const selectedNotes = noteManager.getSelectedNotes();
     const zoomLevel = getZoomLevel();
     const scale = zoomLevel / 5;
 
@@ -924,7 +924,7 @@ export class TouchAdapter extends BaseAdapter {
     };
 
     // Clear existing selections and create visual selection box
-    NoteManager.clearSelections();
+    noteManager.clearSelections();
     this.createSelectionBoxElement(startX, startY);
 
     this.emit('selection.boxStart', {
@@ -1053,9 +1053,9 @@ export class TouchAdapter extends BaseAdapter {
         noteRect.bottom > boxRect.top;
 
       if (intersects) {
-        NoteManager.selectNote(note);
+        noteManager.selectNote(note);
       } else {
-        NoteManager.deselectNote(note);
+        noteManager.deselectNote(note);
       }
     });
   }

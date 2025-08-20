@@ -1,5 +1,5 @@
 // movement.js
-import { NoteManager } from './event.js';
+import { noteManager } from '../services/noteManager.js';
 import { throttle } from '../utils/utils.js';
 import { getZoomLevel } from '../features/zoom/zoomManager.js';
 import { connectionManager } from '../features/connection/connectionManager.js';
@@ -49,12 +49,12 @@ function onMouseUp() {
 
 export function moveNoteStart(note, event) {
   if (!note.classList.contains('selected')) {
-    NoteManager.clearSelections();
-    NoteManager.selectNote(note);
+    noteManager.clearSelections();
+    noteManager.selectNote(note);
   }
 
   activeNote = note;
-  const selectedNotes = NoteManager.getSelectedNotes();
+  const selectedNotes = noteManager.getSelectedNotes();
 
   const zoomLevel = getZoomLevel();
   const scale = zoomLevel / 5;

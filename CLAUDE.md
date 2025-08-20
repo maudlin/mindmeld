@@ -16,6 +16,7 @@ Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven s
 - **Throttling**: The app enforces a 500ms note-creation throttle. Use ~600ms between creations locally and 800–1000ms in CI.
 - **CI Stability**: Some tests need `await page.waitForTimeout(1000)` after page load
 - **Browser Issues**: Use helper methods, avoid direct DOM manipulation in tests
+- **DO NOT** skip failing tests for convenience, or refactor tests to pass. Quality is queen.
 
 ## Code Style
 - ES6+ modules (import/export), no CommonJS
@@ -37,6 +38,7 @@ Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven s
 - All tests must pass before merge
 - Use conventional commits
 - PR template provided
+- Do NOT skip pre-commit tests
 
 ## Key Files
 - `src/js/app.js`: Main entry (minimal dependencies)

@@ -1,6 +1,6 @@
 // noteEvents.js - Handles all note-related event listeners
 import { moveNoteStart, moveNoteEnd } from '../../core/movement.js';
-import { NoteManager } from '../../core/event.js';
+import { noteManager } from '../../services/noteManager.js';
 import { connectionManager } from '../connection/connectionManager.js';
 
 export function addNoteEventListeners(note, canvas) {
@@ -12,8 +12,8 @@ export function addNoteEventListeners(note, canvas) {
     if (!event.target.classList.contains('ghost-connector')) {
       if (!event.shiftKey) {
         if (!note.classList.contains('selected')) {
-          NoteManager.clearSelections();
-          NoteManager.selectNote(note);
+          noteManager.clearSelections();
+          noteManager.selectNote(note);
         }
       }
       moveNoteStart(note, event);
@@ -40,8 +40,8 @@ export function addNoteEventListeners(note, canvas) {
       toggleNoteSelection(note);
     } else {
       if (!note.classList.contains('selected')) {
-        NoteManager.clearSelections();
-        NoteManager.selectNote(note);
+        noteManager.clearSelections();
+        noteManager.selectNote(note);
       }
     }
     event.stopPropagation();
@@ -55,8 +55,8 @@ export function addNoteEventListeners(note, canvas) {
 
 function toggleNoteSelection(note) {
   if (note.classList.contains('selected')) {
-    NoteManager.deselectNote(note);
+    noteManager.deselectNote(note);
   } else {
-    NoteManager.selectNote(note);
+    noteManager.selectNote(note);
   }
 }

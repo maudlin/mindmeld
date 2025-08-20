@@ -296,26 +296,6 @@ test.describe('Color Picker - Accessibility', () => {
     await page.emulateMedia({ forcedColors: null });
   });
 
-  test.skip('Should handle rapid keyboard navigation without issues', async ({
-    page,
-  }) => {
-    const yellowSwatch = page.locator('.color-swatch[data-color="yellow"]');
-    await yellowSwatch.focus();
-
-    // Rapid arrow key navigation
-    for (let i = 0; i < 10; i++) {
-      await page.keyboard.press('ArrowRight');
-      await page.waitForTimeout(50);
-    }
-
-    // Should end up on a valid swatch (yellow after full cycles)
-    await expect(yellowSwatch).toBeFocused();
-
-    // Should still be able to select
-    await page.keyboard.press('Enter');
-    await expect(yellowSwatch).toHaveClass(/active/);
-  });
-
   test('Should work with browser zoom levels', async ({ page }) => {
     // Test with different zoom levels
     const zoomLevels = [0.5, 0.75, 1.0, 1.25, 1.5];

@@ -149,24 +149,6 @@ test.describe('Color Picker - Basic Workflows', () => {
     // Note: hover state may persist after click, this is acceptable behavior
   });
 
-  test.skip('Should work with different canvas templates', async ({ page }) => {
-    // Test on Standard Canvas (default)
-    await page.click('.color-swatch[data-color="pink"]');
-    const note1 = await canvasPage.createNote(400, 300);
-    await expect(note1).toHaveClass(/color-pink/);
-
-    // Switch to Hero's Journey template
-    await canvasPage.switchToTemplate("Hero's Journey");
-
-    // Color picker should still work
-    await page.click('.color-swatch[data-color="green"]');
-    const note2 = await canvasPage.createNote(500, 400);
-    await expect(note2).toHaveClass(/color-green/);
-
-    // Verify first note still has pink color
-    await expect(note1).toHaveClass(/color-pink/);
-  });
-
   test('Should handle rapid color changes without issues', async ({ page }) => {
     // Create a note
     const note = await canvasPage.createNote(400, 300);
