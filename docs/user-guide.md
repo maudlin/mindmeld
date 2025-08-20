@@ -28,10 +28,11 @@ MindMeld is a powerful, browser-based mind mapping application that helps you or
 - **Keyboard Navigation**: Use Tab and arrow keys to navigate colors, Enter or Space to select
 
 ### Connecting Notes
-1. **Hover** over a note to reveal connection points (ghost connectors)
-2. **Click and drag** from a connection point to another note
+1. **Select or hover** over a note to reveal connection points (ghost connectors)
+2. **Click and drag** from a connection point to another note's connection point  
 3. **Release** to create the connection
-4. Connections automatically route around other notes
+4. **Touch devices**: Ghost connectors are larger with enhanced visual feedback
+5. Connections automatically route around other notes and update in real-time
 
 ### Moving and Organizing
 
@@ -41,12 +42,13 @@ MindMeld is a powerful, browser-based mind mapping application that helps you or
 - **Move selected notes** together by dragging any selected note
 - **Delete notes** by selecting them and pressing the Delete key
 
-**Touch Mode (`?mode=touch`):**
-- **Press-hold-drag** notes to move them (wait ~500ms, then drag)
+**Touch Devices (Automatic Detection):**
+- **Long-press and drag** notes to move them (~500ms hold time with jiggle animation)
 - **Single-finger drag** on empty canvas to create lasso selection
 - **Double-tap** notes to edit content
 - **Single tap** notes to select
-- **Two-finger gestures** for canvas pan and zoom only
+- **Ghost connectors** with enhanced touch targets and visual feedback
+- **Two-finger gestures** for canvas pan and zoom
 
 ### Canvas Templates
 Choose from different canvas layouts to structure your mind maps:
@@ -71,10 +73,10 @@ Choose from different canvas layouts to structure your mind maps:
 - **Right-click and drag**: Pan around the canvas
 - **Zoom controls**: Use the zoom indicator in the top-right corner
 
-**Mobile/Touch Devices:**
+**Mobile/Touch Devices (Automatic Detection):**
 - **Two-finger pinch**: Zoom in and out
 - **Two-finger drag**: Pan around the canvas  
-- **Touch Mode**: Add `?mode=touch` to the URL for enhanced touch interactions
+- **Enhanced interactions**: Automatic device detection provides optimized touch experience
 
 ### Menu System
 - **About**: Access information about MindMeld and what's new
@@ -85,41 +87,38 @@ Choose from different canvas layouts to structure your mind maps:
 - **Canvas Style**: Switch between different canvas templates
 - **Clear Canvas**: Remove all notes and connections (with confirmation)
 
-## Touch Mode Features
+## Adaptive Touch Features
 
-MindMeld includes an enhanced touch mode optimized for mobile and tablet devices. Access it by adding `?mode=touch` to your URL:
+MindMeld automatically detects your device capabilities and provides an optimized experience for mobile and tablet devices. No configuration needed - the interface adapts seamlessly.
 
-```
-https://your-mindmeld-site.com/?mode=touch
-```
+### Automatic Touch Detection
 
-### Touch Interaction Model
-
-Touch Mode implements a refined interaction system designed specifically for touch devices:
+The system uses advanced capability detection to provide device-appropriate interactions:
 
 #### Single-Finger Gestures
 - **Single tap**: Select notes or UI elements
 - **Double-tap on canvas**: Create new notes
 - **Double-tap on notes**: Edit note content
 - **Single-finger drag on empty canvas**: Draw lasso selection box
-- **Press-hold-drag on notes**: Move notes (hold ~500ms, then drag)
+- **Long-press and drag on notes**: Move notes with jiggle animation feedback (hold ~500ms, then drag)
 
 #### Two-Finger Gestures
 - **Two-finger pinch**: Zoom in/out
 - **Two-finger drag**: Pan around the canvas
 
-#### Key Differences from Desktop Mode
-- **No hover states**: All interactions use tap/touch patterns
-- **Visual feedback**: Touch elements show immediate visual response
-- **Optimized hit targets**: Larger touch-friendly interaction areas
-- **Gesture priority**: Two-finger gestures override single-finger for canvas navigation
+#### Enhanced Touch Features
+- **Visual feedback**: Touch elements show immediate visual response with animations
+- **Optimized hit targets**: Larger touch-friendly interaction areas for ghost connectors
+- **Jiggle animation**: Selected notes show ready-to-drag feedback on long-press
+- **Smart detection**: Automatic switching between desktop and touch interaction patterns
+- **Ghost connector enhancements**: Larger, more responsive connection points on touch devices
 
-### Touch Mode Best Practices
-1. **Note Movement**: Use press-hold-drag rather than immediate drag
+### Touch Interaction Best Practices
+1. **Note Movement**: Use long-press and drag (wait for jiggle animation) rather than immediate drag
 2. **Multi-Select**: Single-finger drag creates selection lasso
-3. **Canvas Navigation**: Always use two fingers for pan/zoom
+3. **Canvas Navigation**: Always use two fingers for pan/zoom to avoid conflicts
 4. **Note Editing**: Double-tap notes to enter edit mode
-5. **Connection Creation**: Tap and drag from connection points (same as desktop)
+5. **Connection Creation**: Ghost connectors automatically adapt with larger touch targets
 
 ## Advanced Features
 

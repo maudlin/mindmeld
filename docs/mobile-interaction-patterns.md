@@ -4,24 +4,30 @@ This document outlines the mobile-friendly interaction patterns used throughout 
 
 ## Overview
 
-MindMeld provides two interaction modes for mobile devices:
+MindMeld provides adaptive mobile interactions that automatically detect your device capabilities:
 
-1. **Standard Mode**: Basic mobile compatibility with hover-to-tap conversions
-2. **Touch Mode** (`?mode=touch`): Advanced touch-optimized interaction system
+1. **Automatic Detection**: Advanced capability detection determines optimal interaction mode
+2. **Touch-First Devices**: Full touch-optimized interaction system with enhanced visual feedback
+3. **Desktop-First Devices**: Traditional mouse/keyboard interactions with optional touch support
 
-### Touch Mode Architecture
+### Adaptive Touch Architecture
 
-Touch Mode uses the **TouchAdapter** system (`src/js/interactions/adapters/TouchAdapter.js`) which provides:
-- **Gesture Recognition**: Advanced multi-touch gesture detection
-- **Event Consolidation**: Unified event handling for complex touch interactions  
-- **Canvas Integration**: Direct integration with zoom, pan, and selection systems
-- **Visual Feedback**: Touch-optimized visual responses
+The system uses the **CapabilityDetector** (`src/js/interactions/capabilities/detector.js`) to automatically determine device capabilities and route to the appropriate adapter:
 
-## Touch Mode Interactions (TouchAdapter)
+- **TouchAdapter** (`src/js/interactions/adapters/TouchAdapter.js`) for touch-first devices:
+  - **Gesture Recognition**: Advanced multi-touch gesture detection with GestureRecognizer
+  - **Event Consolidation**: Unified event handling for complex touch interactions  
+  - **Canvas Integration**: Direct integration with zoom, pan, and selection systems
+  - **Visual Feedback**: Touch-optimized visual responses including jiggle animations
+  - **Enhanced Ghost Connectors**: Larger touch targets with visual feedback
+
+- **DesktopAdapter** for desktop-first devices with traditional mouse/keyboard optimization
+
+## Touch Device Interactions (Automatic)
 
 ### Refined Touch Interaction Model
 
-Touch Mode implements a sophisticated interaction model optimized for touch devices:
+TouchAdapter implements a sophisticated interaction model automatically activated for touch-first devices:
 
 #### Core Interaction Patterns
 
@@ -29,9 +35,9 @@ Touch Mode implements a sophisticated interaction model optimized for touch devi
 - **Tap**: Select notes, activate UI elements
 - **Double-tap on canvas**: Create new notes  
 - **Double-tap on notes**: Enter edit mode
-- **Long-press**: Prepare for note movement (500ms hold time)
+- **Long-press**: Prepare for note movement with jiggle animation (500ms hold time)
 - **Drag on canvas**: Multi-select lasso selection
-- **Press-hold-drag**: Move notes after long-press detection
+- **Long-press and drag**: Move notes after long-press detection with visual feedback
 
 **Two-Finger Gestures:**
 - **Pinch**: Zoom in/out with scale detection
@@ -41,14 +47,16 @@ Touch Mode implements a sophisticated interaction model optimized for touch devi
 #### Technical Implementation
 
 ```javascript
-// TouchAdapter usage (automatically activated in touch mode)
-// Access via URL: ?mode=touch
+// TouchAdapter usage (automatically activated for touch-first devices)
+// Device detection via CapabilityDetector
 
 // The system automatically:
-// 1. Disables legacy touch panning conflicts  
-// 2. Enables advanced gesture recognition
-// 3. Provides visual feedback for touch interactions
-// 4. Integrates with existing zoom/pan systems
+// 1. Detects device capabilities using media queries
+// 2. Routes to TouchAdapter for touch-first devices  
+// 3. Enables advanced gesture recognition with GestureRecognizer
+// 4. Provides visual feedback including jiggle animations
+// 5. Enhances ghost connectors for touch interaction
+// 6. Integrates seamlessly with zoom/pan systems
 ```
 
 #### Gesture State Machine
@@ -60,6 +68,46 @@ The TouchAdapter uses a sophisticated state machine for gesture recognition:
 3. **Long-Press Detection**: Timer-based detection for note movement prep
 4. **Multi-Touch Handling**: Coordinate multiple simultaneous touch points
 5. **Gesture Completion**: Execute appropriate actions based on gesture type
+6. **Visual Feedback**: Jiggle animations and enhanced ghost connector displays
+
+### Enhanced Touch Features (Recent Updates)
+
+The TouchAdapter system includes several advanced features for improved mobile experience:
+
+#### Ghost Connector Enhancements
+- **Automatic sizing**: Ghost connectors adapt to device type (larger on touch devices)
+- **Visual feedback**: Selected connectors show enhanced glow effects with scaling transforms
+- **Touch-friendly targets**: Expanded hit areas for easier connection creation
+- **CSS transitions**: Smooth animations scoped to touch devices only using `@media (pointer: coarse)`
+
+#### Jiggle Animation System
+- **Ready-to-drag feedback**: Notes show subtle jiggle animation after long-press timeout
+- **Visual confirmation**: Users know when a note is ready to be moved
+- **Automatic cleanup**: Animation automatically removes after completion or cancellation
+- **Touch-only activation**: Animation only appears on touch devices
+
+#### Advanced Device Detection
+- **CapabilityDetector**: Uses CSS media queries to detect device capabilities
+- **Desktop-first priority**: Hybrid devices (laptops with touchscreens) prefer desktop interactions
+- **Touch-first detection**: Pure touch devices (phones, tablets) get full touch optimization
+- **Automatic routing**: No user configuration needed - seamless adaptation
+
+```javascript
+// Example: How the system detects device capabilities
+const detector = new CapabilityDetector();
+
+// Desktop-first devices (laptops with touchscreens)
+if (detector.isDesktopFirst()) {
+  // Use DesktopAdapter - mouse/keyboard optimized
+  // Touch support as secondary
+}
+
+// Touch-first devices (phones, tablets)  
+if (detector.isTouchFirst()) {
+  // Use TouchAdapter - touch optimized
+  // Enhanced ghost connectors, jiggle animations, etc.
+}
+```
 
 ## Standard Mode Utilities
 

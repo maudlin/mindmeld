@@ -29,17 +29,16 @@ npm install && npm start
 
 Visit `http://localhost:8080` to begin mind mapping.
 
-### Touch Mode
-For an enhanced mobile experience, add `?mode=touch` to enable refined touch interactions:
-```bash
-http://localhost:8080/?mode=touch
-```
+### Mobile & Touch Support
+MindMeld automatically detects your device capabilities and provides optimized interactions:
 
-Touch mode features:
-- **Single-finger drag**: Multi-select lasso on canvas
-- **Press-hold-drag**: Move notes and groups
+**Touch Device Features:**
+- **Long-press and drag**: Move notes with visual "jiggle" feedback
+- **Single-finger drag on canvas**: Multi-select lasso selection
 - **Double-tap**: Create or edit notes
 - **Two-finger gestures**: Pan and zoom canvas
+- **Ghost connector enhancements**: Larger touch targets with visual feedback
+- **Automatic adaptation**: No configuration needed - works seamlessly
 
 ## Key Features
 
@@ -48,7 +47,7 @@ Touch mode features:
 - **Intelligent Connections**: Visual connections with directional arrows and real-time updates
 - **Multi-Canvas Templates**: Standard Canvas, Hero's Journey, and custom templates
 - **Advanced Selection**: Multi-select with group operations and touch-optimized lasso selection
-- **Touch-Optimized Interface**: Refined touch interactions for mobile and tablet devices
+- **Adaptive Touch Interface**: Automatic device detection with optimized mobile interactions
 - **Data Management**: Export/import mind maps as JSON with full state preservation
 - **Modern Architecture**: Event-driven design with zero circular dependencies
 
