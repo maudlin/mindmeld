@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Touch Context Menu Debug</title>
+    <style>
+        body { margin: 20px; font-family: Arial, sans-serif; }
+        .debug-info { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+        #svg-container { background: #fafafa; border: 1px solid #ccc; }
+        .context-menu { display: none; }
+        .context-menu.visible { display: block; }
+        .menu-item { cursor: pointer; }
+        .menu-item:hover { opacity: 0.8; }
+    </style>
+</head>
+<body>
+    <h1>Touch Context Menu Debug</h1>
+    <div class="debug-info">
+        <strong>Instructions:</strong>
+        <ol>
+            <li>Tap on the connection line (blue line) to show context menu</li>
+            <li>Try tapping the delete button (X) and cycle button (arrows)</li>
+            <li>Check console for debug messages</li>
+        </ol>
+    </div>
+
+    <div class="debug-info">
+        <div id="events-log">Events will appear here...</div>
+    </div>
+
+    <svg id="svg-container" width="400" height="200">
+        <!-- Connection line -->
+        <g data-start="note1" data-end="note2" data-type="uni-forward">
+            <path d="M50,100 L350,100" stroke="blue" stroke-width="3"/>
+            <circle class="connector-hotspot" cx="200" cy="100" r="15" fill="transparent" stroke="red" stroke-width="1"/>
+            
+            <!-- Context Menu -->
+            <g class="context-menu" id="test-menu">
+                <!-- Delete button -->
+                <g class="menu-item" data-type="delete" style="transform: translate(200px, 80px)">
+                    <circle r="9" cx="0" cy="0" fill="white" stroke="#333" stroke-width="2"/>
+                    <line x1="-4" y1="-4" x2="4" y2="4" stroke="#333" stroke-width="2"/>
+                    <line x1="4" y1="-4" x2="-4" y2="4" stroke="#333" stroke-width="2"/>
+                </g>
+                
+                <!-- Cycle button -->
+                <g class="menu-item" data-type="cycle" style="transform: translate(200px, 120px)">
+                    <circle cx="0" cy="0" r="9" fill="#8585ec" stroke="transparent" stroke-width="1"/>
+                    <polyline points="-3,-3 -6,0 -3,3" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polyline points="3,-3 6,0 3,3" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </g>
+            </g>
+        </g>
+    </svg>
+
+    <script>
+        // Debug logging
+        function logEvent(message) {
+            console.log(message);
+            const log = document.getElementById('events-log');
+            log.innerHTML += '<div>' + new Date().toISOString().substr(11, 8) + ': ' + message + '</div>';
+        }
+
+        // Get elements
+        const menu = document.getElementById('test-menu');
+        const hotspot = document.querySelector('.connector-hotspot');
+        const deleteButton = document.querySelector('.menu-item[data-type="delete"]');
+        const cycleButton = document.querySelector('.menu-item[data-type="cycle"]');
+
+        // Show menu when tapping hotspot
+        hotspot.addEventListener('click', () => {
+            logEvent('Hotspot clicked - showing menu');
+            menu.classList.add('visible');
+        });
+
+        hotspot.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            logEvent('Hotspot touched - showing menu');
+            menu.classList.add('visible');
+        });
+
+        // Delete button event handlers
+        deleteButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            logEvent('Delete button CLICKED');
+            alert('Delete button clicked!');
+        });
+
+        deleteButton.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+            logEvent('Delete button TOUCHSTART');
+        }, { passive: true });
+
+        deleteButton.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            logEvent('Delete button TOUCHEND');
+            alert('Delete button touched!');
+        });
+
+        // Cycle button event handlers
+        cycleButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            logEvent('Cycle button CLICKED');
+            alert('Cycle button clicked!');
+        });
+
+        cycleButton.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+            logEvent('Cycle button TOUCHSTART');
+        }, { passive: true });
+
+        cycleButton.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            logEvent('Cycle button TOUCHEND');
+            alert('Cycle button touched!');
+        });
+
+        // Debug all touch events
+        document.addEventListener('touchstart', (e) => {
+            logEvent(`Touch start on: ${e.target.tagName} ${e.target.className}`);
+        }, true);
+
+        document.addEventListener('touchend', (e) => {
+            logEvent(`Touch end on: ${e.target.tagName} ${e.target.className}`);
+        }, true);
+
+        logEvent('Debug page loaded - ready for testing');
+    </script>
+</body>
+</html>

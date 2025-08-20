@@ -98,9 +98,10 @@
           tabindex="0"
           aria-label="Select blue color"
         ></div>
-        <button
+        <div
           class="kebab-menu-button"
           id="kebab-menu-button"
+          role="button"
           aria-haspopup="true"
           aria-controls="kebab-context-menu"
           aria-expanded="false"
@@ -112,7 +113,7 @@
               d="M12 7a1.75 1.75 0 110-3.5A1.75 1.75 0 0112 7zm0 6a1.75 1.75 0 110-3.5A1.75 1.75 0 0112 13zm0 6a1.75 1.75 0 110-3.5A1.75 1.75 0 0112 19z"
             />
           </svg>
-        </button>
+        </div>
       </div>
     </div>
 
@@ -199,19 +200,7 @@
         </div>
       </div>
     </div>
-    <div id="help-text">
-      <strong>Create a note:</strong> double click on the canvas<br />
-      <strong>Select & delete notes:</strong> left click to select a note. Press
-      delete key to delete<br />
-      <strong>Color notes:</strong> use the color picker at the top to apply
-      colors to selected notes<br />
-      <strong>Connect two notes:</strong> drag a line from one blue connector to
-      another<br />
-      <strong>Select multiple notes:</strong> click on the canvas and drag to
-      select notes<br />
-      <strong>Pan & Zoom:</strong> right click &amp; drag to pan, scroll to
-      zoom<br />
-    </div>
+    <div id="help-text"></div>
     <div id="zoom-display">5x</div>
     <script type="module" src="js/app.js?v=0.11.0"></script>
   </body>

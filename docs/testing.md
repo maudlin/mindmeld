@@ -450,4 +450,155 @@ test('TouchAdapter coordinates with zoom manager', async () => {
 });
 ```
 
+## Touch Regression Testing
+
+### Manual Testing Protocol
+
+When making changes that could affect touch interactions:
+
+**1. Basic Touch Flow Test**
+```bash
+# Start dev server and test in browser
+npm start
+
+# Open with touch mode
+# http://localhost:8080/?mode=touch
+```
+
+**Test checklist:**
+- [ ] Note creation (double-tap canvas)
+- [ ] Note selection (tap note)
+- [ ] Note movement (long-press + drag)
+- [ ] Connection creation (tap ghost connector → tap target note)
+- [ ] Connection context menu (tap connector-hotspot)
+- [ ] Context menu interactions (tap delete/cycle buttons)
+- [ ] Canvas pan (two-finger drag)
+- [ ] Canvas zoom (pinch gesture)
+
+**2. Cross-Platform Verification**
+- [ ] Desktop mode still works (`http://localhost:8080/`)
+- [ ] Browser dev tools mobile viewport
+- [ ] Actual mobile device testing
+
+### Automated Regression Tests
+
+**Touch Event Handler Tests**
+```javascript
+describe('Touch Event Regression', () => {
+  test('SVG elements receive touch events', () => {
+    const svgContainer = document.getElementById('svg-container');
+    const pathElement = svgContainer.querySelector('path');
+    
+    // Verify CSS pointer-events configuration
+    const pathStyles = getComputedStyle(pathElement);
+    expect(pathStyles.pointerEvents).toBe('all');
+    
+    // Verify touch event handlers are attached
+    const listeners = getEventListeners(svgContainer);
+    expect(listeners.touchend).toBeDefined();
+  });
+  
+  test('TouchAdapter does not intercept context menu events', () => {
+    const touchAdapter = new TouchAdapter();
+    const mockContextMenu = { show: jest.fn() };
+    
+    // Simulate tap on connector-hotspot
+    const mockTouch = {
+      currentX: 100,
+      currentY: 100
+    };
+    
+    // Mock element detection to return connector-hotspot
+    jest.spyOn(document, 'elementFromPoint')
+      .mockReturnValue(createMockElement('circle', 'connector-hotspot'));
+    
+    touchAdapter.handleTap(mockTouch);
+    
+    // TouchAdapter should NOT call context menu directly
+    expect(mockContextMenu.show).not.toHaveBeenCalled();
+    
+    // Event should bubble to SVG container handlers instead
+  });
+});
+```
+
+### Common Regression Patterns
+
+**Pattern 1: Event Interception**
+- **Symptom**: Touch interactions stop working after TouchAdapter changes
+- **Root cause**: New code calling `event.preventDefault()` too early
+- **Test**: Verify event bubbling still reaches intended handlers
+
+**Pattern 2: CSS Pointer Events**
+- **Symptom**: SVG elements not responding to touch
+- **Root cause**: Missing `pointer-events: all` on SVG elements
+- **Test**: Check computed styles in automated tests
+
+**Pattern 3: Handler Registration Order**
+- **Symptom**: Inconsistent behavior depending on load order
+- **Root cause**: Event handlers depending on registration sequence
+- **Test**: Verify interactions work regardless of initialization order
+
+### E2E Regression Suite
+
+**Touch Context Menu E2E Test**
+```javascript
+test('Connection context menu touch regression', async ({ page }) => {
+  // Set up touch viewport
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto('http://localhost:8080/?mode=touch');
+  
+  const canvasPage = new CanvasPage(page);
+  
+  // Create notes and connection
+  const note1 = await canvasPage.createNote(200, 200);  
+  const note2 = await canvasPage.createNote(400, 200);
+  await canvasPage.createConnection(note1, note2);
+  
+  // Tap on connector-hotspot
+  const hotspot = page.locator('.connector-hotspot').first();
+  await hotspot.tap();
+  
+  // Context menu should appear
+  await expect(page.locator('.context-menu')).toBeVisible();
+  
+  // Test delete button
+  await page.locator('.menu-item[data-type="delete"]').tap();
+  
+  // Connection should be removed
+  await expect(page.locator('path')).toHaveCount(0);
+});
+```
+
+### Performance Regression
+
+**Touch Event Performance Test**
+```javascript
+test('Touch events performance regression', async () => {
+  const touchAdapter = new TouchAdapter();
+  const performanceMarks = [];
+  
+  // Mock performance.now for consistent timing
+  jest.spyOn(performance, 'now')
+    .mockImplementation(() => performanceMarks.length * 16.67); // 60fps
+  
+  // Simulate rapid touch events
+  for (let i = 0; i < 100; i++) {
+    const startTime = performance.now();
+    
+    touchAdapter.handleTap({
+      currentX: Math.random() * 400,
+      currentY: Math.random() * 400
+    });
+    
+    const duration = performance.now() - startTime;
+    performanceMarks.push(duration);
+  }
+  
+  // Average processing time should be under 16ms (60fps)
+  const averageTime = performanceMarks.reduce((a, b) => a + b) / performanceMarks.length;
+  expect(averageTime).toBeLessThan(16);
+});
+```
+
 For complete testing details, see [`tests/README.md`](../tests/README.md).

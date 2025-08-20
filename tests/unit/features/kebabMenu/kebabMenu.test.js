@@ -466,4 +466,48 @@ describe('KebabMenu', () => {
       expect(mockButton.getAttribute('aria-expanded')).toBe('false');
     });
   });
+
+  describe('visual focus state behavior', () => {
+    beforeEach(() => {
+      kebabMenu.initialize();
+    });
+
+    test('should set aria-expanded to true when menu is opened', () => {
+      expect(mockButton.getAttribute('aria-expanded')).toBe('false');
+
+      kebabMenu.openMenu();
+
+      expect(mockButton.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    test('should set aria-expanded to false when menu is closed', () => {
+      kebabMenu.openMenu();
+      expect(mockButton.getAttribute('aria-expanded')).toBe('true');
+
+      kebabMenu.closeMenu();
+
+      expect(mockButton.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    test('should maintain correct aria-expanded state when toggling menu multiple times', () => {
+      // Start closed
+      expect(mockButton.getAttribute('aria-expanded')).toBe('false');
+
+      // Open -> aria-expanded should be true
+      kebabMenu.openMenu();
+      expect(mockButton.getAttribute('aria-expanded')).toBe('true');
+
+      // Close -> aria-expanded should be false
+      kebabMenu.closeMenu();
+      expect(mockButton.getAttribute('aria-expanded')).toBe('false');
+
+      // Open again -> aria-expanded should be true
+      kebabMenu.openMenu();
+      expect(mockButton.getAttribute('aria-expanded')).toBe('true');
+
+      // Close again -> aria-expanded should be false
+      kebabMenu.closeMenu();
+      expect(mockButton.getAttribute('aria-expanded')).toBe('false');
+    });
+  });
 });

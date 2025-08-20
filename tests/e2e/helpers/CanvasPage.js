@@ -89,13 +89,34 @@ export class CanvasPage {
   }
 
   // Note creation with automatic throttle handling
-  async createNoteWithThrottleWait(x, y) {
-    const note = await this.createNoteAt(x, y);
+  async createNoteWithThrottleWait(x = 640, y = 388) {
+    // Handle note creation throttle (500ms) - wait 600ms to be safe
+    if (this.lastNoteCreationTime) {
+      const timeSinceLastCreation = Date.now() - this.lastNoteCreationTime;
+      if (timeSinceLastCreation < 600) {
+        await this.page.waitForTimeout(600 - timeSinceLastCreation);
+      }
+    }
 
-    // Wait for throttle to complete using state-based approach
-    await this.waitForAppReady();
+    const noteCountBefore = await this.notes.count();
 
-    return note;
+    // Use the same approach as the working createNote() method
+    await this.canvas.click();
+    await this.page.waitForLoadState('domcontentloaded');
+
+    await this.page.mouse.dblclick(x, y);
+    this.lastNoteCreationTime = Date.now(); // Track creation time for throttling
+
+    // Wait for the new note to be created
+    await this.page.waitForFunction(
+      (count) => document.querySelectorAll('.note').length > count,
+      noteCountBefore,
+      { timeout: 10000 },
+    );
+
+    const newNote = this.notes.nth(noteCountBefore);
+    await expect(newNote).toBeVisible();
+    return newNote;
   }
 
   // Simple note creation for basic operations (legacy compatibility)

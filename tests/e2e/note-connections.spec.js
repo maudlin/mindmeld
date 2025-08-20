@@ -42,4 +42,8 @@ test.describe('MindMeld Note Connections', () => {
     expect(connection.targetId).toBeTruthy();
     expect(connection.sourceId).not.toBe(connection.targetId);
   });
+
+  // TODO: Add connection deletion test
+  // This should test: create connection → hover → context menu → delete → verify deletion
+  // Connection deletion UI needs to be investigated for proper selectors and visibility
 });

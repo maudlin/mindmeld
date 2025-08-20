@@ -50,7 +50,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], hasTouch: true },
     },
     // CI Project: Fast, essential tests only for GitHub Actions
     {
@@ -64,6 +64,7 @@ export default defineConfig({
       grep: /@smoke|@critical/,
       use: {
         ...devices['Desktop Chrome'],
+        hasTouch: true,
         // Optimized for CI speed and stability
         actionTimeout: 10000,
         navigationTimeout: 20000,
@@ -75,6 +76,7 @@ export default defineConfig({
       testMatch: 'tests/e2e/**/*.spec.js',
       use: {
         ...devices['Desktop Chrome'],
+        hasTouch: true,
         // More relaxed timeouts for local testing
         actionTimeout: 15000,
         navigationTimeout: 30000,

@@ -340,6 +340,37 @@ test.describe('Kebab Menu Functionality', () => {
       await expect(menuItems).toHaveCount(6); // All 6 menu items
     });
 
+    test('Should show focus outline only when menu is open (MM-147)', async ({
+      page,
+    }) => {
+      const canvasPage = new CanvasPage(page);
+      await canvasPage.load();
+
+      const button = page.locator('#kebab-menu-button');
+
+      // Initially menu should be closed with aria-expanded="false"
+      await expect(button).toHaveAttribute('aria-expanded', 'false');
+
+      // Focus the button - should not show the blue outline (CSS rule targets only aria-expanded="true")
+      await button.focus();
+      await expect(button).toHaveAttribute('aria-expanded', 'false');
+
+      // Click to open menu - should now show the blue outline
+      await button.click();
+      await expect(button).toHaveAttribute('aria-expanded', 'true');
+      await expect(page.locator('#kebab-context-menu.open')).toBeVisible();
+
+      // Click to close menu - should hide the blue outline again
+      await button.click();
+      await expect(button).toHaveAttribute('aria-expanded', 'false');
+      await expect(page.locator('#kebab-context-menu.open')).toBeHidden();
+
+      // Click outside to ensure focus behavior is consistent
+      await page.click('#canvas-container', { position: { x: 100, y: 100 } });
+      await button.focus();
+      await expect(button).toHaveAttribute('aria-expanded', 'false');
+    });
+
     test('Should support keyboard navigation', async ({ page }) => {
       const canvasPage = new CanvasPage(page);
       await canvasPage.load();
