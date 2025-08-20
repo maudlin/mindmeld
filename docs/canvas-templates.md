@@ -4,7 +4,7 @@ To add a new canvas template to MindMeld, follow these steps:
 
 ### 1. Create the Module Files
 
-Create a new directory for your module in `js/features/canvas/templates/[your-module-name]/`. In this directory, create two files:
+Create a new directory for your module in `src/js/features/canvas/templates/[your-module-name]/`. In this directory, create two files:
 
 - `[yourModuleName]Canvas.js`: The main module file
 - `[yourModuleName]Canvas.css`: The CSS styles for your module
@@ -22,7 +22,7 @@ class YourModuleNameCanvas extends CanvasModule {
       'Your Module Name',
       width,
       height,
-      './js/features/canvas/templates/[yourModuleName]/[yourModuleName]Canvas.css',
+      './src/js/features/canvas/templates/[yourModuleName]/[yourModuleName]Canvas.css',
     );
   }
 
@@ -59,7 +59,7 @@ In your `[yourModuleName]Canvas.css` file, add the styles for your canvas layout
 
 ### 4. Register the New Module
 
-Update the `config.js` file to include your new module:
+Update the `src/js/core/config.js` file to include your new module:
 
 ```javascript
 export default {

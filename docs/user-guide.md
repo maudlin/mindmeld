@@ -179,15 +179,3 @@ The system uses advanced capability detection to provide device-appropriate inte
 - **Issues**: Report bugs or request features through the project's issue tracker
 - **Community**: Connect with other users and contributors
 
-## What's Next?
-
-### Upcoming Features
-Check the [What's New](../src/changelog.html) page for recent updates and planned improvements.
-
-### Customization
-- **Templates**: New canvas templates are regularly added
-- **Themes**: Visual customization options
-- **Extensions**: Additional features and integrations
-
-### Contributing
-Interested in improving MindMeld? See our [Contributing Guide](../CONTRIBUTING.md) for ways to get involved.

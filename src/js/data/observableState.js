@@ -58,6 +58,15 @@ class ObservableState {
         };
       }
 
+      // Validate currentColor and fall back to default if invalid
+      const validColors = ['yellow', 'pink', 'green', 'blue'];
+      if (
+        parsedState.colorState.currentColor &&
+        !validColors.includes(parsedState.colorState.currentColor)
+      ) {
+        parsedState.colorState.currentColor = 'yellow';
+      }
+
       // Ensure canvasType exists for backward compatibility
       if (!parsedState.canvasType) {
         parsedState.canvasType = 'Standard Canvas';

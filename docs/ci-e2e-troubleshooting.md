@@ -1,5 +1,7 @@
 # CI vs Local E2E Test Environment Analysis
 
+For which tests to run and approximate runtimes, see [Testing Environments](testing-environments.md). For pipeline policy and CI stages, see the [CI/CD Guide](ci-cd.md).
+
 ## Root Cause Analysis: Why Tests Fail in GitHub Actions But Not Locally
 
 ### Key Differences Between Environments
@@ -199,19 +201,19 @@ test.beforeAll(async () => {
 - ✅ **Note creation stabilized**: Fixed `createNote()` to return correct note instances
 - ✅ **Method cleanup**: Removed unnecessary `createNoteViaJavaScript()` complexity
 - ✅ **CI stability**: Added strategic timing delays for flaky tests
-- ✅ **100% test success**: All 21 E2E tests now pass consistently
+- ✅ **Consistent CI runs**: All current E2E tests pass reliably in CI
 
 ### ✅ **Current Configuration**
 ```javascript
 // playwright.config.js - optimized for CI/CD
-retries: process.env.CI ? 2 : 0, // Retry flaky tests twice in CI
-fullyParallel: !process.env.CI, // Reduce parallelism in CI for stability
+retries: process.env.CI ? 2 : 0, // Retry flaky tests in CI
+fullyParallel: !process.env.CI,   // Reduce parallelism in CI for stability
 reuseExistingServer: !process.env.CI, // Always fresh server in CI
 ```
 
 ### 📋 **Lessons Learned**
 - **State-based waits**: Checking non-existent global state causes browser instability
-- **Throttling respect**: App has 800ms throttling that must be honored
+- **Throttling respect**: The app enforces a 500ms throttle; add buffers (e.g., ~600ms local, 800–1000ms in CI)
 - **Method simplicity**: Complex fallback methods often cause more problems than they solve
 - **CI environment**: Needs extra stability time for consistent results
 
@@ -228,8 +230,8 @@ reuseExistingServer: !process.env.CI, // Always fresh server in CI
 ```
 
 ### Success Metrics
-- **Target**: >95% E2E test success rate in CI ✅ **ACHIEVED**
-- **Current**: **100% (21/21 passing)** - All tests now pass consistently
+- **Target**: High E2E test success rate in CI (consistently green runs)
+- **Current**: CI runs are consistently green for the current suite
 - **Monitoring**: Track test execution times and failure patterns
 
 ## Future Prevention

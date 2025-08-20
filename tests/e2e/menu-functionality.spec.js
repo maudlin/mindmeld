@@ -54,7 +54,7 @@ test.describe('Menu Functionality', () => {
       ).toBeVisible();
     });
 
-    test('Should show Instructions overlay when Instructions button is clicked', async ({
+    test('Should navigate to About page when Instructions button is clicked', async ({
       page,
     }) => {
       const canvasPage = new CanvasPage(page);
@@ -64,18 +64,15 @@ test.describe('Menu Functionality', () => {
       await page.hover('.menu-item:has-text("About")');
       await page.click('#show-instructions-button');
 
-      // Verify instructions overlay appears
-      await expect(page.locator('#overlay')).toBeVisible();
-      await expect(
-        page.locator('#overlay h1:has-text("Welcome to MindMeld!")'),
-      ).toBeVisible();
+      // Verify navigation to about page
+      await page.waitForURL('**/about.html');
+      await expect(page).toHaveURL(/about\.html$/);
 
-      // Close the overlay by clicking dismiss button
-      await page.click('#dismiss-button');
-      // Wait for overlay to be hidden (it should add the 'hidden' class)
-      await expect(page.locator('#overlay')).toHaveClass(/hidden/, {
-        timeout: 10000,
-      });
+      // Verify About page content is visible
+      await expect(page.locator('h1:has-text("About MindMeld")')).toBeVisible();
+      await expect(
+        page.locator('h2:has-text("How to Get Started")'),
+      ).toBeVisible();
     });
   });
 

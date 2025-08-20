@@ -128,46 +128,11 @@ See [Testing Environments](./testing-environments.md) for the definitive suite b
 
 ### Critical E2E Patterns
 
-**Note Creation**: Always use `createNote()` and respect throttling
-```javascript
-const canvasPage = new CanvasPage(page);
+- Respect app throttling (500ms) with buffers (~600ms local; 800–1000ms in CI) during rapid note creation
+- Prefer Page Object methods (CanvasPage) for interactions and stability helpers
+- Test end-to-end user journeys rather than isolated clicks
 
-// ✅ CORRECT: Reliable pattern for multiple notes
-const note1 = await canvasPage.createNote(400, 300);
-await page.waitForTimeout(800); // Respect app throttling
-const note2 = await canvasPage.createNote(600, 300);
-
-// ❌ WRONG: Will fail due to throttling
-const note1 = await canvasPage.createNote(400, 300);  
-const note2 = await canvasPage.createNote(600, 300); // Too fast!
-```
-
-**Stability in CI**: Some tests need extra warmup time
-```javascript
-// For tests that create content immediately after page load
-const canvasPage = new CanvasPage(page);
-await canvasPage.load();
-await page.waitForTimeout(1000); // CI stability - only if needed
-
-// Then proceed with test operations
-const note = await canvasPage.createNote(400, 300);
-```
-
-**Complete Workflows**: Test user journeys, not individual clicks
-```javascript
-test('creates, connects, and deletes notes', async ({ page }) => {
-  const canvasPage = new CanvasPage(page);
-  
-  // Create test content with proper throttling
-  const note1 = await canvasPage.createNote(400, 300);
-  await page.waitForTimeout(800);
-  const note2 = await canvasPage.createNote(600, 300);
-  
-  // Test the actual feature
-  await canvasPage.connectNotes(note1, note2);
-  await expect(page.locator('.connection')).toBeVisible();
-});
-```
+For complete, working examples using CanvasPage (note creation patterns, CI warmups, connection workflows), see tests/README.md.
 
 ### Playwright Setup
 
@@ -215,6 +180,8 @@ Configuration in `playwright.config.js`. Tests in `tests/e2e/`.
 
 ## Debugging
 
+For CI-specific stability tips and environment differences, see [CI vs Local E2E Troubleshooting](ci-e2e-troubleshooting.md).
+
 **Timing issues**: Use `await expect().toBeVisible()` not arbitrary waits (except for throttling)  
 **Flaky tests**: Usually caused by missing throttle delays between note operations  
 **Performance**: Run specific test files for faster feedback  
@@ -231,7 +198,7 @@ Configuration in `playwright.config.js`. Tests in `tests/e2e/`.
 
 ## Advanced Testing Patterns
 
-### Mobile & Cross-Platform Testing
+Detailed, copy-pastable examples for mobile/touch patterns, selectors, coordinates, and complex interactions live in tests/README.md. Use this doc for philosophy and patterns; use tests/README.md for concrete examples and recipes.
 
 **Device Detection Testing**:
 ```javascript

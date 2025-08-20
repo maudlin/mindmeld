@@ -2,7 +2,9 @@
 
 ## Overview
 
-MindMeld includes a comprehensive set of npm scripts for development, testing, building, and maintenance. This guide documents all available commands and their usage.
+MindMeld includes a comprehensive set of npm scripts for development, testing, building, and maintenance. This guide documents all available commands and their usage. All examples below map to scripts defined in package.json.
+
+For which test suite to run (CI/dev/smoke/critical) and tag usage, see Testing Environments.
 
 ## Development Scripts
 
@@ -92,7 +94,7 @@ npx playwright test --project=chromium
 npm test && npm run test:e2e
 
 # Quick test validation
-npm run test:quick  # (if configured)
+# Choose an appropriate suite for your scenario; see Testing Environments
 ```
 
 ## Build and Deployment Scripts
@@ -188,10 +190,10 @@ rm -rf coverage/
 npm run test:watch
 
 # Start development with file watching
-npm run dev:watch  # (if configured)
+# Use your editor/IDE watch features or tooling of choice
 
-# Validate code before committing
-npm run pre-commit
+# Validate code before pushing
+npm run pre-push
 ```
 
 ### Debugging

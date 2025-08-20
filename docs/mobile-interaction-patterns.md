@@ -359,7 +359,7 @@ setupMobileDropdown('.menu-item', {
 
 - [Developer Guide](developer-guide.md) - Overall development patterns
 - [Testing Guide](testing.md) - Testing mobile interactions
-- [Accessibility Guide](accessibility.md) - Mobile accessibility considerations
+- [Accessibility](accessibility.md) - Mobile/touch accessibility and keyboard considerations
 
 ## CSS Utilities
 

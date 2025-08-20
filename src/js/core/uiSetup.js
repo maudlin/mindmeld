@@ -11,7 +11,6 @@ export function setupUI(elements) {
   populateCanvasStyleDropdown(elements);
   setupExportImport(elements.menu, elements.canvas);
   setupClearCanvas(elements.menu, elements.canvas);
-  setupDismissButton();
   setupMobileDropdownBehavior();
 }
 
@@ -190,17 +189,6 @@ function setupClearCanvas(menu, canvas) {
         clearAllState(canvas);
         notificationManager.success('Canvas cleared successfully!');
       }
-    });
-  }
-}
-
-function setupDismissButton() {
-  const dismissButton = document.getElementById('dismiss-button');
-  const overlay = document.getElementById('overlay');
-
-  if (dismissButton && overlay) {
-    dismissButton.addEventListener('click', () => {
-      overlay.classList.add('hidden');
     });
   }
 }

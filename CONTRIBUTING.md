@@ -2,6 +2,11 @@
 
 ## Quick Start
 
+Before contributing, please familiarize yourself with:
+- docs/README.md — Documentation index (start here)
+- docs/testing-environments.md — How to run the right test suites locally and in CI
+- docs/ci-e2e-troubleshooting.md — CI vs local Playwright stability guidance
+
 Fork → Clone → `npm install && npm start` → Develop → Test → Submit PR
 
 ```bash

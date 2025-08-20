@@ -5,8 +5,9 @@
 This guide documents testing approaches, technical findings, and best practices for the MindMeld mind mapping application. Tests are organized into unit tests and end-to-end (E2E) tests using Jest and Playwright respectively.
 
 **📅 Last Updated**: July 2025  
-**🎯 Test Coverage**: 100% of core functionality (9/9 E2E tests) + Event Bus (20/20 unit tests)  
 **🏗️ Architecture**: Refactored with shared Page Object Model + Event Bus foundation tests
+
+Scope: This guide focuses on hands-on details: test structure, the shared CanvasPage API, selectors/coordinates, and technical findings. For philosophy, naming conventions, and patterns, see docs/testing.md. For suites, commands, tags, and runtimes, see docs/testing-environments.md.
 
 ## Test Structure
 
@@ -127,6 +128,8 @@ test('My new test', async ({ page }) => {
 ```
 
 ## Running Tests
+
+For which suite to run (CI/dev/smoke/critical), tag usage, and approximate runtimes, see the Testing Environments guide. This file focuses on structure, the shared Page Object Model, and technical findings.
 
 ### End-to-End Tests (Playwright)
 
@@ -397,10 +400,8 @@ console.log('Note count:', await page.locator('.note').count());
 
 ### 📊 **Test Metrics**
 
-- **Total E2E Tests**: 9 test scenarios
-- **Success Rate**: ~89% (8/9 consistently pass)
-- **Average Runtime**: 6.1 seconds (parallel execution)
-- **Code Coverage**: 100% of core user workflows
+- E2E test scenarios cover core user workflows (basic, note operations, connections, multi-select, template switching, menu, touch, zoom)
+- Runtimes vary by environment; see Testing Environments for suite guidance
 
 ## 🔒 **Security Testing Framework**
 
@@ -810,7 +811,7 @@ export default {
 
 **Issue**: `note-connections.spec.js` occasionally fails during parallel execution  
 **Cause**: Resource contention when 9 tests run simultaneously  
-**Status**: Affects ~11% of test runs (1/9 tests)
+**Status**: Intermittent in parallel execution
 
 **Solutions for Future Engineers**:
 
@@ -851,9 +852,8 @@ For new canvas templates:
 
 ### **Performance Considerations**
 
-- Tests run in parallel by default (9 workers)
+- Tests run in parallel by default
 - Each test gets a fresh browser context
-- Average test completes in <4 seconds
 - Use `page.waitForFunction()` instead of arbitrary timeouts
 
 ## 📋 **Quick Reference**
