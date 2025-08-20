@@ -8,7 +8,7 @@ export class CanvasPage {
   constructor(page) {
     this.page = page;
     this.isCI = !!process.env.CI;
-    
+
     // Throttle tracking for note creation
     this.lastNoteCreationTime = null;
 
@@ -44,10 +44,14 @@ export class CanvasPage {
 
   // Common application loading
   async load(mode = 'desktop') {
-    const url = mode === 'touch' 
-      ? 'http://localhost:8080/?mode=touch' 
-      : 'http://localhost:8080/?mode=desktop';
-    
+    const url =
+      mode === 'touch'
+        ? 'http://localhost:8080/?mode=touch'
+        : 'http://localhost:8080/?mode=desktop';
+
+    // Track the current mode for later use
+    this.currentMode = mode;
+
     await this.page.goto(url);
     await expect(this.canvas).toBeVisible();
 
@@ -55,6 +59,11 @@ export class CanvasPage {
     if (this.isCI) {
       await this.page.waitForLoadState('domcontentloaded');
       await this.waitForAppReady(); // Extra warmup in CI
+    }
+
+    // Extra initialization time for touch mode
+    if (mode === 'touch') {
+      await this.page.waitForTimeout(1000); // Allow TouchAdapter initialization
     }
   }
 
@@ -117,7 +126,17 @@ export class CanvasPage {
     await this.canvas.click();
     await this.page.waitForLoadState('domcontentloaded');
 
-    await this.page.mouse.dblclick(x, y);
+    // Use mode-appropriate interaction method for note creation
+    if (this.currentMode === 'touch') {
+      // Use Playwright's touchscreen API for touch mode
+      await this.page.touchscreen.tap(x, y);
+      await this.page.waitForTimeout(50);
+      await this.page.touchscreen.tap(x, y); // Second tap for double-tap
+    } else {
+      // Use mouse double-click for desktop mode
+      await this.page.mouse.dblclick(x, y);
+    }
+
     this.lastNoteCreationTime = Date.now(); // Track creation time for throttling
 
     // Wait for the new note to be created with generous timeout for throttled creation
@@ -128,7 +147,7 @@ export class CanvasPage {
     );
 
     const newNote = this.notes.nth(noteCountBefore);
-    
+
     // Check if page/browser is still active before expect statement
     if (!this.page.isClosed()) {
       await expect(newNote).toBeVisible();
@@ -139,7 +158,9 @@ export class CanvasPage {
 
   // Note selection
   async selectNote(note = this.note) {
-    await note.click({ position: { x: 3, y: 3 } });
+    // Use boundingBox and page.mouse.click to avoid "html intercepts pointer events" errors
+    const box = await note.boundingBox();
+    await this.page.mouse.click(box.x + 3, box.y + 3);
     await expect(note).toHaveClass(/selected/);
     return note;
   }

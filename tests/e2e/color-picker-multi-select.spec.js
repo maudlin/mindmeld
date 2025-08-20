@@ -112,7 +112,7 @@ test.describe('Color Picker - Multi-Select Operations', () => {
     await expect(note3).not.toHaveClass(/color-green/);
   });
 
-  test.skip('Should handle partial selection of notes', async ({ page }) => {
+  test('Should handle partial selection of notes', async ({ page }) => {
     // Create multiple notes
     const note1 = await canvasPage.createNote(
       TestCoordinates.note1.x,
@@ -157,7 +157,9 @@ test.describe('Color Picker - Multi-Select Operations', () => {
     await expect(note4).toHaveClass(/color-yellow/);
   });
 
-  test('Should work with Shift+click to select multiple notes', async ({ page }) => {
+  test('Should work with Shift+click to select multiple notes', async ({
+    page,
+  }) => {
     // Create notes
     const note1 = await canvasPage.createNote(
       TestCoordinates.note1.x,
@@ -176,9 +178,9 @@ test.describe('Color Picker - Multi-Select Operations', () => {
     await note1.click({ position: { x: 3, y: 3 } });
 
     // Shift+click on second note border to add to selection
-    await note2.click({ 
-      modifiers: ['Shift'], 
-      position: { x: 3, y: 3 } 
+    await note2.click({
+      modifiers: ['Shift'],
+      position: { x: 3, y: 3 },
     });
 
     // Verify both notes are selected
@@ -217,9 +219,9 @@ test.describe('Color Picker - Multi-Select Operations', () => {
 
     // Select both notes using Shift+click on note borders
     await note1.click({ position: { x: 3, y: 3 } });
-    await note2.click({ 
-      modifiers: ['Shift'], 
-      position: { x: 3, y: 3 } 
+    await note2.click({
+      modifiers: ['Shift'],
+      position: { x: 3, y: 3 },
     });
 
     // Color picker should show current global color (blue from last action)
@@ -228,9 +230,9 @@ test.describe('Color Picker - Multi-Select Operations', () => {
     );
 
     // Remove note2 from selection (Shift+click again to toggle)
-    await note2.click({ 
-      modifiers: ['Shift'], 
-      position: { x: 3, y: 3 } 
+    await note2.click({
+      modifiers: ['Shift'],
+      position: { x: 3, y: 3 },
     });
 
     // Now only note1 is selected, picker should show its color (pink)

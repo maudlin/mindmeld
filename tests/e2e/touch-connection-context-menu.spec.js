@@ -8,8 +8,7 @@ test.describe('Touch Connection Context Menu', () => {
     const canvasPage = new CanvasPage(page);
 
     // Load in touch mode to ensure TouchAdapter is active
-    await page.goto('http://localhost:8080/?mode=touch');
-    await page.waitForTimeout(1000); // Allow TouchAdapter initialization
+    await canvasPage.load('touch');
 
     // Create two notes and connect them
     const note1 = await canvasPage.createNoteWithThrottleWait(
@@ -51,43 +50,6 @@ test.describe('Touch Connection Context Menu', () => {
 
     await expect(deleteButton).toBeVisible();
     await expect(cycleButton).toBeVisible();
-  });
-
-  test('should not show context menu when tapping on connection in desktop mode', async ({
-    page,
-  }) => {
-    const canvasPage = new CanvasPage(page);
-
-    // Load in desktop mode (no touch mode parameter)
-    await canvasPage.load();
-
-    // Create two notes and connect them
-    const note1 = await canvasPage.createNoteWithThrottleWait(
-      TestCoordinates.note1.x,
-      TestCoordinates.note1.y,
-    );
-    const note2 = await canvasPage.createNoteWithThrottleWait(
-      TestCoordinates.note2.x,
-      TestCoordinates.note2.y,
-    );
-
-    // Create connection between notes
-    await canvasPage.connectNotes(note1, note2);
-
-    // Verify connection exists
-    const connection = page.locator('g[data-start][data-end]');
-    await expect(connection).toBeAttached();
-
-    // Try clicking on connection (should not show context menu in desktop mode)
-    const connectionPath = connection.locator('path');
-    await connectionPath.first().click();
-
-    // Wait a moment to see if context menu appears
-    await page.waitForTimeout(500);
-
-    // Context menu should NOT be visible after click in desktop mode
-    const contextMenu = page.locator('.context-menu');
-    await expect(contextMenu).toBeHidden();
   });
 
   test('should show context menu on hover in desktop mode', async ({

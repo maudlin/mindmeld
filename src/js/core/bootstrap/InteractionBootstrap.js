@@ -41,25 +41,29 @@ export class InteractionBootstrap extends BaseBootstrap {
 
   async initializeInputSystem() {
     try {
-      console.log('InteractionBootstrap: Starting modern input system initialization');
-      
+      console.log(
+        'InteractionBootstrap: Starting modern input system initialization',
+      );
+
       const capabilityDetector = new CapabilityDetector();
       this.inputController = new InputController(eventBus, capabilityDetector);
 
       await this.inputController.initialize();
 
-      console.log('InteractionBootstrap: Modern input system initialized successfully');
+      console.log(
+        'InteractionBootstrap: Modern input system initialized successfully',
+      );
       log('InteractionBootstrap: Modern input system initialized successfully');
-      
+
       // Global debug flag for E2E tests
       if (typeof window !== 'undefined') {
         window.mindMeldDebug = {
           modernInputSystemReady: true,
           inputController: this.inputController,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       }
-      
+
       return true;
     } catch (error) {
       console.error(
@@ -69,7 +73,6 @@ export class InteractionBootstrap extends BaseBootstrap {
       return false;
     }
   }
-
 
   setupContextMenuPrevention() {
     // Prevent context menu across the application

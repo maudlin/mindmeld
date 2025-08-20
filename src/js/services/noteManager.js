@@ -1,6 +1,6 @@
 /**
  * Note Manager Service
- * 
+ *
  * Centralized service for managing note selection state across the application.
  * Extracted from legacy event.js to provide a clean, reusable service.
  */
@@ -27,7 +27,7 @@ export class NoteManager {
     eventBus.emit('note.selection.changed', {
       type: 'selected',
       note: note,
-      selectedCount: this.selectedNotes.size
+      selectedCount: this.selectedNotes.size,
     });
   }
 
@@ -37,7 +37,9 @@ export class NoteManager {
    */
   deselectNote(note) {
     if (!note || !note.classList) {
-      console.warn('NoteManager: Invalid note element provided to deselectNote');
+      console.warn(
+        'NoteManager: Invalid note element provided to deselectNote',
+      );
       return;
     }
 
@@ -46,7 +48,7 @@ export class NoteManager {
     eventBus.emit('note.selection.changed', {
       type: 'deselected',
       note: note,
-      selectedCount: this.selectedNotes.size
+      selectedCount: this.selectedNotes.size,
     });
   }
 
@@ -55,20 +57,20 @@ export class NoteManager {
    */
   clearSelections() {
     const previousCount = this.selectedNotes.size;
-    
+
     this.selectedNotes.forEach((note) => {
       if (note && note.classList) {
         note.classList.remove('selected');
       }
     });
-    
+
     this.selectedNotes.clear();
-    
+
     if (previousCount > 0) {
       eventBus.emit('note.selection.changed', {
         type: 'cleared',
         selectedCount: 0,
-        previousCount: previousCount
+        previousCount: previousCount,
       });
     }
   }
@@ -79,16 +81,16 @@ export class NoteManager {
    */
   getSelectedNotes() {
     // Filter out any invalid notes that might have been removed from DOM
-    const validNotes = Array.from(this.selectedNotes).filter(note => 
-      note && note.classList && document.contains(note)
+    const validNotes = Array.from(this.selectedNotes).filter(
+      (note) => note && note.classList && document.contains(note),
     );
-    
+
     // Clean up our internal set if we found invalid notes
     if (validNotes.length !== this.selectedNotes.size) {
       this.selectedNotes.clear();
-      validNotes.forEach(note => this.selectedNotes.add(note));
+      validNotes.forEach((note) => this.selectedNotes.add(note));
     }
-    
+
     return validNotes;
   }
 
@@ -131,7 +133,7 @@ export class NoteManager {
       return;
     }
 
-    notes.forEach(note => this.selectNote(note));
+    notes.forEach((note) => this.selectNote(note));
   }
 
   /**

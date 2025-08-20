@@ -69,7 +69,10 @@ export class DesktopAdapter extends BaseAdapter {
       throw new Error('Canvas element not found');
     }
 
-    console.log('DesktopAdapter: Initializing event listeners for canvas:', this.canvas.id);
+    console.log(
+      'DesktopAdapter: Initializing event listeners for canvas:',
+      this.canvas.id,
+    );
 
     // Canvas-specific events
     this.canvas.addEventListener('pointerdown', this.boundHandlers.pointerDown);
@@ -440,8 +443,13 @@ export class DesktopAdapter extends BaseAdapter {
    * Handle double-click events for note creation
    */
   handleDoubleClick(event) {
-    console.log('DesktopAdapter: Double-click detected on target:', event.target, 'isClickOnCanvas:', this.isClickOnCanvas(event.target));
-    
+    console.log(
+      'DesktopAdapter: Double-click detected on target:',
+      event.target,
+      'isClickOnCanvas:',
+      this.isClickOnCanvas(event.target),
+    );
+
     // Check if clicking directly on canvas (not on notes)
     if (this.isClickOnCanvas(event.target)) {
       console.log('DesktopAdapter: Processing double-click for note creation');
@@ -454,7 +462,7 @@ export class DesktopAdapter extends BaseAdapter {
    */
   handleDoubleClickInternal(event) {
     console.log('DesktopAdapter: Emitting note.createAtPosition event');
-    
+
     this.emit('note.createAtPosition', {
       canvas: this.canvas,
       event: event,
