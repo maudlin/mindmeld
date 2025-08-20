@@ -217,6 +217,20 @@ export class ContextMenu {
   }
 
   handleClick(event) {
+    // First check if clicking on a connector-hotspot to show the menu
+    const hotspot = event.target.closest('.connector-hotspot');
+    if (hotspot) {
+      // Only show context menu for permanent connections (same logic as handleSvgMouseMove)
+      const connectionGroup = hotspot.closest('g[data-start][data-end]');
+      if (connectionGroup) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.show(hotspot);
+        return;
+      }
+    }
+
+    // Then check if clicking on a menu item to handle actions
     const menuItem = event.target.closest('.menu-item');
     if (!menuItem) return;
 
@@ -254,6 +268,17 @@ export class ContextMenu {
 
   attachClickHandler(element) {
     element.addEventListener('click', this.handleClick);
+
+    // Add touch support for mobile devices
+    element.addEventListener(
+      'touchstart',
+      (event) => {
+        event.stopPropagation();
+      },
+      { passive: true },
+    );
+
+    element.addEventListener('touchend', this.handleClick);
   }
 
   setDeleteCallback(callback) {

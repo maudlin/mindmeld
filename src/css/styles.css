@@ -517,13 +517,16 @@ body.dragging .confirmation-dialog * {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.kebab-menu-button:focus {
-  outline: 2px solid #4a90e2;
-  outline-offset: 2px;
+
+/* Focus styles consistent with color swatches - only show when menu is open */
+.kebab-menu-button:focus,
+.kebab-menu-button:focus-visible {
+  outline: none;
 }
 
-.kebab-menu-button:focus:not(:focus-visible) {
-  outline: none;
+.kebab-menu-button[aria-expanded="true"] {
+  outline: 2px solid #4a90e2;
+  outline-offset: 2px;
 }
 
 /* Kebab Context Menu */
@@ -655,7 +658,8 @@ line.connection-line {
 }
 
 #svg-container line,
-#svg-container circle {
+#svg-container circle,
+#svg-container path {
   pointer-events: all;
 }
 
@@ -781,8 +785,9 @@ line.connection-line {
 }
 
 .note:hover .ghost-connector,
-.note.selected .ghost-connector {
-  display: block; /* Show on hover and when selected (for touch devices) */
+.note.selected .ghost-connector,
+.connection-mode .note .ghost-connector {
+  display: block; /* Show on hover, when selected, or during connection mode (for touch devices) */
 }
 
 /* Selected ghost connector state for touch connection creation */
@@ -792,11 +797,11 @@ line.connection-line {
   }
 
   .ghost-connector.connector-selected {
-    background-color: rgba(112, 181, 255, 0.9); /* More opaque when selected */
-    transform: scale(1.5); /* Larger on touch devices */
+    background-color: rgba(255, 215, 0, 0.9); /* Yellow tinge when selected */
+    transform: scale(1.8); /* Reduced from 2.25 to avoid delete button overlap */
     box-shadow:
       0 0 0 3px rgba(255, 255, 255, 0.9),
-      /* Thicker white ring */ 0 0 12px rgba(112, 181, 255, 0.9); /* Stronger glow */
+      /* Thicker white ring */ 0 0 16px rgba(255, 215, 0, 0.8); /* Stronger yellow glow */
   }
 }
 

@@ -233,9 +233,27 @@ export class TouchAdapter extends BaseAdapter {
   handleTap(touch) {
     const { target } = this.getTouchTarget(touch.currentX, touch.currentY);
 
+    // DEBUG: Log all tap events
+    console.log('🔥 TouchAdapter handleTap:', {
+      target: target,
+      tagName: target?.tagName,
+      className: target?.className,
+      isPATH: target?.tagName === 'PATH',
+      hasConnectorHotspot: target?.classList?.contains('connector-hotspot'),
+    });
+
     // Check if tapping on a ghost connector
     if (target.classList.contains('ghost-connector')) {
       this.handleGhostConnectorTap(target);
+      return;
+    }
+
+    // Check if tapping on a delete button - let it handle its own event
+    if (
+      target.classList.contains('shared-delete-button--note') ||
+      target.closest('.shared-delete-button--note')
+    ) {
+      // Don't interfere with delete button functionality
       return;
     }
 
@@ -245,7 +263,12 @@ export class TouchAdapter extends BaseAdapter {
       : target.closest('.note');
 
     if (note) {
-      this.handleNoteSelection(note);
+      // Check if we're in connection mode and should complete connection
+      if (this.isConnectionMode && this.selectedConnector) {
+        this.completeConnectionToNote(note);
+      } else {
+        this.handleNoteSelection(note);
+      }
     } else if (this.isClickOnCanvas(target)) {
       // Tap on canvas - clear selections and cancel operations (MM-145 refined)
       this.clearAllJiggleAnimations();
@@ -304,13 +327,19 @@ export class TouchAdapter extends BaseAdapter {
 
     // Double-tap on canvas creates new note
     if (this.isClickOnCanvas(target)) {
+      // Create proper event object that matches desktop behavior
+      const syntheticEvent = {
+        clientX: touch.currentX,
+        clientY: touch.currentY,
+        type: 'doubletap',
+        preventDefault: () => {},
+        stopPropagation: () => {},
+        target: target,
+      };
+
       this.emit('note.createAtPosition', {
         canvas: this.canvas,
-        event: {
-          clientX: touch.currentX,
-          clientY: touch.currentY,
-          type: 'doubletap',
-        },
+        event: syntheticEvent,
         _gesture: 'doubletap',
       });
 
@@ -625,6 +654,9 @@ export class TouchAdapter extends BaseAdapter {
     // Add visual feedback
     connector.classList.add('connector-selected');
 
+    // Show ghost connectors on all notes during connection mode
+    document.body.classList.add('connection-mode');
+
     // Emit connection mode started event
     this.emit('connection.modeStarted', {
       connector: connector,
@@ -648,17 +680,73 @@ export class TouchAdapter extends BaseAdapter {
       return;
     }
 
-    // Emit connection creation event
-    this.emit('connection.create', {
-      sourceConnector: this.selectedConnector,
-      targetConnector: targetConnector,
-      sourceNote: sourceNote,
-      targetNote: targetNote,
-      _gesture: 'tap',
-    });
+    // Create the connection directly via connectionManager (like desktop system)
+    this.createTouchConnection(sourceNote, targetNote);
 
     // Clear connection mode
     this.clearConnectionMode();
+  }
+
+  /**
+   * Complete connection between selected connector and target note (tap anywhere on note)
+   */
+  completeConnectionToNote(targetNote) {
+    if (!this.selectedConnector || !this.isConnectionMode) return;
+
+    const sourceNote = this.selectedConnector.closest('.note');
+
+    // Don't allow self-connections
+    if (sourceNote === targetNote) {
+      this.clearConnectionMode();
+      return;
+    }
+
+    // Create the connection directly via connectionManager (like desktop system)
+    this.createTouchConnection(sourceNote, targetNote);
+
+    // Clear connection mode
+    this.clearConnectionMode();
+  }
+
+  /**
+   * Create connection via connectionManager (mimics desktop behavior)
+   */
+  createTouchConnection(sourceNote, targetNote) {
+    // Check if connection already exists (like desktop system does)
+    if (connectionManager.connectionExists(sourceNote.id, targetNote.id)) {
+      console.log('Connection already exists between these notes');
+      return;
+    }
+
+    // Get the canvas and SVG container
+    const canvas = document.getElementById('canvas');
+    const svgContainer = document.getElementById('svg-container');
+
+    if (!canvas || !svgContainer) {
+      console.error(
+        'Cannot create connection: canvas or svg container not found',
+      );
+      return;
+    }
+
+    // Create connection group (similar to desktop system)
+    // We need to simulate the connection group creation for touch
+    connectionManager.createConnection(
+      sourceNote.id,
+      targetNote.id,
+      connectionManager.CONNECTION_TYPES.UNI_FORWARD,
+    );
+
+    // Update data store (like desktop system does)
+    connectionManager.updateConnectionInDataStore(
+      sourceNote.id,
+      targetNote.id,
+      connectionManager.CONNECTION_TYPES.UNI_FORWARD,
+    );
+
+    console.log(
+      `Touch connection created: ${sourceNote.id} -> ${targetNote.id}`,
+    );
   }
 
   /**
@@ -672,6 +760,10 @@ export class TouchAdapter extends BaseAdapter {
 
     if (this.isConnectionMode) {
       this.isConnectionMode = false;
+
+      // Hide ghost connectors on all notes when exiting connection mode
+      document.body.classList.remove('connection-mode');
+
       this.emit('connection.modeCancelled', { _gesture: 'tap' });
     }
   }
