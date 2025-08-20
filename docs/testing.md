@@ -62,10 +62,10 @@ describe('Connection Manager Behavior', () => {
 
 ## Quick Start
 
-**All tests**: `npm test && npm run test:e2e`  
-**Quick feedback**: `npm run test:e2e:smoke` (tagged core workflows)  
-**Critical only**: `npm run test:e2e:critical` (essential user flows)  
-Commands: See [Scripts Reference](scripts.md) for all testing commands
+Run all tests locally:
+- Unit + E2E: `npm test && npm run test:e2e`
+
+For suite options (CI/dev/smoke/critical), tag usage, and full command references, see [Testing Environments](./testing-environments.md). For all script entries, also see the [Scripts Reference](scripts.md).
 
 ## Test Structure
 
@@ -122,28 +122,9 @@ test('updates active color swatch', () => {
 
 Tests complete user workflows across Chrome, Firefox, and Safari. Use the `CanvasPage` helper for consistent interactions.
 
-### Test Categories & Commands
+### Test Categories, Commands, and Tags
 
-**Full Test Suite** (CI default - runs all 21 tests):
-```bash
-npm run test:e2e                    # All E2E tests (~2 minutes)
-```
-
-**Quick Feedback** (local development):
-```bash
-npm run test:e2e:smoke              # ~5 tagged core workflows (~30 seconds)
-npm run test:e2e:critical           # ~3 essential user flows (~20 seconds)
-```
-
-**Test Tags**:
-- `@critical` - Essential user flows (page load, note operations, connections)
-- `@smoke` - Core workflows for quick validation
-- No tags - Full regression tests
-
-**Usage Strategy**:
-- **CI/GitHub**: Full suite (browser install is the bottleneck anyway)
-- **Local Development**: Use smoke tests for rapid iteration
-- **Pre-commit**: Critical tests for essential validation
+See [Testing Environments](./testing-environments.md) for the definitive suite breakdowns (CI/dev/smoke/critical), tag definitions (`@smoke`, `@critical`), and guidance on when to run which suite. Locally, prefer smoke tests for rapid iteration and run critical tests before committing; CI runs the CI suite.
 
 ### Critical E2E Patterns
 
@@ -243,8 +224,263 @@ Configuration in `playwright.config.js`. Tests in `tests/e2e/`.
 - **"Notes created at same position"**: Missing `waitForTimeout(800)` between creations
 - **"Browser context closed"**: Avoid direct DOM manipulation, use helper methods  
 - **Tests pass locally, fail in CI**: Add `waitForTimeout(1000)` after page load
-- **Touch interactions fail**: Ensure ?mode=touch parameter for TouchAdapter tests
-- **Canvas panning conflicts**: Verify legacy vs TouchAdapter isolation in tests
+- **Touch interactions fail**: Use device emulation for proper touch testing
+- **Canvas panning conflicts**: Verify CapabilityDetector routing and adapter isolation
 - **Gesture timing issues**: Allow adequate time for long-press detection (500ms)
+- **CSS Media Query Issues**: Verify `@media (pointer: coarse)` styles in tests
+
+## Advanced Testing Patterns
+
+### Mobile & Cross-Platform Testing
+
+**Device Detection Testing**:
+```javascript
+// Test automatic device detection
+test('CapabilityDetector routes to correct adapter', () => {
+  const detector = new CapabilityDetector();
+  
+  // Mock touch-first device
+  Object.defineProperty(window, 'matchMedia', {
+    value: jest.fn(() => ({ matches: true }))
+  });
+  
+  expect(detector.getOptimalInputMode()).toBe('touch');
+});
+```
+
+**Touch-Specific E2E Testing**:
+```javascript
+// Test enhanced touch interactions
+test('Touch device shows jiggle animation on long press', async ({ page }) => {
+  // Set mobile viewport and CSS environment
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.addStyleTag({ 
+    content: '@media (pointer: coarse) { .note.jiggle { animation: noteJiggle 0.3s; } }' 
+  });
+  
+  const canvasPage = new CanvasPage(page);
+  const note = await canvasPage.createNote(400, 300);
+  
+  // Simulate long press with timing
+  await page.touchStart(note);
+  await page.waitForTimeout(500); // Long press threshold
+  
+  await expect(page.locator('.note.jiggle')).toBeVisible();
+  
+  // Test animation cleanup
+  await page.touchEnd(note);
+  await page.waitForTimeout(100);
+  await expect(page.locator('.note.jiggle')).not.toBeVisible();
+});
+```
+
+**CSS Media Query Testing**:
+```javascript
+// Verify touch-specific styles don't leak to desktop
+test('Touch transitions only apply on touch devices', async ({ page }) => {
+  const canvasPage = new CanvasPage(page);
+  const note = await canvasPage.createNote(400, 300);
+  
+  // Desktop: no transitions on ghost connectors
+  await page.setViewportSize({ width: 1200, height: 800 });
+  await page.hover(note);
+  
+  const connector = page.locator('.ghost-connector');
+  await expect(connector).not.toHaveCSS('transition', /ease/);
+  
+  // Touch: transitions enabled
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.tap(note);
+  await expect(connector).toHaveCSS('transition', /ease/);
+});
+```
+
+### Complex Interaction Testing
+
+**Event Flow Testing**:
+```javascript
+// Test event propagation through adapters
+test('Touch gestures route through correct event handlers', async () => {
+  const mockEventBus = createMockEventBus();
+  const touchAdapter = new TouchAdapter();
+  await touchAdapter.init(mockEventBus);
+  
+  // Simulate touch sequence
+  const touchEvent = createMockTouchEvent({
+    touches: [{ clientX: 100, clientY: 200, identifier: 0 }]
+  });
+  
+  touchAdapter.handleTouchStart(touchEvent);
+  
+  // Verify event emission
+  expect(mockEventBus.emit).toHaveBeenCalledWith('gesture.start', 
+    expect.objectContaining({ _gesture: 'touch' })
+  );
+});
+```
+
+**State Machine Testing**:
+```javascript
+// Test gesture recognition state transitions
+test('GestureRecognizer handles complex touch sequences', () => {
+  const recognizer = new GestureRecognizer(mockEventBus);
+  
+  // Start with single touch
+  recognizer.handleTouchStart(singleTouchEvent);
+  expect(recognizer.currentState).toBe('single_touch');
+  
+  // Add second touch
+  recognizer.handleTouchStart(secondTouchEvent);
+  expect(recognizer.currentState).toBe('multi_touch');
+  
+  // Test movement detection
+  recognizer.handleTouchMove(pinchEvent);
+  expect(recognizer.currentState).toBe('pinch_gesture');
+});
+```
+
+### Regression Testing
+
+**Context Menu Positioning**:
+```javascript
+// Test that context menus appear at correct locations
+test('Context menu appears over connection lines, not ghost connectors', async ({ page }) => {
+  const canvasPage = new CanvasPage(page);
+  
+  // Create connected notes
+  const note1 = await canvasPage.createNote(400, 300);
+  await page.waitForTimeout(800);
+  const note2 = await canvasPage.createNote(600, 300);
+  await canvasPage.connectNotes(note1, note2);
+  
+  // Hover over connection line (not ghost connector)
+  const connection = page.locator('[data-start][data-end] .connector-hotspot');
+  await page.hover(connection);
+  
+  // Verify context menu appears at connection
+  const contextMenu = page.locator('.context-menu');
+  await expect(contextMenu).toBeVisible();
+  
+  // Verify it's positioned over the line, not at ghost connector
+  const menuBox = await contextMenu.boundingBox();
+  const connectionBox = await connection.boundingBox();
+  
+  expect(Math.abs(menuBox.x - connectionBox.x)).toBeLessThan(50);
+});
+```
+
+**Ghost Connector Behavior**:
+```javascript
+// Test ghost connector sizing and visibility
+test('Ghost connectors adapt to device type', async ({ page }) => {
+  const canvasPage = new CanvasPage(page);
+  const note = await canvasPage.createNote(400, 300);
+  
+  // Desktop: hover shows connectors
+  await page.setViewportSize({ width: 1200, height: 800 });
+  await page.hover(note);
+  
+  const connector = page.locator('.ghost-connector');
+  await expect(connector).toBeVisible();
+  await expect(connector).toHaveCSS('width', '10px'); // Desktop size
+  
+  // Touch: selection shows connectors with enhanced sizing
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.tap(note);
+  
+  // Should still be 10px base size (enhanced via transforms, not CSS width)
+  await expect(connector).toHaveCSS('width', '10px');
+  
+  // But should have enhanced touch targets via CSS
+  const hitArea = await connector.evaluate(el => {
+    const rect = el.getBoundingClientRect();
+    return { width: rect.width, height: rect.height };
+  });
+  
+  expect(hitArea.width).toBeGreaterThan(20); // Expanded hit area
+});
+```
+
+### Performance Testing
+
+**Memory Leak Detection**:
+```javascript
+// Test adapter cleanup prevents memory leaks
+test('TouchAdapter properly cleans up event listeners', async () => {
+  const touchAdapter = new TouchAdapter();
+  const mockCanvas = document.createElement('div');
+  
+  await touchAdapter.init(mockEventBus);
+  touchAdapter.canvas = mockCanvas;
+  
+  // Track event listeners
+  const initialListeners = getEventListenerCount(mockCanvas);
+  
+  await touchAdapter.initializeEventListeners();
+  const afterInitListeners = getEventListenerCount(mockCanvas);
+  
+  expect(afterInitListeners).toBeGreaterThan(initialListeners);
+  
+  // Cleanup
+  await touchAdapter.destroyEventListeners();
+  const finalListeners = getEventListenerCount(mockCanvas);
+  
+  expect(finalListeners).toBe(initialListeners);
+});
+```
+
+**Animation Performance**:
+```javascript
+// Test CSS animations don't interfere with interactions
+test('Jiggle animation cleanup works correctly', async ({ page }) => {
+  const canvasPage = new CanvasPage(page);
+  const note = await canvasPage.createNote(400, 300);
+  
+  // Start jiggle animation
+  await page.touchStart(note);
+  await page.waitForTimeout(500);
+  await expect(page.locator('.note.jiggle')).toBeVisible();
+  
+  // Cancel via tap on canvas
+  await page.tap('.canvas', { position: { x: 100, y: 100 } });
+  
+  // Animation should be cleared
+  await page.waitForTimeout(100);
+  await expect(page.locator('.note.jiggle')).not.toBeVisible();
+  
+  // Note should still be selectable
+  await page.tap(note);
+  await expect(page.locator('.note.selected')).toBeVisible();
+});
+```
+
+### Integration Testing
+
+**Cross-Component Communication**:
+```javascript
+// Test adapter communication with other systems
+test('TouchAdapter coordinates with zoom manager', async () => {
+  const touchAdapter = new TouchAdapter();
+  const mockZoomManager = { 
+    setZoomLevel: jest.fn(),
+    getZoomLevel: jest.fn(() => 5)
+  };
+  
+  await touchAdapter.init(mockEventBus);
+  
+  // Simulate pinch gesture
+  const pinchEvent = createPinchGestureEvent(1.5); // 1.5x scale
+  touchAdapter.handlePinchMove(pinchEvent);
+  
+  // Verify zoom event emission
+  expect(mockEventBus.emit).toHaveBeenCalledWith('zoom.change', 
+    expect.objectContaining({ 
+      direction: 'in',
+      scale: 1.5,
+      _gesture: 'pinch'
+    })
+  );
+});
+```
 
 For complete testing details, see [`tests/README.md`](../tests/README.md).
