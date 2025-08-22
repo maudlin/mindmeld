@@ -306,8 +306,35 @@ export class TouchAdapter extends BaseAdapter {
       // Find the note content element for editing
       const noteContent = note.querySelector('.note-content');
       if (noteContent) {
-        // Enter edit mode by focusing the content
-        noteContent.focus();
+        // For mobile, we need to ensure contentEditable is properly set
+        // and use the right focus technique to trigger the keyboard
+        noteContent.setAttribute('contenteditable', 'true');
+
+        // Use a slight delay to ensure the DOM updates are processed
+        // This helps mobile browsers recognize the editable state
+        setTimeout(() => {
+          noteContent.focus();
+
+          // For mobile devices, we may need to trigger a click to show keyboard
+          // This is a workaround for some mobile browsers
+          if ('ontouchstart' in window) {
+            noteContent.click();
+          }
+
+          // Set the cursor position to the end of the text
+          const range = document.createRange();
+          const sel = window.getSelection();
+          if (noteContent.childNodes.length > 0) {
+            const textNode =
+              noteContent.childNodes[noteContent.childNodes.length - 1];
+            if (textNode.nodeType === Node.TEXT_NODE) {
+              range.setStart(textNode, textNode.length);
+              range.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(range);
+            }
+          }
+        }, 50);
 
         // Ensure note is selected
         if (!note.classList.contains('selected')) {
