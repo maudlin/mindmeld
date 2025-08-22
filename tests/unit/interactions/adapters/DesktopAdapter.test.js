@@ -224,6 +224,24 @@ describe('DesktopAdapter - Unit Tests', () => {
       );
     });
 
+    it('should NOT emit canvas.pan events for wheel without modifier keys', () => {
+      const mockEvent = {
+        deltaX: 50,
+        deltaY: 30,
+        ctrlKey: false,
+        metaKey: false,
+        preventDefault: jest.fn(),
+      };
+
+      desktopAdapter.handleWheel(mockEvent);
+
+      // Should not emit canvas.pan events - wheel should only zoom, not pan on desktop
+      expect(mockEventBus.emit).not.toHaveBeenCalledWith(
+        'canvas.pan',
+        expect.any(Object),
+      );
+    });
+
     it('should handle keyboard delete events', () => {
       const mockEvent = {
         key: 'Delete',

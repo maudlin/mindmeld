@@ -1,5 +1,6 @@
 // src/js/features/zoom/zoomManager.js
 import config from '../../core/config.js';
+import { eventBus } from '../../core/eventBus.js';
 // isMobileDevice import removed - legacy touch system eliminated
 
 let zoomLevel = config.zoomLevels.default;
@@ -215,6 +216,15 @@ export function setupTouchPan(canvasContainer, canvas) {
 export function setupZoomAndPan(canvasContainer, canvas, zoomDisplay) {
   setupZoom(canvasContainer, canvas, zoomDisplay);
   setupPan(canvasContainer, canvas);
+
+  // Set up EventBus listener for adapter-generated pan events
+  // Handles TouchAdapter two-finger pan events
+  eventBus.on('canvas.pan', ({ deltaX, deltaY }) => {
+    const transform = new DOMMatrix(window.getComputedStyle(canvas).transform);
+    canvas.style.transform = `translate(${transform.e + deltaX}px, ${
+      transform.f + deltaY
+    }px) scale(${transform.a})`;
+  });
 
   // Legacy touch panning removed - TouchAdapter now handles all mobile touch interactions
   // Desktop users get mouse/trackpad panning, mobile users get TouchAdapter gesture system

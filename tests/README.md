@@ -23,7 +23,6 @@ tests/
 │   ├── multi-select-notes.spec.js    # Multi-select and group operations
 │   ├── canvas-template-switching.spec.js # Template switching functionality
 │   ├── menu-functionality.spec.js    # 🆕 Menu operations and import/export (12 tests)
-│   ├── touch-canvas-pan-fix.spec.js  # ✨ Touch interaction system tests
 │   └── desktop-zoom-test.spec.js     # ✨ Desktop zoom functionality tests
 └── unit/                             # Unit tests (Jest)
     ├── core/

@@ -33,9 +33,7 @@ export function createNote(x, y, canvas, addEventListeners = null) {
 
   note.appendChild(noteContent);
   createGhostConnectors(note);
-  console.log('About to call createDeleteButton for note:', note);
   createDeleteButton(note);
-  console.log('createDeleteButton call completed');
   canvas.appendChild(note);
 
   note.style.left = `${x}px`;
