@@ -1,5 +1,22 @@
 // tests/unit/features/zoom/zoomManager.test.js
 
+// Define mocks before imports
+jest.mock('../../../../src/js/core/eventBus.js', () => ({
+  eventBus: {
+    on: jest.fn(),
+    off: jest.fn(),
+    emit: jest.fn(),
+  },
+}));
+
+jest.mock('../../../../src/js/core/config.js', () => ({
+  zoomLevels: {
+    min: 1,
+    max: 5,
+    default: 5,
+  },
+}));
+
 import {
   getZoomLevel,
   setZoomLevel,
@@ -11,14 +28,7 @@ import {
   removeZoomAndPan,
 } from '../../../../src/js/features/zoom/zoomManager.js';
 import config from '../../../../src/js/core/config.js';
-
-jest.mock('../../../../src/js/core/config.js', () => ({
-  zoomLevels: {
-    min: 1,
-    max: 5,
-    default: 5,
-  },
-}));
+import { eventBus } from '../../../../src/js/core/eventBus.js';
 
 describe('zoomManager', () => {
   let mockCanvas;
@@ -26,6 +36,10 @@ describe('zoomManager', () => {
   let mockZoomDisplay;
 
   beforeEach(() => {
+    // Reset eventBus mocks
+    eventBus.on.mockClear();
+    eventBus.off.mockClear();
+    eventBus.emit.mockClear();
     mockCanvas = {
       style: {},
       getBoundingClientRect: jest.fn(() => ({ width: 1000, height: 800 })),
@@ -172,6 +186,55 @@ describe('zoomManager', () => {
       // Update the expected number of calls to match the actual implementation
       // Expects: wheel(1) + mouse events(4) + touch events(4) + initial wheel cleanup(1) = 10
       expect(mockCanvasContainer.removeEventListener).toHaveBeenCalledTimes(10);
+    });
+  });
+
+  describe('EventBus canvas.pan listener', () => {
+    beforeEach(() => {
+      // Reset mocks
+      eventBus.on.mockClear();
+
+      // Mock getComputedStyle
+      Object.defineProperty(window, 'getComputedStyle', {
+        writable: true,
+        value: jest.fn(() => ({
+          transform: 'matrix(1, 0, 0, 1, 100, 50)', // translate(100px, 50px) scale(1)
+        })),
+      });
+
+      // Mock DOMMatrix
+      global.DOMMatrix = jest.fn().mockImplementation(() => ({
+        e: 100, // translateX
+        f: 50, // translateY
+        a: 1, // scaleX
+      }));
+    });
+
+    it('should set up EventBus listener for canvas.pan events', () => {
+      setupZoomAndPan(mockCanvasContainer, mockCanvas, mockZoomDisplay);
+
+      // Should have registered a listener for canvas.pan
+      expect(eventBus.on).toHaveBeenCalledWith(
+        'canvas.pan',
+        expect.any(Function),
+      );
+    });
+
+    it('should apply pan transform when canvas.pan event is received', () => {
+      setupZoomAndPan(mockCanvasContainer, mockCanvas, mockZoomDisplay);
+
+      // Get the registered canvas.pan handler
+      const panHandler = eventBus.on.mock.calls.find(
+        (call) => call[0] === 'canvas.pan',
+      )[1];
+
+      // Trigger the handler with mock delta values
+      panHandler({ deltaX: 20, deltaY: -10 });
+
+      // Should apply transform with deltas added to current position
+      expect(mockCanvas.style.transform).toBe(
+        'translate(120px, 40px) scale(1)',
+      );
     });
   });
 });
