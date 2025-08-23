@@ -270,21 +270,14 @@ export class TouchAdapter extends BaseAdapter {
         this.handleNoteSelection(note);
       }
     } else if (this.isClickOnCanvas(target)) {
-      // Tap on canvas - clear selections and cancel operations (MM-145 refined)
+      // Tap on canvas - clear selections and cancel operations (MM-169)
       this.clearAllJiggleAnimations();
       this.clearConnectionMode();
       noteManager.clearSelections();
       this.emit('note.selection.changed');
 
-      // Exit any editing mode
-      const activeElement = document.activeElement;
-      if (activeElement && activeElement.classList.contains('note-content')) {
-        activeElement.blur();
-        this.emit('note.editMode.exit', {
-          content: activeElement,
-          _gesture: 'tap',
-        });
-      }
+      // Emit canvas click for EditModeController to handle edit mode exit
+      this.emit('canvas.clicked', { _gesture: 'tap' });
 
       // Clear any other active states
       this.emit('interaction.cancel', { _gesture: 'tap' });
@@ -297,31 +290,26 @@ export class TouchAdapter extends BaseAdapter {
   handleDoubleTap(touch) {
     const { target } = this.getTouchTarget(touch.currentX, touch.currentY);
 
-    // Check if double-tapping on a note - enter edit mode (MM-145 refined)
+    // Check if double-tapping on a note - enter edit mode (MM-169)
     const note = target.classList.contains('note')
       ? target
       : target.closest('.note');
 
     if (note) {
-      // Find the note content element for editing
-      const noteContent = note.querySelector('.note-content');
-      if (noteContent) {
-        // Enter edit mode by focusing the content
-        noteContent.focus();
-
-        // Ensure note is selected
-        if (!note.classList.contains('selected')) {
-          noteManager.clearSelections();
-          noteManager.selectNote(note);
-          this.emit('note.selection.changed');
-        }
-
-        this.emit('note.editMode.enter', {
-          note: note,
-          content: noteContent,
-          _gesture: 'doubletap',
-        });
+      // Ensure note is selected
+      if (!note.classList.contains('selected')) {
+        noteManager.clearSelections();
+        noteManager.selectNote(note);
+        this.emit('note.selection.changed');
       }
+
+      // Emit edit request to EditModeController
+      this.emit('note.requestEdit', {
+        noteId: note.id,
+        noteElement: note,
+        _gesture: 'doubletap',
+      });
+      
       return;
     }
 

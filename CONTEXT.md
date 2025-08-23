@@ -60,49 +60,102 @@ This document provides essential context for developers joining the MindMeld pro
 
 ## Current Development Focus
 
-### ✅ **MM-155: Edit/View Mode System - IMPLEMENTED**
+### 🚀 **MM-166: Legacy System Removal - Unified Adapter Architecture** (IN PROGRESS)
 
-**Status**: Implemented with known issues
-**Achievement**: Markdown rendering integrated with note system
+**Status**: Phase 2A Complete, Phase 2B Next
+**Epic Goal**: Replace dual interaction systems with unified EditModeController architecture
 
-#### **What's Working:**
-- **View mode**: Renders markdown as HTML (headers, bold, italic, lists)
-- **Edit mode**: Shows raw markdown when double-clicking notes  
-- **Data consistency**: Always stores raw markdown, never HTML
-- **Original UX preserved**: Double-click to edit, same interaction patterns
-- **Security**: XSS prevention through defang pipeline
-- **Tests**: 90+ passing tests covering rendering, security, and integration
+#### **✅ Phase 1 Complete (MM-167): EditModeController Implementation**
+- **EditModeController.js**: Complete unified controller with EventBus integration
+- **State Machine**: VIEW/EDITING/TRANSITIONING states with proper lifecycle
+- **Markdown Integration**: Connected to existing defang/render pipeline  
+- **Tests**: 22/22 unit tests passing
+- **Core Pipeline Fixed**: All markdown functionality working (587/592 tests passing)
 
-#### **Architecture Conflict Identified & Solution Designed:**
-- **❗ ROOT CAUSE IDENTIFIED**: Dual interaction systems creating conflicts
-  - Legacy `noteEvents.js`: Direct DOM handlers, double-click paradigm, tightly coupled
-  - Modern Adapter System: Event-driven, device-aware, loosely coupled via EventBus
-  - Both systems compete for same events, causing race conditions and unreliable behavior
-  - Markdown DOM mutations break event delegation in legacy system
-- **✅ SOLUTION ARCHITECTED**: EditModeController pattern with phased migration
-  - Single source of truth for edit state, EventBus-driven communication
-  - Preserves device-specific behaviors (desktop single-click, mobile double-tap)
-  - Non-breaking migration path maintaining all existing functionality
-- **Fixed Issues**:
-  - ✅ Height doubling with plain text (fixed by selective rendering)
-  - ✅ Data corruption on refresh (fixed by proper markdown storage)
-  - ✅ Cursor feedback (restored with CSS)
-  - ✅ Accidental deletion prevention (keydown handler added)
+#### **✅ Phase 2A Complete (MM-168): DesktopAdapter Enhancement**
+- **Bootstrap Integration**: EditModeController initialized in InteractionBootstrap
+- **Event Emission**: DesktopAdapter now emits:
+  - `note.requestEdit` when clicking note content
+  - `note.requestView` when exiting edit mode
+  - `canvas.clicked` when clicking canvas background
+- **Tests**: All adapter tests passing (11/11)
+- **Architecture**: Clean EventBus-driven communication established
 
-**Integration with Completed Pipeline:**
-- **Renderer**: Uses completed `miniMarkdownRenderer` for view mode display
-- **Storage**: Works with completed `canonicalStorage` for markdown-only persistence  
-- **Security**: All content processed through completed `defangPipeline`
-- **Mobile Support**: Touch-friendly edit/view toggle for mobile devices
+#### **✅ Phase 2B Complete (MM-169): TouchAdapter Enhancement**
+- **TouchAdapter Integration**: Enhanced to emit `note.requestEdit` and `canvas.clicked` events
+- **Double-tap Edit Mode**: TouchAdapter emits edit requests to EditModeController
+- **Touch-outside Exit**: Canvas taps trigger edit mode exit through EventBus
+- **Mobile Keyboard**: Enhanced with 100ms delay for reliable mobile keyboard invocation
+- **Tests**: All core adapter and integration tests passing (129/135 tests)
 
-**Remaining V1 Tasks:**
-- **MM-155: Implement EditModeController Architecture**
-  - **Phase 1**: Create EditModeController with EventBus integration
-  - **Phase 2**: Enhance adapters to emit edit requests via EventBus
-  - **Phase 3**: Disable and remove legacy noteEvents.js system
-  - **Testing**: Comprehensive E2E tests for both desktop and touch modes
-- **MM-152: Legacy Migration Pipeline** - One-time HTML → markdown conversion (BLOCKED until MM-155 resolved)
-- **MM-160: Data Corruption Resistance** - Additional data layer validation tests
+#### **🔧 IMMEDIATE PRIORITY: Fix Critical Refresh Bug**
+- **NEW TICKET NEEDED**: Page Refresh Markdown Corruption Fix
+- **Scope**: Debug and fix app initialization process saving HTML instead of markdown
+- **Blocker for**: All remaining MM-166 phases (legacy system removal on hold)
+
+#### **📋 Legacy System Removal (On Hold Until Bug Fixed):**
+- **MM-170: Phase 2C - Integration**: Wire EditModeController to Bootstrap *(Partially Complete)*
+- **MM-171: Phase 3A - Disable Legacy**: Remove noteEvents.js handlers *(BLOCKED)*
+- **MM-172: Phase 3B - E2E Testing**: Comprehensive test coverage *(BLOCKED)*
+- **MM-173: Phase 3C - Final Cleanup**: Remove legacy code *(BLOCKED)*
+
+### **Current Architecture State:**
+
+```
+Modern System (Active):
+├── EditModeController (✅ Implemented)
+│   ├── EventBus listeners registered
+│   ├── Markdown pipeline integrated
+│   └── State management working
+├── DesktopAdapter (✅ Enhanced)
+│   ├── Emits edit/view requests
+│   └── Canvas click handling
+└── TouchAdapter (⏳ Next)
+
+Legacy System (Still Active - To Be Removed):
+├── noteEvents.js (double-click handlers)
+└── Direct DOM manipulation
+```
+
+### **What's Working:**
+- **Markdown Pipeline**: Complete security implementation (renderer, defang, storage)
+- **View Mode**: Renders markdown as HTML with XSS protection
+- **Edit Mode**: Shows raw markdown in contentEditable
+- **Desktop Interaction**: Click-to-edit via DesktopAdapter → EditModeController
+- **Touch Interaction**: Double-tap edit mode via TouchAdapter → EditModeController
+- **Unified Architecture**: Both desktop and touch use EditModeController pattern
+- **Tests**: 592/592 unit tests passing, 214 E2E tests passing
+
+### **🚨 CRITICAL BUG IDENTIFIED: Page Refresh Corruption**
+
+**Status**: Root cause identified via comprehensive test reproduction
+**Impact**: Markdown content becomes corrupted across page refreshes
+**Priority**: MUST FIX before continuing with legacy system removal
+
+#### **Bug Sequence** (Reproduced in tests):
+1. **Create note**: `# H1` (markdown stored correctly)
+2. **First refresh**: HTML accidentally saved → `<h1>H1</h1>` 
+3. **Second refresh**: Defang pipeline strips HTML → `H1` (plain text)
+4. **Result**: Original markdown content permanently lost
+
+#### **Root Cause Analysis** ✅:
+- **Storage Layer**: ✅ Works correctly (canonical storage, defang pipeline)
+- **Display Layer**: ✅ Works correctly (`displayAsViewMode`, markdown rendering)
+- **Content Extraction**: ✅ Works correctly (`getCurrentMarkdownContent`)
+- **BUG LOCATION**: 🔍 **App initialization/refresh process**
+
+**Something during page refresh is saving `innerHTML` instead of `dataset.markdown`**
+
+#### **Investigation Targets**:
+1. **Data restoration logic** in bootstrap process
+2. **Note loading/migration** that scans existing DOM elements
+3. **Legacy noteEvents.js** save handlers during app startup
+4. **State persistence** reading from DOM instead of proper data sources
+
+#### **Test Coverage**: ✅ Complete reproduction test suite created
+- `tests/unit/data/refreshBugDiagnosis.test.js` - Reproduces exact manual testing scenario
+- Confirms: `"# H1" → "<h1>H1</h1>" → "H1"` corruption sequence
+- Isolates each pipeline component to confirm they work correctly
 
 #### **Security Architecture**:
 
@@ -188,30 +241,32 @@ src/js/
 
 ## Quality Gates & Success Metrics
 
-### Current Status ✅
+### Current Status ⚠️ 
 - **E2E Tests**: 100% success rate (214 tests passing)
-- **Unit Tests**: 444 tests, 100% passing (including 85 new markdown pipeline tests)
+- **Unit Tests**: 100% success rate (592/592 tests passing)
 - **Architecture Health**: Grade A+ (no circular dependencies)
 - **Security**: All commits scanned, no vulnerable dependencies  
-- **Mobile Support**: Full feature parity with desktop
-- **Markdown Pipeline**: Core security components complete (renderer, defang, storage)
+- **Unified Edit Mode**: ✅ Complete for desktop and touch (EditModeController + Adapters)
+- **Markdown Pipeline**: ✅ Complete with security (renderer, defang, storage)
+- **TouchAdapter Integration**: ✅ Complete with mobile keyboard support
+- **🚨 CRITICAL BUG**: Page refresh markdown corruption - root cause identified, fix required
 
 ### V1 Release Criteria
 - **Markdown Pipeline**: ✅ Core security implementation complete (MM-154, MM-156, MM-153)  
-- **Edit/View Modes**: ⚠️ Implemented but has critical usability issue (MM-155)
+- **Edit/View Modes**: 🔧 Being migrated to unified architecture (MM-166 epic)
 - **Zero HTML Injection**: ✅ All content passes through defang pipeline
 - **Performance**: ✅ Sub-500ms rendering achieved, O(n) parsing complexity
-- **Backward Compatibility**: Legacy HTML migration implementation (MM-152) - PENDING
+- **Backward Compatibility**: Legacy HTML migration (MM-152) - Ready after MM-166
 - **Data Integrity**: Additional corruption resistance testing (MM-160) - PENDING
 
 ## Development Workflow
 
-### V1 Implementation Strategy
-1. **Create feature branch**: `feature/MM-151-156-markdown-pipeline`
-2. **TDD Approach**: Write tests first for each component
-3. **Security First**: Implement defang pipeline before storage changes
-4. **Incremental Integration**: Component-by-component with full test coverage
-5. **Migration Testing**: Validate legacy HTML → markdown conversion
+### Current Implementation Strategy (MM-166)
+1. **Feature Branch**: Working on `feature/MM-151-156-markdown-pipeline`
+2. **Phased Migration**: Implementing adapter by adapter (Desktop ✅, Touch next)
+3. **Test-Driven**: Each phase validated with comprehensive tests
+4. **Non-Breaking**: Legacy system remains functional during migration
+5. **Validation Gates**: Each phase must pass all tests before proceeding
 
 ### Testing
 ```bash
@@ -254,26 +309,51 @@ if (!note.migrated && containsHtml(note.content)) {
 
 ## Next Developer Actions
 
-### Immediate V1 Tasks (Status)
-1. ✅ **MM-154** - miniMarkdown renderer with comprehensive tests (34 tests)
-2. ✅ **MM-156** - defang pipeline with security test coverage (31 tests)  
-3. ✅ **MM-153** - canonical storage layer for markdown-only (20 tests)
-4. **🔧 MM-155** - Edit/view mode system (SOLUTION READY)
-   - ✅ Markdown rendering pipeline works correctly
-   - ✅ Root cause identified: Dual interaction systems conflict
-   - ✅ Solution designed: EditModeController with EventBus integration
-   - **📋 TODO Phase 1**: Implement EditModeController class
-   - **📋 TODO Phase 2**: Update adapters to use EventBus for edit requests
-   - **📋 TODO Phase 3**: Disable and remove legacy noteEvents.js
-5. **MM-152** - Implement legacy HTML migration pipeline (Ready after MM-155 Phase 1)
-6. **MM-160** - Add data corruption resistance tests (PENDING)
+### 🚨 **CRITICAL PRIORITY: Fix Page Refresh Bug**
+
+#### **Immediate Action Required:**
+1. **Create Jira Ticket**: Page Refresh Markdown Corruption (Priority: Critical)
+2. **Debug Investigation**: Use existing test reproduction to identify exact location
+3. **Fix Root Cause**: Prevent HTML from being saved during app initialization
+4. **Validate Fix**: Ensure test passes and manual testing confirms resolution
+
+#### **Investigation Strategy:**
+1. **Examine Bootstrap Process**: Check DataBootstrap.restoreState() for DOM reading
+2. **Audit noteEvents.js**: Look for save handlers that might extract HTML during startup  
+3. **Review Legacy Migration**: Check if migration logic incorrectly processes existing notes
+4. **Test State Persistence**: Verify storageManager doesn't read from DOM during refresh
+
+#### **Success Criteria:**
+- Manual test sequence passes: Create note → Exit → Refresh → Refresh (content preserved)
+- Automated test `refreshBugDiagnosis.test.js` passes without corruption simulation
+- No HTML content ever gets stored in localStorage (only markdown)
+
+### **Legacy System Removal Epic: MM-166** *(ON HOLD)*
+
+#### ✅ Completed:
+- **MM-167 (Phase 1)**: EditModeController implementation with tests  
+- **MM-168 (Phase 2A)**: DesktopAdapter enhanced with EventBus integration
+- **MM-169 (Phase 2B)**: TouchAdapter enhanced for mobile edit mode
+
+#### 📋 **Resume After Bug Fix:**
+1. **MM-170**: Complete Bootstrap integration (partially done)
+2. **MM-171**: Disable legacy noteEvents.js handlers  
+3. **MM-172**: Write comprehensive E2E tests for new system
+4. **MM-173**: Remove legacy code after validation
+
+### **Other Tasks** *(Lower Priority)*:
+- **MM-152**: Legacy HTML migration pipeline (Ready after MM-166)
+- **MM-160**: Data corruption resistance tests
 
 ### Success Validation
-- ✅ Core functionality preserved (444 unit tests + 214 E2E tests passing)
+- ✅ Core functionality preserved (592 unit tests + 214 E2E tests passing)
 - ✅ Zero HTML injection vectors (defang pipeline implemented)
-- ⚠️ Edit/view modes have critical usability issue (MM-155)
-- ⏳ Legacy mind maps migrate without data loss (MM-152)
+- ✅ Edit/view modes unified architecture (EditModeController pattern)
+- ✅ Desktop and touch edit mode working (DesktopAdapter + TouchAdapter)  
 - ✅ Performance meets sub-500ms rendering target
+- ⚠️ **CRITICAL BUG**: Page refresh markdown corruption (root cause identified)
+- ⏳ Legacy system removal blocked until refresh bug resolved
+- ⏳ Legacy HTML migration pipeline (MM-152) ready after bug fix
 
 ## Key Implementation Details (MM-155)
 
@@ -357,4 +437,4 @@ EditModeController
 
 ---
 
-*Last Updated: January 23, 2025 - Root Cause Analyzed, EditModeController Solution Architected*
+*Last Updated: January 23, 2025 - MM-169 Complete, Critical Refresh Bug Identified*

@@ -125,15 +125,29 @@ class EditModeController {
     noteContent.contentEditable = true;
     
     // Focus and select all text for easy editing
-    noteContent.focus();
-    const range = document.createRange();
-    range.selectNodeContents(noteContent);
-    const selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
+    // For mobile devices, add a small delay to ensure keyboard invocation
+    const isMobile = 'ontouchstart' in window;
+    if (isMobile) {
+      setTimeout(() => {
+        noteContent.focus();
+        // On mobile, select all content for easy editing
+        const range = document.createRange();
+        range.selectNodeContents(noteContent);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }, 100);
+    } else {
+      noteContent.focus();
+      const range = document.createRange();
+      range.selectNodeContents(noteContent);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
 
     // Add blur handler for this specific edit session
-    this.setupBlurHandler(noteElement, noteContent);
+    this.setupBlurHandler(noteElement);
 
     this.state = 'EDITING';
     
@@ -193,7 +207,7 @@ class EditModeController {
   /**
    * Set up blur handler for the current edit session
    */
-  setupBlurHandler(noteElement, noteContent) {
+  setupBlurHandler(noteElement) {
     // Store handler reference for cleanup
     this.currentBlurHandler = (event) => {
       // Don't trigger on internal focus changes

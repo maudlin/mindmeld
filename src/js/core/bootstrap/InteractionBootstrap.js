@@ -8,6 +8,7 @@
 import { BaseBootstrap } from './BaseBootstrap.js';
 import { InputController } from '../../interactions/InputController.js';
 import { CapabilityDetector } from '../../interactions/capabilities/detector.js';
+import { editModeController } from '../../features/note/EditModeController.js';
 import { eventBus } from '../eventBus.js';
 import { log } from '../../utils/utils.js';
 
@@ -22,6 +23,9 @@ export class InteractionBootstrap extends BaseBootstrap {
     // Legacy system removed - elements parameter no longer needed
     // Initialize modern input system with graceful fallback
     const inputSystemReady = await this.initializeInputSystem();
+
+    // Initialize EditModeController for unified edit/view state management
+    this.initializeEditModeController();
 
     // Set up additional event handling
     this.setupContextMenuPrevention();
@@ -74,6 +78,16 @@ export class InteractionBootstrap extends BaseBootstrap {
     }
   }
 
+  initializeEditModeController() {
+    try {
+      editModeController.initialize();
+      log('InteractionBootstrap: EditModeController initialized successfully');
+    } catch (error) {
+      console.error('InteractionBootstrap: Failed to initialize EditModeController:', error);
+      // Don't throw error since EditModeController is not critical for basic functionality
+    }
+  }
+
   setupContextMenuPrevention() {
     // Prevent context menu across the application
     document.addEventListener('contextmenu', (event) => event.preventDefault());
@@ -86,6 +100,14 @@ export class InteractionBootstrap extends BaseBootstrap {
     if (this.inputController) {
       // InputController cleanup would go here if it has a cleanup method
       this.inputController = null;
+    }
+
+    // Cleanup EditModeController
+    try {
+      editModeController.cleanup();
+      log('InteractionBootstrap: EditModeController cleaned up');
+    } catch (error) {
+      console.error('InteractionBootstrap: Failed to cleanup EditModeController:', error);
     }
 
     // Remove context menu prevention

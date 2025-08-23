@@ -151,6 +151,8 @@ export class DesktopAdapter extends BaseAdapter {
       event.stopPropagation();
       // Clear selections immediately on canvas click
       noteManager.clearSelections();
+      // Exit any active edit mode
+      this.emit('canvas.clicked');
       this.startSelectionBox(event);
     }
   }
@@ -162,24 +164,36 @@ export class DesktopAdapter extends BaseAdapter {
     const target = event.target;
     const isSelected = note.classList.contains('selected');
 
-    // If clicking on note-content, handle selection and blur if focused
+    // If clicking on note-content, handle edit mode entry/exit
     if (target.classList.contains('note-content')) {
-      // Always blur if the content has focus (ends editing mode)
+      // If content already has focus, this is a blur request (exit edit mode)
       if (document.activeElement === target) {
-        target.blur();
-      }
-      // Ensure note is selected
-      if (!isSelected) {
-        noteManager.clearSelections();
-        noteManager.selectNote(note);
+        this.emit('note.requestView', { 
+          noteId: note.id,
+          noteElement: note 
+        });
+      } else {
+        // Content not focused, this is an edit request (enter edit mode)
+        // Ensure note is selected first
+        if (!isSelected) {
+          noteManager.clearSelections();
+          noteManager.selectNote(note);
+        }
+        this.emit('note.requestEdit', { 
+          noteId: note.id,
+          noteElement: note 
+        });
       }
       return; // Don't start dragging for content editing
     }
 
-    // If clicking outside note-content, blur any focused content within this note
+    // If clicking outside note-content, exit edit mode for focused content  
     const noteContent = note.querySelector('.note-content');
     if (noteContent && document.activeElement === noteContent) {
-      noteContent.blur();
+      this.emit('note.requestView', { 
+        noteId: note.id,
+        noteElement: note 
+      });
     }
 
     // Handle selection using noteManager service
