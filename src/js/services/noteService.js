@@ -1,6 +1,7 @@
 // noteService.js - Service layer for note operations
 import { createNote } from '../factories/noteFactory.js';
 import { addNoteEventListeners } from '../features/note/noteEvents.js';
+import { displayAsViewMode } from '../features/note/editViewMode.js';
 
 export class NoteService {
   static createNoteFromData(noteData, canvas) {
@@ -13,7 +14,9 @@ export class NoteService {
 
     note.id = noteData.id || noteData.i;
     const noteContent = note.querySelector('.note-content');
-    noteContent.textContent = noteData.content || noteData.c;
+    // Load stored markdown content and immediately render as HTML (view mode)
+    const storedMarkdown = noteData.content || noteData.c || '';
+    displayAsViewMode(noteContent, storedMarkdown);
 
     return note;
   }

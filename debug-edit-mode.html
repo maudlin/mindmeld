@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Edit Mode Issue</title>
+    <style>
+        .note {
+            border: 1px solid #ccc;
+            width: 200px;
+            height: 100px;
+            margin: 20px;
+            padding: 10px;
+        }
+        .note-content {
+            width: 100%;
+            height: 100%;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Debug Edit Mode Issue</h1>
+    
+    <div class="note" id="test-note">
+        <div class="note-content" id="test-content">
+            <!-- This will be populated with test content -->
+        </div>
+    </div>
+
+    <button onclick="setPlainText()">Set Plain Text</button>
+    <button onclick="setRenderedHTML()">Set Rendered HTML</button>
+    
+    <script>
+        const note = document.getElementById('test-note');
+        const noteContent = document.getElementById('test-content');
+        
+        // Add double-click handler like the real app
+        note.addEventListener('dblclick', () => {
+            console.log('Double-click detected on note!');
+            alert('Edit mode triggered!');
+        });
+        
+        function setPlainText() {
+            noteContent.textContent = 'Plain text content';
+        }
+        
+        function setRenderedHTML() {
+            noteContent.innerHTML = '<h1>Header Content</h1><p><strong>Bold text</strong></p>';
+        }
+        
+        // Test both scenarios
+        setPlainText();
+    </script>
+</body>
+</html>

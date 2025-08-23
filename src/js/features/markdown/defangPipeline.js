@@ -17,7 +17,6 @@
 // Security constants
 const MAX_INPUT_SIZE = 10000; // 10KB limit
 const DANGEROUS_URI_SCHEMES = /\b(?:javascript|data|vbscript):[^\s]*/gi;
-const WHITESPACE_NORMALIZE = /\s+/g;
 
 /**
  * Main security defang function - converts any input to safe plain text
@@ -80,8 +79,15 @@ export function defangToPlainText(input, isHtml = false) {
   // Remove dangerous URI schemes from any context
   result = result.replace(DANGEROUS_URI_SCHEMES, '');
 
-  // Normalize whitespace
-  result = result.replace(WHITESPACE_NORMALIZE, ' ').trim();
+  // Normalize whitespace but preserve line breaks for markdown structure
+  // First, normalize line endings (convert \r\n and \r to \n)
+  result = result.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  // Then normalize spaces and tabs within lines
+  result = result.replace(/[ \t]+/g, ' ');
+  // Finally normalize multiple consecutive line breaks to at most 2 (preserves paragraph separation)
+  result = result.replace(/\n{3,}/g, '\n\n');
+  // Trim leading/trailing whitespace
+  result = result.trim();
 
   return result;
 }

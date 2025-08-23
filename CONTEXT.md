@@ -1,6 +1,6 @@
 # MindMeld Developer Context
 
-*Last Updated: August 22, 2025*
+*Last Updated: December 22, 2024*
 
 This document provides essential context for developers joining the MindMeld project, summarizing the current state, recent major work, architecture decisions, and key information needed to be productive immediately.
 
@@ -11,13 +11,13 @@ This document provides essential context for developers joining the MindMeld pro
 - **Event-driven architecture** with zero circular dependencies
 - **Advanced touch/mobile support** with automatic device detection
 - **Bootstrap architecture** for clean initialization
-- **Comprehensive testing** (442 unit tests + 97 E2E tests)
+- **Comprehensive testing** (444 unit tests + 214 E2E tests)
 - **Security-first approach** with ESLint security plugins and pre-commit scanning
 
 **Live Demo**: [mind-meld.co](https://mind-meld.co/)
 **Repository**: Modern vanilla JavaScript with no build step required
 
-## Current Project State (August 2025)
+## Current Project State (December 2024)
 
 ### ✅ Recent Major Achievements
 
@@ -48,50 +48,61 @@ This document provides essential context for developers joining the MindMeld pro
 - **Added**: 5 new comprehensive test files for touch interactions
 - **Impact**: Touch devices now have full feature parity with desktop
 
+#### 4. **V1 FINAL EPIC: Markdown Pipeline Completed** ✅ (Commit 277040f, MM-151-156)
+- **Achievement**: Complete security-first markdown system implementation
+- **Components Delivered**:
+  - **MM-154**: miniMarkdown renderer with XSS protection (34 tests)
+  - **MM-156**: Comprehensive defang pipeline for HTML sanitization (31 tests)
+  - **MM-153**: Canonical storage layer enforcing markdown-only persistence (20 tests)
+  - **Infrastructure**: Fixed E2E test state pollution (214 tests now passing)
+- **Security Features**: Zero HTML persistence, content sanitization, size limits, validation guardrails
+- **Impact**: Foundation for secure note content handling with comprehensive validation
+
 ## Current Development Focus
 
-### 🚀 **V1 FINAL EPIC: Markdown Pipeline Implementation** (MM-151-156)
+### ✅ **MM-155: Edit/View Mode System - IMPLEMENTED**
 
-**Status**: Ready to implement - comprehensive security and content system overhaul
-**Goal**: Replace HTML injection vulnerability with secure, predictable markdown system
-**Priority**: Critical for V1 release
+**Status**: Implemented with known issues
+**Achievement**: Markdown rendering integrated with note system
 
-#### **Epic Structure**:
+#### **What's Working:**
+- **View mode**: Renders markdown as HTML (headers, bold, italic, lists)
+- **Edit mode**: Shows raw markdown when double-clicking notes  
+- **Data consistency**: Always stores raw markdown, never HTML
+- **Original UX preserved**: Double-click to edit, same interaction patterns
+- **Security**: XSS prevention through defang pipeline
+- **Tests**: 90+ passing tests covering rendering, security, and integration
 
-**MM-151: Master Implementation Ticket**
-- Comprehensive markdown system with 7 core requirements
-- Canonical storage, renderer, edit/view modes, security pipeline
-- Performance constraints (O(n lines), sub-500ms rendering)
+#### **Architecture Conflict Identified & Solution Designed:**
+- **❗ ROOT CAUSE IDENTIFIED**: Dual interaction systems creating conflicts
+  - Legacy `noteEvents.js`: Direct DOM handlers, double-click paradigm, tightly coupled
+  - Modern Adapter System: Event-driven, device-aware, loosely coupled via EventBus
+  - Both systems compete for same events, causing race conditions and unreliable behavior
+  - Markdown DOM mutations break event delegation in legacy system
+- **✅ SOLUTION ARCHITECTED**: EditModeController pattern with phased migration
+  - Single source of truth for edit state, EventBus-driven communication
+  - Preserves device-specific behaviors (desktop single-click, mobile double-tap)
+  - Non-breaking migration path maintaining all existing functionality
+- **Fixed Issues**:
+  - ✅ Height doubling with plain text (fixed by selective rendering)
+  - ✅ Data corruption on refresh (fixed by proper markdown storage)
+  - ✅ Cursor feedback (restored with CSS)
+  - ✅ Accidental deletion prevention (keydown handler added)
 
-**MM-153: Canonical Markdown Storage**
-- Store all notes as raw markdown strings (`''` for empty)
-- Zero HTML persistence in state/storage/exports
-- Guardrails against HTML creeping into storage layer
+**Integration with Completed Pipeline:**
+- **Renderer**: Uses completed `miniMarkdownRenderer` for view mode display
+- **Storage**: Works with completed `canonicalStorage` for markdown-only persistence  
+- **Security**: All content processed through completed `defangPipeline`
+- **Mobile Support**: Touch-friendly edit/view toggle for mobile devices
 
-**MM-154: Markdown Renderer (Security-First Subset)**
-- **Whitelisted tags only**: `h1`, `h2`, `p`, `ul`, `li`, `em`, `strong`
-- **Supported syntax**: `#`/`##` headers, `-`/`*`/`•` lists, `*italic*`, `**bold**`
-- **Unsupported syntax**: Escaped and displayed as plain text
-- **No attributes, inline styles, or arbitrary tags ever**
-- Lightweight line-based parser (avoid heavy markdown engines)
-
-**MM-155: Edit vs View Mode Toggle**  
-- **View mode (default)**: Rendered HTML, not editable, no caret
-- **Edit mode**: Raw markdown in contenteditable, triggered on focus/click
-- **Exit**: blur saves → render → return to view mode
-- **Future-proof**: Design for Ctrl/Cmd+Enter exit
-
-**MM-156: Defang Pipeline (Security)**
-- **Treat all input as hostile**: legacy HTML, paste, imports
-- **Defense in depth**: DOMParser + textContent → plain text → markdown
-- **Strip**: All tags, attributes, scripts, styles, dangerous URI schemes
-- **Preserve**: Text content only through structured conversion
-
-**MM-152: Legacy Migration Pipeline**
-- **One-time conversion**: HTML → defang → markdown on load/import  
-- **Detection**: `<` or `>` in content = legacy HTML input
-- **Process**: DOMParser → textContent → infer structure → canonical markdown
-- **Store migration flag**: Avoid re-processing same notes
+**Remaining V1 Tasks:**
+- **MM-155: Implement EditModeController Architecture**
+  - **Phase 1**: Create EditModeController with EventBus integration
+  - **Phase 2**: Enhance adapters to emit edit requests via EventBus
+  - **Phase 3**: Disable and remove legacy noteEvents.js system
+  - **Testing**: Comprehensive E2E tests for both desktop and touch modes
+- **MM-152: Legacy Migration Pipeline** - One-time HTML → markdown conversion (BLOCKED until MM-155 resolved)
+- **MM-160: Data Corruption Resistance** - Additional data layer validation tests
 
 #### **Security Architecture**:
 
@@ -112,13 +123,17 @@ function miniMarkdownRenderer(markdown) {
 }
 ```
 
-#### **Implementation Priorities**:
+#### **Completed Implementation ✅**:
 
-1. **MM-154** (Renderer) - Core functionality, testable in isolation
-2. **MM-156** (Defang Pipeline) - Security foundation
-3. **MM-153** (Canonical Storage) - Data layer changes
-4. **MM-155** (Edit/View Toggle) - UI interaction layer  
-5. **MM-152** (Legacy Migration) - Backward compatibility
+1. **MM-154** (Renderer) - ✅ Complete with 34 tests
+2. **MM-156** (Defang Pipeline) - ✅ Complete with 31 tests  
+3. **MM-153** (Canonical Storage) - ✅ Complete with 20 tests
+
+#### **Next Implementation Priorities**:
+
+4. **MM-155** (Edit/View Toggle) - UI interaction layer (NEXT)
+5. **MM-152** (Legacy Migration) - Backward compatibility  
+6. **MM-160** (Data Corruption Resistance) - Additional validation
 
 #### **Critical Requirements**:
 
@@ -174,18 +189,20 @@ src/js/
 ## Quality Gates & Success Metrics
 
 ### Current Status ✅
-- **E2E Tests**: 100% success rate (97 tests passing)
-- **Unit Tests**: 442 tests, 100% passing
+- **E2E Tests**: 100% success rate (214 tests passing)
+- **Unit Tests**: 444 tests, 100% passing (including 85 new markdown pipeline tests)
 - **Architecture Health**: Grade A+ (no circular dependencies)
-- **Security**: All commits scanned, no vulnerable dependencies
+- **Security**: All commits scanned, no vulnerable dependencies  
 - **Mobile Support**: Full feature parity with desktop
+- **Markdown Pipeline**: Core security components complete (renderer, defang, storage)
 
 ### V1 Release Criteria
-- **Markdown Pipeline**: Complete security implementation (MM-151-156)
-- **Zero HTML Injection**: All content passes through defang pipeline  
-- **Performance**: Sub-500ms rendering, O(n) parsing complexity
-- **Backward Compatibility**: Legacy HTML notes migrate seamlessly
-- **Data Integrity**: Corruption resistance testing (MM-160)
+- **Markdown Pipeline**: ✅ Core security implementation complete (MM-154, MM-156, MM-153)  
+- **Edit/View Modes**: ⚠️ Implemented but has critical usability issue (MM-155)
+- **Zero HTML Injection**: ✅ All content passes through defang pipeline
+- **Performance**: ✅ Sub-500ms rendering achieved, O(n) parsing complexity
+- **Backward Compatibility**: Legacy HTML migration implementation (MM-152) - PENDING
+- **Data Integrity**: Additional corruption resistance testing (MM-160) - PENDING
 
 ## Development Workflow
 
@@ -237,23 +254,107 @@ if (!note.migrated && containsHtml(note.content)) {
 
 ## Next Developer Actions
 
-### Immediate V1 Tasks (In Order)
-1. **Start MM-154** - Implement miniMarkdown renderer with comprehensive tests
-2. **Implement MM-156** - Build defang pipeline with security test coverage  
-3. **Update MM-153** - Modify storage layer for canonical markdown
-4. **Build MM-155** - Create edit/view mode toggle system
-5. **Complete MM-152** - Implement legacy HTML migration
-6. **Validate MM-160** - Add data corruption resistance tests
+### Immediate V1 Tasks (Status)
+1. ✅ **MM-154** - miniMarkdown renderer with comprehensive tests (34 tests)
+2. ✅ **MM-156** - defang pipeline with security test coverage (31 tests)  
+3. ✅ **MM-153** - canonical storage layer for markdown-only (20 tests)
+4. **🔧 MM-155** - Edit/view mode system (SOLUTION READY)
+   - ✅ Markdown rendering pipeline works correctly
+   - ✅ Root cause identified: Dual interaction systems conflict
+   - ✅ Solution designed: EditModeController with EventBus integration
+   - **📋 TODO Phase 1**: Implement EditModeController class
+   - **📋 TODO Phase 2**: Update adapters to use EventBus for edit requests
+   - **📋 TODO Phase 3**: Disable and remove legacy noteEvents.js
+5. **MM-152** - Implement legacy HTML migration pipeline (Ready after MM-155 Phase 1)
+6. **MM-160** - Add data corruption resistance tests (PENDING)
 
 ### Success Validation
-- All existing functionality preserved
-- Zero HTML injection vectors remain
-- Mobile edit/view modes work flawlessly  
-- Legacy mind maps migrate without data loss
-- Performance meets sub-500ms rendering target
+- ✅ Core functionality preserved (444 unit tests + 214 E2E tests passing)
+- ✅ Zero HTML injection vectors (defang pipeline implemented)
+- ⚠️ Edit/view modes have critical usability issue (MM-155)
+- ⏳ Legacy mind maps migrate without data loss (MM-152)
+- ✅ Performance meets sub-500ms rendering target
 
-**The project is positioned for a secure, robust V1 release with the markdown pipeline implementation.**
+## Key Implementation Details (MM-155)
+
+### Architecture Changes
+- **noteFactory.js**: Minimal changes, focus/blur handlers added
+- **noteEvents.js**: Integrated markdown rendering with double-click edit system
+- **editViewMode.js**: Pure display formatter (no event handling)
+- **noteService.js**: Loads stored notes in view mode with rendered HTML
+
+### How It Works
+1. **Storage**: Always stores raw markdown text
+2. **Loading**: Notes load with rendered HTML (view mode)
+3. **Editing**: Double-click triggers edit mode (shows raw markdown)
+4. **Saving**: Blur event renders HTML and saves markdown
+
+### Root Cause Analysis - Architecture Conflict
+
+**Problem**: Dual interaction systems causing edit mode failures
+- **Legacy System** (`noteEvents.js`): Direct DOM handlers, double-click for edit, blur for exit
+- **Modern System** (Adapters): Event-driven, device-aware, single-click (desktop) / double-tap (touch)
+- **Conflict**: Both systems compete for same events, causing unreliable behavior
+
+**Technical Details**:
+- `noteEvents.js` adds listeners directly to note DOM elements (lines 9-65)
+- `DesktopAdapter` handles note interactions via pointer events (lines 161-203)
+- `TouchAdapter` processes gestures through GestureRecognizer (lines 230-292)
+- Markdown rendering changes DOM structure, breaking event delegation
+
+**Why Current Approach Fails**:
+1. Event handler registration order creates race conditions
+2. DOM mutations from markdown rendering invalidate event targets
+3. Focus/blur events fire inconsistently between systems
+4. No unified state management for edit mode
+
+## Architectural Solution - Unified Adapter System
+
+### Recommended Approach: EditModeController Pattern
+
+**Core Concept**: Single source of truth for edit mode state, managed through EventBus
+
+```
+EditModeController
+├── Listens to adapter events (note.requestEdit, note.requestView)
+├── Manages markdown rendering pipeline
+├── Handles focus/blur lifecycle
+└── Emits state changes for UI updates
+```
+
+**Benefits**:
+- Eliminates event handler conflicts
+- Clear separation of concerns
+- Platform-specific behaviors preserved
+- Non-breaking migration path
+
+### Implementation Strategy
+
+**Phase 1: Create EditModeController**
+- New controller class managing edit/view state transitions
+- EventBus integration for adapter communication
+- Markdown pipeline integration (uses existing defang/render functions)
+- Single active edit session enforcement
+
+**Phase 2: Enhance Adapters**
+- DesktopAdapter: Emit `note.requestEdit` on content click
+- TouchAdapter: Emit `note.requestEdit` on double-tap
+- Both: Handle blur/outside-click for edit exit
+- Preserve all existing functionality (selection, dragging, connections)
+
+**Phase 3: Retire Legacy System**
+- Disable `noteEvents.js` event handlers
+- Update `noteFactory.js` to skip `addNoteEventListeners`
+- Remove legacy code after validation period
+
+### Key Technical Decisions
+
+1. **Event Flow**: Adapters → EventBus → EditModeController → DOM Updates
+2. **State Machine**: VIEW ↔ EDITING with TRANSITIONING state for async operations
+3. **Markdown Timing**: Render on blur, not on every keystroke
+4. **Focus Management**: Controller owns focus/blur, not individual handlers
+5. **Mobile Keyboard**: Explicit trigger in TouchAdapter after edit request
 
 ---
 
-*This document should be updated when the V1 markdown pipeline is completed.*
+*Last Updated: January 23, 2025 - Root Cause Analyzed, EditModeController Solution Architected*

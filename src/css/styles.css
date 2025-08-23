@@ -268,11 +268,18 @@ html {
   font-weight: bold;
   color: #333;
   outline: none; /* Remove default outline when focused */
-  cursor: text; /* Ensure cursor is text when focused */
   min-width: 50px;
+  /* Removed min-height to restore original sizing */
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: center;
+  box-sizing: border-box; /* Include border/padding in dimensions */
+  cursor: text; /* Show text cursor to indicate editability */
+}
+
+/* Ensure all rendered markdown elements allow proper event handling */
+.note-content.view-mode * {
+  cursor: text; /* Show text cursor on all child elements to indicate editability */
 }
 
 .note-content-handdrawn {
@@ -280,9 +287,11 @@ html {
   font-size: 1.1em;
 }
 
-/* Prevent text selection in notes */
+/* All mode-specific styles removed - back to original behavior */
+
+/* Prevent text selection in notes when not in edit mode */
 .note,
-.note-content {
+.note-content:not(.edit-mode) {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;

@@ -184,7 +184,7 @@ describe('Canonical Markdown Storage Tests', () => {
 
       const processedNotes = storageManager.processNotesForStorage(cleanNotes);
 
-      expect(processedNotes[0].content).toBe('# Header **Bold** text');
+      expect(processedNotes[0].content).toBe('# Header\n**Bold** text');
       expect(processedNotes[1].content).toBe('Just plain text');
     });
   });

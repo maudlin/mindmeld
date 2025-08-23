@@ -4,6 +4,8 @@ import config from '../core/config.js';
 import { NOTE_CONTENT_LIMIT } from '../core/constants.js';
 import { eventBus } from '../core/eventBus.js';
 import { createDeleteButton } from '../features/note/deleteButton.js';
+// Import available for future use when integrating EditModeController
+// import { displayAsViewMode, displayAsEditMode, getCurrentMarkdownContent } from '../features/note/editViewMode.js';
 
 let nextNoteId = 1;
 let handDrawn = false;
@@ -54,6 +56,19 @@ export function createNote(x, y, canvas, addEventListeners = null) {
     top: note.style.top,
   });
 
+  // Prevent accidental note deletion with backspace/delete on empty content
+  noteContent.addEventListener('keydown', function(event) {
+    const isEmpty = !this.textContent || this.textContent.trim() === '';
+    
+    // Prevent backspace and delete (Mac) when content is empty
+    if (isEmpty && (event.key === 'Backspace' || event.key === 'Delete')) {
+      event.preventDefault();
+      event.stopPropagation();
+      console.log('Prevented accidental note deletion - content is empty');
+      return;
+    }
+  });
+
   noteContent.addEventListener('input', function () {
     if (this.innerText.length > NOTE_CONTENT_LIMIT) {
       this.innerText = this.innerText.slice(0, NOTE_CONTENT_LIMIT);
@@ -66,7 +81,7 @@ export function createNote(x, y, canvas, addEventListeners = null) {
       sel.addRange(range);
     }
     // Emit events instead of direct calls
-    eventBus.emit('note.updated', { id: noteId, content: this.innerHTML });
+    eventBus.emit('note.updated', { id: noteId, content: this.textContent });
     eventBus.emit('state.save');
   });
 

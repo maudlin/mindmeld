@@ -2,6 +2,8 @@
 import { moveNoteStart, moveNoteEnd } from '../../core/movement.js';
 import { noteManager } from '../../services/noteManager.js';
 import { connectionManager } from '../connection/connectionManager.js';
+import { displayAsViewMode, getCurrentMarkdownContent } from './editViewMode.js';
+import { eventBus } from '../../core/eventBus.js';
 
 export function addNoteEventListeners(note, canvas) {
   note.addEventListener('mousedown', (event) => {
@@ -24,6 +26,15 @@ export function addNoteEventListeners(note, canvas) {
 
   note.addEventListener('blur', () => {
     note.removeAttribute('contenteditable');
+    
+    // Handle markdown rendering when exiting edit mode
+    const noteContent = note.querySelector('.note-content');
+    if (noteContent) {
+      const rawText = getCurrentMarkdownContent(noteContent) || noteContent.textContent || '';
+      displayAsViewMode(noteContent, rawText);
+      eventBus.emit('note.updated', { id: note.id, content: rawText });
+      eventBus.emit('state.save');
+    }
   });
 
   note.addEventListener('dblclick', () => {
