@@ -5,8 +5,7 @@
  * Reproduces the bug: MD -> HTML elements -> stripped text across refreshes.
  */
 
-import { saveNotesToStorage, loadNotesFromStorage, processNotesForStorage } from '../../../src/js/data/canonicalStorage.js';
-import { NoteService } from '../../../src/js/services/noteService.js';
+import { saveNotesToStorage, loadNotesFromStorage } from '../../../src/js/data/canonicalStorage.js';
 import { defangToPlainText } from '../../../src/js/features/markdown/defangPipeline.js';
 import { renderMarkdown } from '../../../src/js/features/markdown/markdownRenderer.js';
 import { displayAsViewMode, getCurrentMarkdownContent } from '../../../src/js/features/note/editViewMode.js';
