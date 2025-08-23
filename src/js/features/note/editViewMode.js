@@ -15,9 +15,14 @@ export function displayAsViewMode(noteContent, markdownContent = '') {
   // Clean and store the markdown content
   const cleanedMarkdown = defangToPlainText(markdownContent, false);
   noteContent.setAttribute('data-markdown', cleanedMarkdown);
-  
+
   // Simple check: only render as markdown if it contains common markdown syntax
-  if (cleanedMarkdown.includes('#') || cleanedMarkdown.includes('**') || cleanedMarkdown.includes('*') || cleanedMarkdown.includes('-')) {
+  if (
+    cleanedMarkdown.includes('#') ||
+    cleanedMarkdown.includes('**') ||
+    cleanedMarkdown.includes('*') ||
+    cleanedMarkdown.includes('-')
+  ) {
     // Render markdown to HTML
     const renderedHTML = renderMarkdown(cleanedMarkdown);
     // eslint-disable-next-line no-unsanitized/property
@@ -26,9 +31,11 @@ export function displayAsViewMode(noteContent, markdownContent = '') {
     // Plain text - keep as textContent to preserve original behavior
     noteContent.textContent = cleanedMarkdown;
   }
-  
-  noteContent.contentEditable = true;
-  
+
+  // In view mode, contentEditable should be false to prevent editing
+  // Clicking will be handled by DesktopAdapter to trigger edit mode
+  noteContent.contentEditable = false;
+
   // Track mode state
   noteContent.classList.remove('edit-mode');
   noteContent.classList.add('view-mode');
@@ -42,22 +49,24 @@ export function displayAsViewMode(noteContent, markdownContent = '') {
  */
 export function displayAsEditMode(noteContent, markdownContent = null) {
   // Get markdown content from parameter, data attribute, or current text
-  const rawMarkdown = markdownContent || 
-                      noteContent.getAttribute('data-markdown') || 
-                      noteContent.textContent || '';
-  
+  const rawMarkdown =
+    markdownContent ||
+    noteContent.getAttribute('data-markdown') ||
+    noteContent.textContent ||
+    '';
+
   // Clean and store the markdown content
   const cleanedMarkdown = defangToPlainText(rawMarkdown, false);
   noteContent.setAttribute('data-markdown', cleanedMarkdown);
-  
+
   // Show raw markdown for editing - only content changes, no visual styling changes
   noteContent.textContent = cleanedMarkdown;
   noteContent.contentEditable = true;
-  
+
   // Track mode state without visual changes
   noteContent.classList.remove('view-mode');
   noteContent.classList.add('edit-mode');
-  
+
   console.log('Displayed as edit mode:', { cleanedMarkdown });
 }
 
@@ -72,7 +81,9 @@ export function getCurrentMarkdownContent(noteContent) {
     return noteContent.textContent || '';
   } else {
     // Get from stored markdown attribute or fall back to text content
-    return noteContent.getAttribute('data-markdown') || noteContent.textContent || '';
+    return (
+      noteContent.getAttribute('data-markdown') || noteContent.textContent || ''
+    );
   }
 }
 
@@ -88,7 +99,7 @@ export function loadNoteInViewMode(noteContent, markdownContent = '') {
 
 /**
  * Check if a note is currently in edit mode
- * @param {HTMLElement} noteContent - The note content element  
+ * @param {HTMLElement} noteContent - The note content element
  * @returns {boolean} True if in edit mode
  */
 export function isInEditMode(noteContent) {
@@ -98,7 +109,7 @@ export function isInEditMode(noteContent) {
 /**
  * Check if a note is currently in view mode
  * @param {HTMLElement} noteContent - The note content element
- * @returns {boolean} True if in view mode  
+ * @returns {boolean} True if in view mode
  */
 export function isInViewMode(noteContent) {
   return noteContent.classList.contains('view-mode');

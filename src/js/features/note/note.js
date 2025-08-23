@@ -3,5 +3,6 @@ export {
   createNote,
   createNoteAtPosition,
 } from '../../factories/noteFactory.js';
-export { addNoteEventListeners } from './noteEvents.js';
+// MM-172: Legacy noteEvents.js disabled - using EditModeController system
+// export { addNoteEventListeners } from './noteEvents.js';
 export { deleteNote, deleteNoteWithConnections } from './noteDeletion.js';

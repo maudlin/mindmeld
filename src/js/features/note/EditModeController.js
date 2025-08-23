@@ -1,13 +1,17 @@
 /**
  * EditModeController - Unified controller for note edit/view mode transitions
- * 
+ *
  * Single source of truth for edit mode state, managed through EventBus.
  * Coordinates between adapters, markdown rendering, and DOM updates.
  * Replaces legacy noteEvents.js dual-system conflict.
  */
 
 import { eventBus } from '../../core/eventBus.js';
-import { displayAsViewMode, displayAsEditMode, getCurrentMarkdownContent } from './editViewMode.js';
+import {
+  displayAsViewMode,
+  displayAsEditMode,
+  getCurrentMarkdownContent,
+} from './editViewMode.js';
 
 class EditModeController {
   constructor() {
@@ -37,7 +41,7 @@ class EditModeController {
     // Listen for edit mode requests from adapters
     eventBus.on('note.requestEdit', (data) => this.handleEditRequest(data));
     eventBus.on('note.requestView', (data) => this.handleViewRequest(data));
-    
+
     // Listen for external triggers to exit edit mode
     eventBus.on('canvas.clicked', () => this.exitEditMode());
     eventBus.on('note.selected', (data) => {
@@ -60,6 +64,7 @@ class EditModeController {
    * Handle request to enter edit mode for a note
    */
   handleEditRequest(data) {
+    console.log('EditModeController: Received edit request', data);
     const { noteId, noteElement } = data;
 
     if (!noteElement) {
@@ -76,7 +81,6 @@ class EditModeController {
     if (this.currentEditingNote) {
       this.exitEditMode();
     }
-
     this.enterEditMode(noteElement);
   }
 
@@ -84,8 +88,10 @@ class EditModeController {
    * Handle request to exit edit mode
    */
   handleViewRequest(data) {
-    if (this.currentEditingNote && 
-        (!data || !data.noteId || this.currentEditingNote.id === data.noteId)) {
+    if (
+      this.currentEditingNote &&
+      (!data || !data.noteId || this.currentEditingNote.id === data.noteId)
+    ) {
       this.exitEditMode();
     }
   }
@@ -99,7 +105,7 @@ class EditModeController {
     }
 
     this.state = 'TRANSITIONING';
-    
+
     const noteContent = noteElement.querySelector('.note-content');
     if (!noteContent) {
       console.warn('EditModeController: No note content element found');
@@ -111,19 +117,22 @@ class EditModeController {
     this.currentEditingNote = {
       id: noteElement.id,
       element: noteElement,
-      contentElement: noteContent
+      contentElement: noteContent,
     };
 
     // Get current markdown content
-    const currentContent = getCurrentMarkdownContent(noteContent) || noteContent.dataset.markdown || noteContent.textContent || '';
-    
+    const currentContent =
+      getCurrentMarkdownContent(noteContent) ||
+      noteContent.dataset.markdown ||
+      noteContent.textContent ||
+      '';
+
     // Switch to edit mode display
     displayAsEditMode(noteContent, currentContent);
-    
-    // Make editable and focus
-    noteElement.contentEditable = true;
-    noteContent.contentEditable = true;
-    
+
+    // Note: contentEditable is already set by displayAsEditMode
+    // We don't set it on noteElement, only on noteContent
+
     // Focus and select all text for easy editing
     // For mobile devices, add a small delay to ensure keyboard invocation
     const isMobile = 'ontouchstart' in window;
@@ -146,15 +155,16 @@ class EditModeController {
       selection.addRange(range);
     }
 
-    // Add blur handler for this specific edit session
-    this.setupBlurHandler(noteElement);
+    // Blur handling is now done through adapters (DesktopAdapter/TouchAdapter)
+    // which emit note.requestView events
+    // this.setupBlurHandler(noteElement);
 
     this.state = 'EDITING';
-    
+
     // Emit edit mode entered event
-    eventBus.emit('note.editModeEntered', { 
+    eventBus.emit('note.editModeEntered', {
       noteId: noteElement.id,
-      element: noteElement 
+      element: noteElement,
     });
   }
 
@@ -168,35 +178,37 @@ class EditModeController {
 
     this.state = 'TRANSITIONING';
 
-    const { element: noteElement, contentElement: noteContent } = this.currentEditingNote;
+    const { element: noteElement, contentElement: noteContent } =
+      this.currentEditingNote;
 
     // Get the current markdown content
-    const rawText = getCurrentMarkdownContent(noteContent) || noteContent.textContent || '';
-    
+    const rawText =
+      getCurrentMarkdownContent(noteContent) || noteContent.textContent || '';
+
     // Store markdown in dataset for persistence
     noteContent.dataset.markdown = rawText;
-    
+
     // Switch to view mode display
     displayAsViewMode(noteContent, rawText);
-    
+
     // Remove editable state
     noteElement.removeAttribute('contenteditable');
     noteContent.removeAttribute('contenteditable');
-    
-    // Remove blur handler
-    this.removeBlurHandler(noteElement);
+
+    // Blur handling is now done through adapters
+    // this.removeBlurHandler(noteElement);
 
     // Save the updated content
-    eventBus.emit('note.updated', { 
-      id: noteElement.id, 
-      content: rawText 
+    eventBus.emit('note.updated', {
+      id: noteElement.id,
+      content: rawText,
     });
     eventBus.emit('state.save');
 
     // Emit edit mode exited event
-    eventBus.emit('note.editModeExited', { 
+    eventBus.emit('note.editModeExited', {
       noteId: noteElement.id,
-      element: noteElement 
+      element: noteElement,
     });
 
     // Clear current editing reference
@@ -214,10 +226,13 @@ class EditModeController {
       if (noteElement.contains(event.relatedTarget)) {
         return;
       }
-      
+
       // Delay to allow for click events to process
       setTimeout(() => {
-        if (this.currentEditingNote && this.currentEditingNote.element === noteElement) {
+        if (
+          this.currentEditingNote &&
+          this.currentEditingNote.element === noteElement
+        ) {
           this.exitEditMode();
         }
       }, 100);
@@ -240,7 +255,9 @@ class EditModeController {
    * Check if a note is currently being edited
    */
   isEditing(noteId) {
-    return this.currentEditingNote ? this.currentEditingNote.id === noteId : false;
+    return this.currentEditingNote
+      ? this.currentEditingNote.id === noteId
+      : false;
   }
 
   /**
@@ -257,14 +274,14 @@ class EditModeController {
     if (this.currentEditingNote) {
       this.exitEditMode();
     }
-    
+
     // Remove all event listeners
     eventBus.off('note.requestEdit');
     eventBus.off('note.requestView');
     eventBus.off('canvas.clicked');
     eventBus.off('note.selected');
     eventBus.off('note.deleted');
-    
+
     this.initialized = false;
   }
 }

@@ -186,6 +186,9 @@ export class TouchAdapter extends BaseAdapter {
 
     // Enhance hit targets for touch
     this.enhanceHitTargets();
+
+    // MM-169: TouchAdapter uses double-tap for edit mode, not focus/blur
+    // this.setupFocusBlurHandling();
   }
 
   /**
@@ -309,7 +312,7 @@ export class TouchAdapter extends BaseAdapter {
         noteElement: note,
         _gesture: 'doubletap',
       });
-      
+
       return;
     }
 

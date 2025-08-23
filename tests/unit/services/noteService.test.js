@@ -3,7 +3,7 @@
 describe('NoteService', () => {
   let NoteService;
   let mockCreateNote;
-  let mockAddNoteEventListeners;
+  // let mockAddNoteEventListeners; // No longer used - legacy system disabled
 
   beforeEach(async () => {
     // Reset modules
@@ -11,16 +11,17 @@ describe('NoteService', () => {
 
     // Create mocks
     mockCreateNote = jest.fn();
-    mockAddNoteEventListeners = jest.fn();
+    // mockAddNoteEventListeners = jest.fn(); // No longer used
 
     // Mock dependencies before importing
     jest.doMock('../../../src/js/factories/noteFactory.js', () => ({
       createNote: mockCreateNote,
     }));
 
-    jest.doMock('../../../src/js/features/note/noteEvents.js', () => ({
-      addNoteEventListeners: mockAddNoteEventListeners,
-    }));
+    // NOTE: Legacy noteEvents.js is now disabled/removed - no longer needed
+    // jest.doMock('../../../src/js/features/note/noteEvents.js', () => ({
+    //   addNoteEventListeners: mockAddNoteEventListeners,
+    // }));
 
     // Import the module to test
     const module = await import('../../../src/js/services/noteService.js');
@@ -64,7 +65,7 @@ describe('NoteService', () => {
         100,
         200,
         mockCanvas,
-        mockAddNoteEventListeners,
+        null, // Legacy event listener callback is now disabled
       );
       expect(result.id).toBe('test-id');
       expect(mockNoteContent.textContent).toBe('test content');
@@ -84,7 +85,7 @@ describe('NoteService', () => {
         150,
         250,
         mockCanvas,
-        mockAddNoteEventListeners,
+        null, // Legacy event listener callback is now disabled
       );
       expect(result.id).toBe('standard-id');
       expect(mockNoteContent.textContent).toBe('standard content');
@@ -107,7 +108,7 @@ describe('NoteService', () => {
         300,
         400,
         mockCanvas,
-        mockAddNoteEventListeners,
+        null, // Legacy event listener callback is now disabled
       );
       expect(result.id).toBe('mixed-id');
       expect(mockNoteContent.textContent).toBe('mixed content');
@@ -128,7 +129,7 @@ describe('NoteService', () => {
         0,
         0,
         mockCanvas,
-        mockAddNoteEventListeners,
+        null, // Legacy event listener callback is now disabled
       );
       expect(result.id).toBe('no-position-id');
     });
@@ -158,7 +159,7 @@ describe('NoteService', () => {
         0,
         0,
         mockCanvas,
-        mockAddNoteEventListeners,
+        null, // Legacy event listener callback is now disabled
       );
     });
   });

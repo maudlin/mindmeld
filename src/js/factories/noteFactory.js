@@ -4,8 +4,7 @@ import config from '../core/config.js';
 import { NOTE_CONTENT_LIMIT } from '../core/constants.js';
 import { eventBus } from '../core/eventBus.js';
 import { createDeleteButton } from '../features/note/deleteButton.js';
-// Import available for future use when integrating EditModeController
-// import { displayAsViewMode, displayAsEditMode, getCurrentMarkdownContent } from '../features/note/editViewMode.js';
+import { displayAsViewMode } from '../features/note/editViewMode.js';
 
 let nextNoteId = 1;
 let handDrawn = false;
@@ -35,9 +34,11 @@ export function createNote(x, y, canvas, addEventListeners = null) {
 
   note.appendChild(noteContent);
   createGhostConnectors(note);
-  console.log('About to call createDeleteButton for note:', note);
   createDeleteButton(note);
-  console.log('createDeleteButton call completed');
+
+  // Initialize in view mode with empty content
+  displayAsViewMode(noteContent, '');
+
   canvas.appendChild(note);
 
   note.style.left = `${x}px`;
@@ -57,9 +58,9 @@ export function createNote(x, y, canvas, addEventListeners = null) {
   });
 
   // Prevent accidental note deletion with backspace/delete on empty content
-  noteContent.addEventListener('keydown', function(event) {
+  noteContent.addEventListener('keydown', function (event) {
     const isEmpty = !this.textContent || this.textContent.trim() === '';
-    
+
     // Prevent backspace and delete (Mac) when content is empty
     if (isEmpty && (event.key === 'Backspace' || event.key === 'Delete')) {
       event.preventDefault();

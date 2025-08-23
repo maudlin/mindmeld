@@ -323,6 +323,87 @@ handleTap(touch) {
 }
 ```
 
+## E2E Testing Patterns for Styled Content
+
+### Pattern 4: Styled Content Click Detection
+
+**Problem:** E2E tests fail on styled content while manual testing works perfectly.
+
+**Root Cause Discovery:**
+- Empty/unstyled notes: E2E tests pass ✅
+- Styled content with HTML: E2E tests fail ❌
+- Manual testing: All scenarios work ✅
+
+**Technical Analysis:**
+```javascript
+// Test scenarios that reveal the pattern
+test('Empty note works in E2E', () => {
+  // ✅ PASSES: Note with no content, click detection works
+  noteContent.innerHTML = '';
+  await noteContent.click(); // Works
+});
+
+test('Styled content fails in E2E', () => {
+  // ❌ FAILS: Note with rendered HTML, click detection fails  
+  noteContent.innerHTML = '<h1>Header</h1><p><strong>Bold</strong></p>';
+  await noteContent.click(); // Doesn't trigger edit mode
+});
+```
+
+**Playwright vs Real User Clicks:**
+- **Real user clicks**: `event.target` properly bubbles through HTML elements
+- **Playwright `.click()`**: May target child HTML elements directly
+- **Detection logic**: `target.closest('.note-content')` works differently
+
+**Solution Pattern:**
+```javascript
+// Robust click detection for both E2E and manual testing
+handleClick(event) {
+  const target = event.target;
+  
+  // Check multiple scenarios for reliable detection
+  const noteContent = target.classList.contains('note-content') 
+    ? target 
+    : target.closest('.note-content');
+    
+  // Additional E2E-specific checks may be needed
+  if (noteContent) {
+    // Process edit mode request
+  }
+}
+```
+
+**CSS Requirements:**
+```css
+/* Ensure minimum clickable areas for E2E testing */
+.note {
+  min-height: 40px; /* Prevent container collapse */
+}
+
+.note-content {
+  min-height: 24px; /* Ensure child element has clickable area */
+}
+```
+
+**Testing Strategy:**
+```javascript
+// Comprehensive test matrix for regression prevention
+const scenarios = [
+  { name: 'Empty note', content: '', shouldPass: true },
+  { name: 'Plain text', content: 'Simple text', shouldPass: true },
+  { name: 'Styled HTML', content: '<h1>Header</h1>', shouldPass: true },
+  { name: 'Nested HTML', content: '<p><strong><em>Deep</em></strong></p>', shouldPass: true }
+];
+
+scenarios.forEach(scenario => {
+  test(`Click detection: ${scenario.name}`, async () => {
+    await setupNote(scenario.content);
+    await noteContent.click();
+    await expect(noteContent).toHaveClass(/edit-mode/);
+  });
+});
+```
+
 ## Debugging Touch Interactions
 
 Common issues and debugging techniques learned from real-world troubleshooting:
