@@ -12,6 +12,7 @@ import { ConnectionService } from '../services/connectionService.js';
 import { ColorService } from '../services/colorService.js';
 import { CanvasStateService } from '../services/canvasStateService.js';
 import { eventBus } from '../core/eventBus.js';
+import { getCurrentMarkdownContent } from '../features/note/editViewMode.js';
 
 export function addNote(note) {
   const currentNotes = appState.getState().notes;
@@ -145,12 +146,22 @@ export function updateConnectionInDataStore(startId, endId, type) {
 
 export function getCurrentState() {
   const notes = Array.from(document.querySelectorAll('.note')).map(
-    (noteElement) => ({
-      id: noteElement.id,
-      content: noteElement.querySelector('.note-content').innerHTML,
-      left: noteElement.style.left,
-      top: noteElement.style.top,
-    }),
+    (noteElement) => {
+      const noteContent = noteElement.querySelector('.note-content');
+      // FIX: Use getCurrentMarkdownContent instead of innerHTML to preserve markdown
+      const content =
+        getCurrentMarkdownContent(noteContent) ||
+        noteContent.dataset.markdown ||
+        noteContent.textContent ||
+        '';
+
+      return {
+        id: noteElement.id,
+        content: content,
+        left: noteElement.style.left,
+        top: noteElement.style.top,
+      };
+    },
   );
 
   const connections = Array.from(
