@@ -4,8 +4,9 @@
 
 This guide documents testing approaches, technical findings, and best practices for the MindMeld mind mapping application. Tests are organized into unit tests and end-to-end (E2E) tests using Jest and Playwright respectively.
 
-**📅 Last Updated**: July 2025  
+**📅 Last Updated**: August 2025  
 **🏗️ Architecture**: Refactored with shared Page Object Model + Event Bus foundation tests
+**🚀 Status**: V1 Feature Complete - Enterprise-grade data integrity with comprehensive test coverage
 
 Scope: This guide focuses on hands-on details: test structure, the shared CanvasPage API, selectors/coordinates, and technical findings. For philosophy, naming conventions, and patterns, see docs/testing.md. For suites, commands, tags, and runtimes, see docs/testing-environments.md.
 
@@ -399,7 +400,17 @@ console.log('Note count:', await page.locator('.note').count());
 
 ### 📊 **Test Metrics**
 
-- E2E test scenarios cover core user workflows (basic, note operations, connections, multi-select, template switching, menu, touch, zoom)
+**Unit Tests**: Comprehensive test suite covering:
+- **MM-160 Data Corruption Resistance Epic**: Enterprise-grade data integrity testing
+  - Storage quota exhaustion handling
+  - Browser compatibility testing (Chrome, Safari, Edge support)
+  - Data corruption recovery scenarios  
+  - Session integrity and multi-tab consistency
+- Core architecture, event bus, services, and business logic
+- Touch/desktop interaction adapters and gesture recognition
+- Data integrity, export/import, and state management
+
+**E2E Tests**: Core user workflows (basic, note operations, connections, multi-select, template switching, menu, touch, zoom)
 - Runtimes vary by environment; see Testing Environments for suite guidance
 
 ## 🔒 **Security Testing Framework**

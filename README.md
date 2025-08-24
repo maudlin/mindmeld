@@ -50,6 +50,8 @@ MindMeld automatically detects your device capabilities and provides optimized i
 - **Adaptive Touch Interface**: Automatic device detection with optimized mobile interactions
 - **Data Management**: Export/import mind maps as JSON with full state preservation
 - **Modern Architecture**: Event-driven design with zero circular dependencies
+- **Enterprise-Grade Data Integrity**: Comprehensive corruption resistance with browser compatibility
+- **Secure Markdown System**: XSS-protected rendering with zero HTML injection
 
 ## Documentation
 

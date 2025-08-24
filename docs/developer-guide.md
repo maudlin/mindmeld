@@ -22,7 +22,8 @@ Before opening a PR, review the CI Quick Checklist below.
 **Service layer**: Clean separation with dependency injection (`src/js/services/`)  
 **Factory pattern**: Pure, testable functions (`src/js/factories/`)  
 **Zero circular deps**: Maintained via automated health checks  
-**Test coverage**: Run `npm run test:coverage` for current status
+**Enterprise data integrity**: Comprehensive corruption resistance with browser compatibility  
+**Test coverage**: Comprehensive unit test suite with enterprise-grade data integrity testing
 
 ```
 src/js/
@@ -39,7 +40,8 @@ src/js/
 ├── services/                # Service layer (noteService, colorService)
 ├── factories/               # Pure factory functions
 ├── features/                # Feature modules (colorPicker, note, connection)
-└── data/                    # Data management (with color persistence)
+├── utils/                   # Utilities (browserDetection, mobileInteractions)
+└── data/                    # Data management with enterprise-grade integrity
 ```
 
 ## Standards
