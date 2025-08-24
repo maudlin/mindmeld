@@ -87,8 +87,8 @@ describe('TouchAdapter - Edit Mode Integration', () => {
       const mockNote = {
         id: 'note-123',
         classList: {
-          contains: jest.fn((className) => 
-            className === 'note' || className === 'selected'
+          contains: jest.fn(
+            (className) => className === 'note', // Not selected initially
           ),
         },
         closest: jest.fn(() => null),
@@ -115,14 +115,20 @@ describe('TouchAdapter - Edit Mode Integration', () => {
       touchAdapter.handleDoubleTap(mockTouch);
 
       // Verify edit request was emitted
-      expect(mockEventBus).toHaveBeenCalledWith('note.requestEdit', expect.objectContaining({
-        noteId: 'note-123',
-        noteElement: mockNote,
-        _gesture: 'doubletap',
-      }));
+      expect(mockEventBus).toHaveBeenCalledWith(
+        'note.requestEdit',
+        expect.objectContaining({
+          noteId: 'note-123',
+          noteElement: mockNote,
+          _gesture: 'doubletap',
+        }),
+      );
 
       // Verify note selection change was emitted
-      expect(mockEventBus).toHaveBeenCalledWith('note.selection.changed');
+      expect(mockEventBus).toHaveBeenCalledWith(
+        'note.selection.changed',
+        expect.any(Object),
+      );
     });
 
     it('should ensure note is selected before requesting edit', () => {
@@ -154,14 +160,19 @@ describe('TouchAdapter - Edit Mode Integration', () => {
 
       // Verify note was selected
       expect(mockNoteManager.noteManager.clearSelections).toHaveBeenCalled();
-      expect(mockNoteManager.noteManager.selectNote).toHaveBeenCalledWith(mockNote);
+      expect(mockNoteManager.noteManager.selectNote).toHaveBeenCalledWith(
+        mockNote,
+      );
 
       // Verify edit request was still emitted
-      expect(mockEventBus).toHaveBeenCalledWith('note.requestEdit', expect.objectContaining({
-        noteId: 'note-123',
-        noteElement: mockNote,
-        _gesture: 'doubletap',
-      }));
+      expect(mockEventBus).toHaveBeenCalledWith(
+        'note.requestEdit',
+        expect.objectContaining({
+          noteId: 'note-123',
+          noteElement: mockNote,
+          _gesture: 'doubletap',
+        }),
+      );
     });
 
     it('should create note on double-tap canvas (existing behavior preserved)', () => {
@@ -177,17 +188,23 @@ describe('TouchAdapter - Edit Mode Integration', () => {
       touchAdapter.handleDoubleTap(mockTouch);
 
       // Verify note creation was emitted
-      expect(mockEventBus).toHaveBeenCalledWith('note.createAtPosition', expect.objectContaining({
-        canvas: mockCanvas,
-        event: expect.objectContaining({
-          clientX: 150,
-          clientY: 150,
-          type: 'doubletap',
+      expect(mockEventBus).toHaveBeenCalledWith(
+        'note.createAtPosition',
+        expect.objectContaining({
+          canvas: mockCanvas,
+          event: expect.objectContaining({
+            clientX: 150,
+            clientY: 150,
+            type: 'doubletap',
+          }),
+          _gesture: 'doubletap',
         }),
-        _gesture: 'doubletap',
-      }));
+      );
 
-      expect(mockEventBus).toHaveBeenCalledWith('state.save', expect.any(Object));
+      expect(mockEventBus).toHaveBeenCalledWith(
+        'state.save',
+        expect.any(Object),
+      );
     });
   });
 
@@ -211,17 +228,31 @@ describe('TouchAdapter - Edit Mode Integration', () => {
       touchAdapter.handleTap(mockTouch);
 
       // Verify canvas.clicked was emitted for EditModeController
-      expect(mockEventBus).toHaveBeenCalledWith('canvas.clicked', expect.objectContaining({ _gesture: 'tap' }));
+      expect(mockEventBus).toHaveBeenCalledWith(
+        'canvas.clicked',
+        expect.objectContaining({ _gesture: 'tap' }),
+      );
 
       // Verify other cleanup was performed
       expect(mockNoteManager.noteManager.clearSelections).toHaveBeenCalled();
-      expect(mockEventBus).toHaveBeenCalledWith('note.selection.changed', expect.any(Object));
-      expect(mockEventBus).toHaveBeenCalledWith('interaction.cancel', expect.objectContaining({ _gesture: 'tap' }));
+      expect(mockEventBus).toHaveBeenCalledWith(
+        'note.selection.changed',
+        expect.any(Object),
+      );
+      expect(mockEventBus).toHaveBeenCalledWith(
+        'interaction.cancel',
+        expect.objectContaining({ _gesture: 'tap' }),
+      );
     });
 
     it('should not emit canvas.clicked when tapping notes or other elements', () => {
       const mockNote = {
-        classList: { contains: jest.fn(() => true) }, // Is a note
+        classList: {
+          contains: jest.fn((className) => {
+            // Only return true for 'note', not for 'ghost-connector'
+            return className === 'note';
+          }),
+        },
         closest: jest.fn(() => null),
       };
 
@@ -236,7 +267,10 @@ describe('TouchAdapter - Edit Mode Integration', () => {
       touchAdapter.handleTap(mockTouch);
 
       // Verify canvas.clicked was NOT emitted
-      expect(mockEventBus).not.toHaveBeenCalledWith('canvas.clicked', expect.any(Object));
+      expect(mockEventBus).not.toHaveBeenCalledWith(
+        'canvas.clicked',
+        expect.any(Object),
+      );
 
       // But note selection was handled
       expect(touchAdapter.handleNoteSelection).toHaveBeenCalledWith(mockNote);
@@ -246,17 +280,17 @@ describe('TouchAdapter - Edit Mode Integration', () => {
   describe('Event Integration', () => {
     it('should preserve all existing touch functionality while adding edit mode', () => {
       // This test ensures we didn't break existing functionality
-      
+
       // Test connection mode functionality still works
       const mockConnector = {
-        classList: { 
-          contains: jest.fn(() => true), // Is ghost connector
+        classList: {
+          contains: jest.fn((className) => className === 'ghost-connector'),
           add: jest.fn(),
-          remove: jest.fn()
+          remove: jest.fn(),
         },
         closest: jest.fn(() => ({
           id: 'note-connector-parent',
-          classList: { add: jest.fn(), remove: jest.fn() }
+          classList: { add: jest.fn(), remove: jest.fn() },
         })),
       };
 
@@ -267,11 +301,18 @@ describe('TouchAdapter - Edit Mode Integration', () => {
       const mockTouch = { currentX: 100, currentY: 100 };
       touchAdapter.handleTap(mockTouch);
 
-      expect(touchAdapter.handleGhostConnectorTap).toHaveBeenCalledWith(mockConnector);
+      expect(touchAdapter.handleGhostConnectorTap).toHaveBeenCalledWith(
+        mockConnector,
+      );
 
       // Test note selection still works
       const mockNote = {
-        classList: { contains: jest.fn(() => true) },
+        classList: {
+          contains: jest.fn((className) => {
+            // Only return true for 'note', not for 'ghost-connector'
+            return className === 'note';
+          }),
+        },
         closest: jest.fn(() => null),
       };
 

@@ -83,7 +83,10 @@ export class InteractionBootstrap extends BaseBootstrap {
       editModeController.initialize();
       log('InteractionBootstrap: EditModeController initialized successfully');
     } catch (error) {
-      console.error('InteractionBootstrap: Failed to initialize EditModeController:', error);
+      console.error(
+        'InteractionBootstrap: Failed to initialize EditModeController:',
+        error,
+      );
       // Don't throw error since EditModeController is not critical for basic functionality
     }
   }
@@ -107,7 +110,10 @@ export class InteractionBootstrap extends BaseBootstrap {
       editModeController.cleanup();
       log('InteractionBootstrap: EditModeController cleaned up');
     } catch (error) {
-      console.error('InteractionBootstrap: Failed to cleanup EditModeController:', error);
+      console.error(
+        'InteractionBootstrap: Failed to cleanup EditModeController:',
+        error,
+      );
     }
 
     // Remove context menu prevention
