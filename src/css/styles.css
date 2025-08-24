@@ -315,7 +315,7 @@ html {
 /* H1 uses Poppins for clear hierarchy */
 .note-content h1 {
   font-family: var(--font-family-headings);
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 700;
   line-height: 1.15;
   margin-bottom: 4px;
@@ -324,7 +324,7 @@ html {
 /* H2 uses Inter and is clearly different from bold */
 .note-content h2 {
   font-family: var(--font-family-body);
-  font-size: 1.1rem;
+  font-size: 1.0rem;
   font-weight: 600;
   line-height: 1.2;
   margin-top: 2px;
