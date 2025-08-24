@@ -115,34 +115,82 @@ function extractTextFromHtml(html) {
     // Extract text from elements that have useful text or alt attributes
     let result = '';
 
-    // Walk through all elements to extract text and alt text
-    const walker = doc.createTreeWalker(
-      doc.body,
-      NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
-      null,
-      false,
-    );
-
-    let node;
-    while ((node = walker.nextNode())) {
-      if (node.nodeType === Node.TEXT_NODE) {
-        const text = node.textContent.trim();
-        if (text) {
-          result += text + ' ';
-        }
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        // Extract alt text from images
-        if (node.tagName.toLowerCase() === 'img' && node.alt) {
-          result += node.alt + ' ';
-        }
-      }
-    }
+    // Process elements recursively to properly handle spacing
+    result = extractTextRecursively(doc.body);
 
     return result.trim();
   } catch {
     // Fallback: strip basic HTML tags manually if DOMParser fails
     return html.replace(/<[^>]*>/g, '');
   }
+}
+
+/**
+ * Recursively extract text from HTML elements with proper spacing
+ * @param {Element} element - DOM element to process
+ * @returns {string} Text content with preserved whitespace
+ */
+function extractTextRecursively(element) {
+  let result = '';
+
+  for (const child of element.childNodes) {
+    if (child.nodeType === Node.TEXT_NODE) {
+      // Preserve the original text content including whitespace
+      result += child.textContent;
+    } else if (child.nodeType === Node.ELEMENT_NODE) {
+      const tagName = child.tagName.toLowerCase();
+
+      // Handle images with alt text
+      if (tagName === 'img' && child.alt) {
+        result += child.alt;
+      }
+
+      // Check if this is a block-level element that should add spacing
+      const isBlockElement = [
+        'div',
+        'p',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'ul',
+        'ol',
+        'li',
+        'blockquote',
+        'pre',
+      ].includes(tagName);
+
+      // Recursively process child content
+      const childText = extractTextRecursively(child);
+
+      if (childText.trim()) {
+        // Add space before block elements if needed
+        if (
+          isBlockElement &&
+          result &&
+          !result.endsWith(' ') &&
+          !result.endsWith('\n')
+        ) {
+          result += ' ';
+        }
+
+        result += childText;
+
+        // Add space after block elements if needed
+        if (
+          isBlockElement &&
+          !childText.endsWith(' ') &&
+          !childText.endsWith('\n')
+        ) {
+          result += ' ';
+        }
+      }
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -178,10 +226,10 @@ function processHtmlNode(node) {
 
   for (const child of node.childNodes) {
     if (child.nodeType === Node.TEXT_NODE) {
-      // Text node - add content directly
-      const text = child.textContent.trim();
+      // Text node - preserve whitespace including newlines
+      const text = child.textContent;
       if (text) {
-        result += text + ' ';
+        result += text;
       }
     } else if (child.nodeType === Node.ELEMENT_NODE) {
       // Element node - convert based on tag type
