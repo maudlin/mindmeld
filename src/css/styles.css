@@ -288,11 +288,23 @@ html {
 }
 
 /* MM-175: Note Content Typography Improvements */
+/* Reset margins and padding for all markdown elements to prevent extra spacing */
+.note-content p,
+.note-content h1,
+.note-content h2,
+.note-content ul,
+.note-content ol,
+.note-content li,
+.note-content strong,
+.note-content em {
+  margin: 0;
+  padding: 0;
+}
+
 /* Headers - Poppins font with improved sizing and spacing */
 .note-content h1,
 .note-content h2 {
   font-family: var(--font-family-headings);
-  margin: 0;
   line-height: 1.15;
   font-weight: 700;
 }
@@ -323,12 +335,11 @@ html {
   font-style: italic; 
 }
 
-/* List styling with custom bullets and proper spacing */
+/* List styling with custom bullets and minimal spacing */
 .note-content ul,
 .note-content ol {
-  margin: 4px 0 0 0;
-  padding-left: 0;
   list-style: none;
+  margin-top: 4px;
 }
 
 .note-content ul li {
