@@ -525,13 +525,9 @@ export class DesktopAdapter extends BaseAdapter {
         centerX: event.clientX,
         centerY: event.clientY,
       });
-    } else {
-      // Pan with wheel (natural scrolling)
-      this.emit('canvas.pan', {
-        deltaX: -event.deltaX,
-        deltaY: -event.deltaY,
-      });
     }
+    // Note: Desktop wheel without modifier keys should not pan
+    // Pan functionality is available via right-click drag in zoomManager
   }
 
   /**
