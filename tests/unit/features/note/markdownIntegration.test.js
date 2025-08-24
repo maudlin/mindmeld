@@ -1,15 +1,18 @@
 // tests/unit/features/note/markdownIntegration.test.js
 // Comprehensive tests for markdown integration with the note system
 
-import { displayAsViewMode, displayAsEditMode, getCurrentMarkdownContent } from '../../../../src/js/features/note/editViewMode.js';
-import { createNote } from '../../../../src/js/factories/noteFactory.js';
+import {
+  displayAsViewMode,
+  displayAsEditMode,
+  getCurrentMarkdownContent,
+} from '../../../../src/js/features/note/editViewMode.js';
 import { NoteService } from '../../../../src/js/services/noteService.js';
 
 // Mock the event bus
 jest.mock('../../../../src/js/core/eventBus.js', () => ({
   eventBus: {
-    emit: jest.fn()
-  }
+    emit: jest.fn(),
+  },
 }));
 
 describe('Markdown Integration with Note System', () => {
@@ -22,7 +25,7 @@ describe('Markdown Integration with Note System', () => {
 
   afterEach(() => {
     document.body.removeChild(canvas);
-    document.querySelectorAll('.note').forEach(note => note.remove());
+    document.querySelectorAll('.note').forEach((note) => note.remove());
   });
 
   describe('Core Display Functions', () => {
@@ -81,7 +84,7 @@ describe('Markdown Integration with Note System', () => {
       displayAsViewMode(noteContent, 'hello world');
       expect(noteContent.textContent).toBe('hello world');
 
-      // Markdown - should render as HTML  
+      // Markdown - should render as HTML
       displayAsViewMode(noteContent, '**bold**');
       expect(noteContent.innerHTML).toContain('<strong>bold</strong>');
 
@@ -200,11 +203,11 @@ describe('Markdown Integration with Note System', () => {
     test('should sanitize HTML injection attempts', () => {
       const maliciousInput = '<script>alert("xss")</script>**Bold** text';
       displayAsViewMode(noteContent, maliciousInput);
-      
+
       // Should not contain script tags or javascript: URLs
       expect(noteContent.innerHTML).not.toContain('<script>');
       expect(noteContent.innerHTML).not.toContain('javascript:');
-      
+
       // Should still render safe markdown (case-sensitive match for what was actually input)
       expect(noteContent.innerHTML).toContain('<strong>Bold</strong>');
     });
@@ -212,13 +215,15 @@ describe('Markdown Integration with Note System', () => {
     test('should handle dangerous markdown attempts', () => {
       const dangerousInput = '[link](javascript:alert("xss"))\n**bold**';
       displayAsViewMode(noteContent, dangerousInput);
-      
+
       // Should not contain javascript: links (links aren't supported)
       expect(noteContent.innerHTML).not.toContain('javascript:');
       expect(noteContent.innerHTML).not.toContain('alert');
-      
+
       // Should render as plain text since links aren't supported
-      expect(noteContent.textContent || noteContent.innerHTML).toContain('link');
+      expect(noteContent.textContent || noteContent.innerHTML).toContain(
+        'link',
+      );
     });
   });
 
@@ -228,7 +233,7 @@ describe('Markdown Integration with Note System', () => {
         id: 'test-note',
         content: '# Stored Header\n**Stored content**',
         left: '100px',
-        top: '100px'
+        top: '100px',
       };
 
       const note = NoteService.createNoteFromData(noteData, canvas);
@@ -237,18 +242,22 @@ describe('Markdown Integration with Note System', () => {
       // Should be in view mode with rendered HTML
       expect(noteContent.classList.contains('view-mode')).toBe(true);
       expect(noteContent.innerHTML).toContain('<h1>Stored Header</h1>');
-      expect(noteContent.innerHTML).toContain('<strong>Stored content</strong>');
-      
+      expect(noteContent.innerHTML).toContain(
+        '<strong>Stored content</strong>',
+      );
+
       // Should have stored the raw markdown
-      expect(noteContent.getAttribute('data-markdown')).toBe('# Stored Header\n**Stored content**');
+      expect(noteContent.getAttribute('data-markdown')).toBe(
+        '# Stored Header\n**Stored content**',
+      );
     });
 
     test('should preserve original content format in storage', () => {
       const noteData = {
         id: 'test-note',
         content: 'plain text without markdown',
-        left: '100px', 
-        top: '100px'
+        left: '100px',
+        top: '100px',
       };
 
       const note = NoteService.createNoteFromData(noteData, canvas);
@@ -267,8 +276,11 @@ describe('Markdown Integration with Note System', () => {
       noteContent.className = 'note-content';
       document.body.appendChild(noteContent);
 
-      const largeContent = '# Header\n\n' + 
-        Array(50).fill('**Bold text** with *italic* content and - list items').join('\n');
+      const largeContent =
+        '# Header\n\n' +
+        Array(50)
+          .fill('**Bold text** with *italic* content and - list items')
+          .join('\n');
 
       const startTime = performance.now();
       displayAsViewMode(noteContent, largeContent);
@@ -276,7 +288,7 @@ describe('Markdown Integration with Note System', () => {
 
       // Should complete within reasonable time (< 200ms for large content)
       expect(endTime - startTime).toBeLessThan(200);
-      
+
       // Should still render correctly
       expect(noteContent.innerHTML).toContain('<h1>Header</h1>');
       expect(noteContent.innerHTML).toContain('<strong>Bold text</strong>');

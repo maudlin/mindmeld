@@ -1,7 +1,11 @@
 // tests/unit/features/note/markdownWorking.test.js
 // Tests for the actual working markdown integration (not ideal behavior, but current behavior)
 
-import { displayAsViewMode, displayAsEditMode, getCurrentMarkdownContent } from '../../../../src/js/features/note/editViewMode.js';
+import {
+  displayAsViewMode,
+  displayAsEditMode,
+  getCurrentMarkdownContent,
+} from '../../../../src/js/features/note/editViewMode.js';
 
 describe('Working Markdown Integration Tests', () => {
   let noteContent;
@@ -47,7 +51,7 @@ describe('Working Markdown Integration Tests', () => {
       // Clear and test markdown
       noteContent.innerHTML = '';
       noteContent.textContent = '';
-      
+
       displayAsViewMode(noteContent, '**bold**');
       expect(noteContent.innerHTML).toContain('<strong>');
     });
@@ -63,10 +67,10 @@ describe('Working Markdown Integration Tests', () => {
     test('should retrieve markdown from storage', () => {
       // Set up view mode first
       displayAsViewMode(noteContent, '# Test');
-      
+
       // Switch to edit mode without providing content
       displayAsEditMode(noteContent);
-      
+
       // Should show the stored markdown
       expect(noteContent.textContent).toBe('# Test');
     });
@@ -75,19 +79,19 @@ describe('Working Markdown Integration Tests', () => {
   describe('Data Consistency', () => {
     test('should maintain markdown through multiple cycles', () => {
       const original = '# Header';
-      
+
       // View mode
       displayAsViewMode(noteContent, original);
       expect(noteContent.innerHTML).toBe('<h1>Header</h1>');
-      
+
       // Edit mode
       displayAsEditMode(noteContent);
       expect(noteContent.textContent).toBe(original);
-      
+
       // Back to view mode
       displayAsViewMode(noteContent, getCurrentMarkdownContent(noteContent));
       expect(noteContent.innerHTML).toBe('<h1>Header</h1>');
-      
+
       // Should preserve original
       expect(getCurrentMarkdownContent(noteContent)).toBe(original);
     });
@@ -102,13 +106,13 @@ describe('Working Markdown Integration Tests', () => {
   describe('Security', () => {
     test('should escape HTML in content', () => {
       displayAsViewMode(noteContent, '<script>alert("xss")</script>**bold**');
-      
+
       // Should not contain unescaped script tags
       expect(noteContent.innerHTML).not.toContain('<script>');
-      
+
       // Should contain escaped content
       expect(noteContent.innerHTML).toContain('&lt;script&gt;');
-      
+
       // Should still process safe markdown
       expect(noteContent.innerHTML).toContain('<strong>bold</strong>');
     });
@@ -117,11 +121,11 @@ describe('Working Markdown Integration Tests', () => {
   describe('Performance', () => {
     test('should handle reasonable content quickly', () => {
       const content = '# Header\n' + Array(10).fill('**Bold** text').join(' ');
-      
+
       const start = performance.now();
       displayAsViewMode(noteContent, content);
       const end = performance.now();
-      
+
       expect(end - start).toBeLessThan(50); // Should be fast
       expect(noteContent.innerHTML).toContain('<h1>');
       expect(noteContent.innerHTML).toContain('Header');
