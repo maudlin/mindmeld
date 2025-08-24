@@ -6,6 +6,8 @@
   --hover-color: rgba(30, 65, 107, 0.5); /* Hover background */
   --font-family: 'Poppins', sans-serif;
   --font-family-alt: 'Over the Rainbow', cursive;
+  --font-family-headings: 'Poppins', sans-serif;
+  --font-family-body: 'Inter', sans-serif;
 
   /* Note Color Palette Variables */
   /* Yellow (Default) */
@@ -283,6 +285,62 @@ html {
 .note-content.view-mode * {
   cursor: text; /* Show text cursor on all child elements to indicate editability */
   pointer-events: none; /* Ensure clicks bubble to parent for E2E tests */
+}
+
+/* MM-175: Note Content Typography Improvements */
+/* Headers - Poppins font with improved sizing and spacing */
+.note-content h1,
+.note-content h2 {
+  font-family: var(--font-family-headings);
+  margin: 0;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.note-content h1 {
+  font-size: 1.2rem;
+  margin-bottom: 4px;
+}
+
+.note-content h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+/* Emphasis styling with proper weight and italic support */
+.note-content strong { 
+  font-weight: 700; 
+}
+
+.note-content em { 
+  font-style: italic; 
+}
+
+.note-content em strong { 
+  font-weight: 700; 
+  font-style: italic; 
+}
+
+/* List styling with custom bullets and proper spacing */
+.note-content ul,
+.note-content ol {
+  margin: 4px 0 0 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.note-content ul li {
+  position: relative;
+  padding-left: 0.9ch;
+}
+
+.note-content ul li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  font-weight: 700;
 }
 
 .note-content-handdrawn {
