@@ -301,24 +301,35 @@ html {
   padding: 0;
 }
 
-/* Headers - Poppins font with improved sizing and spacing */
-.note-content h1,
-.note-content h2 {
-  font-family: var(--font-family-headings);
-  line-height: 1.15;
-  font-weight: 700;
+/* Use Inter font for all body text, paragraphs, and most elements */
+.note-content p,
+.note-content,
+.note-content strong,
+.note-content em,
+.note-content ul,
+.note-content ol,
+.note-content li {
+  font-family: var(--font-family-body);
 }
 
+/* H1 uses Poppins for clear hierarchy */
 .note-content h1 {
+  font-family: var(--font-family-headings);
   font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.15;
   margin-bottom: 4px;
 }
 
+/* H2 uses Inter and is clearly different from bold */
 .note-content h2 {
-  font-size: 1.05rem;
+  font-family: var(--font-family-body);
+  font-size: 1.1rem;
   font-weight: 600;
+  line-height: 1.2;
   margin-top: 2px;
   margin-bottom: 2px;
+  color: #2c3e50;
 }
 
 /* Emphasis styling with proper weight and italic support */
@@ -335,16 +346,19 @@ html {
   font-style: italic; 
 }
 
-/* List styling with custom bullets and minimal spacing */
+/* List styling with custom bullets, minimal spacing, and left alignment */
 .note-content ul,
 .note-content ol {
   list-style: none;
   margin-top: 4px;
+  text-align: left;
 }
 
-.note-content ul li {
+.note-content ul li,
+.note-content ol li {
   position: relative;
   padding-left: 0.9ch;
+  text-align: left;
 }
 
 .note-content ul li::before {
