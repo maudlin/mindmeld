@@ -96,8 +96,8 @@ describe('noteFactory', () => {
       // Note content
       const noteContent = note.querySelector('.note-content');
       expect(noteContent).toBeInstanceOf(HTMLDivElement);
-      expect(noteContent.className).toBe('note-content');
-      expect(noteContent.contentEditable).toBe(true);
+      expect(noteContent.className).toBe('note-content view-mode');
+      expect(noteContent.contentEditable).toBe(false); // Starts in view mode
 
       // Ghost connectors
       const connectors = note.querySelectorAll('.ghost-connector');

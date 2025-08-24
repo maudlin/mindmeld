@@ -186,6 +186,9 @@ export class TouchAdapter extends BaseAdapter {
 
     // Enhance hit targets for touch
     this.enhanceHitTargets();
+
+    // MM-169: TouchAdapter uses double-tap for edit mode, not focus/blur
+    // this.setupFocusBlurHandling();
   }
 
   /**
@@ -270,21 +273,14 @@ export class TouchAdapter extends BaseAdapter {
         this.handleNoteSelection(note);
       }
     } else if (this.isClickOnCanvas(target)) {
-      // Tap on canvas - clear selections and cancel operations (MM-145 refined)
+      // Tap on canvas - clear selections and cancel operations (MM-169)
       this.clearAllJiggleAnimations();
       this.clearConnectionMode();
       noteManager.clearSelections();
       this.emit('note.selection.changed');
 
-      // Exit any editing mode
-      const activeElement = document.activeElement;
-      if (activeElement && activeElement.classList.contains('note-content')) {
-        activeElement.blur();
-        this.emit('note.editMode.exit', {
-          content: activeElement,
-          _gesture: 'tap',
-        });
-      }
+      // Emit canvas click for EditModeController to handle edit mode exit
+      this.emit('canvas.clicked', { _gesture: 'tap' });
 
       // Clear any other active states
       this.emit('interaction.cancel', { _gesture: 'tap' });
@@ -297,58 +293,26 @@ export class TouchAdapter extends BaseAdapter {
   handleDoubleTap(touch) {
     const { target } = this.getTouchTarget(touch.currentX, touch.currentY);
 
-    // Check if double-tapping on a note - enter edit mode (MM-145 refined)
+    // Check if double-tapping on a note - enter edit mode (MM-169)
     const note = target.classList.contains('note')
       ? target
       : target.closest('.note');
 
     if (note) {
-      // Find the note content element for editing
-      const noteContent = note.querySelector('.note-content');
-      if (noteContent) {
-        // For mobile, we need to ensure contentEditable is properly set
-        // and use the right focus technique to trigger the keyboard
-        noteContent.setAttribute('contenteditable', 'true');
-
-        // Use a slight delay to ensure the DOM updates are processed
-        // This helps mobile browsers recognize the editable state
-        setTimeout(() => {
-          noteContent.focus();
-
-          // For mobile devices, we may need to trigger a click to show keyboard
-          // This is a workaround for some mobile browsers
-          if ('ontouchstart' in window) {
-            noteContent.click();
-          }
-
-          // Set the cursor position to the end of the text
-          const range = document.createRange();
-          const sel = window.getSelection();
-          if (noteContent.childNodes.length > 0) {
-            const textNode =
-              noteContent.childNodes[noteContent.childNodes.length - 1];
-            if (textNode.nodeType === Node.TEXT_NODE) {
-              range.setStart(textNode, textNode.length);
-              range.collapse(true);
-              sel.removeAllRanges();
-              sel.addRange(range);
-            }
-          }
-        }, 50);
-
-        // Ensure note is selected
-        if (!note.classList.contains('selected')) {
-          noteManager.clearSelections();
-          noteManager.selectNote(note);
-          this.emit('note.selection.changed');
-        }
-
-        this.emit('note.editMode.enter', {
-          note: note,
-          content: noteContent,
-          _gesture: 'doubletap',
-        });
+      // Ensure note is selected
+      if (!note.classList.contains('selected')) {
+        noteManager.clearSelections();
+        noteManager.selectNote(note);
+        this.emit('note.selection.changed');
       }
+
+      // Emit edit request to EditModeController
+      this.emit('note.requestEdit', {
+        noteId: note.id,
+        noteElement: note,
+        _gesture: 'doubletap',
+      });
+
       return;
     }
 

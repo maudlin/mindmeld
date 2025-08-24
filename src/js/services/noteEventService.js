@@ -1,7 +1,8 @@
 // noteEventService.js - Handles note-related events from the event bus
 import { createNoteAtPosition } from '../factories/noteFactory.js';
 import { deleteNoteWithConnections } from '../features/note/noteDeletion.js';
-import { addNoteEventListeners } from '../features/note/noteEvents.js';
+// MM-171: Legacy event system disabled - using adapter architecture
+// import { addNoteEventListeners } from '../features/note/noteEvents.js';
 import { eventBus } from '../core/eventBus.js';
 
 export class NoteEventService {
@@ -14,7 +15,7 @@ export class NoteEventService {
         canvas: canvas?.id,
         event: event?.type,
       });
-      createNoteAtPosition(canvas, event, addNoteEventListeners);
+      createNoteAtPosition(canvas, event, null); // MM-171: Legacy disabled
     });
 
     // Handle note deletion from events

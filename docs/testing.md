@@ -12,7 +12,35 @@ Note on throttling: The app enforces a 500ms double-click throttle for note crea
 
 **Unit Tests**: Core algorithms, data transformations, utility functions  
 **E2E Tests**: Complete user workflows, UI interactions, browser integration  
-**Integration Tests**: Event bus communication, service coordination
+**Integration Tests**: Event bus communication, service coordination  
+**Regression Tests**: Critical bug prevention - prevent return of specific resolved issues
+
+## Critical Regression Tests
+
+### MM-174: Page Refresh Markdown Corruption Prevention
+
+**File**: `tests/unit/data/refreshPersistenceRegression.test.js`  
+**Purpose**: Prevents regression of critical data loss bug where page refreshes corrupted markdown content  
+**Critical Nature**: ⚠️ **MUST PASS** - Failure indicates potential data loss for users
+
+**Bug History**: 
+- **Issue**: `getCurrentState()` was reading `innerHTML` (HTML) instead of stored markdown during page refreshes
+- **Impact**: Progressive corruption: `# H1` → `<h1>H1</h1>` → `H1` (data permanently lost)
+- **Fix**: Modified `getCurrentState()` to use `getCurrentMarkdownContent()` instead of `innerHTML`
+
+**Test Coverage**:
+- ✅ Validates `getCurrentState()` never returns HTML content
+- ✅ Simulates complete refresh cycles to ensure markdown preservation
+- ✅ Tests multiple refresh cycles to prevent progressive degradation
+- ✅ Validates supporting pipeline components (defang, render, storage)
+
+**When This Test Fails**:
+1. **STOP IMMEDIATELY** - Do not merge/deploy code that fails this test
+2. **Investigate**: Check if `getCurrentState()` has been modified to read from DOM
+3. **Validate**: Ensure the fix in `dataStore.js` is still present
+4. **Test Manually**: Use `test-refresh-fix.html` for manual validation
+
+This test is designed to catch any changes that might accidentally reintroduce the data corruption bug.
 
 ## Test Naming and Structure Standards
 

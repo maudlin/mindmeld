@@ -227,6 +227,7 @@ html {
 .note {
   position: absolute;
   width: 150px;
+  min-height: 40px; /* Ensure notes have minimum clickable area even when empty */
   padding: 8px;
   background-color: var(--note-color-yellow-bg);
   border: 1px solid var(--note-color-yellow-border);
@@ -268,11 +269,20 @@ html {
   font-weight: bold;
   color: #333;
   outline: none; /* Remove default outline when focused */
-  cursor: text; /* Ensure cursor is text when focused */
   min-width: 50px;
+  min-height: 24px; /* Ensure note-content has clickable area even when empty */
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: center;
+  box-sizing: border-box; /* Include border/padding in dimensions */
+  cursor: text; /* Show text cursor to indicate editability */
+}
+
+/* Ensure all rendered markdown elements allow proper event handling */
+/* MM-173: Fix E2E test click detection on styled HTML elements */
+.note-content.view-mode * {
+  cursor: text; /* Show text cursor on all child elements to indicate editability */
+  pointer-events: none; /* Ensure clicks bubble to parent for E2E tests */
 }
 
 .note-content-handdrawn {
@@ -280,9 +290,11 @@ html {
   font-size: 1.1em;
 }
 
-/* Prevent text selection in notes */
+/* All mode-specific styles removed - back to original behavior */
+
+/* Prevent text selection in notes when not in edit mode */
 .note,
-.note-content {
+.note-content:not(.edit-mode) {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;

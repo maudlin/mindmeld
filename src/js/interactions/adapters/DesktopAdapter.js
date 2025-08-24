@@ -52,6 +52,7 @@ export class DesktopAdapter extends BaseAdapter {
       pointerDown: this.handlePointerDown.bind(this),
       pointerMove: this.handlePointerMove.bind(this),
       pointerUp: this.handlePointerUp.bind(this),
+      click: this.handleClick.bind(this), // MM-168: Click-based edit mode
       doubleClick: this.handleDoubleClick.bind(this),
       wheel: this.handleWheel.bind(this),
       keyDown: this.handleKeyDown.bind(this),
@@ -82,6 +83,7 @@ export class DesktopAdapter extends BaseAdapter {
     // Document-level events for dragging and keyboard
     document.addEventListener('pointermove', this.boundHandlers.pointerMove);
     document.addEventListener('pointerup', this.boundHandlers.pointerUp);
+    document.addEventListener('click', this.boundHandlers.click); // MM-168: Click-based edit mode
     document.addEventListener('keydown', this.boundHandlers.keyDown);
     document.addEventListener('contextmenu', this.boundHandlers.contextMenu);
 
@@ -106,6 +108,7 @@ export class DesktopAdapter extends BaseAdapter {
 
     document.removeEventListener('pointermove', this.boundHandlers.pointerMove);
     document.removeEventListener('pointerup', this.boundHandlers.pointerUp);
+    document.removeEventListener('click', this.boundHandlers.click);
     document.removeEventListener('keydown', this.boundHandlers.keyDown);
     document.removeEventListener('contextmenu', this.boundHandlers.contextMenu);
 
@@ -151,35 +154,23 @@ export class DesktopAdapter extends BaseAdapter {
       event.stopPropagation();
       // Clear selections immediately on canvas click
       noteManager.clearSelections();
+      // Exit any active edit mode
+      this.emit('canvas.clicked');
       this.startSelectionBox(event);
     }
   }
 
   /**
    * Handle note interaction (selection and drag start)
+   * MM-168: Edit mode now handled by handleClick method
    */
   handleNoteInteraction(event, note) {
     const target = event.target;
     const isSelected = note.classList.contains('selected');
 
-    // If clicking on note-content, handle selection and blur if focused
+    // MM-168: Skip note-content clicks - let handleClick manage edit mode
     if (target.classList.contains('note-content')) {
-      // Always blur if the content has focus (ends editing mode)
-      if (document.activeElement === target) {
-        target.blur();
-      }
-      // Ensure note is selected
-      if (!isSelected) {
-        noteManager.clearSelections();
-        noteManager.selectNote(note);
-      }
-      return; // Don't start dragging for content editing
-    }
-
-    // If clicking outside note-content, blur any focused content within this note
-    const noteContent = note.querySelector('.note-content');
-    if (noteContent && document.activeElement === noteContent) {
-      noteContent.blur();
+      return; // Edit mode handled by handleClick method
     }
 
     // Handle selection using noteManager service
@@ -370,6 +361,53 @@ export class DesktopAdapter extends BaseAdapter {
 
     // Select notes within the selection box
     this.selectNotesWithinBox();
+  }
+
+  /**
+   * Handle click events for edit mode (MM-168)
+   */
+  handleClick(event) {
+    const target = event.target;
+
+    // Check if clicking on a note
+    const note = target.classList.contains('note')
+      ? target
+      : target.closest('.note');
+
+    // Check if the click is inside note-content (target itself or parent)
+    const noteContent = target.classList.contains('note-content')
+      ? target
+      : target.closest('.note-content');
+
+    if (note && noteContent) {
+      console.log(
+        'DesktopAdapter: Click on note-content detected, emitting edit request',
+        note.id,
+      );
+      event.preventDefault();
+      event.stopPropagation();
+
+      // Emit edit mode request via EventBus
+      this.emit('note.requestEdit', {
+        noteId: note.id,
+        noteElement: note,
+        trigger: 'click',
+      });
+
+      // Track editing note for click-outside handling
+      this.editingNote = note;
+      return;
+    }
+
+    // Handle click-outside for edit mode exit
+    if (this.editingNote && !target.closest('.note')) {
+      this.emit('note.requestView', {
+        noteId: this.editingNote.id,
+        noteElement: this.editingNote,
+        trigger: 'clickOutside',
+      });
+      this.editingNote = null;
+    }
   }
 
   /**

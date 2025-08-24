@@ -55,6 +55,14 @@ export class CanvasPage {
     await this.page.goto(url);
     await expect(this.canvas).toBeVisible();
 
+    // Clear any existing localStorage to prevent state pollution between tests
+    await this.page.evaluate(() => {
+      localStorage.clear();
+    });
+
+    // Wait for the app to stabilize after localStorage clear
+    await this.page.waitForTimeout(200);
+
     // CI-specific warmup period for application stability
     if (this.isCI) {
       await this.page.waitForLoadState('domcontentloaded');
