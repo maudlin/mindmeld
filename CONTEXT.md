@@ -186,6 +186,68 @@ This document provides essential context for developers joining the MindMeld pro
 - **Test Coverage**: ✅ 100% E2E success rate for edit mode scenarios
 - **Production Ready**: ✅ Unified edit/view mode system fully functional
 
+### 🔧 **Current Development: Markdown Newline Fix & UX Improvements (August 2025)**
+
+**Status**: 🚧 **IN PROGRESS** - Critical markdown newline corruption fix implemented, working on edit mode UX improvements
+
+#### **✅ RESOLVED: Critical Markdown Newline Corruption (MM-160)**
+**Problem**: "# heading one\n## heading two" corrupted to "# heading one## heading two" (single line)
+**Root Cause**: ContentEditable divs don't preserve newlines naturally + innerText strips newlines
+**Solution**: Implemented textarea-based editing with Inter font consistency
+- **Architecture Change**: Replaced contentEditable with textarea for edit mode
+- **Font Consistency**: Unified Inter 0.9em across view/edit modes for seamless transitions  
+- **CSS Simplification**: Removed font weight inconsistencies (base text no longer bold by default)
+- **Height Consistency**: Fixed note expansion issues when entering edit mode
+
+#### **🔧 Current Bug Investigation: Edit Mode Click Handling**
+**Problem**: Clicking textarea during edit mode causes edit mode to exit unexpectedly
+**Status**: 🚧 **UNDER INVESTIGATION** - Root cause identified, solution in progress
+
+**Detailed Technical Analysis**:
+```
+Issue Chain:
+1. User clicks note → enters edit mode → editingNote gets set
+2. User clicks within textarea to move caret → edit mode unexpectedly exits
+3. Analysis reveals: textarea click events are reaching handleClick as canvas DIV clicks
+```
+
+**Debug Evidence** (Console logs from DesktopAdapter.js):
+```javascript
+// When clicking textarea, this is what we see:
+{
+  targetTag: 'DIV',           // Should be TEXTAREA  
+  targetClass: '',            // Should be 'edit-textarea'
+  isEditingClick: false,      // Should be true
+  isInsideNote: false,        // Should be true  
+  target: div#canvas          // Should be textarea element!
+}
+```
+
+**Root Cause Discovered**:
+- Textarea clicks are somehow being detected as clicks on `div#canvas`
+- This causes `target.closest('.note')` to return `null` → triggers "click outside" logic
+- The existing `isEditingNoteContent()` method fails because target is canvas, not textarea
+- Event delegation or bubbling issue causing textarea events to reach handleClick as canvas events
+
+**Investigation Findings**:
+- ✅ Note selection on edit mode entry: **WORKING** (noteManager integration successful)
+- ✅ CSS font consistency: **WORKING** (Inter 0.9em across modes)
+- ✅ Height consistency: **WORKING** (textarea inherits exact note height)
+- 🔧 Textarea click detection: **BROKEN** (events reaching wrong target)
+- 🔧 Edit mode persistence: **BROKEN** (premature exit due to click detection)
+
+**Next Steps**:
+1. **Priority 1**: Fix textarea click event detection/delegation issue
+2. **Priority 2**: Implement ctrl-enter keybind to complete editing  
+3. **Priority 3**: Address internal scrollbars on longer styled content
+4. **Priority 4**: Fix color picker integration with styled content (H1 notes not changing color)
+
+**Files Modified in Current Work**:
+- `editViewMode.js`: Textarea implementation + note selection integration
+- `styles.css`: Font consistency + aggressive textarea resets for height matching
+- `DesktopAdapter.js`: Enhanced click detection with debugging (investigation ongoing)
+- `noteManager.js`: Integration for proper selection state management
+
 ### **✅ RESOLVED: Page Refresh Corruption Bug (MM-174)**
 
 **Status**: ✅ **FIXED** - Critical data corruption bug resolved

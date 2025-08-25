@@ -369,6 +369,19 @@ export class DesktopAdapter extends BaseAdapter {
   handleClick(event) {
     const target = event.target;
 
+    // Check if clicking on note-content that's actually a textarea (our new approach)
+    // Since textarea has class 'note-content', all existing checks will work
+    if (
+      target.tagName === 'TEXTAREA' &&
+      target.classList.contains('note-content')
+    ) {
+      console.log(
+        'DesktopAdapter: Click on textarea note-content, allowing native behavior',
+      );
+      // Don't interfere with textarea clicks - let them work normally
+      return;
+    }
+
     // Check if clicking on a note
     const note = target.classList.contains('note')
       ? target
@@ -380,6 +393,31 @@ export class DesktopAdapter extends BaseAdapter {
       : target.closest('.note-content');
 
     if (note && noteContent) {
+      // Check if we're already editing this specific note
+      const isAlreadyEditing = this.editingNote === note;
+
+      console.log('DesktopAdapter: Click debug:', {
+        isAlreadyEditing,
+        editingNoteId: this.editingNote?.id,
+        clickedNoteId: note.id,
+        targetClasses: target.className,
+        noteContentClasses: noteContent.className,
+        targetTag: target.tagName,
+        editingNoteRef: this.editingNote,
+        clickedNoteRef: note,
+        refsEqual: this.editingNote === note,
+      });
+
+      if (isAlreadyEditing) {
+        // Already editing this note - allow normal textarea interaction
+        console.log(
+          'DesktopAdapter: Click on note already being edited, allowing interaction',
+        );
+        event.stopPropagation();
+        return;
+      }
+
+      // Note is in view mode - enter edit mode
       console.log(
         'DesktopAdapter: Click on note-content detected, emitting edit request',
         note.id,
@@ -395,12 +433,32 @@ export class DesktopAdapter extends BaseAdapter {
       });
 
       // Track editing note for click-outside handling
+      console.log('DesktopAdapter: Setting editingNote to:', note.id);
       this.editingNote = note;
       return;
     }
 
     // Handle click-outside for edit mode exit
-    if (this.editingNote && !target.closest('.note')) {
+    // Use the existing isEditingNoteContent method which properly handles textareas
+    const isEditingClick = this.isEditingNoteContent(target);
+    const isInsideNote = target.closest('.note');
+
+    if (this.editingNote) {
+      console.log('DesktopAdapter: Click-outside check:', {
+        editingNoteId: this.editingNote.id,
+        targetTag: target.tagName,
+        targetClass: target.className,
+        isEditingClick,
+        isInsideNote: !!isInsideNote,
+        target: target,
+      });
+    }
+
+    if (this.editingNote && !isInsideNote && !isEditingClick) {
+      console.log(
+        'DesktopAdapter: Click outside detected, clearing editingNote:',
+        this.editingNote.id,
+      );
       this.emit('note.requestView', {
         noteId: this.editingNote.id,
         noteElement: this.editingNote,

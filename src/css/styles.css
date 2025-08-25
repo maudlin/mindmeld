@@ -304,6 +304,13 @@ html {
   pointer-events: none; /* Ensure clicks bubble to parent for E2E tests */
 }
 
+/* CRITICAL: Override pointer-events for edit mode textarea */
+.note-content.edit-mode .edit-textarea {
+  pointer-events: auto !important; /* Ensure textarea can receive clicks */
+  position: relative !important; /* Ensure proper stacking context */
+  z-index: 10 !important; /* Place above other elements */
+}
+
 /* MM-175: Note Content Typography Improvements */
 /* Reset margins and padding for all markdown elements to prevent extra spacing */
 .note-content p,

@@ -4,6 +4,7 @@
 
 import { renderMarkdown } from '../markdown/markdownRenderer.js';
 import { defangToPlainText } from '../markdown/defangPipeline.js';
+import { noteManager } from '../../services/noteManager.js';
 
 /**
  * Display note content in view mode (rendered HTML, not editable)
@@ -67,13 +68,18 @@ export function displayAsEditMode(noteContent, markdownContent = null) {
   // Capture current height before changing content
   const currentHeight = noteContent.offsetHeight;
 
-  // Create textarea for proper newline handling
-  noteContent.innerHTML = '';
+  // Store the parent for replacing the element
+  const parent = noteContent.parentNode;
 
+  // Create textarea to REPLACE note-content (not go inside it)
   const textarea = document.createElement('textarea');
   textarea.value = cleanedMarkdown;
-  textarea.className = 'edit-textarea';
+  // CRITICAL: Give textarea both classes so event handlers recognize it
+  textarea.className = 'note-content edit-mode edit-textarea';
   textarea.rows = 1; // Start with single row to prevent default 2-row height
+
+  // Copy the data-markdown attribute
+  textarea.setAttribute('data-markdown', cleanedMarkdown);
 
   // Copy relevant styles and attributes
   textarea.style.width = '100%';
@@ -112,7 +118,8 @@ export function displayAsEditMode(noteContent, markdownContent = null) {
 
   textarea.addEventListener('input', resizeTextarea);
 
-  noteContent.appendChild(textarea);
+  // REPLACE the note-content div with the textarea
+  parent.replaceChild(textarea, noteContent);
 
   // Only resize initially if there's actual content that might need more space
   if (cleanedMarkdown && cleanedMarkdown.trim()) {
@@ -122,12 +129,22 @@ export function displayAsEditMode(noteContent, markdownContent = null) {
     }, 0);
   }
 
-  // Track mode state
-  noteContent.classList.remove('view-mode');
-  noteContent.classList.add('edit-mode');
+  // Note: Mode state is already set on the textarea element itself
+  // The old noteContent div has been replaced
+
+  // Handle note selection when entering edit mode
+  const note = textarea.closest('.note');
+  if (note) {
+    // Clear other selections and select this note
+    noteManager.clearSelections();
+    noteManager.selectNote(note);
+  }
 
   // Focus the textarea
   setTimeout(() => textarea.focus(), 0);
+
+  // Return the textarea so callers can reference the new element
+  return textarea;
 }
 
 /**
@@ -141,8 +158,16 @@ export function getCurrentMarkdownContent(noteContent) {
     return '';
   }
 
+  // Check if noteContent itself is a textarea (new approach)
+  if (
+    noteContent.tagName === 'TEXTAREA' &&
+    noteContent.classList.contains('edit-textarea')
+  ) {
+    return noteContent.value;
+  }
+
   if (noteContent.classList.contains('edit-mode')) {
-    // In edit mode, get content from textarea
+    // Legacy: In edit mode, get content from textarea inside
     const textarea = noteContent.querySelector('textarea.edit-textarea');
     const content = textarea ? textarea.value : '';
     return content;
