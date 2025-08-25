@@ -265,19 +265,36 @@ html {
   outline: none; /* Remove default outline */
 }
 
+/* ===============================================
+   NOTE CONTENT STYLING - SIMPLIFIED ARCHITECTURE
+   
+   Base: Inter 0.9em, normal weight (400)
+   - Consistent across view and edit modes
+   - All elements inherit unless specified
+   
+   View Mode Deviations:
+   - H1: Poppins, 1.3em, bold (700)
+   - H2: Inter, 1.1em, semibold (600)
+   - Strong: Inter, bold (700)
+   - Em: Inter, italic
+   
+   Edit Mode: Inherits all base styles via textarea
+   =============================================== */
+
 .note-content {
-  font-family: var(--font-family);
-  font-size: 0.8em;
-  font-weight: bold;
+  font-family: 'Inter', var(--font-family-body);
+  font-size: 0.9em; /* Standard size for all note content */
+  font-weight: 400; /* Normal weight - bold is a markdown feature */
+  line-height: 1.4;
   color: #333;
-  outline: none; /* Remove default outline when focused */
+  text-align: center;
+  outline: none;
   min-width: 50px;
-  min-height: 24px; /* Ensure note-content has clickable area even when empty */
+  min-height: 24px;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: center;
-  box-sizing: border-box; /* Include border/padding in dimensions */
-  cursor: text; /* Show text cursor to indicate editability */
+  box-sizing: border-box;
+  cursor: text;
 }
 
 /* Ensure all rendered markdown elements allow proper event handling */
@@ -301,48 +318,31 @@ html {
   padding: 0;
 }
 
-/* Use Inter font for all body text, paragraphs, and most elements */
-.note-content p,
-.note-content,
-.note-content strong,
-.note-content em,
-.note-content ul,
-.note-content ol,
-.note-content li {
-  font-family: var(--font-family-body);
-}
+/* All standard text inherits from .note-content base (Inter 0.9em) */
+/* No need to redefine - they inherit automatically */
 
-/* H1 uses Poppins for clear hierarchy */
-.note-content h1 {
-  font-family: var(--font-family-headings);
-  font-size: 1.2rem;
+/* VIEW MODE ONLY: Markdown-specific styling deviations */
+
+/* H1: Poppins for visual hierarchy */
+.note-content.view-mode h1 {
+  font-family: 'Poppins', var(--font-family-headings);
+  font-size: 1.3em; /* Relative to base 0.9em */
   font-weight: 700;
-  line-height: 1.15;
-  margin-bottom: 4px;
 }
 
-/* H2 uses Inter and is clearly different from bold */
-.note-content h2 {
-  font-family: var(--font-family-body);
-  font-size: 1.0rem;
+/* H2: Larger Inter with medium weight */
+.note-content.view-mode h2 {
+  font-size: 1.1em; /* Relative to base 0.9em */
   font-weight: 600;
-  line-height: 1.2;
-  margin-top: 2px;
-  margin-bottom: 2px;
   color: #2c3e50;
 }
 
-/* Emphasis styling with proper weight and italic support */
-.note-content strong { 
+/* Bold and italic in view mode only */
+.note-content.view-mode strong { 
   font-weight: 700; 
 }
 
-.note-content em { 
-  font-style: italic; 
-}
-
-.note-content em strong { 
-  font-weight: 700; 
+.note-content.view-mode em { 
   font-style: italic; 
 }
 
@@ -374,52 +374,33 @@ html {
   font-size: 1.1em;
 }
 
-/* Edit Mode: Raw Markdown Display */
+/* Edit mode container - minimal overrides needed */
 .note-content.edit-mode {
-  /* Maintain the note's background and remove jarring borders */
-  background-color: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-  
-  /* Remove all markdown-specific styling in edit mode */
-  color: inherit !important;
+  /* Container is just a wrapper for textarea */
+  padding: 0;
 }
 
-/* Style the textarea specifically for smooth editing experience */
+/* Edit mode textarea - inherit base styles for consistency */
 .note-content.edit-mode .edit-textarea {
-  /* Use monospace font to clearly indicate raw markdown editing */
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace !important;
-  font-size: 0.75rem !important;
-  font-weight: 400 !important;
-  line-height: 1.4 !important;
-  color: #495057 !important;
+  /* Inherit font properties from .note-content for perfect match */
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  line-height: inherit;
   
-  /* Maintain note's natural appearance */
-  background: transparent !important;
-  border: none !important;
-  outline: none !important;
-  resize: none !important;
+  /* Textarea-specific resets */
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
-/* In edit mode, ensure NO child elements have special styling */
-.note-content.edit-mode *,
-.note-content.edit-mode h1,
-.note-content.edit-mode h2,
-.note-content.edit-mode strong,
-.note-content.edit-mode em,
-.note-content.edit-mode ul,
-.note-content.edit-mode li {
-  font-family: inherit !important;
-  font-size: inherit !important;
-  font-weight: inherit !important;
-  line-height: inherit !important;
-  color: inherit !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  list-style: none !important;
-  background: none !important;
-}
+/* Edit mode contains only textarea - no need for child element rules */
 
 /* Prevent text selection in notes when not in edit mode */
 .note,

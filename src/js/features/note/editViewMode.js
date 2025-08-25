@@ -86,15 +86,28 @@ export function displayAsEditMode(noteContent, markdownContent = null) {
   textarea.style.margin = '0';
 
   // Auto-resize textarea to fit content
-  textarea.addEventListener('input', function () {
-    this.style.height = 'auto';
-    this.style.height = this.scrollHeight + 'px';
-  });
+  function resizeTextarea() {
+    // Save current scroll position
+    const scrollTop = textarea.scrollTop;
+
+    // Reset height to get accurate measurement
+    textarea.style.height = 'auto';
+
+    // Set to scrollHeight to fit content
+    textarea.style.height = textarea.scrollHeight + 'px';
+
+    // Restore scroll position
+    textarea.scrollTop = scrollTop;
+  }
+
+  textarea.addEventListener('input', resizeTextarea);
 
   noteContent.appendChild(textarea);
 
-  // Initial resize
-  textarea.style.height = textarea.scrollHeight + 'px';
+  // Defer initial resize to next tick to ensure proper rendering
+  setTimeout(() => {
+    resizeTextarea();
+  }, 0);
 
   // Track mode state
   noteContent.classList.remove('view-mode');
