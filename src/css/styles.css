@@ -388,16 +388,18 @@ html {
   text-align: inherit;
   line-height: inherit;
   
-  /* Textarea-specific resets */
+  /* Textarea-specific resets - aggressive to match view mode exactly */
   background: transparent;
   border: none;
   outline: none;
   resize: none;
-  padding: 0;
-  margin: 0;
+  padding: 0 !important;
+  margin: 0 !important;
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
+  vertical-align: top; /* Prevent baseline alignment issues */
+  min-height: 0; /* Override any browser defaults */
 }
 
 /* Edit mode contains only textarea - no need for child element rules */

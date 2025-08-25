@@ -64,16 +64,19 @@ export function displayAsEditMode(noteContent, markdownContent = null) {
   const cleanedMarkdown = defangToPlainText(rawMarkdown, false);
   noteContent.setAttribute('data-markdown', cleanedMarkdown);
 
+  // Capture current height before changing content
+  const currentHeight = noteContent.offsetHeight;
+
   // Create textarea for proper newline handling
   noteContent.innerHTML = '';
 
   const textarea = document.createElement('textarea');
   textarea.value = cleanedMarkdown;
   textarea.className = 'edit-textarea';
+  textarea.rows = 1; // Start with single row to prevent default 2-row height
 
   // Copy relevant styles and attributes
   textarea.style.width = '100%';
-  textarea.style.height = 'auto';
   textarea.style.border = 'none';
   textarea.style.outline = 'none';
   textarea.style.resize = 'none';
@@ -85,16 +88,23 @@ export function displayAsEditMode(noteContent, markdownContent = null) {
   textarea.style.padding = '0';
   textarea.style.margin = '0';
 
+  // Set initial height to match the original note height exactly
+  textarea.style.height = currentHeight + 'px';
+
   // Auto-resize textarea to fit content
   function resizeTextarea() {
     // Save current scroll position
     const scrollTop = textarea.scrollTop;
 
-    // Reset height to get accurate measurement
-    textarea.style.height = 'auto';
+    // Temporarily set to small height to measure actual content height
+    textarea.style.height = '1px';
 
-    // Set to scrollHeight to fit content
-    textarea.style.height = textarea.scrollHeight + 'px';
+    // Get the actual scroll height needed for content
+    const contentHeight = textarea.scrollHeight;
+
+    // Set height to fit content, ensuring minimum height for empty notes
+    const minHeight = 24; // Matches .note-content min-height
+    textarea.style.height = Math.max(contentHeight, minHeight) + 'px';
 
     // Restore scroll position
     textarea.scrollTop = scrollTop;
@@ -104,10 +114,13 @@ export function displayAsEditMode(noteContent, markdownContent = null) {
 
   noteContent.appendChild(textarea);
 
-  // Defer initial resize to next tick to ensure proper rendering
-  setTimeout(() => {
-    resizeTextarea();
-  }, 0);
+  // Only resize initially if there's actual content that might need more space
+  if (cleanedMarkdown && cleanedMarkdown.trim()) {
+    // Defer to next tick to ensure textarea is rendered
+    setTimeout(() => {
+      resizeTextarea();
+    }, 0);
+  }
 
   // Track mode state
   noteContent.classList.remove('view-mode');
