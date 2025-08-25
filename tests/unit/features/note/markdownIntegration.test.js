@@ -115,14 +115,16 @@ describe('Markdown Integration with Note System', () => {
 
       // Switch to edit mode
       displayAsEditMode(noteContent);
-      expect(noteContent.textContent).toBe('# Test Header');
+      const textarea = noteContent.querySelector('textarea.edit-textarea');
+      expect(textarea.value).toBe('# Test Header');
       expect(noteContent.classList.contains('edit-mode')).toBe(true);
     });
 
     test('should preserve line breaks in edit mode', () => {
       const markdown = '# Header\n\n**Bold** text\n\n- List item';
       displayAsEditMode(noteContent, markdown);
-      expect(noteContent.textContent).toBe(markdown);
+      const textarea = noteContent.querySelector('textarea.edit-textarea');
+      expect(textarea.value).toBe(markdown);
     });
   });
 
@@ -173,7 +175,8 @@ describe('Markdown Integration with Note System', () => {
 
       // Switch to edit mode
       displayAsEditMode(noteContent);
-      expect(noteContent.textContent).toBe(originalMarkdown);
+      const editTextarea = noteContent.querySelector('textarea.edit-textarea');
+      expect(editTextarea.value).toBe(originalMarkdown);
 
       // Switch back to view mode
       displayAsViewMode(noteContent, getCurrentMarkdownContent(noteContent));

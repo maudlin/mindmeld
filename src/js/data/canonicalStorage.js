@@ -15,9 +15,9 @@
  */
 
 import { defangToPlainText } from '../features/markdown/defangPipeline.js';
-import { 
-  detectBrowser, 
-  getStorageErrorMessage 
+import {
+  detectBrowser,
+  getStorageErrorMessage,
 } from '../utils/browserDetection.js';
 
 // Storage format version for migration compatibility
@@ -143,7 +143,7 @@ export function saveNotesToStorage(notes) {
     // Enhanced error handling with browser-specific messaging
     const browserInfo = detectBrowser();
     let isPrivateMode = false;
-    
+
     // Try to detect private mode synchronously for error reporting
     try {
       const testKey = 'mindmeld-private-test';
@@ -156,8 +156,12 @@ export function saveNotesToStorage(notes) {
     } catch {
       isPrivateMode = true;
     }
-    
-    const userFriendlyMessage = getStorageErrorMessage(error, browserInfo, isPrivateMode);
+
+    const userFriendlyMessage = getStorageErrorMessage(
+      error,
+      browserInfo,
+      isPrivateMode,
+    );
     console.warn('Failed to save to localStorage:', userFriendlyMessage);
     return false;
   }
@@ -190,7 +194,7 @@ export function loadNotesFromStorage() {
     // Enhanced error handling with browser-specific messaging for load failures
     const browserInfo = detectBrowser();
     let isPrivateMode = false;
-    
+
     // Try to detect private mode for better error context
     try {
       const testKey = 'mindmeld-load-test';
@@ -203,8 +207,12 @@ export function loadNotesFromStorage() {
     } catch {
       isPrivateMode = true;
     }
-    
-    const userFriendlyMessage = getStorageErrorMessage(error, browserInfo, isPrivateMode);
+
+    const userFriendlyMessage = getStorageErrorMessage(
+      error,
+      browserInfo,
+      isPrivateMode,
+    );
     console.warn('Failed to load from localStorage:', userFriendlyMessage);
     return { notes: [], recovered: false };
   }
@@ -281,7 +289,11 @@ export function clearStorage() {
   } catch (error) {
     // Enhanced error handling for clear operation
     const browserInfo = detectBrowser();
-    const userFriendlyMessage = getStorageErrorMessage(error, browserInfo, false);
+    const userFriendlyMessage = getStorageErrorMessage(
+      error,
+      browserInfo,
+      false,
+    );
     console.warn('Failed to clear localStorage:', userFriendlyMessage);
     return false;
   }

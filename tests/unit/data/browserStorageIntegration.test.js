@@ -46,7 +46,9 @@ const mockBrowserEnvironment = (config) => {
       }
       localStorage.data[key] = value;
     });
-    localStorage.getItem.mockImplementation((key) => localStorage.data[key] || null);
+    localStorage.getItem.mockImplementation(
+      (key) => localStorage.data[key] || null,
+    );
   } else {
     // Normal behavior
     localStorage.setItem.mockImplementation((key, value) => {
@@ -57,7 +59,9 @@ const mockBrowserEnvironment = (config) => {
       }
       localStorage.data[key] = value;
     });
-    localStorage.getItem.mockImplementation((key) => localStorage.data[key] || null);
+    localStorage.getItem.mockImplementation(
+      (key) => localStorage.data[key] || null,
+    );
     localStorage.removeItem.mockImplementation((key) => {
       delete localStorage.data[key];
     });
@@ -86,7 +90,8 @@ describe('Browser Storage Integration', () => {
   describe('Supported Browsers', () => {
     it('should save and load normally in Chrome', () => {
       mockBrowserEnvironment({
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        userAgent:
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         vendor: 'Google Inc.',
         storageDisabled: false,
       });
@@ -106,7 +111,8 @@ describe('Browser Storage Integration', () => {
 
     it('should save and load normally in Safari', () => {
       mockBrowserEnvironment({
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
+        userAgent:
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
         vendor: 'Apple Computer, Inc.',
         storageDisabled: false,
       });
@@ -128,18 +134,17 @@ describe('Browser Storage Integration', () => {
   describe('Private/Incognito Mode Handling', () => {
     it('should handle Safari private mode limitations', () => {
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-      
+
       mockBrowserEnvironment({
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
+        userAgent:
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
         vendor: 'Apple Computer, Inc.',
         privateMode: true,
         quotaLimit: 500, // Very small limit for private mode
       });
 
       // Small content should work
-      const smallNotes = [
-        { id: 'small', content: 'Small', position: [0, 0] },
-      ];
+      const smallNotes = [{ id: 'small', content: 'Small', position: [0, 0] }];
       const smallResult = saveNotesToStorage(smallNotes);
       expect(smallResult).toBe(true);
 
@@ -153,7 +158,7 @@ describe('Browser Storage Integration', () => {
       // Should provide helpful error message
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringMatching(/Failed to save to localStorage/i),
-        expect.stringMatching(/Safari Private Browsing mode/i)
+        expect.stringMatching(/Safari Private Browsing mode/i),
       );
 
       consoleSpy.mockRestore();
@@ -161,7 +166,8 @@ describe('Browser Storage Integration', () => {
 
     it('should handle Chrome incognito mode quota limits', () => {
       mockBrowserEnvironment({
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        userAgent:
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         vendor: 'Google Inc.',
         quotaLimit: 1000, // Simulate reduced quota
       });
@@ -183,7 +189,8 @@ describe('Browser Storage Integration', () => {
 
     it('should handle Edge incognito mode quota limits', () => {
       mockBrowserEnvironment({
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+        userAgent:
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
         vendor: '', // Empty vendor for Edge
         quotaLimit: 1000, // Simulate reduced quota
       });
@@ -207,9 +214,10 @@ describe('Browser Storage Integration', () => {
   describe('Unsupported Browsers', () => {
     it('should fail gracefully in Firefox with helpful message', () => {
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-      
+
       mockBrowserEnvironment({
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/119.0',
+        userAgent:
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/119.0',
         storageDisabled: true, // Simulating our decision to not support Firefox yet
       });
 
@@ -227,7 +235,7 @@ describe('Browser Storage Integration', () => {
       // Should provide helpful error message
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringMatching(/Failed to save to localStorage/i),
-        expect.stringMatching(/Firefox is not yet fully supported/i)
+        expect.stringMatching(/Firefox is not yet fully supported/i),
       );
 
       consoleSpy.mockRestore();
@@ -235,7 +243,8 @@ describe('Browser Storage Integration', () => {
 
     it('should work normally in Edge (Chromium-based)', () => {
       mockBrowserEnvironment({
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+        userAgent:
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
         vendor: '', // Edge has empty vendor like test environments
         storageDisabled: false, // Edge is now supported
       });
@@ -257,7 +266,8 @@ describe('Browser Storage Integration', () => {
   describe('Error Recovery and Data Integrity', () => {
     it('should preserve existing data when new saves fail due to browser limitations', () => {
       const mockStorage = mockBrowserEnvironment({
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
+        userAgent:
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
         vendor: 'Apple Computer, Inc.',
         privateMode: false,
       });
@@ -271,7 +281,8 @@ describe('Browser Storage Integration', () => {
 
       // Now simulate private mode kicking in (user switched to private)
       mockStorage.setItem.mockImplementation((key, value) => {
-        if (value.length > 100) { // Simulate very restrictive private mode
+        if (value.length > 100) {
+          // Simulate very restrictive private mode
           throw new Error('localStorage is disabled in private mode');
         }
         mockStorage.data[key] = value;
@@ -285,7 +296,9 @@ describe('Browser Storage Integration', () => {
       expect(largeResult).toBe(false);
 
       // Original data should still be recoverable
-      mockStorage.getItem.mockImplementation((key) => mockStorage.data[key] || null);
+      mockStorage.getItem.mockImplementation(
+        (key) => mockStorage.data[key] || null,
+      );
       const recovered = loadNotesFromStorage();
       expect(recovered.notes).toHaveLength(1);
       expect(recovered.notes[0].content).toBe('Existing content');
@@ -293,7 +306,11 @@ describe('Browser Storage Integration', () => {
 
     it('should maintain data format consistency across browser differences', () => {
       const testNotes = [
-        { id: 'format-test', content: '# Header\n**Bold** text', position: [100, 200] },
+        {
+          id: 'format-test',
+          content: '# Header\n**Bold** text',
+          position: [100, 200],
+        },
       ];
 
       // Test Chrome
@@ -304,7 +321,7 @@ describe('Browser Storage Integration', () => {
       saveNotesToStorage(testNotes);
       const chromeData = JSON.parse(localStorage.data['mindmeld-notes']);
 
-      // Test Safari  
+      // Test Safari
       mockBrowserEnvironment({
         userAgent: 'Safari/605.1.15',
         vendor: 'Apple Computer, Inc.',
@@ -379,7 +396,7 @@ describe('Browser Storage Integration', () => {
         },
       ];
 
-      scenarios.forEach(({ browser, expectedMessage, description }) => {
+      scenarios.forEach(({ browser, expectedMessage }) => {
         consoleSpy.mockClear();
         mockBrowserEnvironment(browser);
 
@@ -391,8 +408,10 @@ describe('Browser Storage Integration', () => {
         expect(result).toBe(false);
 
         const calls = consoleSpy.mock.calls;
-        const hasExpectedMessage = calls.some(call =>
-          call.some(arg => typeof arg === 'string' && expectedMessage.test(arg))
+        const hasExpectedMessage = calls.some((call) =>
+          call.some(
+            (arg) => typeof arg === 'string' && expectedMessage.test(arg),
+          ),
         );
         expect(hasExpectedMessage).toBe(true);
       });

@@ -551,7 +551,7 @@ export class DesktopAdapter extends BaseAdapter {
         this.emit('state.save');
       } else if (
         event.key === 'Backspace' &&
-        event.target.textContent.length === 0
+        this.isContentEmpty(event.target)
       ) {
         // Editing but content is empty: delete the note
         event.preventDefault();
@@ -589,14 +589,55 @@ export class DesktopAdapter extends BaseAdapter {
   }
 
   /**
+   * Check if content is empty (works with both textarea and contentEditable)
+   * @param {HTMLElement} element - The target element
+   * @returns {boolean} True if content is empty
+   */
+  isContentEmpty(element) {
+    if (element.tagName === 'TEXTAREA') {
+      return element.value.length === 0;
+    }
+
+    // For contentEditable or note-content containers
+    const textarea = element.querySelector('textarea.edit-textarea');
+    if (textarea) {
+      return textarea.value.length === 0;
+    }
+
+    return element.textContent.length === 0;
+  }
+
+  /**
    * Check if currently editing note content
    */
   isEditingNoteContent(element) {
-    return (
+    // Check if element is a textarea in edit mode
+    if (
+      element.tagName === 'TEXTAREA' &&
+      element.classList.contains('edit-textarea')
+    ) {
+      return true;
+    }
+
+    // Check if element is contentEditable note-content
+    if (
       element.classList.contains('note-content') &&
-      element.isContentEditable &&
-      document.activeElement === element
-    );
+      element.isContentEditable
+    ) {
+      return document.activeElement === element;
+    }
+
+    // Check if we're inside a note-content that contains an active textarea
+    // Ensure element is a DOM element with closest method
+    if (element && typeof element.closest === 'function') {
+      const noteContent = element.closest('.note-content');
+      if (noteContent) {
+        const textarea = noteContent.querySelector('textarea.edit-textarea');
+        return textarea && document.activeElement === textarea;
+      }
+    }
+
+    return false;
   }
 
   /**

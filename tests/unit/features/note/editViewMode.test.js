@@ -85,7 +85,8 @@ describe('Edit/View Mode Functions', () => {
 
       displayAsEditMode(noteContent, markdown);
 
-      expect(noteContent.textContent).toBe('# Test Header\n**Bold text**');
+      const textarea = noteContent.querySelector('textarea.edit-textarea');
+      expect(textarea.value).toBe('# Test Header\n**Bold text**');
       expect(noteContent.classList.contains('edit-mode')).toBe(true);
       expect(noteContent.contentEditable).toBe(true);
     });
@@ -95,7 +96,8 @@ describe('Edit/View Mode Functions', () => {
 
       displayAsEditMode(noteContent);
 
-      expect(noteContent.textContent).toBe('# Stored Header');
+      const textarea = noteContent.querySelector('textarea.edit-textarea');
+      expect(textarea.value).toBe('# Stored Header');
     });
   });
 
@@ -129,7 +131,8 @@ describe('Edit/View Mode Functions', () => {
 
       // Switch to edit mode (raw markdown)
       displayAsEditMode(noteContent, markdown);
-      expect(noteContent.textContent).toBe(markdown);
+      const textarea = noteContent.querySelector('textarea.edit-textarea');
+      expect(textarea.value).toBe(markdown);
       expect(noteContent.classList.contains('edit-mode')).toBe(true);
 
       // Switch back to view mode

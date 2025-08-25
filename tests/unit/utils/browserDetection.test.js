@@ -32,7 +32,7 @@ const createLocalStorageMock = (behavior = 'normal') => {
         throw new Error('localStorage is not supported');
       });
       break;
-      
+
     case 'safari-private':
       mock.setItem.mockImplementation((key, value) => {
         if (key === 'mindmeld-private-mode-test') {
@@ -52,11 +52,14 @@ const createLocalStorageMock = (behavior = 'normal') => {
         return mock.data[key] || null;
       });
       break;
-      
+
     case 'chrome-incognito':
       mock.setItem.mockImplementation((key, value) => {
-        if (value.length > 2 * 1024 * 1024) { // 2MB limit
-          const error = new Error('QuotaExceededError: Chrome incognito storage limit exceeded');
+        if (value.length > 2 * 1024 * 1024) {
+          // 2MB limit
+          const error = new Error(
+            'QuotaExceededError: Chrome incognito storage limit exceeded',
+          );
           error.name = 'QuotaExceededError';
           throw error;
         }
@@ -64,7 +67,7 @@ const createLocalStorageMock = (behavior = 'normal') => {
       });
       mock.getItem.mockImplementation((key) => mock.data[key] || null);
       break;
-      
+
     default: // normal
       mock.setItem.mockImplementation((key, value) => {
         mock.data[key] = value;
@@ -108,7 +111,7 @@ describe('Browser Detection Utilities', () => {
     it('should detect Chrome correctly', () => {
       createBrowserMock(
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Google Inc.'
+        'Google Inc.',
       );
 
       const result = detectBrowser();
@@ -122,7 +125,7 @@ describe('Browser Detection Utilities', () => {
     it('should detect Chromium (test environment) correctly', () => {
       createBrowserMock(
         'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        '' // Empty vendor like in test environments
+        '', // Empty vendor like in test environments
       );
 
       const result = detectBrowser();
@@ -136,7 +139,7 @@ describe('Browser Detection Utilities', () => {
     it('should detect Safari correctly', () => {
       createBrowserMock(
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
-        'Apple Computer, Inc.'
+        'Apple Computer, Inc.',
       );
 
       const result = detectBrowser();
@@ -149,7 +152,7 @@ describe('Browser Detection Utilities', () => {
 
     it('should detect Firefox as unsupported', () => {
       createBrowserMock(
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/119.0'
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/119.0',
       );
 
       const result = detectBrowser();
@@ -162,7 +165,7 @@ describe('Browser Detection Utilities', () => {
 
     it('should detect Edge as supported (Chromium-based)', () => {
       createBrowserMock(
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0'
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
       );
 
       const result = detectBrowser();
@@ -366,8 +369,14 @@ describe('Browser Detection Utilities', () => {
 
       const result = showBrowserMessage(limitations);
       expect(result).toBe(false);
-      expect(consoleSpy).toHaveBeenCalledWith('Browser Compatibility:', limitations.warning);
-      expect(infoSpy).toHaveBeenCalledWith('Recommendation:', limitations.recommendation);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Browser Compatibility:',
+        limitations.warning,
+      );
+      expect(infoSpy).toHaveBeenCalledWith(
+        'Recommendation:',
+        limitations.recommendation,
+      );
 
       consoleSpy.mockRestore();
       infoSpy.mockRestore();
@@ -384,8 +393,14 @@ describe('Browser Detection Utilities', () => {
 
       const result = showBrowserMessage(limitations);
       expect(result).toBe(true);
-      expect(infoSpy).toHaveBeenCalledWith('Browser Notice:', limitations.warning);
-      expect(infoSpy).toHaveBeenCalledWith('Recommendation:', limitations.recommendation);
+      expect(infoSpy).toHaveBeenCalledWith(
+        'Browser Notice:',
+        limitations.warning,
+      );
+      expect(infoSpy).toHaveBeenCalledWith(
+        'Recommendation:',
+        limitations.recommendation,
+      );
 
       infoSpy.mockRestore();
     });
@@ -425,26 +440,26 @@ describe('Browser Detection Utilities', () => {
     });
 
     it('should return false when data exceeds storage limit', () => {
-      const limitations = { 
-        supported: true, 
-        maxStorage: 1024 
+      const limitations = {
+        supported: true,
+        maxStorage: 1024,
       };
       const result = canSaveData(2048, limitations);
       expect(result).toBe(false);
     });
 
     it('should return true when data is within limits', () => {
-      const limitations = { 
-        supported: true, 
-        maxStorage: 2048 
+      const limitations = {
+        supported: true,
+        maxStorage: 2048,
       };
       const result = canSaveData(1000, limitations);
       expect(result).toBe(true);
     });
 
     it('should return true when no storage limit is specified', () => {
-      const limitations = { 
-        supported: true 
+      const limitations = {
+        supported: true,
       };
       const result = canSaveData(1000000, limitations);
       expect(result).toBe(true);

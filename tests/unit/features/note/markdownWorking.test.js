@@ -60,7 +60,8 @@ describe('Working Markdown Integration Tests', () => {
   describe('Edit Mode', () => {
     test('should show raw markdown in edit mode', () => {
       displayAsEditMode(noteContent, '# Test Header');
-      expect(noteContent.textContent).toBe('# Test Header');
+      const textarea = noteContent.querySelector('textarea.edit-textarea');
+      expect(textarea.value).toBe('# Test Header');
       expect(noteContent.classList.contains('edit-mode')).toBe(true);
     });
 
@@ -71,8 +72,9 @@ describe('Working Markdown Integration Tests', () => {
       // Switch to edit mode without providing content
       displayAsEditMode(noteContent);
 
-      // Should show the stored markdown
-      expect(noteContent.textContent).toBe('# Test');
+      // Should show the stored markdown in textarea
+      const textarea = noteContent.querySelector('textarea.edit-textarea');
+      expect(textarea.value).toBe('# Test');
     });
   });
 
@@ -86,7 +88,8 @@ describe('Working Markdown Integration Tests', () => {
 
       // Edit mode
       displayAsEditMode(noteContent);
-      expect(noteContent.textContent).toBe(original);
+      const textarea = noteContent.querySelector('textarea.edit-textarea');
+      expect(textarea.value).toBe(original);
 
       // Back to view mode
       displayAsViewMode(noteContent, getCurrentMarkdownContent(noteContent));

@@ -165,14 +165,15 @@ describe('noteFactory', () => {
         noteContent.dispatchEvent(new Event('input'));
         expect(noteContent.innerText).toBe(exactLimitText);
 
-        // Test event emission on content change
+        // Test that input events no longer trigger immediate saves (prevents corruption)
         noteContent.innerHTML = 'New content';
         noteContent.dispatchEvent(new Event('input'));
-        expect(mockEventBus.emit).toHaveBeenCalledWith('note.updated', {
-          id: 'content_test_id',
-          content: 'New content',
-        });
-        expect(mockEventBus.emit).toHaveBeenCalledWith('state.save');
+        // Should NOT emit note.updated on input to prevent corruption feedback loops
+        expect(mockEventBus.emit).not.toHaveBeenCalledWith(
+          'note.updated',
+          expect.any(Object),
+        );
+        expect(mockEventBus.emit).not.toHaveBeenCalledWith('state.save');
       });
     });
   });

@@ -48,26 +48,60 @@ export function displayAsViewMode(noteContent, markdownContent = '') {
  * @param {string} markdownContent - The raw markdown content to edit (optional)
  */
 export function displayAsEditMode(noteContent, markdownContent = null) {
-  // Get markdown content from parameter, data attribute, or current text
+  // Get markdown content from parameter or data attribute ONLY
+  // Never fall back to textContent as it may be corrupted HTML-derived text
   const rawMarkdown =
-    markdownContent ||
-    noteContent.getAttribute('data-markdown') ||
-    noteContent.textContent ||
-    '';
+    markdownContent || noteContent.getAttribute('data-markdown') || '';
+
+  // Debug warning if no markdown content found
+  if (!rawMarkdown && markdownContent === null) {
+    console.warn(
+      'displayAsEditMode: No markdown content found. data-markdown may be missing.',
+    );
+  }
 
   // Clean and store the markdown content
   const cleanedMarkdown = defangToPlainText(rawMarkdown, false);
   noteContent.setAttribute('data-markdown', cleanedMarkdown);
 
-  // Show raw markdown for editing - only content changes, no visual styling changes
-  noteContent.textContent = cleanedMarkdown;
-  noteContent.contentEditable = true;
+  // Create textarea for proper newline handling
+  noteContent.innerHTML = '';
 
-  // Track mode state without visual changes
+  const textarea = document.createElement('textarea');
+  textarea.value = cleanedMarkdown;
+  textarea.className = 'edit-textarea';
+
+  // Copy relevant styles and attributes
+  textarea.style.width = '100%';
+  textarea.style.height = 'auto';
+  textarea.style.border = 'none';
+  textarea.style.outline = 'none';
+  textarea.style.resize = 'none';
+  textarea.style.background = 'transparent';
+  textarea.style.fontFamily = 'inherit';
+  textarea.style.fontSize = 'inherit';
+  textarea.style.lineHeight = 'inherit';
+  textarea.style.color = 'inherit';
+  textarea.style.padding = '0';
+  textarea.style.margin = '0';
+
+  // Auto-resize textarea to fit content
+  textarea.addEventListener('input', function () {
+    this.style.height = 'auto';
+    this.style.height = this.scrollHeight + 'px';
+  });
+
+  noteContent.appendChild(textarea);
+
+  // Initial resize
+  textarea.style.height = textarea.scrollHeight + 'px';
+
+  // Track mode state
   noteContent.classList.remove('view-mode');
   noteContent.classList.add('edit-mode');
 
-  console.log('Displayed as edit mode:', { cleanedMarkdown });
+  // Focus the textarea
+  setTimeout(() => textarea.focus(), 0);
 }
 
 /**
@@ -76,14 +110,27 @@ export function displayAsEditMode(noteContent, markdownContent = null) {
  * @returns {string} The current markdown content
  */
 export function getCurrentMarkdownContent(noteContent) {
+  if (!noteContent || typeof noteContent.classList === 'undefined') {
+    console.warn('getCurrentMarkdownContent: Invalid noteContent element');
+    return '';
+  }
+
   if (noteContent.classList.contains('edit-mode')) {
-    // In edit mode, get the raw text content being edited
-    return noteContent.textContent || '';
+    // In edit mode, get content from textarea
+    const textarea = noteContent.querySelector('textarea.edit-textarea');
+    const content = textarea ? textarea.value : '';
+    return content;
   } else {
-    // Get from stored markdown attribute or fall back to text content
-    return (
-      noteContent.getAttribute('data-markdown') || noteContent.textContent || ''
-    );
+    // Get from stored markdown attribute ONLY - never fall back to textContent (corrupted HTML-derived)
+    const storedMarkdown = noteContent.getAttribute('data-markdown') || '';
+
+    if (!storedMarkdown) {
+      console.warn(
+        'getCurrentMarkdownContent: No data-markdown found in view mode. Content may be lost.',
+      );
+    }
+
+    return storedMarkdown;
   }
 }
 

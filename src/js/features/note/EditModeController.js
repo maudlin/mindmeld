@@ -120,12 +120,19 @@ class EditModeController {
       contentElement: noteContent,
     };
 
-    // Get current markdown content
+    // Get current markdown content - NEVER fall back to textContent (corrupted HTML-derived)
     const currentContent =
       getCurrentMarkdownContent(noteContent) ||
       noteContent.dataset.markdown ||
-      noteContent.textContent ||
       '';
+
+    // Debug warning if no content found
+    if (!currentContent) {
+      console.warn(
+        'EditModeController: No markdown content found for note',
+        noteElement.id,
+      );
+    }
 
     // Switch to edit mode display
     displayAsEditMode(noteContent, currentContent);
@@ -181,9 +188,14 @@ class EditModeController {
     const { element: noteElement, contentElement: noteContent } =
       this.currentEditingNote;
 
-    // Get the current markdown content
-    const rawText =
-      getCurrentMarkdownContent(noteContent) || noteContent.textContent || '';
+    // Get the current markdown content - NO DANGEROUS FALLBACKS
+    const rawText = getCurrentMarkdownContent(noteContent) || '';
+
+    if (!rawText) {
+      console.warn(
+        'EditModeController: Failed to extract content during exit. Content may be lost.',
+      );
+    }
 
     // Store markdown in dataset for persistence
     noteContent.dataset.markdown = rawText;

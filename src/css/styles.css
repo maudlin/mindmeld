@@ -315,7 +315,7 @@ html {
 /* H1 uses Poppins for clear hierarchy */
 .note-content h1 {
   font-family: var(--font-family-headings);
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   font-weight: 700;
   line-height: 1.15;
   margin-bottom: 4px;
@@ -351,6 +351,7 @@ html {
 .note-content ol {
   list-style: none;
   margin-top: 4px;
+  padding-left:0;
   text-align: left;
 }
 
@@ -373,7 +374,52 @@ html {
   font-size: 1.1em;
 }
 
-/* All mode-specific styles removed - back to original behavior */
+/* Edit Mode: Raw Markdown Display */
+.note-content.edit-mode {
+  /* Maintain the note's background and remove jarring borders */
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  
+  /* Remove all markdown-specific styling in edit mode */
+  color: inherit !important;
+}
+
+/* Style the textarea specifically for smooth editing experience */
+.note-content.edit-mode .edit-textarea {
+  /* Use monospace font to clearly indicate raw markdown editing */
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace !important;
+  font-size: 0.75rem !important;
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+  color: #495057 !important;
+  
+  /* Maintain note's natural appearance */
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  resize: none !important;
+}
+
+/* In edit mode, ensure NO child elements have special styling */
+.note-content.edit-mode *,
+.note-content.edit-mode h1,
+.note-content.edit-mode h2,
+.note-content.edit-mode strong,
+.note-content.edit-mode em,
+.note-content.edit-mode ul,
+.note-content.edit-mode li {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  line-height: inherit !important;
+  color: inherit !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+  background: none !important;
+}
 
 /* Prevent text selection in notes when not in edit mode */
 .note,

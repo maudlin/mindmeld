@@ -149,10 +149,10 @@ export function getCurrentState() {
     (noteElement) => {
       const noteContent = noteElement.querySelector('.note-content');
       // FIX: Use getCurrentMarkdownContent instead of innerHTML to preserve markdown
+      // CRITICAL: Never fall back to textContent - it corrupts HTML-rendered content by stripping newlines
       const content =
         getCurrentMarkdownContent(noteContent) ||
         noteContent.dataset.markdown ||
-        noteContent.textContent ||
         '';
 
       return {
