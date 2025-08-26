@@ -18,9 +18,15 @@ test.describe('MindMeld Operations', () => {
 
     await canvasPage.editNoteContent('Test Note', note);
 
-    // Assert the note content
+    // Assert the note content - handle both textarea (edit mode) and div (view mode)
     const noteContent = note.locator('.note-content');
-    await expect(noteContent).toHaveText('Test Note');
+    const isTextarea = await noteContent.evaluate(el => el.tagName === 'TEXTAREA');
+    
+    if (isTextarea) {
+      await expect(noteContent).toHaveValue('Test Note');
+    } else {
+      await expect(noteContent).toHaveText('Test Note');
+    }
 
     await canvasPage.selectNote(note);
     await canvasPage.deleteNote();

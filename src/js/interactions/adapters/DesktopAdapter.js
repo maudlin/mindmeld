@@ -84,7 +84,7 @@ export class DesktopAdapter extends BaseAdapter {
     document.addEventListener('pointermove', this.boundHandlers.pointerMove);
     document.addEventListener('pointerup', this.boundHandlers.pointerUp);
     document.addEventListener('click', this.boundHandlers.click); // MM-168: Click-based edit mode
-    document.addEventListener('keydown', this.boundHandlers.keyDown);
+    document.addEventListener('keydown', this.boundHandlers.keyDown, true); // Use capture phase for priority
     document.addEventListener('contextmenu', this.boundHandlers.contextMenu);
 
     console.log('DesktopAdapter: Event listeners initialized successfully');
@@ -109,7 +109,7 @@ export class DesktopAdapter extends BaseAdapter {
     document.removeEventListener('pointermove', this.boundHandlers.pointerMove);
     document.removeEventListener('pointerup', this.boundHandlers.pointerUp);
     document.removeEventListener('click', this.boundHandlers.click);
-    document.removeEventListener('keydown', this.boundHandlers.keyDown);
+    document.removeEventListener('keydown', this.boundHandlers.keyDown, true);
     document.removeEventListener('contextmenu', this.boundHandlers.contextMenu);
 
     // Cleanup any active selection box
@@ -594,6 +594,69 @@ export class DesktopAdapter extends BaseAdapter {
   handleKeyDown(event) {
     const isEditingNote = this.isEditingNoteContent(event.target);
 
+    // Handle Enter key - priority over kebab menu
+    if (event.key === 'Enter') {
+      // Don't interfere with Enter in edit mode (allows newlines)
+      if (!isEditingNote) {
+        const focusedNote = this.getFocusedNote();
+        if (focusedNote) {
+          // Enter on focused note - enter edit mode
+          event.preventDefault();
+          event.stopPropagation();
+          this.emit('note.requestEdit', {
+            noteId: focusedNote.id,
+            noteElement: focusedNote,
+            trigger: 'keyboard',
+          });
+          this.editingNote = focusedNote;
+          return;
+        }
+      }
+      // In edit mode, allow default Enter behavior for newlines
+      return;
+    }
+
+    // Handle Escape key
+    if (event.key === 'Escape') {
+      if (isEditingNote) {
+        // Exit edit mode
+        event.preventDefault();
+        if (this.editingNote) {
+          this.emit('note.requestView', {
+            noteId: this.editingNote.id,
+            noteElement: this.editingNote,
+            trigger: 'keyboard',
+          });
+          this.editingNote = null;
+        }
+      } else {
+        // Deselect all notes
+        const selectedNotes = noteManager.getSelectedNotes();
+        if (selectedNotes.length > 0) {
+          event.preventDefault();
+          noteManager.clearSelections();
+        }
+      }
+      return;
+    }
+
+    // Handle Ctrl+Enter in edit mode (already working, but documenting)
+    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+      if (isEditingNote) {
+        event.preventDefault();
+        if (this.editingNote) {
+          this.emit('note.requestView', {
+            noteId: this.editingNote.id,
+            noteElement: this.editingNote,
+            trigger: 'keyboard',
+          });
+          this.editingNote = null;
+        }
+      }
+      return;
+    }
+
+    // Handle Delete/Backspace
     if (event.key === 'Delete' || event.key === 'Backspace') {
       if (!isEditingNote) {
         // Not editing: delete selected items
@@ -696,6 +759,36 @@ export class DesktopAdapter extends BaseAdapter {
     }
 
     return false;
+  }
+
+  /**
+   * Get the currently focused note (selected note with keyboard focus)
+   * Returns the note that should respond to Enter key for edit mode
+   */
+  getFocusedNote() {
+    // Check if we have a focused note-content element
+    const activeElement = document.activeElement;
+    
+    if (activeElement && activeElement.classList.contains('note-content')) {
+      return activeElement.closest('.note');
+    }
+
+    // Check if active element is within a note
+    if (activeElement && activeElement.closest) {
+      const parentNote = activeElement.closest('.note');
+      if (parentNote) {
+        return parentNote;
+      }
+    }
+
+    // Fallback: if no specific focus, use the first selected note
+    const selectedNotes = noteManager.getSelectedNotes();
+    if (selectedNotes.length === 1) {
+      return selectedNotes[0];
+    }
+
+    // If multiple selected or none, no focused note for edit mode
+    return null;
   }
 
   /**

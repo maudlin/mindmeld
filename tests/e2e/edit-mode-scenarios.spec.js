@@ -16,16 +16,15 @@ test.describe('MM-173: Edit Mode Click Detection Scenarios', () => {
 
     // Verify it's empty and in view mode
     await expect(noteContent).toHaveAttribute('data-markdown', '');
-    await expect(noteContent).toHaveClass(/view-mode/);
-    await expect(noteContent).toHaveAttribute('contenteditable', 'false');
+    await canvasPage.assertNoteInViewMode(noteContent);
 
     // Click should trigger edit mode
     await noteContent.click();
-
-    // Should now be in edit mode
-    await expect(noteContent).toHaveClass(/edit-mode/);
-    await expect(noteContent).toHaveAttribute('contenteditable', 'true');
-    await expect(noteContent).toBeFocused();
+    await page.waitForTimeout(100); // Wait for element replacement
+    
+    // Re-query after mode change
+    const editContent = await canvasPage.getNoteContentElement(note);
+    await canvasPage.assertNoteInEditMode(editContent);
   });
 
   test('Unstyled text note should enter edit mode when clicked @critical', async ({
@@ -51,18 +50,17 @@ test.describe('MM-173: Edit Mode Click Detection Scenarios', () => {
     );
 
     // Verify starting state
-    await expect(noteContent).toHaveClass(/view-mode/);
-    await expect(noteContent).toHaveAttribute('contenteditable', 'false');
-    await expect(noteContent).toHaveText('Simple text content');
+    await canvasPage.assertNoteInViewMode(noteContent);
+    await canvasPage.assertNoteContent(noteContent, 'Simple text content');
 
     // Click should trigger edit mode
     await noteContent.click();
-
-    // Should now be in edit mode with original markdown
-    await expect(noteContent).toHaveClass(/edit-mode/);
-    await expect(noteContent).toHaveAttribute('contenteditable', 'true');
-    await expect(noteContent).toHaveText('Simple text content');
-    await expect(noteContent).toBeFocused();
+    await page.waitForTimeout(100); // Wait for element replacement
+    
+    // Re-query after mode change and verify edit mode with original markdown
+    const editContent = await canvasPage.getNoteContentElement(note);
+    await canvasPage.assertNoteInEditMode(editContent);
+    await canvasPage.assertNoteContent(editContent, 'Simple text content');
   });
 
   test('Styled note (with HTML) should enter edit mode when clicked @critical', async ({
@@ -92,8 +90,7 @@ test.describe('MM-173: Edit Mode Click Detection Scenarios', () => {
     );
 
     // Verify starting state shows rendered HTML
-    await expect(noteContent).toHaveClass(/view-mode/);
-    await expect(noteContent).toHaveAttribute('contenteditable', 'false');
+    await canvasPage.assertNoteInViewMode(noteContent);
 
     const headerElement = noteContent.locator('h1');
     await expect(headerElement).toBeVisible();
@@ -105,18 +102,16 @@ test.describe('MM-173: Edit Mode Click Detection Scenarios', () => {
 
     // Click on the note-content div should trigger edit mode
     await noteContent.click();
-
-    // Should now be in edit mode showing raw markdown
-    await expect(noteContent).toHaveClass(/edit-mode/);
-    await expect(noteContent).toHaveAttribute('contenteditable', 'true');
-
-    const textContent = await noteContent.textContent();
-    expect(textContent).toContain('# Test Header');
-    expect(textContent).toContain('**Bold**');
-    expect(textContent).not.toContain('<h1>'); // No HTML tags in edit mode
-    expect(textContent).not.toContain('<strong>');
-
-    await expect(noteContent).toBeFocused();
+    await page.waitForTimeout(100); // Wait for element replacement
+    
+    // Re-query after mode change and verify raw markdown
+    const editContent = await canvasPage.getNoteContentElement(note);
+    await canvasPage.assertNoteInEditMode(editContent);
+    
+    await canvasPage.assertNoteContentContains(editContent, '# Test Header');
+    await canvasPage.assertNoteContentContains(editContent, '**Bold**');
+    await canvasPage.assertNoteContentDoesNotContain(editContent, '<h1>');
+    await canvasPage.assertNoteContentDoesNotContain(editContent, '<strong>');
   });
 
   test('Clicking on HTML elements inside styled note should still trigger edit mode @critical', async ({
@@ -149,14 +144,14 @@ test.describe('MM-173: Edit Mode Click Detection Scenarios', () => {
     const headerElement = noteContent.locator('h1');
     await expect(headerElement).toBeVisible();
     await noteContent.click(); // Click parent since child has pointer-events: none
-
-    // Should still trigger edit mode even though we clicked on child element
-    await expect(noteContent).toHaveClass(/edit-mode/);
-    await expect(noteContent).toHaveAttribute('contenteditable', 'true');
-
-    const textContent = await noteContent.textContent();
-    expect(textContent).toContain('# Click Target');
-    expect(textContent).toContain('**Bold text**');
+    await page.waitForTimeout(100); // Wait for element replacement
+    
+    // Re-query after mode change and verify edit mode
+    const editContent = await canvasPage.getNoteContentElement(note);
+    await canvasPage.assertNoteInEditMode(editContent);
+    
+    await canvasPage.assertNoteContentContains(editContent, '# Click Target');
+    await canvasPage.assertNoteContentContains(editContent, '**Bold text**');
   });
 
   test('Clicking on deeply nested HTML elements should trigger edit mode @critical', async ({
@@ -190,14 +185,14 @@ test.describe('MM-173: Edit Mode Click Detection Scenarios', () => {
     await expect(italicElement).toBeVisible();
     await expect(italicElement).toHaveText('italic');
     await noteContent.click(); // Click parent since child has pointer-events: none
-
-    // Should still trigger edit mode
-    await expect(noteContent).toHaveClass(/edit-mode/);
-    await expect(noteContent).toHaveAttribute('contenteditable', 'true');
-
-    const textContent = await noteContent.textContent();
-    expect(textContent).toContain('# Header');
-    expect(textContent).toContain('**Bold *italic* text**');
+    await page.waitForTimeout(100); // Wait for element replacement
+    
+    // Re-query after mode change and verify edit mode
+    const editContent = await canvasPage.getNoteContentElement(note);
+    await canvasPage.assertNoteInEditMode(editContent);
+    
+    await canvasPage.assertNoteContentContains(editContent, '# Header');
+    await canvasPage.assertNoteContentContains(editContent, '**Bold *italic* text**');
   });
 
   test('Edit mode to view mode transition preserves content @critical', async ({
@@ -224,36 +219,38 @@ test.describe('MM-173: Edit Mode Click Detection Scenarios', () => {
 
     // Click to enter edit mode properly through EditModeController
     await noteContent.click();
-    await expect(noteContent).toHaveClass(/edit-mode/);
+    await page.waitForTimeout(100); // Wait for element replacement
+    
+    let editContent = await canvasPage.getNoteContentElement(note);
+    await canvasPage.assertNoteInEditMode(editContent);
 
     // Modify content - use actual newline, not escaped
-    await noteContent.fill('# Modified Header\n**New content**');
+    await editContent.fill('# Modified Header\n**New content**');
 
-    // Click outside to trigger view mode (blur doesn't work reliably in E2E)
+    // Click outside to trigger view mode
     await page.click('#canvas');
-    // eslint-disable-next-line playwright/no-wait-for-timeout
     await page.waitForTimeout(100); // Allow for processing
 
-    // Should be in view mode with rendered content
-    await expect(noteContent).toHaveClass(/view-mode/);
-    // Note: contenteditable might be removed or set to false
-    const contentEditable = await noteContent.getAttribute('contenteditable');
-    expect(!contentEditable || contentEditable === 'false').toBeTruthy();
+    // Re-query after mode change
+    const viewContent = await canvasPage.getNoteContentElement(note);
+    await canvasPage.assertNoteInViewMode(viewContent);
 
     // Check that markdown was rendered (h1 and strong tags exist)
-    const headerElement = noteContent.locator('h1');
+    const headerElement = viewContent.locator('h1');
     await expect(headerElement).toBeVisible();
 
-    const boldElement = noteContent.locator('strong');
+    const boldElement = viewContent.locator('strong');
     await expect(boldElement).toBeVisible();
 
     // Click again should show the modified markdown in edit mode
-    await noteContent.click();
-
-    await expect(noteContent).toHaveClass(/edit-mode/);
-    const textContent = await noteContent.textContent();
-    // Check that both parts of the markdown are present (newline handling varies)
-    expect(textContent).toContain('# Modified Header');
-    expect(textContent).toContain('**New content**');
+    await viewContent.click();
+    await page.waitForTimeout(100); // Wait for element replacement
+    
+    editContent = await canvasPage.getNoteContentElement(note);
+    await canvasPage.assertNoteInEditMode(editContent);
+    
+    // Check that both parts of the markdown are present
+    await canvasPage.assertNoteContentContains(editContent, '# Modified Header');
+    await canvasPage.assertNoteContentContains(editContent, '**New content**');
   });
 });
