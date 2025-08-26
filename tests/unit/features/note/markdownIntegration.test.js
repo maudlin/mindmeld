@@ -95,17 +95,21 @@ describe('Markdown Integration with Note System', () => {
   });
 
   describe('Edit Mode Functions', () => {
-    let noteContent;
+    let noteContent, noteContainer;
 
     beforeEach(() => {
+      // Create a mock note content element with a parent container
+      noteContainer = document.createElement('div');
+      noteContainer.className = 'note';
       noteContent = document.createElement('div');
       noteContent.className = 'note-content';
       noteContent.contentEditable = true;
-      document.body.appendChild(noteContent);
+      noteContainer.appendChild(noteContent);
+      document.body.appendChild(noteContainer);
     });
 
     afterEach(() => {
-      document.body.removeChild(noteContent);
+      document.body.removeChild(noteContainer);
     });
 
     test('should switch to raw markdown in edit mode', () => {
@@ -113,37 +117,41 @@ describe('Markdown Integration with Note System', () => {
       displayAsViewMode(noteContent, '# Test Header');
       expect(noteContent.innerHTML).toBe('<h1>Test Header</h1>');
 
-      // Switch to edit mode
-      displayAsEditMode(noteContent);
-      const textarea = noteContent.querySelector('textarea.edit-textarea');
+      // Switch to edit mode - element gets replaced
+      const textarea = displayAsEditMode(noteContent);
+      expect(textarea.tagName).toBe('TEXTAREA');
       expect(textarea.value).toBe('# Test Header');
-      expect(noteContent.classList.contains('edit-mode')).toBe(true);
+      expect(textarea.classList.contains('edit-mode')).toBe(true);
     });
 
     test('should preserve line breaks in edit mode', () => {
       const markdown = '# Header\n\n**Bold** text\n\n- List item';
-      displayAsEditMode(noteContent, markdown);
-      const textarea = noteContent.querySelector('textarea.edit-textarea');
+      const textarea = displayAsEditMode(noteContent, markdown);
+      expect(textarea.tagName).toBe('TEXTAREA');
       expect(textarea.value).toBe(markdown);
     });
   });
 
   describe('getCurrentMarkdownContent Function', () => {
-    let noteContent;
+    let noteContent, noteContainer;
 
     beforeEach(() => {
+      // Create a mock note content element with a parent container
+      noteContainer = document.createElement('div');
+      noteContainer.className = 'note';
       noteContent = document.createElement('div');
       noteContent.className = 'note-content';
-      document.body.appendChild(noteContent);
+      noteContainer.appendChild(noteContent);
+      document.body.appendChild(noteContainer);
     });
 
     afterEach(() => {
-      document.body.removeChild(noteContent);
+      document.body.removeChild(noteContainer);
     });
 
     test('should return textContent in edit mode', () => {
-      displayAsEditMode(noteContent, '# Test');
-      const result = getCurrentMarkdownContent(noteContent);
+      const textarea = displayAsEditMode(noteContent, '# Test');
+      const result = getCurrentMarkdownContent(textarea);
       expect(result).toBe('# Test');
     });
 
@@ -161,9 +169,13 @@ describe('Markdown Integration with Note System', () => {
 
   describe('Data Consistency', () => {
     test('should maintain markdown through view/edit cycles', () => {
+      // Create note with parent container
+      const noteContainer = document.createElement('div');
+      noteContainer.className = 'note';
       const noteContent = document.createElement('div');
       noteContent.className = 'note-content';
-      document.body.appendChild(noteContent);
+      noteContainer.appendChild(noteContent);
+      document.body.appendChild(noteContainer);
 
       const originalMarkdown = '# Header\n**Bold** text\n- Item 1\n- Item 2';
 
@@ -173,20 +185,23 @@ describe('Markdown Integration with Note System', () => {
       expect(noteContent.innerHTML).toContain('<strong>Bold</strong>');
       expect(noteContent.innerHTML).toContain('<li>Item 1</li>');
 
-      // Switch to edit mode
-      displayAsEditMode(noteContent);
-      const editTextarea = noteContent.querySelector('textarea.edit-textarea');
+      // Switch to edit mode - element gets replaced
+      const editTextarea = displayAsEditMode(noteContent);
+      expect(editTextarea.tagName).toBe('TEXTAREA');
       expect(editTextarea.value).toBe(originalMarkdown);
 
-      // Switch back to view mode
-      displayAsViewMode(noteContent, getCurrentMarkdownContent(noteContent));
-      expect(noteContent.innerHTML).toContain('<h1>Header</h1>');
-      expect(noteContent.innerHTML).toContain('<strong>Bold</strong>');
+      // Switch back to view mode - need to create new div for this test
+      const newDiv = document.createElement('div');
+      newDiv.className = 'note-content';
+      editTextarea.parentNode.replaceChild(newDiv, editTextarea);
+      displayAsViewMode(newDiv, getCurrentMarkdownContent(editTextarea));
+      expect(newDiv.innerHTML).toContain('<h1>Header</h1>');
+      expect(newDiv.innerHTML).toContain('<strong>Bold</strong>');
 
       // Verify the stored markdown is preserved
-      expect(getCurrentMarkdownContent(noteContent)).toBe(originalMarkdown);
+      expect(getCurrentMarkdownContent(newDiv)).toBe(originalMarkdown);
 
-      document.body.removeChild(noteContent);
+      document.body.removeChild(noteContainer);
     });
   });
 
