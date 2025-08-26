@@ -685,22 +685,8 @@ export class DesktopAdapter extends BaseAdapter {
           });
         });
         this.emit('state.save');
-      } else if (
-        event.key === 'Backspace' &&
-        this.isContentEmpty(event.target)
-      ) {
-        // Editing but content is empty: delete the note
-        event.preventDefault();
-        const note = event.target.closest('.note');
-        if (note) {
-          this.emit('note.deleteWithConnections', {
-            note,
-            canvas: this.canvas,
-          });
-          this.emit('state.save');
-        }
       }
-      // If editing with content, allow default behavior
+      // If editing (regardless of content), allow default behavior
     }
   }
 

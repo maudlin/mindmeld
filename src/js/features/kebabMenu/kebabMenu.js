@@ -245,9 +245,6 @@ export class KebabMenu {
       case 'paste-clipboard':
         this.dispatchAction('import-from-clipboard');
         break;
-      case 'change-template':
-        this.dispatchAction('change-template');
-        break;
       default:
         console.warn(`Unknown kebab menu action: ${action}`);
     }

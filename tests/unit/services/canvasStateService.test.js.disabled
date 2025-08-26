@@ -72,9 +72,6 @@ describe('CanvasStateService', () => {
     it('should contain expected canvas types', () => {
       expect(CanvasStateService.VALID_CANVAS_TYPES).toEqual([
         'Standard Canvas',
-        "Hero's Journey",
-        'Now/Next/Future',
-        'Wardley Map',
       ]);
     });
   });
@@ -84,14 +81,12 @@ describe('CanvasStateService', () => {
       expect(CanvasStateService.isValidCanvasType('Standard Canvas')).toBe(
         true,
       );
-      expect(CanvasStateService.isValidCanvasType("Hero's Journey")).toBe(true);
-      expect(CanvasStateService.isValidCanvasType('Now/Next/Future')).toBe(
-        true,
-      );
-      expect(CanvasStateService.isValidCanvasType('Wardley Map')).toBe(true);
     });
 
     it('should return false for invalid canvas types', () => {
+      expect(CanvasStateService.isValidCanvasType("Hero's Journey")).toBe(
+        false,
+      );
       expect(CanvasStateService.isValidCanvasType('Invalid Canvas')).toBe(
         false,
       );

@@ -17,22 +17,17 @@ import { log } from '../utils/utils.js';
  */
 export class CanvasStateService {
   /**
-   * Valid canvas types extracted from config
+   * V1 Simplification: Only Standard Canvas is valid
    */
   static get VALID_CANVAS_TYPES() {
-    return Object.values(config.canvasTypes).map(
-      (canvasType) => canvasType.name,
-    );
+    return ['Standard Canvas'];
   }
 
   /**
-   * Check if canvas type is valid
+   * Check if canvas type is valid (V1: only Standard Canvas)
    */
   static isValidCanvasType(canvasType) {
-    return (
-      typeof canvasType === 'string' &&
-      this.VALID_CANVAS_TYPES.includes(canvasType)
-    );
+    return canvasType === 'Standard Canvas';
   }
 
   /**

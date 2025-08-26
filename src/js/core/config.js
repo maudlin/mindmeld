@@ -13,24 +13,7 @@ export default {
     width: 150,
     padding: 10,
   },
+  // Canvas templates temporarily disabled for V1 simplification
+  // See CANVAS_TEMPLATES_REMOVAL.md for restoration instructions
   defaultCanvasType: 'Standard Canvas',
-  canvasTypes: {
-    standardCanvas: {
-      name: 'Standard Canvas',
-      path: '../features/canvas/templates/standardCanvas/standardCanvas.js',
-    },
-    herosJourney: {
-      name: "Hero's Journey",
-      path: '../features/canvas/templates/herosJourney/herosJourneyCanvas.js',
-    },
-    nowNextFuture: {
-      name: 'Now/Next/Future',
-      path: '../features/canvas/templates/nowNextFuture/nowNextFutureCanvas.js',
-    },
-    wardleyMap: {
-      name: 'Wardley Map',
-      path: '../features/canvas/templates/wardleyMap/wardleyMapCanvas.js',
-    },
-    // Add other canvas types here
-  },
 };

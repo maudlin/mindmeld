@@ -176,7 +176,7 @@ export function getCurrentState() {
 }
 
 export function exportToJSON() {
-  const { notes, connections, canvasType } = appState.getState();
+  const { notes, connections } = appState.getState();
   const allNoteColors = ColorService.getAllNoteColors();
 
   const compressedData = {
@@ -205,10 +205,8 @@ export function exportToJSON() {
     ]),
   };
 
-  // Add canvas type if not default (Standard Canvas)
-  if (canvasType && canvasType !== 'Standard Canvas') {
-    compressedData.ct = canvasType;
-  }
+  // V1 Simplification: Always use Standard Canvas, don't export canvas type
+  // (Canvas templates temporarily disabled)
 
   return JSON.stringify({ data: compressedData }, null, 2);
 }
@@ -238,16 +236,10 @@ export async function importFromJSON(jsonData, canvas) {
       ColorService.setAllNoteColors(noteColors);
     }
 
-    // Handle canvas type import
-    let importedCanvasType = 'Standard Canvas'; // Default
-    if (data.ct && CanvasStateService.isValidCanvasType(data.ct)) {
-      importedCanvasType = data.ct;
-      log('Importing canvas type:', importedCanvasType);
-    } else if (data.ct) {
-      log(
-        'Invalid canvas type in import, defaulting to Standard Canvas:',
-        data.ct,
-      );
+    // V1 Simplification: Always use Standard Canvas regardless of imported canvas type
+    const importedCanvasType = 'Standard Canvas';
+    if (data.ct && data.ct !== 'Standard Canvas') {
+      log('V1: Ignoring non-standard canvas type from import:', data.ct);
     }
 
     // Create notes

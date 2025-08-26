@@ -329,6 +329,9 @@ describe('Session Integrity Tests', () => {
     });
 
     it('should maintain data integrity during concurrent session operations', async () => {
+      // Clear any existing timers from previous tests
+      jest.clearAllTimers();
+
       // Simulate multiple concurrent operations that might happen during session
       const operations = Array.from({ length: 5 }, (_, i) => {
         return new Promise((resolve) => {
@@ -357,6 +360,9 @@ describe('Session Integrity Tests', () => {
         expect(typeof result.loadResult.recovered).toBe('boolean');
         expect(Array.isArray(result.loadResult.notes)).toBe(true);
       });
+
+      // Clear storage after test to ensure clean state
+      mockStorage.clear();
     });
   });
 

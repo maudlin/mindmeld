@@ -118,13 +118,8 @@ test.describe('Kebab Menu Functionality', () => {
         ),
       ).toBeVisible();
 
-      // Verify Templates group
-      await expect(
-        page.locator('.kebab-menu-subtitle:has-text("Templates")'),
-      ).toBeVisible();
-      await expect(
-        page.locator('.kebab-menu-item[data-action="change-template"]'),
-      ).toBeVisible();
+      // Templates group removed for V1 simplification
+      // (Template functionality disabled - see CANVAS_TEMPLATES_REMOVAL.md)
     });
 
     test('Should close menu after selecting any item', async ({ page }) => {
@@ -138,7 +133,7 @@ test.describe('Kebab Menu Functionality', () => {
         'export-file',
         'copy-clipboard',
         'paste-clipboard',
-        'change-template',
+        // 'change-template', - removed for V1 simplification
       ];
 
       for (const action of menuItems) {
@@ -265,7 +260,7 @@ test.describe('Kebab Menu Functionality', () => {
 
       // Check menu items have proper roles
       const menuItems = page.locator('.kebab-menu-item[role="menuitem"]');
-      await expect(menuItems).toHaveCount(6); // All 6 menu items
+      await expect(menuItems).toHaveCount(5); // 5 menu items (templates removed for V1)
     });
 
     test('Should show focus outline only when menu is open (MM-147)', async ({
@@ -431,21 +426,8 @@ test.describe('Kebab Menu Functionality', () => {
       await expect(page.locator('#kebab-context-menu.open')).toBeHidden();
     });
 
-    test('Template change action should be accessible', async ({ page }) => {
-      const canvasPage = new CanvasPage(page);
-      await canvasPage.load();
-
-      // Open kebab menu and click change template
-      await page.click('#kebab-menu-button');
-      const templateItem = page.locator(
-        '.kebab-menu-item[data-action="change-template"]',
-      );
-      await expect(templateItem).toBeVisible();
-      await templateItem.click();
-
-      // Menu should close (actual template functionality tested elsewhere)
-      await expect(page.locator('#kebab-context-menu.open')).toBeHidden();
-    });
+    // Template change functionality removed for V1 simplification
+    // See CANVAS_TEMPLATES_REMOVAL.md for restoration instructions
   });
 
   test.describe('Edge Cases and Error Handling', () => {
