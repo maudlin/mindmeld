@@ -5,6 +5,7 @@
 import { renderMarkdown } from '../markdown/markdownRenderer.js';
 import { defangToPlainText } from '../markdown/defangPipeline.js';
 import { noteManager } from '../../services/noteManager.js';
+import { eventBus } from '../../core/eventBus.js';
 
 /**
  * Display note content in view mode (rendered HTML, not editable)
@@ -87,10 +88,12 @@ export function displayAsEditMode(noteContent, markdownContent = null) {
   textarea.style.outline = 'none';
   textarea.style.resize = 'none';
   textarea.style.background = 'transparent';
-  textarea.style.fontFamily = 'inherit';
-  textarea.style.fontSize = 'inherit';
-  textarea.style.lineHeight = 'inherit';
-  textarea.style.color = 'inherit';
+  textarea.style.fontFamily = "'Inter', sans-serif";
+  textarea.style.fontSize = '0.9em';
+  textarea.style.fontWeight = '400';
+  textarea.style.lineHeight = '1.4';
+  textarea.style.color = '#333';
+  textarea.style.textAlign = 'center';
   textarea.style.padding = '0';
   textarea.style.margin = '0';
 
@@ -117,6 +120,21 @@ export function displayAsEditMode(noteContent, markdownContent = null) {
   }
 
   textarea.addEventListener('input', resizeTextarea);
+
+  // Add Ctrl+Enter keybind to exit edit mode
+  textarea.addEventListener('keydown', (event) => {
+    if (event.ctrlKey && event.key === 'Enter') {
+      event.preventDefault();
+      // Find the note element and emit exit edit mode request
+      const note = textarea.closest('.note');
+      if (note) {
+        eventBus.emit('note.requestView', {
+          noteId: note.id,
+          noteElement: note,
+        });
+      }
+    }
+  });
 
   // REPLACE the note-content div with the textarea
   parent.replaceChild(textarea, noteContent);

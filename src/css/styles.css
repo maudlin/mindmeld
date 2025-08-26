@@ -4,7 +4,7 @@
   --secondary-color: #d1d5db; /* Light text color */
   --accent-color: #ffd588; /* Accent color */
   --hover-color: rgba(30, 65, 107, 0.5); /* Hover background */
-  --font-family: 'Poppins', sans-serif;
+  --font-family: 'Inter', sans-serif;
   --font-family-alt: 'Over the Rainbow', cursive;
   --font-family-headings: 'Poppins', sans-serif;
   --font-family-body: 'Inter', sans-serif;
@@ -295,6 +295,7 @@ html {
   text-overflow: ellipsis;
   box-sizing: border-box;
   cursor: text;
+  width: 100%; /* Always use full note width */
 }
 
 /* Ensure all rendered markdown elements allow proper event handling */
@@ -346,27 +347,31 @@ html {
 
 /* Bold and italic in view mode only */
 .note-content.view-mode strong { 
-  font-weight: 700; 
+  font-weight: 900;
 }
 
 .note-content.view-mode em { 
   font-style: italic; 
 }
 
+
 /* List styling with custom bullets, minimal spacing, and left alignment */
 .note-content ul,
 .note-content ol {
   list-style: none;
   margin-top: 4px;
-  padding-left:0;
-  text-align: left;
+  padding-left: 0;
+  text-align: left !important; /* Force left alignment regardless of parent */
+  display: block; /* Ensure block layout for proper text alignment */
+  width: 100%; /* Take full width of note content area */
 }
 
 .note-content ul li,
 .note-content ol li {
   position: relative;
   padding-left: 0.9ch;
-  text-align: left;
+  text-align: left !important; /* Force left alignment for list items */
+  display: block; /* Ensure block layout */
 }
 
 .note-content ul li::before {
@@ -389,11 +394,13 @@ html {
 
 /* Edit mode textarea - inherit base styles for consistency */
 .note-content.edit-mode .edit-textarea {
-  /* Inherit font properties from .note-content for perfect match */
-  font: inherit;
+  /* Explicit font properties to match .note-content exactly */
+  font-family: 'Inter', var(--font-family-body);
+  font-size: 0.9em;
+  font-weight: 400;
+  line-height: 1.4;
   color: inherit;
   text-align: inherit;
-  line-height: inherit;
   
   /* Textarea-specific resets - aggressive to match view mode exactly */
   background: transparent;
