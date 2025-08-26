@@ -190,13 +190,15 @@ export class CanvasPage {
   async editNoteContent(text, note = this.note) {
     const noteContent = note.locator('.note-content');
     await noteContent.click();
-    
+
     // Wait for potential edit mode transition (div -> textarea)
     await this.page.waitForTimeout(100);
-    
+
     // Check if we now have a textarea (edit mode) or div (view mode)
-    const isTextarea = await noteContent.evaluate(el => el.tagName === 'TEXTAREA');
-    
+    const isTextarea = await noteContent.evaluate(
+      (el) => el.tagName === 'TEXTAREA',
+    );
+
     if (isTextarea) {
       // In edit mode - clear existing content and type new text
       await this.page.keyboard.press('Control+a'); // Select all
@@ -712,8 +714,10 @@ export class CanvasPage {
    * @param {string} expectedText - The expected text
    */
   async expectNoteContentToHaveText(noteContent, expectedText) {
-    const isTextarea = await noteContent.evaluate(el => el.tagName === 'TEXTAREA');
-    
+    const isTextarea = await noteContent.evaluate(
+      (el) => el.tagName === 'TEXTAREA',
+    );
+
     if (isTextarea) {
       await expect(noteContent).toHaveValue(expectedText);
     } else {
@@ -727,8 +731,10 @@ export class CanvasPage {
    * @param {string} expectedText - The expected text to contain
    */
   async expectNoteContentToContainText(noteContent, expectedText) {
-    const isTextarea = await noteContent.evaluate(el => el.tagName === 'TEXTAREA');
-    
+    const isTextarea = await noteContent.evaluate(
+      (el) => el.tagName === 'TEXTAREA',
+    );
+
     if (isTextarea) {
       // For textarea, check the value contains the text
       await expect(noteContent).toHaveValue(new RegExp(expectedText));
@@ -743,8 +749,10 @@ export class CanvasPage {
    * @returns {string} The current content
    */
   async getNoteContentText(noteContent) {
-    const isTextarea = await noteContent.evaluate(el => el.tagName === 'TEXTAREA');
-    
+    const isTextarea = await noteContent.evaluate(
+      (el) => el.tagName === 'TEXTAREA',
+    );
+
     if (isTextarea) {
       return await noteContent.inputValue();
     } else {
@@ -965,8 +973,10 @@ export class CanvasPage {
    * @param {Locator} noteContent - The note content element
    */
   async assertNoteInEditMode(noteContent) {
-    const isTextarea = await noteContent.evaluate(el => el.tagName === 'TEXTAREA');
-    
+    const isTextarea = await noteContent.evaluate(
+      (el) => el.tagName === 'TEXTAREA',
+    );
+
     if (isTextarea) {
       // Textarea-based edit mode - this is the expected behavior
       await expect(noteContent).toHaveClass(/edit-mode/);
@@ -984,13 +994,15 @@ export class CanvasPage {
    * @param {Locator} noteContent - The note content element
    */
   async assertNoteInViewMode(noteContent) {
-    const isTextarea = await noteContent.evaluate(el => el.tagName === 'TEXTAREA');
-    
+    const isTextarea = await noteContent.evaluate(
+      (el) => el.tagName === 'TEXTAREA',
+    );
+
     // In view mode, it should be a div, not a textarea
     expect(isTextarea).toBe(false);
     await expect(noteContent).toHaveClass(/view-mode/);
-    
-    // Note: In the textarea architecture, when returning to view mode, 
+
+    // Note: In the textarea architecture, when returning to view mode,
     // the contenteditable attribute may still be "true" on the div, which is fine
     // The important thing is that it's not a textarea and has view-mode class
   }
@@ -1001,8 +1013,10 @@ export class CanvasPage {
    * @param {string} expectedText - The expected text content
    */
   async assertNoteContent(noteContent, expectedText) {
-    const isTextarea = await noteContent.evaluate(el => el.tagName === 'TEXTAREA');
-    
+    const isTextarea = await noteContent.evaluate(
+      (el) => el.tagName === 'TEXTAREA',
+    );
+
     if (isTextarea) {
       await expect(noteContent).toHaveValue(expectedText);
     } else {
@@ -1029,14 +1043,14 @@ export class CanvasPage {
   async enterEditMode(note) {
     let noteContent = await this.getNoteContentElement(note);
     await noteContent.click();
-    
+
     // Wait for potential element replacement
     await this.page.waitForTimeout(100);
-    
+
     // Re-query after click as element may have been replaced
     noteContent = await this.getNoteContentElement(note);
     await this.assertNoteInEditMode(noteContent);
-    
+
     return noteContent;
   }
 
@@ -1048,14 +1062,14 @@ export class CanvasPage {
   async exitEditMode(note) {
     // Click outside on canvas to trigger view mode
     await this.page.click('#canvas');
-    
+
     // Wait for element replacement
     await this.page.waitForTimeout(100);
-    
+
     // Re-query after mode change
     const noteContent = await this.getNoteContentElement(note);
     await this.assertNoteInViewMode(noteContent);
-    
+
     return noteContent;
   }
 
@@ -1065,8 +1079,10 @@ export class CanvasPage {
    * @returns {string} The raw text content
    */
   async getRawNoteContent(noteContent) {
-    const isTextarea = await noteContent.evaluate(el => el.tagName === 'TEXTAREA');
-    
+    const isTextarea = await noteContent.evaluate(
+      (el) => el.tagName === 'TEXTAREA',
+    );
+
     if (isTextarea) {
       return await noteContent.inputValue();
     } else {

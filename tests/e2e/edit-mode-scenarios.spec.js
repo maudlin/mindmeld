@@ -21,7 +21,7 @@ test.describe('MM-173: Edit Mode Click Detection Scenarios', () => {
     // Click should trigger edit mode
     await noteContent.click();
     await page.waitForTimeout(100); // Wait for element replacement
-    
+
     // Re-query after mode change
     const editContent = await canvasPage.getNoteContentElement(note);
     await canvasPage.assertNoteInEditMode(editContent);
@@ -56,7 +56,7 @@ test.describe('MM-173: Edit Mode Click Detection Scenarios', () => {
     // Click should trigger edit mode
     await noteContent.click();
     await page.waitForTimeout(100); // Wait for element replacement
-    
+
     // Re-query after mode change and verify edit mode with original markdown
     const editContent = await canvasPage.getNoteContentElement(note);
     await canvasPage.assertNoteInEditMode(editContent);
@@ -103,11 +103,11 @@ test.describe('MM-173: Edit Mode Click Detection Scenarios', () => {
     // Click on the note-content div should trigger edit mode
     await noteContent.click();
     await page.waitForTimeout(100); // Wait for element replacement
-    
+
     // Re-query after mode change and verify raw markdown
     const editContent = await canvasPage.getNoteContentElement(note);
     await canvasPage.assertNoteInEditMode(editContent);
-    
+
     await canvasPage.assertNoteContentContains(editContent, '# Test Header');
     await canvasPage.assertNoteContentContains(editContent, '**Bold**');
     await canvasPage.assertNoteContentDoesNotContain(editContent, '<h1>');
@@ -145,11 +145,11 @@ test.describe('MM-173: Edit Mode Click Detection Scenarios', () => {
     await expect(headerElement).toBeVisible();
     await noteContent.click(); // Click parent since child has pointer-events: none
     await page.waitForTimeout(100); // Wait for element replacement
-    
+
     // Re-query after mode change and verify edit mode
     const editContent = await canvasPage.getNoteContentElement(note);
     await canvasPage.assertNoteInEditMode(editContent);
-    
+
     await canvasPage.assertNoteContentContains(editContent, '# Click Target');
     await canvasPage.assertNoteContentContains(editContent, '**Bold text**');
   });
@@ -186,13 +186,16 @@ test.describe('MM-173: Edit Mode Click Detection Scenarios', () => {
     await expect(italicElement).toHaveText('italic');
     await noteContent.click(); // Click parent since child has pointer-events: none
     await page.waitForTimeout(100); // Wait for element replacement
-    
+
     // Re-query after mode change and verify edit mode
     const editContent = await canvasPage.getNoteContentElement(note);
     await canvasPage.assertNoteInEditMode(editContent);
-    
+
     await canvasPage.assertNoteContentContains(editContent, '# Header');
-    await canvasPage.assertNoteContentContains(editContent, '**Bold *italic* text**');
+    await canvasPage.assertNoteContentContains(
+      editContent,
+      '**Bold *italic* text**',
+    );
   });
 
   test('Edit mode to view mode transition preserves content @critical', async ({
@@ -220,7 +223,7 @@ test.describe('MM-173: Edit Mode Click Detection Scenarios', () => {
     // Click to enter edit mode properly through EditModeController
     await noteContent.click();
     await page.waitForTimeout(100); // Wait for element replacement
-    
+
     let editContent = await canvasPage.getNoteContentElement(note);
     await canvasPage.assertNoteInEditMode(editContent);
 
@@ -245,12 +248,15 @@ test.describe('MM-173: Edit Mode Click Detection Scenarios', () => {
     // Click again should show the modified markdown in edit mode
     await viewContent.click();
     await page.waitForTimeout(100); // Wait for element replacement
-    
+
     editContent = await canvasPage.getNoteContentElement(note);
     await canvasPage.assertNoteInEditMode(editContent);
-    
+
     // Check that both parts of the markdown are present
-    await canvasPage.assertNoteContentContains(editContent, '# Modified Header');
+    await canvasPage.assertNoteContentContains(
+      editContent,
+      '# Modified Header',
+    );
     await canvasPage.assertNoteContentContains(editContent, '**New content**');
   });
 });

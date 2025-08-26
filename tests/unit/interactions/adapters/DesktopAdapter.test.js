@@ -120,6 +120,7 @@ describe('DesktopAdapter - Unit Tests', () => {
       expect(global.document.addEventListener).toHaveBeenCalledWith(
         'keydown',
         desktopAdapter.boundHandlers.keyDown,
+        true,
       );
     });
 

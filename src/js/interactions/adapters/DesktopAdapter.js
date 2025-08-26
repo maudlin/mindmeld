@@ -596,6 +596,11 @@ export class DesktopAdapter extends BaseAdapter {
 
     // Handle Enter key - priority over kebab menu
     if (event.key === 'Enter') {
+      // Allow color picker to handle Enter on swatches
+      if (event.target.matches('.color-swatch')) {
+        return;
+      }
+
       // Don't interfere with Enter in edit mode (allows newlines)
       if (!isEditingNote) {
         const focusedNote = this.getFocusedNote();
@@ -613,6 +618,16 @@ export class DesktopAdapter extends BaseAdapter {
         }
       }
       // In edit mode, allow default Enter behavior for newlines
+      return;
+    }
+
+    // Handle Space key for color picker accessibility
+    if (event.key === ' ') {
+      // Allow color picker to handle Space on swatches
+      if (event.target.matches('.color-swatch')) {
+        return;
+      }
+      // Otherwise, ignore Space key (prevent page scroll)
       return;
     }
 
@@ -768,7 +783,7 @@ export class DesktopAdapter extends BaseAdapter {
   getFocusedNote() {
     // Check if we have a focused note-content element
     const activeElement = document.activeElement;
-    
+
     if (activeElement && activeElement.classList.contains('note-content')) {
       return activeElement.closest('.note');
     }

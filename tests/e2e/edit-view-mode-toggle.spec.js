@@ -98,7 +98,7 @@ test.describe('MM-155: Edit vs View Mode Toggle', () => {
     // Click should trigger switch to edit mode
     await noteContent.click();
     await page.waitForTimeout(100); // Wait for element replacement
-    
+
     // Re-query after mode change
     const editContent = await canvasPage.getNoteContentElement(note);
     await canvasPage.assertNoteInEditMode(editContent);
@@ -117,10 +117,10 @@ test.describe('MM-155: Edit vs View Mode Toggle', () => {
     await canvasPage.load();
 
     const note = await canvasPage.createNote(640, 388);
-    
+
     // Enter edit mode properly through the EditModeController
     const editContent = await canvasPage.enterEditMode(note);
-    
+
     // Add markdown content in edit mode
     await editContent.fill('## Subtitle\n*Italic* text');
 
@@ -173,7 +173,7 @@ test.describe('MM-155: Edit vs View Mode Toggle', () => {
     // Switch to edit mode
     await noteContent.click();
     await page.waitForTimeout(100); // Wait for element replacement
-    
+
     let editContent = await canvasPage.getNoteContentElement(note);
     await canvasPage.assertNoteContent(editContent, originalMarkdown);
 
@@ -254,7 +254,7 @@ test.describe('MM-155: Edit vs View Mode Toggle', () => {
     const renderedContent = await viewContent.innerHTML();
     expect(renderedContent).not.toContain('<script>'); // No executable script tags
     expect(renderedContent).not.toContain('onclick="steal()">'); // No executable onclick
-    
+
     // When HTML is injected via textarea, it gets treated as plain text and escaped
     // This is the correct security behavior - dangerous content is neutralized
     expect(renderedContent).toContain('&lt;script&gt;'); // HTML is escaped
@@ -293,7 +293,7 @@ test.describe('MM-155: Edit vs View Mode Toggle', () => {
     // Switch to edit mode
     await noteContent.click();
     await page.waitForTimeout(100); // Wait for element replacement
-    
+
     let editContent = await canvasPage.getNoteContentElement(note);
     await canvasPage.assertNoteInEditMode(editContent);
 
@@ -339,7 +339,7 @@ test.describe('MM-155: Edit vs View Mode Toggle', () => {
     await page.waitForTimeout(50);
     await page.touchscreen.tap(bbox.x + 50, bbox.y + 20); // Double tap
     await page.waitForTimeout(100); // Wait for element replacement
-    
+
     let editContent = await canvasPage.getNoteContentElement(note);
     await canvasPage.assertNoteInEditMode(editContent);
 
@@ -353,17 +353,18 @@ test.describe('MM-155: Edit vs View Mode Toggle', () => {
     // Re-query after mode change and verify return to view mode
     const viewContent = await canvasPage.getNoteContentElement(note);
     await canvasPage.assertNoteInViewMode(viewContent);
-    
+
     const headerElement = viewContent.locator('h1');
     await expect(headerElement).toHaveText('Touch Header');
   });
 
-  test('Keyboard shortcuts for edit mode (Enter, Escape, Ctrl+Enter)', async ({ page }) => {
+  test('Keyboard shortcuts for edit mode (Enter, Escape, Ctrl+Enter)', async ({
+    page,
+  }) => {
     const canvasPage = new CanvasPage(page);
     await canvasPage.load();
 
     const note = await canvasPage.createNote(400, 300);
-    const noteContent = note.locator('.note-content');
 
     // Set up note with some content in view mode
     await page.evaluate(
@@ -383,7 +384,7 @@ test.describe('MM-155: Edit vs View Mode Toggle', () => {
     await page.waitForTimeout(50); // Wait for selection
     await page.keyboard.press('Enter');
     await page.waitForTimeout(100); // Wait for element replacement
-    
+
     let editContent = await canvasPage.getNoteContentElement(note);
     await canvasPage.assertNoteInEditMode(editContent);
 
@@ -393,7 +394,7 @@ test.describe('MM-155: Edit vs View Mode Toggle', () => {
     // Test Ctrl+Enter to exit edit mode
     await page.keyboard.press('Control+Enter');
     await page.waitForTimeout(100); // Wait for element replacement
-    
+
     let viewContent = await canvasPage.getNoteContentElement(note);
     await canvasPage.assertNoteInViewMode(viewContent);
 
@@ -405,14 +406,14 @@ test.describe('MM-155: Edit vs View Mode Toggle', () => {
     // Test Enter again to re-enter edit mode - note is still selected from previous click
     await page.keyboard.press('Enter');
     await page.waitForTimeout(100);
-    
+
     editContent = await canvasPage.getNoteContentElement(note);
     await canvasPage.assertNoteInEditMode(editContent);
 
     // Test Escape to exit edit mode without Ctrl
     await page.keyboard.press('Escape');
     await page.waitForTimeout(100);
-    
+
     viewContent = await canvasPage.getNoteContentElement(note);
     await canvasPage.assertNoteInViewMode(viewContent);
   });

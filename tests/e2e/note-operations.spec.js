@@ -20,8 +20,10 @@ test.describe('MindMeld Operations', () => {
 
     // Assert the note content - handle both textarea (edit mode) and div (view mode)
     const noteContent = note.locator('.note-content');
-    const isTextarea = await noteContent.evaluate(el => el.tagName === 'TEXTAREA');
-    
+    const isTextarea = await noteContent.evaluate(
+      (el) => el.tagName === 'TEXTAREA',
+    );
+
     if (isTextarea) {
       await expect(noteContent).toHaveValue('Test Note');
     } else {
