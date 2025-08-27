@@ -287,7 +287,10 @@ export class GestureRecognizer {
 
         // Check if this tap is close enough to the last tap for double tap
         const tapPosition = { x: touchData.currentX, y: touchData.currentY };
+        const now = Date.now();
         if (
+          this.lastTapTime &&
+          now - this.lastTapTime <= this.DOUBLE_TAP_MAX_DELAY &&
           this.lastTapPosition &&
           this.calculateDistance(tapPosition, this.lastTapPosition) <=
             this.TAP_MAX_MOVEMENT

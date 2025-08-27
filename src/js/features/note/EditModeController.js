@@ -64,7 +64,11 @@ class EditModeController {
    * Handle request to enter edit mode for a note
    */
   handleEditRequest(data) {
-    console.log('EditModeController: Received edit request', data);
+    console.log('EditModeController: Received edit request', {
+      ...data,
+      hasNoteElement: !!data.noteElement,
+      noteElementId: data.noteElement?.id,
+    });
     const { noteId, noteElement } = data;
 
     if (!noteElement) {
