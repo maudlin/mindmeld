@@ -56,10 +56,47 @@ class EventDelegationManager {
     canvas.addEventListener(
       'click',
       (event) => {
-        const target = event.target;
+        // CRITICAL FIX: event.target is wrong in capture phase, use actual clicked element
+        const actualElement = document.elementFromPoint(
+          event.clientX,
+          event.clientY,
+        );
+        const target = actualElement || event.target;
+
+        console.log('🔥 EventDelegationManager: Click detected', {
+          target: target.tagName,
+          targetClass: target.className,
+          targetText: target.textContent?.substring(0, 20),
+          targetId: target.id,
+          capturePhase: true,
+          eventPhase: event.eventPhase, // 1=capture, 2=at-target, 3=bubble
+          currentTarget: event.currentTarget?.tagName,
+          currentTargetId: event.currentTarget?.id,
+          clientX: event.clientX,
+          clientY: event.clientY,
+        });
+
+        // Also check what elementFromPoint returns for comparison
+        const elementAtPoint = document.elementFromPoint(
+          event.clientX,
+          event.clientY,
+        );
+        console.log('🔥 EventDelegationManager: Element at click coordinates', {
+          elementAtPoint: elementAtPoint?.tagName,
+          elementAtPointClass: elementAtPoint?.className,
+          elementAtPointId: elementAtPoint?.id,
+          elementAtPointText: elementAtPoint?.textContent?.substring(0, 20),
+        });
 
         // Check if click is within a note-content element
         const noteContent = this.findNoteContent(target);
+
+        console.log('🔥 EventDelegationManager: Found note-content?', {
+          found: !!noteContent,
+          noteContentClass: noteContent?.className,
+          isViewMode: noteContent?.classList.contains('view-mode'),
+        });
+
         if (!noteContent) return;
 
         // Check if we're in view mode
@@ -69,6 +106,14 @@ class EventDelegationManager {
         const noteElement = noteContent.closest('.note');
         if (noteElement) {
           const noteId = noteElement.dataset.id;
+
+          // Only prevent event propagation for styled elements, not direct note-content clicks
+          const isDirectNoteContentClick = target === noteContent;
+          if (!isDirectNoteContentClick) {
+            // This is a click on a styled child element - prevent DesktopAdapter from processing
+            event.preventDefault();
+            event.stopPropagation();
+          }
 
           // For single click, we might want to select the note
           // Let the adapter handle this through EventBus
@@ -93,10 +138,28 @@ class EventDelegationManager {
     canvas.addEventListener(
       'dblclick',
       (event) => {
-        const target = event.target;
+        // CRITICAL FIX: event.target is wrong in capture phase, use actual clicked element
+        const actualElement = document.elementFromPoint(
+          event.clientX,
+          event.clientY,
+        );
+        const target = actualElement || event.target;
+
+        console.log('🔥 EventDelegationManager: Double-click detected', {
+          target: target.tagName,
+          targetClass: target.className,
+          targetText: target.textContent?.substring(0, 20),
+        });
 
         // Check if double-click is within a note-content element
         const noteContent = this.findNoteContent(target);
+
+        console.log('🔥 EventDelegationManager: Found note-content?', {
+          found: !!noteContent,
+          noteContentClass: noteContent?.className,
+          isViewMode: noteContent?.classList.contains('view-mode'),
+        });
+
         if (!noteContent) return;
 
         // Check if we're in view mode
@@ -238,13 +301,47 @@ class EventDelegationManager {
    * @returns {Element|null} The note-content element or null
    */
   findNoteContent(target) {
+    console.log('🔥 EventDelegationManager: findNoteContent debug', {
+      target: target?.tagName,
+      targetClass: target?.className,
+      parentClass: target?.parentElement?.className,
+      grandParentClass: target?.parentElement?.parentElement?.className,
+    });
+
     // Check if target itself is note-content
     if (target.classList && target.classList.contains('note-content')) {
+      console.log('🔥 EventDelegationManager: Target itself is note-content');
       return target;
     }
 
     // Walk up the DOM tree to find note-content
-    return target.closest ? target.closest('.note-content') : null;
+    const noteContent = target.closest ? target.closest('.note-content') : null;
+
+    console.log('🔥 EventDelegationManager: Closest search result', {
+      found: !!noteContent,
+      foundClass: noteContent?.className,
+    });
+
+    // If closest didn't work, try manual traversal
+    if (!noteContent) {
+      let current = target.parentElement;
+      while (current) {
+        console.log('🔥 EventDelegationManager: Manual traversal', {
+          element: current.tagName,
+          className: current.className,
+        });
+
+        if (current.classList && current.classList.contains('note-content')) {
+          console.log(
+            '🔥 EventDelegationManager: Found note-content via manual traversal',
+          );
+          return current;
+        }
+        current = current.parentElement;
+      }
+    }
+
+    return noteContent;
   }
 
   /**

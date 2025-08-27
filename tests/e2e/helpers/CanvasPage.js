@@ -322,18 +322,52 @@ export class CanvasPage {
     // Drag the note (this will move all selected notes)
     await selectedNote.hover();
 
-    // Perform mouse operations with additional safety checks
+    // Use pointer events since the app uses pointerdown/pointermove/pointerup
     if (!this.page.isClosed()) {
-      await this.page.mouse.move(
-        initialBox.x + initialBox.width / 2,
-        initialBox.y + initialBox.height / 2,
-      );
-      await this.page.mouse.down();
-      await this.page.mouse.move(
-        initialBox.x + initialBox.width / 2 + deltaX,
-        initialBox.y + initialBox.height / 2 + deltaY,
-      );
-      await this.page.mouse.up();
+      const startX = initialBox.x + initialBox.width / 2;
+      const startY = initialBox.y + initialBox.height / 2;
+      const endX = startX + deltaX;
+      const endY = startY + deltaY;
+      
+      // Simulate pointer events which the app actually uses
+      await this.page.mouse.move(startX, startY);
+      
+      // Dispatch custom pointer events
+      await selectedNote.dispatchEvent('pointerdown', {
+        pointerId: 1,
+        bubbles: true,
+        isPrimary: true,
+        clientX: startX,
+        clientY: startY,
+        button: 0
+      });
+      
+      // Move to end position
+      await this.page.mouse.move(endX, endY);
+      
+      // Dispatch pointermove event
+      await this.page.evaluate(({endX, endY}) => {
+        document.dispatchEvent(new PointerEvent('pointermove', {
+          pointerId: 1,
+          bubbles: true,
+          isPrimary: true,
+          clientX: endX,
+          clientY: endY,
+          button: 0
+        }));
+      }, {endX, endY});
+      
+      // Dispatch pointerup event
+      await this.page.evaluate(({endX, endY}) => {
+        document.dispatchEvent(new PointerEvent('pointerup', {
+          pointerId: 1,
+          bubbles: true,
+          isPrimary: true,
+          clientX: endX,
+          clientY: endY,
+          button: 0
+        }));
+      }, {endX, endY});
     }
 
     // Wait for movement to complete - ensure note positions have updated

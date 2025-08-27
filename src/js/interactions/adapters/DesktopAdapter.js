@@ -75,6 +75,9 @@ export class DesktopAdapter extends BaseAdapter {
       this.canvas.id,
     );
 
+    // Listen for delegated events from EventDelegationManager (MM-176)
+    this.setupDelegatedEventListeners();
+
     // Canvas-specific events
     this.canvas.addEventListener('pointerdown', this.boundHandlers.pointerDown);
     this.canvas.addEventListener('dblclick', this.boundHandlers.doubleClick);
@@ -121,6 +124,24 @@ export class DesktopAdapter extends BaseAdapter {
     this.isDrawingSelectionBox = false;
     this.dragState = null;
     this.selectionBoxState = null;
+  }
+
+  /**
+   * Setup listeners for delegated events from EventDelegationManager
+   * This handles clicks on styled content elements that previously were blocked
+   * by the CSS pointer-events hack (MM-176)
+   */
+  setupDelegatedEventListeners() {
+    // Listen for delegated click events
+    this.eventBus.on('note.delegatedClick', (data) => {
+      console.log('DesktopAdapter: Received delegated click', data);
+      // For now, single clicks might select the note
+      // This could be enhanced based on requirements
+    });
+
+    // The delegated double-click is already handled via note.requestEdit event
+    // which is emitted by EventDelegationManager and listened to by EditModeController
+    console.log('DesktopAdapter: Delegated event listeners configured');
   }
 
   /**
@@ -369,6 +390,13 @@ export class DesktopAdapter extends BaseAdapter {
   handleClick(event) {
     const target = event.target;
 
+    console.log('🔥 DesktopAdapter: Click detected', {
+      target: target.tagName,
+      targetClass: target.className,
+      targetText: target.textContent?.substring(0, 20),
+      capturePhase: false,
+    });
+
     // Check if clicking on note-content that's actually a textarea (our new approach)
     // Since textarea has class 'note-content', all existing checks will work
     if (
@@ -388,9 +416,8 @@ export class DesktopAdapter extends BaseAdapter {
       : target.closest('.note');
 
     // Check if the click is inside note-content (target itself or parent)
-    const noteContent = target.classList.contains('note-content')
-      ? target
-      : target.closest('.note-content');
+    // Fixed: Use closest() for both direct clicks and bubbled clicks from styled elements
+    const noteContent = target.closest('.note-content');
 
     if (note && noteContent) {
       // Check if we're already editing this specific note
@@ -539,12 +566,13 @@ export class DesktopAdapter extends BaseAdapter {
    * Handle double-click events for note creation
    */
   handleDoubleClick(event) {
-    console.log(
-      'DesktopAdapter: Double-click detected on target:',
-      event.target,
-      'isClickOnCanvas:',
-      this.isClickOnCanvas(event.target),
-    );
+    console.log('🔥 DesktopAdapter: Double-click detected', {
+      target: event.target.tagName,
+      targetClass: event.target.className,
+      targetText: event.target.textContent?.substring(0, 20),
+      isClickOnCanvas: this.isClickOnCanvas(event.target),
+      capturePhase: false,
+    });
 
     // Check if clicking directly on canvas (not on notes)
     if (this.isClickOnCanvas(event.target)) {

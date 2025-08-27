@@ -298,18 +298,18 @@ html {
   width: 100%; /* Always use full note width */
 }
 
-/* Ensure all rendered markdown elements allow proper event handling */
-/* MM-173: Fix E2E test click detection on styled HTML elements */
+/* MM-176: Replaced CSS pointer-events hack with JavaScript event delegation */
+/* Child elements in view mode now properly receive events through EventDelegationManager */
 .note-content.view-mode * {
   cursor: text; /* Show text cursor on all child elements to indicate editability */
-  pointer-events: none; /* Ensure clicks bubble to parent for E2E tests */
+  /* pointer-events: none; REMOVED - Now handled by EventDelegationManager */
 }
 
-/* CRITICAL: Override pointer-events for edit mode textarea */
+/* Edit mode textarea styling */
 .note-content.edit-mode .edit-textarea {
-  pointer-events: auto !important; /* Ensure textarea can receive clicks */
-  position: relative !important; /* Ensure proper stacking context */
-  z-index: 10 !important; /* Place above other elements */
+  /* pointer-events no longer needs override since parent CSS hack was removed */
+  position: relative; /* Ensure proper stacking context */
+  z-index: 10; /* Place above other elements */
 }
 
 /* MM-175: Note Content Typography Improvements */
@@ -346,14 +346,13 @@ html {
 }
 
 /* Bold and italic in view mode only */
-.note-content.view-mode strong { 
+.note-content.view-mode strong {
   font-weight: 900;
 }
 
-.note-content.view-mode em { 
-  font-style: italic; 
+.note-content.view-mode em {
+  font-style: italic;
 }
-
 
 /* List styling with custom bullets, minimal spacing, and left alignment */
 .note-content ul,
@@ -375,7 +374,7 @@ html {
 }
 
 .note-content ul li::before {
-  content: "•";
+  content: '•';
   position: absolute;
   left: 0;
   font-weight: 700;
@@ -401,7 +400,7 @@ html {
   line-height: 1.4;
   color: inherit;
   text-align: inherit;
-  
+
   /* Textarea-specific resets - aggressive to match view mode exactly */
   background: transparent;
   border: none;

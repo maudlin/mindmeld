@@ -72,6 +72,9 @@ export class TouchAdapter extends BaseAdapter {
     this.gestureRecognizer = new GestureRecognizer(this.eventBus);
     this.gestureRecognizer.initialize(this.canvas);
 
+    // Setup delegated event listeners for MM-176 fix
+    this.setupDelegatedEventListeners();
+
     // Set up gesture event handling
     this.setupGestureHandling();
 
@@ -101,6 +104,24 @@ export class TouchAdapter extends BaseAdapter {
 
     // Clear connection state
     this.clearConnectionMode();
+  }
+
+  /**
+   * Setup listeners for delegated events from EventDelegationManager
+   * This handles touch events on styled content elements that were blocked
+   * by the CSS pointer-events hack (MM-176)
+   */
+  setupDelegatedEventListeners() {
+    // Listen for delegated tap events
+    this.eventBus.on('note.delegatedTap', (data) => {
+      console.log('TouchAdapter: Received delegated tap', data);
+      // Single tap might select the note or could be handled differently
+      // based on touch interaction patterns
+    });
+
+    // The delegated double-tap is already handled via note.requestEdit event
+    // which is emitted by EventDelegationManager and listened to by EditModeController
+    console.log('TouchAdapter: Delegated event listeners configured for touch');
   }
 
   /**

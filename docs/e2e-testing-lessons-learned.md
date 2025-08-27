@@ -14,6 +14,39 @@ During the major MM-56 test suite recovery, we discovered critical patterns and 
 - **Desktop mode**: `http://localhost:8080/?mode=desktop`  
 - **Touch mode**: `http://localhost:8080/?mode=touch`
 
+### 🚨 **CRITICAL: GestureRecognizer State Machine Bug (Fixed)**
+
+**Discovery**: Manual testing revealed that **automated tests were giving false positives** for touch interactions.
+
+**The Bug**: Missing timing check in `GestureRecognizer.handlePotentialDoubleTapState()` caused state machine to get stuck in `POTENTIAL_DOUBLE_TAP` state, blocking ALL touch gestures.
+
+```javascript
+// ❌ BROKEN (missing timing validation)
+if (this.lastTapPosition && this.calculateDistance(...) <= this.TAP_MAX_MOVEMENT) {
+
+// ✅ FIXED (proper timing validation)  
+const now = Date.now();
+if (this.lastTapTime && now - this.lastTapTime <= this.DOUBLE_TAP_MAX_DELAY && 
+    this.lastTapPosition && this.calculateDistance(...) <= this.TAP_MAX_MOVEMENT) {
+```
+
+**Impact**: Single fix resolved multiple "unrelated" touch interaction bugs:
+- Canvas zoom/pan failures
+- Double-tap note creation failures  
+- Touch editing mode failures
+- Ghost connector interaction failures
+
+**Testing Lesson**: **Manual testing is essential** - automated tests can mask fundamental gesture recognition failures because Playwright's touch simulation might bypass broken gesture logic.
+
+**Debugging Pattern That Worked**:
+1. **Automated tests showed TouchAdapter initialized** ✅ 
+2. **Manual testing revealed complete touch failure** ❌
+3. **Root cause**: Playwright's `page.touchscreen.tap()` bypasses GestureRecognizer
+4. **Real touch events**: Chrome DevTools simulation goes through actual gesture detection
+5. **Fix**: Target the real gesture recognition logic, not test simulation
+
+**Key Insight**: When automated tests pass but manual testing fails, investigate whether test simulation bypasses the actual production code paths.
+
 ### 🔧 **CanvasPage Helper Patterns**
 
 #### ✅ **Correct Pattern: Mode-Aware CanvasPage**

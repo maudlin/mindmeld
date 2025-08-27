@@ -44,6 +44,35 @@ TouchAdapter implements a sophisticated interaction model automatically activate
 - **Two-finger drag**: Canvas panning
 - **Combined gestures**: Simultaneous zoom and pan
 
+#### ⚠️ **Critical Implementation Note: GestureRecognizer Timing Requirements**
+
+**IMPORTANT**: Touch gesture recognition requires **proper timing validation** to prevent state machine corruption:
+
+```javascript
+// ❌ BROKEN - Missing timing check (causes all touch interactions to fail)
+if (this.lastTapPosition && this.calculateDistance(tapPosition, this.lastTapPosition) <= this.TAP_MAX_MOVEMENT) {
+  this.emitDoubleTap(touchData);
+}
+
+// ✅ CORRECT - Proper timing validation prevents state machine corruption
+const now = Date.now();
+if (this.lastTapTime && 
+    now - this.lastTapTime <= this.DOUBLE_TAP_MAX_DELAY &&
+    this.lastTapPosition && 
+    this.calculateDistance(tapPosition, this.lastTapPosition) <= this.TAP_MAX_MOVEMENT) {
+  this.emitDoubleTap(touchData);
+}
+```
+
+**Why This Matters**: Without proper timing checks, GestureRecognizer gets stuck in `POTENTIAL_DOUBLE_TAP` state, blocking ALL subsequent touch gestures including zoom, pan, and note interactions.
+
+**Symptoms of Broken Timing**:
+- ❌ Double-tap note creation fails
+- ❌ Zoom/pinch gestures don't work  
+- ❌ Canvas panning broken
+- ❌ Note editing via touch fails
+- ❌ Connection creation fails
+
 #### Technical Implementation
 
 ```javascript
