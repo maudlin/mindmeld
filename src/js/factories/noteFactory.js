@@ -48,7 +48,7 @@ export function createNote(x, y, canvas, addEventListeners = null) {
 
   const noteId = toBase62(nextNoteId++);
   note.id = noteId;
-  note.dataset.id = noteId; // For EventDelegationManager
+  note.dataset.id = noteId;
 
   // Emit event instead of direct dataStore call
   eventBus.emit('note.created', {

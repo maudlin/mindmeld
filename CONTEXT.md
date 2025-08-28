@@ -1,227 +1,138 @@
-# MindMeld Developer Context
+# MindMeld Event System Refactor (MM-182)
 
-*Last Updated: August 26, 2025*
+**Branch**: `feature/mm-182-event-system-refactor`  
+**Started**: August 28, 2025  
+**Approach**: Surgical replacement - rip and replace with behavior-driven architecture
 
-## Project Overview
+## What We're Doing
 
-**MindMeld** is a production-ready web-based mind mapping tool with modern JavaScript architecture:
+**Surgical Event System Refactor** - Complete replacement of the current complex, multi-path event handling system with a unified behavior-driven architecture.
 
-- **Event-driven architecture** with zero circular dependencies
-- **Textarea-based edit mode** with seamless view/edit transitions  
-- **Advanced mobile support** with TouchAdapter and desktop DesktopAdapter
-- **Security-first markdown pipeline** with XSS protection
-- **Comprehensive testing**: 680+ unit tests, 214 E2E tests
+### Current Problem
+- **Dual Event Systems**: EventDelegationManager (capture phase) + DesktopAdapter (bubble phase) 
+- **Code Duplication**: 70% overlap between DesktopAdapter (899 lines) and TouchAdapter (1,087 lines)
+- **MM-183 Bug**: Styled content (`<strong>`, `<h1>`) can't be clicked to enter edit mode
+- **Complex Event Flows**: 3-4 levels of event cascading, multiple conflict points
+- **Fragile Architecture**: Every change risks breaking existing functionality
 
-**Live Demo**: [mind-meld.co](https://mind-meld.co/)
+### Target Solution
+- **Single Event Flow**: User Input → Adapter (coordinates only) → Behavior (logic) → EventBus → Services
+- **Behavior-Driven**: One behavior class per interaction type (NoteBehavior, DragBehavior, etc.)
+- **Thin Adapters**: DesktopAdapter (~300 lines), TouchAdapter (~400 lines) - input translation only
+- **Zero Event Delegation**: Direct styled content detection in behaviors using `event.composedPath()`
 
-## Current Project State
+## How We're Doing It
 
-### 🎉 **V1 COMPLETE - Production Ready**
+### Surgical Replacement Strategy
+**No dual systems, no feature flags** - complete replacement with git rollback as safety net.
 
-**Status**: ✅ All major features implemented and tested
-**Architecture Grade**: A+ (no circular dependencies)
-**Test Coverage**: 95.8% E2E success rate (226/236 tests passing)
+**Rollback Plan**: `git reset --hard cb38c57` (last known working state)
 
-### ✅ **Core Achievements**
+### Implementation Phases
 
-#### **1. Revolutionary Textarea Edit Mode Architecture**
-- **Innovation**: First-known "element replacement" architecture where textarea completely replaces div during editing
-- **Benefits**: Perfect newline preservation, no contentEditable issues, seamless font consistency
-- **Implementation**: `editViewMode.js` with EditModeController orchestration
-- **Status**: ✅ Production validated with comprehensive unit tests
+#### Phase 1: Destruction (Day 1 Morning)
+- **MM-184**: Delete EventDelegationManager entirely
+- **MM-185**: Gut all adapter interaction methods  
+- **MM-186**: Create behavior architecture foundation
 
-#### **2. Unified Interaction System (MM-166 Epic)**  
-- **DesktopAdapter**: Click-based edit mode, drag/drop, keyboard shortcuts
-- **TouchAdapter**: Double-tap edit mode, mobile keyboard, gesture recognition
-- **EditModeController**: Unified state management for all edit/view transitions
-- **Status**: ✅ Complete with EventBus integration
+#### Phase 2: Core Behaviors (Day 1-2)
+- **MM-187**: NoteBehavior - click detection, edit mode, selection logic
+- **MM-188**: DragBehavior - single/multi-note dragging, connections
+- **MM-189**: SelectionBoxBehavior - lasso selection, multi-select
 
-#### **3. Security-First Markdown Pipeline**
-- **Defang Pipeline**: XSS protection via HTML sanitization
-- **Markdown Renderer**: Safe whitelisted tag rendering
-- **Storage Layer**: Markdown-only persistence (no HTML injection vectors)
-- **Status**: ✅ Complete with 85+ security tests
+#### Phase 3: Adapter Reconstruction (Day 2-3)
+- **MM-190**: Rebuild DesktopAdapter as thin input layer
+- **MM-191**: Rebuild TouchAdapter as thin input layer
+- **MM-192**: Wire InteractionController and restore functionality
 
-#### **4. Comprehensive E2E Test Recovery** 
-- **Challenge**: Textarea architecture broke existing E2E tests
-- **Solution**: Created mode-agnostic test helpers and systematic test fixes
-- **Result**: 230/246 tests passing (93.5% success rate)
-- **Status**: ✅ Major recovery completed
+#### Phase 4: Testing & Validation (Day 3-4)
+- **MM-193**: Replace old interaction tests with behavior-focused suites
+- **MM-194**: End-to-end validation and performance testing
 
-#### **5. Complete Keyboard Interaction System** 
-- **Challenge**: Enter key conflicts and missing keyboard shortcuts
-- **Solution**: Capture phase event handling with comprehensive keyboard support
-- **Features**: Enter→edit, Escape→exit/deselect, Ctrl+Enter→save
-- **Status**: ✅ Complete with production validation
+## Why We're Doing It
 
-## Current Development Focus
+### Technical Debt Crisis
+The event system has reached **MODERATE-HIGH complexity** with multiple overlapping systems creating:
+- **Unpredictable behavior** - same user action, different code paths
+- **Debugging nightmare** - hours to trace through conflicting event handlers  
+- **Maintenance burden** - every change risks cascade failures
+- **Production bugs** - MM-183 styled content bug is symptom of deeper architecture problems
 
-### ✅ **Completed: Keyboard Interaction Enhancement** ✅ **COMPLETE**
+### Strategic Benefits
 
-**Achievement**: Complete keyboard shortcut system with optimal desktop UX
+#### Immediate (Week 1)
+- **Bug Resolution**: MM-183 styled content clicks work perfectly
+- **Code Reduction**: 40% reduction in adapter complexity (1,986 → ~1,200 lines)
+- **Architecture Clarity**: Single source of truth for each interaction type
 
-#### **Successfully Implemented**:
-1. **Fixed Enter Key Priority**: Used capture phase event handling to prevent kebab menu interference
-2. **Enter → Edit Mode**: Works perfectly on selected notes  
-3. **Escape → Exit Edit Mode**: Functional in textarea edit mode
-4. **Escape → Deselect Notes**: Works when notes are selected
-5. **Color Picker Keyboard Accessibility**: Fixed Enter/Space key conflicts with note editing
-6. **Enhanced E2E Tests**: Updated with proper note selection for keyboard testing
+#### Long-term (Months)
+- **Development Velocity**: Faster feature development with behavior reuse
+- **Fewer Bugs**: Centralized logic eliminates interaction conflicts
+- **Easier Onboarding**: Simple, predictable event flow for new developers
+- **Performance**: Direct behavior calls, no event cascade overhead
 
-#### **Technical Implementation**:
-- **Event Priority Fix**: `addEventListener(..., true)` for capture phase priority over kebab menu
-- **Color Picker Integration**: Added `.color-swatch` event delegation to preserve accessibility
-- **Enhanced DesktopAdapter**: Added `getFocusedNote()` method for keyboard focus detection
-- **Comprehensive Keyboard Handling**: Enter, Escape, Ctrl+Enter all working with color picker
+### Risk Assessment
+- **Technical Risk**: MEDIUM - Complex refactor but comprehensive TDD approach
+- **Business Risk**: LOW - Feature parity maintained, rollback available
+- **Timeline Risk**: LOW - Surgical approach, 4-day completion target
 
-#### **Results**:
-- **95.2% E2E Success Rate**: 236/248 tests passing ⬆️ from 93.5%
-- **All 24 color picker accessibility tests passing**
-- **Keyboard UX Complete**: Both note editing AND color picker accessibility working
-- **Production Validated**: Manual testing confirms proper functionality
+## Architecture Design
 
-### ✅ **Completed: V1 Canvas Template Simplification** ✅ **COMPLETE**
+### New Event Flow
+```
+User Click → Adapter.detectClick() → NoteBehavior.handleNoteClick() → eventBus.emit('note.requestEdit') → EditModeController
+```
 
-**Achievement**: Eliminated canvas template complexity for V1 focus and bug reduction
+### Behavior Responsibilities
+- **NoteBehavior**: All note interactions (click, select, edit mode)
+- **DragBehavior**: All dragging operations (single/multi-note, connections)  
+- **SelectionBoxBehavior**: Lasso selection and multi-select coordination
+- **InteractionController**: Behavior orchestration and adapter coordination
 
-#### **Successfully Removed**:
-1. **UI Elements**: Kebab menu "Change Template" option completely removed
-2. **Template Switching Logic**: Canvas template selection and switching disabled
-3. **Multi-Canvas Support**: Only Standard Canvas available (Hero's Journey, Wardley Map, Now/Next/Future disabled)
-4. **Template State Management**: Simplified to Standard Canvas only
-5. **Template-Related Tests**: 5 test suites disabled but preserved for future restoration
+### Adapter Responsibilities  
+- **DesktopAdapter**: Pointer event coordinates → behavior method calls
+- **TouchAdapter**: Gesture recognition → behavior method calls
+- **Both**: ZERO business logic, pure input translation
 
-#### **Technical Implementation**:
-- **Config Simplification**: Removed `canvasTypes` object, kept single `defaultCanvasType`
-- **Canvas Manager**: Only loads Standard Canvas module
-- **Canvas State Service**: Only accepts 'Standard Canvas' as valid type
-- **Data Store**: Always uses Standard Canvas, ignores imported canvas types
-- **Preserved Template Files**: All template modules intact for future restoration
+### Styled Content Solution
+**No event delegation needed** - behaviors use `event.composedPath()` to detect styled elements directly:
 
-#### **Results**:
-- **83 E2E Tests Passing**: Significant improvement from template-related failures
-- **700+ Unit Tests Passing**: Clean test suite with template complexity removed
-- **Eliminated Template Bugs**: No more canvas centering/multi-select issues
-- **Comprehensive Restoration Guide**: `CANVAS_TEMPLATES_REMOVAL.md` created
-
-### 🎯 **Current Priorities**
-
-#### ✅ **COMPLETED: Test Suite Investigation & Multi-Select Fix** ✅
-- **Multi-Select Tests Fixed**: ✅ All 6 tests now passing (pointer events instead of mouse events)
-- **Delete/Backspace Bug Fixed**: ✅ Resolved - empty notes no longer incorrectly deleted during editing
-- **Canvas Template Tests Fixed**: ✅ All template-related test failures resolved
-- **Current E2E Status**: **95.8% success rate** (226/236 tests passing) ⬆️
-
-#### ✅ **MAJOR SUCCESS: Critical Touch Interaction Bug Resolved**
-
-**🎯 Root Cause Identified & Fixed**: Missing timing check in GestureRecognizer.handlePotentialDoubleTapState()
-
-**The Bug**: 
 ```javascript
-// BROKEN - Missing timing check
-if (this.lastTapPosition && this.calculateDistance(...) <= TAP_MAX_MOVEMENT)
+// In NoteBehavior.handleNoteClick()
+const clickedElement = event.target;
+const noteContent = clickedElement.closest('.note-content');
+const isStyledContent = clickedElement !== noteContent;
 
-// FIXED - Added proper timing validation  
-if (this.lastTapTime && now - this.lastTapTime <= DOUBLE_TAP_MAX_DELAY && 
-    this.lastTapPosition && this.calculateDistance(...) <= TAP_MAX_MOVEMENT)
+// Handle both normal and styled content in the same code path
+if (noteContent && !noteContent.classList.contains('edit-mode')) {
+  this.requestEditMode(noteContent);
+}
 ```
-
-**Impact - Single Fix Resolved Multiple Issues**:
-- ✅ **MM-178**: Canvas Background Disappears on Zoom Out (Touch Mode) 
-- ✅ **MM-179**: Double-Tap Note Creation Not Working (Touch Mode)
-- ✅ **MM-180**: Touch Experience Generally Degraded  
-- ✅ **MM-181**: Ghost Connector Selection Works But Connections Not Created
-
-**Technical Analysis**: GestureRecognizer state machine was getting stuck in `POTENTIAL_DOUBLE_TAP` state, blocking ALL subsequent touch gestures (zoom, pan, tap, connection creation).
-
-**Resolution**: Complete touch experience restoration - note creation, editing, zoom, pan, and connections all working properly.
-
-#### 🏗️ **MM-176: EventDelegationManager Architecture Completed**
-
-**Implementation**: JavaScript event delegation system to replace CSS pointer-events hack
-- ✅ **EventDelegationManager**: Centralized touch/click handling for styled content
-- ✅ **Integration**: Bootstrap, TouchAdapter, DesktopAdapter integration complete
-- ✅ **CSS Clean-up**: Removed problematic `pointer-events: none` hack
-- ✅ **Production Ready**: Both desktop and mobile interactions working
-
-#### **Current Status**: 
-🎉 **Touch experience fully restored** - Manual testing confirms all major touch interactions working
-
-## Technical Architecture
-
-### **Core Components**
-
-```
-src/js/
-├── core/
-│   ├── bootstrap/           # Clean initialization system  
-│   └── eventBus.js         # Central communication hub
-├── interactions/
-│   ├── adapters/           # DesktopAdapter, TouchAdapter
-│   └── EditModeController.js # Unified edit/view state management
-├── features/
-│   ├── note/               # Note creation, editing, rendering
-│   │   └── editViewMode.js # Textarea replacement architecture
-│   └── markdown/          # Security-first rendering pipeline
-└── data/                  # State management & persistence
-```
-
-### **Key Patterns**
-
-**Event-Driven Communication**:
-```javascript
-// Edit mode transitions via EventBus
-eventBus.emit('note.requestEdit', { noteId, noteElement });
-eventBus.emit('note.requestView', { noteId, noteElement });
-```
-
-**Textarea Element Replacement**:
-```javascript
-// Revolutionary approach: textarea IS the note-content element
-<textarea class="note-content edit-mode edit-textarea">markdown content</textarea>
-// Instead of nested: <div class="note-content"><textarea></textarea></div>
-```
-
-**Security-First Content Handling**:
-```javascript
-const cleanedMarkdown = defangToPlainText(userInput, false);
-const safeHTML = renderMarkdown(cleanedMarkdown); // Whitelisted tags only
-```
-
-## Development Workflow
-
-### **Commands**
-```bash
-npm start                    # Development server (http://localhost:8080)
-npm test                     # Unit tests (680+ tests)
-npm run test:e2e             # E2E tests (214 tests)  
-npm run lint                 # Code style check
-npm run health-check         # Architecture health assessment
-```
-
-### **Testing Standards**
-- **E2E Tests**: Use CanvasPage helper with mode-agnostic assertions
-- **Textarea Compatibility**: Use `.toHaveValue()` for textareas, `.toHaveText()` for divs
-- **Note Creation**: Always use `createNote()` with throttle handling
-- **Mode Transitions**: Re-query elements after edit/view mode changes
-
-### **Quality Gates**
-- ✅ **Unit Tests**: 700+ tests passing (99.9% success rate)
-- ✅ **E2E Tests**: 83/240 tests passing (34.5% success rate - improvement in progress) 
-- ✅ **Architecture**: Grade A+ (zero circular dependencies)
-- ✅ **Security**: All commits scanned, no vulnerable dependencies
-- ✅ **Performance**: Sub-500ms rendering, production validated
 
 ## Success Metrics
 
-**V1 Release Criteria**: ✅ **COMPLETE**
-- **Core Functionality**: Edit/view modes, mobile support, security pipeline
-- **Test Coverage**: Comprehensive unit and E2E test suites  
-- **Architecture**: Clean, maintainable, zero technical debt
-- **Production Ready**: Live deployment successful, user feedback positive
+### Code Quality
+- [ ] 40% code reduction achieved (1,986 → ~1,200 lines)
+- [ ] Zero circular dependencies maintained
+- [ ] Single source of truth for each interaction type
 
-**Current Focus**: Major test suite investigation completed with 95.8% E2E success rate achieved. Critical pointer-events architecture issue identified (MM-176) affecting touch interactions and remaining 6 E2E test failures. Implementation of JavaScript event delegation solution in progress.
+### Functionality  
+- [ ] All existing interactions work identically
+- [ ] MM-183 styled content bug resolved
+- [ ] No performance regression in interactions
+
+### Testing
+- [ ] 100% behavior test coverage
+- [ ] All E2E tests pass
+- [ ] Faster, more reliable test execution
+
+### Architecture Health
+- [ ] Grade A+ architecture health maintained
+- [ ] Simple, debuggable event flows
+- [ ] Easy to extend with new interaction types
 
 ---
 
-*MindMeld V1: Production-ready mind mapping with revolutionary textarea edit architecture*
+**Current Status**: Ready to begin Phase 1 - Destruction
+
+*This refactor eliminates the fundamental complexity that causes interaction bugs while dramatically simplifying the codebase for future development.*

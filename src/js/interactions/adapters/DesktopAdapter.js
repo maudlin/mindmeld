@@ -75,9 +75,6 @@ export class DesktopAdapter extends BaseAdapter {
       this.canvas.id,
     );
 
-    // Listen for delegated events from EventDelegationManager (MM-176)
-    this.setupDelegatedEventListeners();
-
     // Canvas-specific events
     this.canvas.addEventListener('pointerdown', this.boundHandlers.pointerDown);
     this.canvas.addEventListener('dblclick', this.boundHandlers.doubleClick);
@@ -124,24 +121,6 @@ export class DesktopAdapter extends BaseAdapter {
     this.isDrawingSelectionBox = false;
     this.dragState = null;
     this.selectionBoxState = null;
-  }
-
-  /**
-   * Setup listeners for delegated events from EventDelegationManager
-   * This handles clicks on styled content elements that previously were blocked
-   * by the CSS pointer-events hack (MM-176)
-   */
-  setupDelegatedEventListeners() {
-    // Listen for delegated click events
-    this.eventBus.on('note.delegatedClick', (data) => {
-      console.log('DesktopAdapter: Received delegated click', data);
-      // For now, single clicks might select the note
-      // This could be enhanced based on requirements
-    });
-
-    // The delegated double-click is already handled via note.requestEdit event
-    // which is emitted by EventDelegationManager and listened to by EditModeController
-    console.log('DesktopAdapter: Delegated event listeners configured');
   }
 
   /**

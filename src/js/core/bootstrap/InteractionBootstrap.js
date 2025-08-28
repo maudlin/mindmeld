@@ -9,7 +9,6 @@ import { BaseBootstrap } from './BaseBootstrap.js';
 import { InputController } from '../../interactions/InputController.js';
 import { CapabilityDetector } from '../../interactions/capabilities/detector.js';
 import { editModeController } from '../../features/note/EditModeController.js';
-import { eventDelegationManager } from '../EventDelegationManager.js';
 import { eventBus } from '../eventBus.js';
 import { log } from '../../utils/utils.js';
 
@@ -24,10 +23,6 @@ export class InteractionBootstrap extends BaseBootstrap {
     // Legacy system removed - elements parameter no longer needed
     // Initialize modern input system with graceful fallback
     const inputSystemReady = await this.initializeInputSystem();
-
-    // Initialize EventDelegationManager for proper click handling on styled content
-    // This replaces the CSS pointer-events hack (MM-176)
-    this.initializeEventDelegation();
 
     // Initialize EditModeController for unified edit/view state management
     this.initializeEditModeController();
@@ -83,21 +78,6 @@ export class InteractionBootstrap extends BaseBootstrap {
     }
   }
 
-  initializeEventDelegation() {
-    try {
-      eventDelegationManager.initialize();
-      log(
-        'InteractionBootstrap: EventDelegationManager initialized successfully',
-      );
-    } catch (error) {
-      console.error(
-        'InteractionBootstrap: Failed to initialize EventDelegationManager:',
-        error,
-      );
-      // Don't throw - allow app to continue with degraded functionality
-    }
-  }
-
   initializeEditModeController() {
     try {
       editModeController.initialize();
@@ -123,17 +103,6 @@ export class InteractionBootstrap extends BaseBootstrap {
     if (this.inputController) {
       // InputController cleanup would go here if it has a cleanup method
       this.inputController = null;
-    }
-
-    // Cleanup EventDelegationManager
-    try {
-      eventDelegationManager.destroy();
-      log('InteractionBootstrap: EventDelegationManager cleaned up');
-    } catch (error) {
-      console.error(
-        'InteractionBootstrap: Failed to cleanup EventDelegationManager:',
-        error,
-      );
     }
 
     // Cleanup EditModeController

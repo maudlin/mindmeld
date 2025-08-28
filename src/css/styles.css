@@ -298,11 +298,8 @@ html {
   width: 100%; /* Always use full note width */
 }
 
-/* MM-176: Replaced CSS pointer-events hack with JavaScript event delegation */
-/* Child elements in view mode now properly receive events through EventDelegationManager */
 .note-content.view-mode * {
   cursor: text; /* Show text cursor on all child elements to indicate editability */
-  /* pointer-events: none; REMOVED - Now handled by EventDelegationManager */
 }
 
 /* Edit mode textarea styling */
