@@ -131,8 +131,58 @@ if (noteContent && !noteContent.classList.contains('edit-mode')) {
 - [ ] Simple, debuggable event flows
 - [ ] Easy to extend with new interaction types
 
+## Platform Specialization Strategy
+
+### **Input Detection → Behavior Delegation Pattern**
+
+The new architecture preserves platform-specific interaction patterns while eliminating logic duplication through a **delegation model**:
+
+**Platform-Specific Input Detection** (Stays in Adapters):
+- **DesktopAdapter**: `handleClick()` → `detectNoteClick()`, `handleDoubleClick()` → `detectNoteDoubleClick()`
+- **TouchAdapter**: `handleTap()` → `detectNoteTap()`, `handlePinch()` → `detectPinchGesture()`
+
+**Unified Logic** (Moves to Behaviors):
+```javascript
+// DesktopAdapter - Input detection only
+detectNoteClick(event) {
+  const noteElement = event.target.closest('.note');
+  if (noteElement) {
+    this.noteBehavior.handleNoteClick(noteElement, event, 'desktop');
+  }
+}
+
+// TouchAdapter - Input detection only  
+detectNoteTap(event) {
+  const noteElement = event.target.closest('.note');
+  if (noteElement) {
+    this.noteBehavior.handleNoteClick(noteElement, event, 'touch');
+  }
+}
+
+// NoteBehavior - Unified logic for both platforms
+handleNoteClick(noteElement, event, inputType) {
+  this.requestEditMode(noteElement); // Same logic regardless of input method
+}
+```
+
+### **What Gets Preserved vs Unified**
+
+**Platform-Specific (Preserved)**:
+- Desktop: Precise pointer coordinates, right-click handling, hover states
+- Touch: Hit target expansion, gesture recognition, multi-touch handling  
+- Input timing differences (click vs tap detection)
+- Coordinate system translations
+
+**Unified (Behavior Classes)**:
+- Edit mode logic: Same whether clicked or tapped
+- Selection logic: Same multi-select patterns
+- Drag calculations: Same position updates and collision detection
+- Visual feedback: Same selection boxes and drag previews
+
+**Benefits**: No logic duplication + platform optimization preserved + easier testing + single source of truth per interaction.
+
 ---
 
-**Current Status**: Ready to begin Phase 1 - Destruction
+**Current Status**: MM-184 Complete ✅ → MM-185 In Progress (Gutting Adapters)
 
 *This refactor eliminates the fundamental complexity that causes interaction bugs while dramatically simplifying the codebase for future development.*
