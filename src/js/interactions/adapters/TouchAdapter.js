@@ -5,14 +5,20 @@ import { GestureRecognizer } from '../gestures/GestureRecognizer.js';
 
 /**
  * Touch input adapter for mobile and tablet interactions
- * Handles raw gesture detection and delegates interaction logic to behaviors
+ * Thin input layer that detects touch gestures and delegates to behaviors
  *
- * REFACTORED: Only handles gesture recognition, all interaction logic moved to behaviors
+ * MM-204: Rebuilt as thin input layer with behavior delegation
  */
 export class TouchAdapter extends BaseAdapter {
-  constructor() {
+  constructor(interactionController) {
     super();
     this.name = 'touch';
+
+    // Behavior references
+    this.interactionController = interactionController;
+    this.noteBehavior = null;
+    this.dragBehavior = null;
+    this.selectionBoxBehavior = null;
 
     // Core components
     this.gestureRecognizer = null;
@@ -20,6 +26,33 @@ export class TouchAdapter extends BaseAdapter {
 
     // Touch-specific settings
     this.HIT_TARGET_EXPANSION = 20; // pixels to expand hit targets for mobile
+
+    // Touch-specific interaction state
+    this.currentGesture = null;
+    this.gestureStartTarget = null;
+  }
+
+  /**
+   * Initialize adapter with behavior references and event listeners
+   */
+  async initialize() {
+    await super.initialize();
+
+    // Get behavior references from interaction controller
+    if (this.interactionController) {
+      this.noteBehavior = this.interactionController.getBehavior('note');
+      this.dragBehavior = this.interactionController.getBehavior('drag');
+      this.selectionBoxBehavior =
+        this.interactionController.getBehavior('selectionBox');
+
+      console.log('TouchAdapter: Behavior references initialized', {
+        hasNoteBehavior: !!this.noteBehavior,
+        hasDragBehavior: !!this.dragBehavior,
+        hasSelectionBoxBehavior: !!this.selectionBoxBehavior,
+      });
+    }
+
+    await this.initializeEventListeners();
   }
 
   /**
@@ -41,7 +74,7 @@ export class TouchAdapter extends BaseAdapter {
     this.gestureRecognizer = new GestureRecognizer(this.eventBus);
     this.gestureRecognizer.initialize(this.canvas);
 
-    // Set up raw gesture detection (no interaction logic)
+    // Set up gesture detection with behavior delegation
     this.setupGestureDetection();
 
     // Set up touch-specific enhancements
@@ -67,13 +100,12 @@ export class TouchAdapter extends BaseAdapter {
   }
 
   /**
-   * Set up raw gesture detection - NO INTERACTION LOGIC
-   * TODO: Will delegate to behaviors after behavior implementation
+   * Set up gesture detection with behavior delegation
    */
   setupGestureDetection() {
     if (!this.gestureRecognizer) return;
 
-    // Override gesture recognizer methods to detect gestures without handling them
+    // Override gesture recognizer methods to delegate to behaviors
     const originalEmitTap = this.gestureRecognizer.emitTap.bind(
       this.gestureRecognizer,
     );
@@ -84,8 +116,10 @@ export class TouchAdapter extends BaseAdapter {
         target: touch.target?.tagName,
       });
 
-      // TODO: Delegate to NoteBehavior
-      // For now, just detect the gesture
+      // Detect interaction type and delegate to behavior
+      this.handleTap(touch);
+
+      // Still emit original event for any legacy listeners
       originalEmitTap(touch);
     };
 
@@ -99,8 +133,10 @@ export class TouchAdapter extends BaseAdapter {
         target: touch.target?.tagName,
       });
 
-      // TODO: Delegate to NoteBehavior
-      // For now, just detect the gesture
+      // Handle double-tap as note interaction (edit mode)
+      this.handleDoubleTap(touch);
+
+      // Still emit original event for any legacy listeners
       originalEmitDoubleTap(touch);
     };
 
@@ -114,8 +150,10 @@ export class TouchAdapter extends BaseAdapter {
         target: touch.target?.tagName,
       });
 
-      // TODO: Delegate to DragBehavior
-      // For now, just detect the gesture
+      // Handle drag start - delegate to appropriate behavior
+      this.handleDragStart(touch);
+
+      // Still emit original event for any legacy listeners
       originalEmitDragStart(touch);
     };
 
@@ -123,8 +161,10 @@ export class TouchAdapter extends BaseAdapter {
       this.gestureRecognizer,
     );
     this.gestureRecognizer.emitDragMove = (touch) => {
-      // TODO: Delegate to active DragBehavior
-      // For now, just detect movement
+      // Handle drag move - delegate to active behavior
+      this.handleDragMove(touch);
+
+      // Still emit original event for any legacy listeners
       originalEmitDragMove(touch);
     };
 
@@ -134,8 +174,10 @@ export class TouchAdapter extends BaseAdapter {
     this.gestureRecognizer.emitDragEnd = (touch) => {
       console.log('TouchAdapter: Drag end detected');
 
-      // TODO: Delegate to active DragBehavior
-      // For now, just detect the gesture end
+      // Handle drag end - delegate to active behavior
+      this.handleDragEnd(touch);
+
+      // Still emit original event for any legacy listeners
       originalEmitDragEnd(touch);
     };
 
@@ -145,12 +187,13 @@ export class TouchAdapter extends BaseAdapter {
     this.gestureRecognizer.emitPinchStart = (touches) => {
       console.log('TouchAdapter: Pinch start detected');
 
-      // TODO: Delegate to zoom behavior (or keep as canvas-specific?)
-      // For now, just detect the gesture
+      // Pinch is canvas-specific (zoom) - keep as direct event
       originalEmitPinchStart(touches);
     };
 
-    console.log('TouchAdapter: Raw gesture detection configured');
+    console.log(
+      'TouchAdapter: Gesture detection with behavior delegation configured',
+    );
   }
 
   /**
@@ -206,6 +249,211 @@ export class TouchAdapter extends BaseAdapter {
       }
     `;
     document.head.appendChild(touchStyle);
+  }
+
+  /**
+   * Handle tap gesture - detect interaction type and delegate to behaviors
+   */
+  handleTap(touch) {
+    if (!touch) return;
+
+    const target = this.expandTouchTarget(touch);
+
+    // Check for note interaction
+    const noteElement = target.closest('.note');
+    if (noteElement) {
+      this.handleNoteTap(noteElement, touch);
+      return;
+    }
+
+    // Check for canvas interaction (future: selection start on long press)
+    if (target.id === 'canvas' || target.closest('#canvas')) {
+      // Single tap on canvas - no action needed
+      console.log('TouchAdapter: Canvas tap detected (no action)');
+      return;
+    }
+
+    console.log('TouchAdapter: No recognized tap target');
+  }
+
+  /**
+   * Handle double-tap gesture - primarily for edit mode
+   */
+  handleDoubleTap(touch) {
+    if (!touch) return;
+
+    const target = this.expandTouchTarget(touch);
+
+    // Check for note interaction - double tap always tries to edit
+    const noteElement = target.closest('.note');
+    if (noteElement) {
+      this.handleNoteDoubleTap(noteElement, touch);
+      return;
+    }
+
+    console.log('TouchAdapter: Double-tap on non-note target');
+  }
+
+  /**
+   * Handle drag start - detect what's being dragged
+   */
+  handleDragStart(touch) {
+    if (!touch) return;
+
+    const target = this.expandTouchTarget(touch);
+    this.gestureStartTarget = target;
+
+    // Check for note drag
+    const noteElement = target.closest('.note');
+    if (noteElement) {
+      this.handleNoteDragStart(noteElement, touch);
+      return;
+    }
+
+    // Check for canvas selection box (long press + drag)
+    if (target.id === 'canvas' || target.closest('#canvas')) {
+      this.handleSelectionBoxStart(touch);
+      return;
+    }
+
+    console.log('TouchAdapter: Drag start on unrecognized target');
+  }
+
+  /**
+   * Handle drag move - delegate to active behavior
+   */
+  handleDragMove(touch) {
+    if (!touch) return;
+
+    // Check if we have active interactions and delegate
+    if (this.dragBehavior && this.dragBehavior.isDragging) {
+      this.dragBehavior.updateDrag(touch, 'touch');
+      return;
+    }
+
+    if (
+      this.selectionBoxBehavior &&
+      this.selectionBoxBehavior.isDrawingSelectionBox
+    ) {
+      this.selectionBoxBehavior.updateSelectionBox(touch, 'touch');
+      return;
+    }
+  }
+
+  /**
+   * Handle drag end - delegate to active behavior
+   */
+  handleDragEnd(touch) {
+    if (!touch) return;
+
+    // Check if we have active interactions and delegate
+    if (this.dragBehavior && this.dragBehavior.isDragging) {
+      this.dragBehavior.endDrag(touch, 'touch');
+    }
+
+    if (
+      this.selectionBoxBehavior &&
+      this.selectionBoxBehavior.isDrawingSelectionBox
+    ) {
+      this.selectionBoxBehavior.endSelectionBox(touch, 'touch');
+    }
+
+    // Reset gesture state
+    this.gestureStartTarget = null;
+    this.currentGesture = null;
+  }
+
+  /**
+   * Handle note tap - delegate to NoteBehavior
+   */
+  handleNoteTap(noteElement, touch) {
+    if (!this.noteBehavior) {
+      console.warn('TouchAdapter: NoteBehavior not available');
+      return;
+    }
+
+    console.log('TouchAdapter: Note tap detected, delegating to NoteBehavior');
+    this.noteBehavior.handleNoteClick(noteElement, touch, 'touch');
+  }
+
+  /**
+   * Handle note double-tap - delegate to NoteBehavior for edit mode
+   */
+  handleNoteDoubleTap(noteElement, touch) {
+    if (!this.noteBehavior) {
+      console.warn('TouchAdapter: NoteBehavior not available');
+      return;
+    }
+
+    console.log(
+      'TouchAdapter: Note double-tap detected, delegating to NoteBehavior',
+    );
+    this.noteBehavior.handleNoteClick(noteElement, touch, 'touch');
+  }
+
+  /**
+   * Handle note drag start - delegate to DragBehavior
+   */
+  handleNoteDragStart(noteElement, touch) {
+    if (!this.dragBehavior) {
+      console.warn('TouchAdapter: DragBehavior not available');
+      return;
+    }
+
+    console.log('TouchAdapter: Note drag detected, delegating to DragBehavior');
+    this.currentGesture = 'note-drag';
+    this.dragBehavior.startDrag(noteElement, touch, 'touch');
+  }
+
+  /**
+   * Handle selection box start - delegate to SelectionBoxBehavior
+   */
+  handleSelectionBoxStart(touch) {
+    if (!this.selectionBoxBehavior) {
+      console.warn('TouchAdapter: SelectionBoxBehavior not available');
+      return;
+    }
+
+    console.log(
+      'TouchAdapter: Selection box detected, delegating to SelectionBoxBehavior',
+    );
+    this.currentGesture = 'selection-box';
+    this.selectionBoxBehavior.startSelectionBox(touch, 'touch');
+  }
+
+  /**
+   * Expand touch target for better touch interaction (touch-specific enhancement)
+   */
+  expandTouchTarget(touch) {
+    const originalTarget = touch.target;
+
+    // If we hit a note or its content, that's good enough
+    if (originalTarget.closest('.note')) {
+      return originalTarget;
+    }
+
+    // For other targets, check if there's a nearby note within hit expansion
+    const notes = document.querySelectorAll('.note');
+    for (const note of notes) {
+      const noteRect = note.getBoundingClientRect();
+      const expandedRect = {
+        left: noteRect.left - this.HIT_TARGET_EXPANSION,
+        top: noteRect.top - this.HIT_TARGET_EXPANSION,
+        right: noteRect.right + this.HIT_TARGET_EXPANSION,
+        bottom: noteRect.bottom + this.HIT_TARGET_EXPANSION,
+      };
+
+      if (
+        touch.clientX >= expandedRect.left &&
+        touch.clientX <= expandedRect.right &&
+        touch.clientY >= expandedRect.top &&
+        touch.clientY <= expandedRect.bottom
+      ) {
+        return note;
+      }
+    }
+
+    return originalTarget;
   }
 
   /**

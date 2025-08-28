@@ -213,7 +213,7 @@ export class SelectionBoxBehavior {
     try {
       const selectionBox = document.createElement('div');
       selectionBox.className = 'selection-box';
-      
+
       // Set initial styles
       Object.assign(selectionBox.style, {
         position: 'absolute',
@@ -226,7 +226,10 @@ export class SelectionBoxBehavior {
 
       return selectionBox;
     } catch (error) {
-      console.error('SelectionBoxBehavior: Failed to create selection box element:', error);
+      console.error(
+        'SelectionBoxBehavior: Failed to create selection box element:',
+        error,
+      );
       return null;
     }
   }
@@ -286,7 +289,7 @@ export class SelectionBoxBehavior {
 
       for (const note of notes) {
         const noteRect = note.getBoundingClientRect();
-        
+
         // Check if note intersects with selection bounds
         if (this.isRectIntersecting(noteRect, bounds)) {
           selectedNotes.push(note);
@@ -295,7 +298,10 @@ export class SelectionBoxBehavior {
 
       return selectedNotes;
     } catch (error) {
-      console.error('SelectionBoxBehavior: Failed to detect notes in bounds:', error);
+      console.error(
+        'SelectionBoxBehavior: Failed to detect notes in bounds:',
+        error,
+      );
       return [];
     }
   }
@@ -320,7 +326,10 @@ export class SelectionBoxBehavior {
       try {
         this.selectionBox.remove();
       } catch (error) {
-        console.error('SelectionBoxBehavior: Failed to remove selection box:', error);
+        console.error(
+          'SelectionBoxBehavior: Failed to remove selection box:',
+          error,
+        );
       }
       this.selectionBox = null;
     }

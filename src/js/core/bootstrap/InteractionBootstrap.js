@@ -7,6 +7,7 @@
 
 import { BaseBootstrap } from './BaseBootstrap.js';
 import { InputController } from '../../interactions/InputController.js';
+import { InteractionController } from '../../interactions/InteractionController.js';
 import { CapabilityDetector } from '../../interactions/capabilities/detector.js';
 import { editModeController } from '../../features/note/EditModeController.js';
 import { eventBus } from '../eventBus.js';
@@ -16,6 +17,7 @@ export class InteractionBootstrap extends BaseBootstrap {
   constructor() {
     super('InteractionBootstrap');
     this.inputController = null;
+    this.interactionController = null;
     this.usingLegacyEvents = false;
   }
 
@@ -49,8 +51,16 @@ export class InteractionBootstrap extends BaseBootstrap {
         'InteractionBootstrap: Starting modern input system initialization',
       );
 
+      // Initialize InteractionController for behavior management
+      this.interactionController = new InteractionController(eventBus);
+      await this.interactionController.initialize();
+
       const capabilityDetector = new CapabilityDetector();
-      this.inputController = new InputController(eventBus, capabilityDetector);
+      this.inputController = new InputController(
+        eventBus,
+        capabilityDetector,
+        this.interactionController,
+      );
 
       await this.inputController.initialize();
 
@@ -64,6 +74,7 @@ export class InteractionBootstrap extends BaseBootstrap {
         window.mindMeldDebug = {
           modernInputSystemReady: true,
           inputController: this.inputController,
+          interactionController: this.interactionController,
           timestamp: Date.now(),
         };
       }
@@ -103,6 +114,11 @@ export class InteractionBootstrap extends BaseBootstrap {
     if (this.inputController) {
       // InputController cleanup would go here if it has a cleanup method
       this.inputController = null;
+    }
+
+    if (this.interactionController) {
+      await this.interactionController.cleanup();
+      this.interactionController = null;
     }
 
     // Cleanup EditModeController

@@ -5,7 +5,7 @@ import { BaseAdapter } from './BaseAdapter.js';
 /**
  * Desktop input adapter for mouse, keyboard, and trackpad interactions
  * Thin input layer that detects desktop-specific interactions and delegates to behaviors
- * 
+ *
  * MM-203: Rebuilt as thin input layer with behavior delegation
  */
 export class DesktopAdapter extends BaseAdapter {
@@ -49,8 +49,9 @@ export class DesktopAdapter extends BaseAdapter {
     if (this.interactionController) {
       this.noteBehavior = this.interactionController.getBehavior('note');
       this.dragBehavior = this.interactionController.getBehavior('drag');
-      this.selectionBoxBehavior = this.interactionController.getBehavior('selectionBox');
-      
+      this.selectionBoxBehavior =
+        this.interactionController.getBehavior('selectionBox');
+
       console.log('DesktopAdapter: Behavior references initialized', {
         hasNoteBehavior: !!this.noteBehavior,
         hasDragBehavior: !!this.dragBehavior,
@@ -152,7 +153,7 @@ export class DesktopAdapter extends BaseAdapter {
 
     // Check for canvas interaction (selection box)
     if (target.id === 'canvas' || target.closest('#canvas')) {
-      this.handleCanvasInteractionStart(event);
+      this.handleCanvasInteractionStart();
       return;
     }
 
@@ -169,20 +170,24 @@ export class DesktopAdapter extends BaseAdapter {
     }
 
     // For now, handle as note click - drag detection will be added in pointer move
-    console.log('DesktopAdapter: Note click detected, delegating to NoteBehavior');
+    console.log(
+      'DesktopAdapter: Note click detected, delegating to NoteBehavior',
+    );
     this.noteBehavior.handleNoteClick(noteElement, event, 'desktop');
   }
 
   /**
    * Handle canvas interaction start - prepare for selection box
    */
-  handleCanvasInteractionStart(event) {
+  handleCanvasInteractionStart() {
     if (!this.selectionBoxBehavior) {
       console.warn('DesktopAdapter: SelectionBoxBehavior not available');
       return;
     }
 
-    console.log('DesktopAdapter: Canvas click detected, preparing selection box');
+    console.log(
+      'DesktopAdapter: Canvas click detected, preparing selection box',
+    );
     // Don't start selection box immediately - wait for drag movement
     // This prevents accidental selection boxes on single clicks
   }
@@ -199,7 +204,10 @@ export class DesktopAdapter extends BaseAdapter {
       return;
     }
 
-    if (this.selectionBoxBehavior && this.selectionBoxBehavior.isDrawingSelectionBox) {
+    if (
+      this.selectionBoxBehavior &&
+      this.selectionBoxBehavior.isDrawingSelectionBox
+    ) {
       this.selectionBoxBehavior.updateSelectionBox(event, 'desktop');
       return;
     }
@@ -244,8 +252,10 @@ export class DesktopAdapter extends BaseAdapter {
       return;
     }
 
-    console.log('DesktopAdapter: Note drag detected, delegating to DragBehavior');
-    
+    console.log(
+      'DesktopAdapter: Note drag detected, delegating to DragBehavior',
+    );
+
     // Create synthetic start event with original position
     const startEvent = {
       ...this.pointerDownPosition,
@@ -269,8 +279,10 @@ export class DesktopAdapter extends BaseAdapter {
       return;
     }
 
-    console.log('DesktopAdapter: Selection box detected, delegating to SelectionBoxBehavior');
-    
+    console.log(
+      'DesktopAdapter: Selection box detected, delegating to SelectionBoxBehavior',
+    );
+
     // Create synthetic start event with original position
     const startEvent = {
       ...this.pointerDownPosition,
@@ -314,7 +326,10 @@ export class DesktopAdapter extends BaseAdapter {
     }
 
     // Check if we have an active selection box
-    if (this.selectionBoxBehavior && this.selectionBoxBehavior.isDrawingSelectionBox) {
+    if (
+      this.selectionBoxBehavior &&
+      this.selectionBoxBehavior.isDrawingSelectionBox
+    ) {
       console.log('DesktopAdapter: Ending selection box interaction');
       this.selectionBoxBehavior.endSelectionBox(event, 'desktop');
       return;

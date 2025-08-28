@@ -54,7 +54,7 @@ export class NoteBehavior {
     // Detect styled content using event composition path
     // This solves MM-183: styled elements like <strong>, <h1>, <em> are now clickable
     const clickedElement = event.target;
-    
+
     // Handle direct clicks on note content or its children
     let isValidClick = false;
     if (clickedElement === noteContent) {
@@ -68,7 +68,7 @@ export class NoteBehavior {
       // Click on note element itself (borders/padding)
       isValidClick = true;
     }
-    
+
     if (isValidClick) {
       this.requestEditMode(noteElement, inputType);
     }

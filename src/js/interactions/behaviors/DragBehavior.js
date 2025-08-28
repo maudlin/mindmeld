@@ -153,7 +153,7 @@ export class DragBehavior {
       return;
     }
 
-    // Extract coordinates safely  
+    // Extract coordinates safely
     const endX = event?.clientX || this.dragState.currentPosition.x;
     const endY = event?.clientY || this.dragState.currentPosition.y;
 
@@ -200,7 +200,7 @@ export class DragBehavior {
     console.log('DragBehavior: Drag cancelled');
 
     // TODO: In future, emit event to restore original positions
-    
+
     this.isDragging = false;
     this.dragState = null;
   }
