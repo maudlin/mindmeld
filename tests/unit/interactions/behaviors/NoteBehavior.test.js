@@ -68,16 +68,16 @@ describe('NoteBehavior', () => {
 
     test('should initialize successfully', async () => {
       await noteBehavior.initialize();
-      
+
       expect(noteBehavior.isInitialized).toBe(true);
     });
 
     test('should not initialize twice', async () => {
       await noteBehavior.initialize();
       const firstInitialized = noteBehavior.isInitialized;
-      
+
       await noteBehavior.initialize();
-      
+
       expect(firstInitialized).toBe(true);
       expect(noteBehavior.isInitialized).toBe(true);
     });
@@ -136,7 +136,11 @@ describe('NoteBehavior', () => {
           target: mockStrongElement,
           clientX: 100,
           clientY: 200,
-          composedPath: () => [mockStrongElement, mockNoteContent, mockNoteElement],
+          composedPath: () => [
+            mockStrongElement,
+            mockNoteContent,
+            mockNoteElement,
+          ],
         };
 
         noteBehavior.handleNoteClick(mockNoteElement, mockEvent, 'desktop');
@@ -159,7 +163,11 @@ describe('NoteBehavior', () => {
           target: mockHeadingElement,
           clientX: 100,
           clientY: 200,
-          composedPath: () => [mockHeadingElement, mockNoteContent, mockNoteElement],
+          composedPath: () => [
+            mockHeadingElement,
+            mockNoteContent,
+            mockNoteElement,
+          ],
         };
 
         noteBehavior.handleNoteClick(mockNoteElement, mockEvent, 'touch');
@@ -210,7 +218,12 @@ describe('NoteBehavior', () => {
           target: mockSpanElement,
           clientX: 100,
           clientY: 200,
-          composedPath: () => [mockSpanElement, mockStrongElement, mockNoteContent, mockNoteElement],
+          composedPath: () => [
+            mockSpanElement,
+            mockStrongElement,
+            mockNoteContent,
+            mockNoteElement,
+          ],
         };
 
         noteBehavior.handleNoteClick(mockNoteElement, mockEvent, 'desktop');
@@ -225,8 +238,8 @@ describe('NoteBehavior', () => {
 
     describe('Edit Mode Detection', () => {
       test('should not request edit mode when note is already in edit mode', () => {
-        mockNoteContent.classList.contains.mockImplementation((className) => 
-          className === 'edit-mode'
+        mockNoteContent.classList.contains.mockImplementation(
+          (className) => className === 'edit-mode',
         );
 
         const mockEvent = {
@@ -238,7 +251,10 @@ describe('NoteBehavior', () => {
 
         noteBehavior.handleNoteClick(mockNoteElement, mockEvent, 'desktop');
 
-        expect(mockEventBus.emit).not.toHaveBeenCalledWith('note.requestEdit', expect.any(Object));
+        expect(mockEventBus.emit).not.toHaveBeenCalledWith(
+          'note.requestEdit',
+          expect.any(Object),
+        );
       });
 
       test('should request edit mode when note is not in edit mode', () => {
@@ -361,7 +377,7 @@ describe('NoteBehavior', () => {
 
     test('should destroy behavior cleanly', async () => {
       await noteBehavior.initialize();
-      
+
       await noteBehavior.destroy();
 
       expect(noteBehavior.isInitialized).toBe(false);

@@ -49,7 +49,7 @@ export class InputController {
 
       // Initialize new adapter
       try {
-        await newAdapter.init(this.eventBus);
+        await newAdapter.initialize(this.eventBus);
       } catch (initError) {
         throw new Error(
           `Failed to initialize ${mode} adapter: ${initError.message}`,

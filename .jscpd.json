@@ -1,0 +1,10 @@
+{
+  "threshold": 2,
+  "reporters": ["console", "json"],
+  "ignore": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/*.test.js",
+    "**/*.spec.js"
+  ]
+}

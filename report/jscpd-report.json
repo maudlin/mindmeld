@@ -1,0 +1,1581 @@
+{
+  "statistics": {
+    "detectionDate": "2025-08-28T19:17:53.716Z",
+    "formats": {
+      "javascript": {
+        "sources": {
+          "src/js/features/canvas/templates/wardleyMap/wardleyMapCanvas.js": {
+            "lines": 136,
+            "tokens": 1303,
+            "sources": 1,
+            "clones": 2,
+            "duplicatedLines": 10,
+            "duplicatedTokens": 140,
+            "percentage": 7.35,
+            "percentageTokens": 10.74,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/canvas/templates/standardCanvas/standardCanvas.js": {
+            "lines": 18,
+            "tokens": 135,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/canvas/templates/nowNextFuture/nowNextFutureCanvas.js": {
+            "lines": 33,
+            "tokens": 231,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/canvas/templates/herosJourney/herosJourneyCanvas.js": {
+            "lines": 49,
+            "tokens": 298,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/interactions/gestures/TouchState.js": {
+            "lines": 189,
+            "tokens": 1145,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/interactions/gestures/GestureRecognizer.js": {
+            "lines": 574,
+            "tokens": 3839,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/interactions/capabilities/detector.js": {
+            "lines": 179,
+            "tokens": 910,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/interactions/behaviors/SelectionBoxBehavior.js": {
+            "lines": 312,
+            "tokens": 1863,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/interactions/behaviors/NoteBehavior.js": {
+            "lines": 138,
+            "tokens": 692,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/interactions/behaviors/DragBehavior.js": {
+            "lines": 216,
+            "tokens": 1285,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/interactions/adapters/TouchAdapter.js": {
+            "lines": 475,
+            "tokens": 2701,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/interactions/adapters/DesktopAdapter.js": {
+            "lines": 522,
+            "tokens": 3299,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/interactions/adapters/BaseAdapter.js": {
+            "lines": 147,
+            "tokens": 716,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/zoom/zoomManager.js": {
+            "lines": 263,
+            "tokens": 2342,
+            "sources": 1,
+            "clones": 2,
+            "duplicatedLines": 28,
+            "duplicatedTokens": 244,
+            "percentage": 10.65,
+            "percentageTokens": 10.42,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/note/noteDeletion.js": {
+            "lines": 19,
+            "tokens": 172,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/note/noteColorApplication.js": {
+            "lines": 270,
+            "tokens": 1627,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/note/note.js": {
+            "lines": 7,
+            "tokens": 46,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/note/ghostConnectors.js": {
+            "lines": 8,
+            "tokens": 90,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 7,
+            "duplicatedTokens": 86,
+            "percentage": 87.5,
+            "percentageTokens": 95.56,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/note/editViewMode.js": {
+            "lines": 231,
+            "tokens": 1391,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/note/deleteButton.js": {
+            "lines": 44,
+            "tokens": 282,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/note/EditModeController.js": {
+            "lines": 304,
+            "tokens": 1734,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/markdown/markdownRenderer.js": {
+            "lines": 346,
+            "tokens": 2234,
+            "sources": 1,
+            "clones": 5,
+            "duplicatedLines": 70,
+            "duplicatedTokens": 526,
+            "percentage": 20.23,
+            "percentageTokens": 23.55,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/markdown/isolatedMarkdownEngine.js": {
+            "lines": 363,
+            "tokens": 2449,
+            "sources": 1,
+            "clones": 5,
+            "duplicatedLines": 70,
+            "duplicatedTokens": 526,
+            "percentage": 19.28,
+            "percentageTokens": 21.48,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/markdown/defangPipeline.js": {
+            "lines": 372,
+            "tokens": 2159,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/kebabMenu/kebabMenuEvents.js": {
+            "lines": 114,
+            "tokens": 553,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/kebabMenu/kebabMenu.js": {
+            "lines": 263,
+            "tokens": 2034,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/connection/contextMenu.js": {
+            "lines": 290,
+            "tokens": 2186,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 14,
+            "duplicatedTokens": 95,
+            "percentage": 4.83,
+            "percentageTokens": 4.35,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/connection/connectionUtils.js": {
+            "lines": 109,
+            "tokens": 1033,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 14,
+            "duplicatedTokens": 95,
+            "percentage": 12.84,
+            "percentageTokens": 9.2,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/connection/connectionUpdate.js": {
+            "lines": 130,
+            "tokens": 1076,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/connection/connectionManager.js": {
+            "lines": 279,
+            "tokens": 2091,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/connection/connectionCreation.js": {
+            "lines": 136,
+            "tokens": 1016,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/connection/connection.js": {
+            "lines": 103,
+            "tokens": 715,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/colorPicker/colorPickerEvents.js": {
+            "lines": 299,
+            "tokens": 1882,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/core/bootstrap/UIBootstrap.js": {
+            "lines": 106,
+            "tokens": 737,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/core/bootstrap/ServiceBootstrap.js": {
+            "lines": 141,
+            "tokens": 888,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/core/bootstrap/InteractionBootstrap.js": {
+            "lines": 142,
+            "tokens": 833,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/core/bootstrap/DataBootstrap.js": {
+            "lines": 140,
+            "tokens": 840,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/core/bootstrap/BaseBootstrap.js": {
+            "lines": 80,
+            "tokens": 451,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/core/bootstrap/AppBootstrap.js": {
+            "lines": 128,
+            "tokens": 828,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/components/deleteButton/index.js": {
+            "lines": 11,
+            "tokens": 44,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/components/deleteButton/deleteButtonStyles.js": {
+            "lines": 44,
+            "tokens": 159,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/components/deleteButton/deleteButtonFactory.js": {
+            "lines": 172,
+            "tokens": 1226,
+            "sources": 1,
+            "clones": 2,
+            "duplicatedLines": 14,
+            "duplicatedTokens": 142,
+            "percentage": 8.14,
+            "percentageTokens": 11.58,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/utils/utils.js": {
+            "lines": 106,
+            "tokens": 709,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/utils/mobileInteractions.js": {
+            "lines": 285,
+            "tokens": 1848,
+            "sources": 1,
+            "clones": 2,
+            "duplicatedLines": 22,
+            "duplicatedTokens": 174,
+            "percentage": 7.72,
+            "percentageTokens": 9.42,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/utils/deviceUtils.js": {
+            "lines": 8,
+            "tokens": 33,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/utils/browserDetection.js": {
+            "lines": 240,
+            "tokens": 1403,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/services/zoomStateService.js": {
+            "lines": 95,
+            "tokens": 472,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/services/notificationManager.js": {
+            "lines": 349,
+            "tokens": 2235,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/services/noteService.js": {
+            "lines": 27,
+            "tokens": 230,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/services/noteManager.js": {
+            "lines": 151,
+            "tokens": 818,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/services/noteEventService.js": {
+            "lines": 30,
+            "tokens": 223,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/services/markdownContentService.js": {
+            "lines": 180,
+            "tokens": 944,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/services/connectionService.js": {
+            "lines": 45,
+            "tokens": 310,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/services/colorService.js": {
+            "lines": 209,
+            "tokens": 1242,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/services/canvasStateService.js": {
+            "lines": 118,
+            "tokens": 624,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/interactions/InteractionController.js": {
+            "lines": 236,
+            "tokens": 1354,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/interactions/InputController.js": {
+            "lines": 200,
+            "tokens": 1106,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/factories/noteFactory.js": {
+            "lines": 119,
+            "tokens": 1031,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 7,
+            "duplicatedTokens": 86,
+            "percentage": 5.88,
+            "percentageTokens": 8.34,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/data/storageManager.js": {
+            "lines": 155,
+            "tokens": 949,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/data/observableState.js": {
+            "lines": 99,
+            "tokens": 697,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/data/dataStore.js": {
+            "lines": 348,
+            "tokens": 2896,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/data/canonicalStorage.js": {
+            "lines": 323,
+            "tokens": 2187,
+            "sources": 1,
+            "clones": 2,
+            "duplicatedLines": 32,
+            "duplicatedTokens": 218,
+            "percentage": 9.91,
+            "percentageTokens": 9.97,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/core/uiSetup.js": {
+            "lines": 208,
+            "tokens": 1617,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/core/movement.js": {
+            "lines": 112,
+            "tokens": 1007,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/core/eventBus.js": {
+            "lines": 53,
+            "tokens": 400,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/core/constants.js": {
+            "lines": 43,
+            "tokens": 306,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/core/config.js": {
+            "lines": 18,
+            "tokens": 101,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/core/canvasModule.js": {
+            "lines": 32,
+            "tokens": 310,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/core/canvasManager.js": {
+            "lines": 112,
+            "tokens": 868,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/core/canvasInitialization.js": {
+            "lines": 28,
+            "tokens": 187,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/accessibility/adaptiveHelp.js": {
+            "lines": 250,
+            "tokens": 1667,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/app.js": {
+            "lines": 64,
+            "tokens": 350,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          }
+        },
+        "total": {
+          "lines": 12145,
+          "tokens": 79659,
+          "sources": 72,
+          "clones": 12,
+          "duplicatedLines": 144,
+          "duplicatedTokens": 1166,
+          "percentage": 1.19,
+          "percentageTokens": 1.46,
+          "newDuplicatedLines": 0,
+          "newClones": 0
+        }
+      },
+      "css": {
+        "sources": {
+          "src/js/features/canvas/templates/wardleyMap/wardleyMapCanvas.css": {
+            "lines": 25,
+            "tokens": 148,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/canvas/templates/nowNextFuture/nowNextFutureCanvas.css": {
+            "lines": 32,
+            "tokens": 188,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/features/canvas/templates/herosJourney/herosJourneyCanvas.css": {
+            "lines": 32,
+            "tokens": 177,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          }
+        },
+        "total": {
+          "lines": 89,
+          "tokens": 513,
+          "sources": 3,
+          "clones": 0,
+          "duplicatedLines": 0,
+          "duplicatedTokens": 0,
+          "percentage": 0,
+          "percentageTokens": 0,
+          "newDuplicatedLines": 0,
+          "newClones": 0
+        }
+      },
+      "markup": {
+        "sources": {
+          "src/index.html": {
+            "lines": 193,
+            "tokens": 1546,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 8,
+            "duplicatedTokens": 80,
+            "percentage": 4.15,
+            "percentageTokens": 5.17,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/changelog.html": {
+            "lines": 204,
+            "tokens": 1906,
+            "sources": 1,
+            "clones": 6,
+            "duplicatedLines": 71,
+            "duplicatedTokens": 577,
+            "percentage": 34.8,
+            "percentageTokens": 30.27,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/about.html": {
+            "lines": 220,
+            "tokens": 2491,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 29,
+            "duplicatedTokens": 213,
+            "percentage": 13.18,
+            "percentageTokens": 8.55,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          }
+        },
+        "total": {
+          "lines": 617,
+          "tokens": 5943,
+          "sources": 3,
+          "clones": 4,
+          "duplicatedLines": 54,
+          "duplicatedTokens": 435,
+          "percentage": 8.75,
+          "percentageTokens": 7.32,
+          "newDuplicatedLines": 0,
+          "newClones": 0
+        }
+      }
+    },
+    "total": {
+      "lines": 12851,
+      "tokens": 86115,
+      "sources": 78,
+      "clones": 16,
+      "duplicatedLines": 198,
+      "duplicatedTokens": 1601,
+      "percentage": 1.54,
+      "percentageTokens": 1.86,
+      "newDuplicatedLines": 0,
+      "newClones": 0
+    }
+  },
+  "duplicates": [
+    {
+      "format": "javascript",
+      "lines": 6,
+      "fragment": ".forEach((label) => {\n      const textElement = document.createElementNS(svgNS, 'text');\n      textElement.setAttribute('x', label.x);\n      textElement.setAttribute('y', label.y);\n      textElement.textContent = label.text;\n      // Apply rotation",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/js/features/canvas/templates/wardleyMap/wardleyMapCanvas.js",
+        "start": 104,
+        "end": 109,
+        "startLoc": {
+          "line": 104,
+          "column": 8,
+          "position": 1030
+        },
+        "endLoc": {
+          "line": 109,
+          "column": 18,
+          "position": 1100
+        }
+      },
+      "secondFile": {
+        "name": "src/js/features/canvas/templates/wardleyMap/wardleyMapCanvas.js",
+        "start": 78,
+        "end": 83,
+        "startLoc": {
+          "line": 78,
+          "column": 8,
+          "position": 775
+        },
+        "endLoc": {
+          "line": 83,
+          "column": 12,
+          "position": 845
+        }
+      }
+    },
+    {
+      "format": "javascript",
+      "lines": 15,
+      "fragment": ".clientY - event.currentTarget.offsetTop;\n    const dx = x - startX;\n    const dy = y - startY;\n\n    const transform = new DOMMatrix(window.getComputedStyle(canvas).transform);\n    canvas.style.transform = `translate(${transform.e + dx}px, ${\n      transform.f + dy\n    }px) scale(${transform.a})`;\n\n    startX = x;\n    startY = y;\n  }\n}\n\nfunction stopTouchPanning",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/js/features/zoom/zoomManager.js",
+        "start": 160,
+        "end": 174,
+        "startLoc": {
+          "line": 160,
+          "column": 2,
+          "position": 1520
+        },
+        "endLoc": {
+          "line": 174,
+          "column": 17,
+          "position": 1642
+        }
+      },
+      "secondFile": {
+        "name": "src/js/features/zoom/zoomManager.js",
+        "start": 128,
+        "end": 142,
+        "startLoc": {
+          "line": 128,
+          "column": 6,
+          "position": 1194
+        },
+        "endLoc": {
+          "line": 142,
+          "column": 12,
+          "position": 1316
+        }
+      }
+    },
+    {
+      "format": "javascript",
+      "lines": 16,
+      "fragment": "function escapeHtml(text) {\n  if (typeof text !== 'string') return '';\n\n  return text\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&#x27;');\n}\n\n/**\n * Safe whitespace normalization - preserves markdown structure\n * @param {string} text - Input text\n * @returns {string} Normalized text with preserved structure\n */",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/js/features/markdown/isolatedMarkdownEngine.js",
+        "start": 17,
+        "end": 32,
+        "startLoc": {
+          "line": 17,
+          "column": 1,
+          "position": 11
+        },
+        "endLoc": {
+          "line": 32,
+          "column": 4,
+          "position": 98
+        }
+      },
+      "secondFile": {
+        "name": "src/js/features/markdown/markdownRenderer.js",
+        "start": 20,
+        "end": 35,
+        "startLoc": {
+          "line": 20,
+          "column": 1,
+          "position": 8
+        },
+        "endLoc": {
+          "line": 35,
+          "column": 4,
+          "position": 95
+        }
+      }
+    },
+    {
+      "format": "javascript",
+      "lines": 17,
+      "fragment": "if (trimmed.startsWith('## ') && trimmed.length > 3) {\n    return { level: 2, content: trimmed.slice(3).trim() };\n  }\n\n  // Check for # (h1)\n  if (trimmed.startsWith('# ') && trimmed.length > 2) {\n    return { level: 1, content: trimmed.slice(2).trim() };\n  }\n\n  return null;\n}\n\n/**\n * Parse a single line to detect if it's a list item\n * @param {string} line - Line to parse\n * @returns {object|null} {marker, content} or null\n */",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/js/features/markdown/isolatedMarkdownEngine.js",
+        "start": 62,
+        "end": 78,
+        "startLoc": {
+          "line": 62,
+          "column": 3,
+          "position": 310
+        },
+        "endLoc": {
+          "line": 78,
+          "column": 4,
+          "position": 433
+        }
+      },
+      "secondFile": {
+        "name": "src/js/features/markdown/markdownRenderer.js",
+        "start": 116,
+        "end": 132,
+        "startLoc": {
+          "line": 116,
+          "column": 3,
+          "position": 737
+        },
+        "endLoc": {
+          "line": 132,
+          "column": 4,
+          "position": 860
+        }
+      }
+    },
+    {
+      "format": "javascript",
+      "lines": 19,
+      "fragment": "const markers = ['-', '*', '•'];\n\n  for (const marker of markers) {\n    if (trimmed.startsWith(marker + ' ')) {\n      return {\n        marker,\n        content: trimmed.slice(2).trim(),\n      };\n    }\n  }\n\n  return null;\n}\n\n/**\n * Process inline formatting (*italic*, **bold**) - pure function\n * @param {string} text - Text to process\n * @returns {string} Text with HTML formatting\n */",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/js/features/markdown/isolatedMarkdownEngine.js",
+        "start": 83,
+        "end": 101,
+        "startLoc": {
+          "line": 83,
+          "column": 3,
+          "position": 480
+        },
+        "endLoc": {
+          "line": 101,
+          "column": 4,
+          "position": 576
+        }
+      },
+      "secondFile": {
+        "name": "src/js/features/markdown/markdownRenderer.js",
+        "start": 137,
+        "end": 154,
+        "startLoc": {
+          "line": 137,
+          "column": 3,
+          "position": 890
+        },
+        "endLoc": {
+          "line": 154,
+          "column": 4,
+          "position": 985
+        }
+      }
+    },
+    {
+      "format": "javascript",
+      "lines": 12,
+      "fragment": "let j = i + 2;\n      let foundClosing = false;\n\n      while (j <= chars.length - 2) {\n        if (chars[j] === '*' && chars[j + 1] === '*') {\n          foundClosing = true;\n          break;\n        }\n        j++;\n      }\n\n      if (foundClosing &&",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/js/features/markdown/isolatedMarkdownEngine.js",
+        "start": 116,
+        "end": 127,
+        "startLoc": {
+          "line": 116,
+          "column": 7,
+          "position": 729
+        },
+        "endLoc": {
+          "line": 127,
+          "column": 3,
+          "position": 833
+        }
+      },
+      "secondFile": {
+        "name": "src/js/features/markdown/markdownRenderer.js",
+        "start": 51,
+        "end": 62,
+        "startLoc": {
+          "line": 51,
+          "column": 7,
+          "position": 234
+        },
+        "endLoc": {
+          "line": 62,
+          "column": 2,
+          "position": 337
+        }
+      }
+    },
+    {
+      "format": "javascript",
+      "lines": 11,
+      "fragment": "if (chars[j] === '<' || chars[j] === '>') {\n          break;\n        }\n        j++;\n      }\n\n      if (foundClosing && j > i + 1) {\n        const content = chars.slice(i + 1, j).join('');\n        output.push(`<em>${content}</em>`);\n        i = j + 1;\n        continue",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/js/features/markdown/isolatedMarkdownEngine.js",
+        "start": 148,
+        "end": 158,
+        "startLoc": {
+          "line": 148,
+          "column": 9,
+          "position": 1040
+        },
+        "endLoc": {
+          "line": 158,
+          "column": 9,
+          "position": 1156
+        }
+      },
+      "secondFile": {
+        "name": "src/js/features/markdown/markdownRenderer.js",
+        "start": 85,
+        "end": 94,
+        "startLoc": {
+          "line": 85,
+          "column": 9,
+          "position": 541
+        },
+        "endLoc": {
+          "line": 94,
+          "column": 23,
+          "position": 656
+        }
+      }
+    },
+    {
+      "format": "javascript",
+      "lines": 15,
+      "fragment": ");\n  }\n\n  createSVGElement(type, attributes = {}) {\n    const element = document.createElementNS(\n      'http://www.w3.org/2000/svg',\n      type,\n    );\n    Object.entries(attributes).forEach(([key, value]) =>\n      element.setAttribute(key, value),\n    );\n    return element;\n  }\n\n  getClosestPoints",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/js/features/connection/connectionUtils.js",
+        "start": 20,
+        "end": 34,
+        "startLoc": {
+          "line": 20,
+          "column": 2,
+          "position": 145
+        },
+        "endLoc": {
+          "line": 34,
+          "column": 17,
+          "position": 240
+        }
+      },
+      "secondFile": {
+        "name": "src/js/features/connection/contextMenu.js",
+        "start": 175,
+        "end": 189,
+        "startLoc": {
+          "line": 175,
+          "column": 2,
+          "position": 1301
+        },
+        "endLoc": {
+          "line": 189,
+          "column": 5,
+          "position": 1396
+        }
+      }
+    },
+    {
+      "format": "javascript",
+      "lines": 8,
+      "fragment": ");\n\n  const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');\n  line2.setAttribute('x1', '17');\n  line2.setAttribute('y1', '3');\n  line2.setAttribute('x2', '3');\n  line2.setAttribute('y2', '17');\n  line2",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/js/components/deleteButton/deleteButtonFactory.js",
+        "start": 128,
+        "end": 135,
+        "startLoc": {
+          "line": 128,
+          "column": 29,
+          "position": 923
+        },
+        "endLoc": {
+          "line": 135,
+          "column": 6,
+          "position": 994
+        }
+      },
+      "secondFile": {
+        "name": "src/js/components/deleteButton/deleteButtonFactory.js",
+        "start": 32,
+        "end": 40,
+        "startLoc": {
+          "line": 32,
+          "column": 5,
+          "position": 210
+        },
+        "endLoc": {
+          "line": 40,
+          "column": 4,
+          "position": 282
+        }
+      }
+    },
+    {
+      "format": "javascript",
+      "lines": 12,
+      "fragment": "document\n          .querySelectorAll(config.dropdownSelector)\n          .forEach((dropdown) => {\n            if (dropdown.style.display === 'block') {\n              dropdown.style.display = 'none';\n              if (config.onClose) config.onClose(dropdown);\n            }\n          });\n      }\n    });\n\n    document",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/js/utils/mobileInteractions.js",
+        "start": 107,
+        "end": 118,
+        "startLoc": {
+          "line": 107,
+          "column": 9,
+          "position": 691
+        },
+        "endLoc": {
+          "line": 118,
+          "column": 9,
+          "position": 778
+        }
+      },
+      "secondFile": {
+        "name": "src/js/utils/mobileInteractions.js",
+        "start": 93,
+        "end": 104,
+        "startLoc": {
+          "line": 93,
+          "column": 9,
+          "position": 570
+        },
+        "endLoc": {
+          "line": 104,
+          "column": 22,
+          "position": 657
+        }
+      }
+    },
+    {
+      "format": "javascript",
+      "lines": 8,
+      "fragment": "function createGhostConnectors(note) {\n  const positions = ['top', 'bottom', 'left', 'right'];\n  positions.forEach((position) => {\n    const connector = document.createElement('div');\n    connector.className = `ghost-connector ${position}`;\n    note.appendChild(connector);\n  });\n}",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/js/factories/noteFactory.js",
+        "start": 113,
+        "end": 120,
+        "startLoc": {
+          "line": 113,
+          "column": 1,
+          "position": 945
+        },
+        "endLoc": {
+          "line": 120,
+          "column": 2,
+          "position": 1031
+        }
+      },
+      "secondFile": {
+        "name": "src/js/features/note/ghostConnectors.js",
+        "start": 2,
+        "end": 9,
+        "startLoc": {
+          "line": 2,
+          "column": 2,
+          "position": 4
+        },
+        "endLoc": {
+          "line": 9,
+          "column": 2,
+          "position": 90
+        }
+      }
+    },
+    {
+      "format": "javascript",
+      "lines": 17,
+      "fragment": ";\n      localStorage.setItem(testKey, 'test');\n      if (localStorage.getItem(testKey) !== 'test') {\n        isPrivateMode = true;\n      } else {\n        localStorage.removeItem(testKey);\n      }\n    } catch {\n      isPrivateMode = true;\n    }\n\n    const userFriendlyMessage = getStorageErrorMessage(\n      error,\n      browserInfo,\n      isPrivateMode,\n    );\n    console.warn('Failed to load from localStorage:'",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/js/data/canonicalStorage.js",
+        "start": 200,
+        "end": 216,
+        "startLoc": {
+          "line": 200,
+          "column": 21,
+          "position": 1344
+        },
+        "endLoc": {
+          "line": 216,
+          "column": 36,
+          "position": 1453
+        }
+      },
+      "secondFile": {
+        "name": "src/js/data/canonicalStorage.js",
+        "start": 149,
+        "end": 165,
+        "startLoc": {
+          "line": 149,
+          "column": 24,
+          "position": 994
+        },
+        "endLoc": {
+          "line": 165,
+          "column": 34,
+          "position": 1103
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 9,
+      "fragment": ">\n    <nav id=\"navbar\">\n      <div id=\"logo\">\n        <img src=\"img/icon64.png\" alt=\"MindMeld Logo\" id=\"logo-icon\" />\n        mindmeld\n      </div>\n      <ul id=\"menu\">\n        <li class=\"menu-item\">\n          <a",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/changelog.html",
+        "start": 25,
+        "end": 33,
+        "startLoc": {
+          "line": 25,
+          "column": 2,
+          "position": 172
+        },
+        "endLoc": {
+          "line": 33,
+          "column": 2,
+          "position": 252
+        }
+      },
+      "secondFile": {
+        "name": "src/index.html",
+        "start": 37,
+        "end": 45,
+        "startLoc": {
+          "line": 37,
+          "column": 5,
+          "position": 285
+        },
+        "endLoc": {
+          "line": 45,
+          "column": 7,
+          "position": 373
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 9,
+      "fragment": "<small style=\"color: #666; margin-left: 1rem\">\n                (<a href=\"https://github.com/maudlin/mindmeld/pull/52\" target=\"_blank\">#52</a>, July 24, 2025)\n              </small>\n            </li>\n          \n        </ul>\n      </section>\n      <section>\n        <h2>📝",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/changelog.html",
+        "start": 91,
+        "end": 99,
+        "startLoc": {
+          "line": 91,
+          "column": 15,
+          "position": 764
+        },
+        "endLoc": {
+          "line": 99,
+          "column": 3,
+          "position": 834
+        }
+      },
+      "secondFile": {
+        "name": "src/changelog.html",
+        "start": 71,
+        "end": 79,
+        "startLoc": {
+          "line": 71,
+          "column": 15,
+          "position": 571
+        },
+        "endLoc": {
+          "line": 79,
+          "column": 3,
+          "position": 641
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 10,
+      "fragment": "<small style=\"color: #666; margin-left: 1rem\">\n                (<a href=\"https://github.com/maudlin/mindmeld/pull/49\" target=\"_blank\">#49</a>, July 24, 2025)\n              </small>\n            </li>\n          \n        </ul>\n      </section>\n      \n      <section>\n        <h2>📝",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/changelog.html",
+        "start": 174,
+        "end": 183,
+        "startLoc": {
+          "line": 174,
+          "column": 15,
+          "position": 1639
+        },
+        "endLoc": {
+          "line": 183,
+          "column": 3,
+          "position": 1711
+        }
+      },
+      "secondFile": {
+        "name": "src/changelog.html",
+        "start": 58,
+        "end": 66,
+        "startLoc": {
+          "line": 58,
+          "column": 15,
+          "position": 466
+        },
+        "endLoc": {
+          "line": 66,
+          "column": 2,
+          "position": 536
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 30,
+      "fragment": "\" />\n    <link\n      href=\"https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap\"\n      rel=\"stylesheet\"\n    />\n    <link\n      rel=\"icon\"\n      type=\"image/png\"\n      href=\"img/icon16.png\"\n      media=\"(prefers-color-scheme: light)\"\n    />\n    <link\n      rel=\"icon\"\n      type=\"image/png\"\n      href=\"img/icon16.png\"\n      media=\"(prefers-color-scheme: dark)\"\n    />\n  </head>\n  <body class=\"override-overflow\">\n    <nav id=\"navbar\">\n      <div id=\"logo\">\n        <img src=\"img/icon64.png\" alt=\"MindMeld Logo\" id=\"logo-icon\" />\n        mindmeld\n      </div>\n      <ul id=\"menu\">\n        <li class=\"menu-item\">\n          <a class=\"menu-link\" href=\"index.html\">Home</a>\n        </li>\n        <li class=\"menu-item\">\n          <button",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/about.html",
+        "start": 7,
+        "end": 36,
+        "startLoc": {
+          "line": 7,
+          "column": 23,
+          "position": 72
+        },
+        "endLoc": {
+          "line": 36,
+          "column": 7,
+          "position": 285
+        }
+      },
+      "secondFile": {
+        "name": "src/changelog.html",
+        "start": 7,
+        "end": 36,
+        "startLoc": {
+          "line": 7,
+          "column": 23,
+          "position": 76
+        },
+        "endLoc": {
+          "line": 36,
+          "column": 2,
+          "position": 289
+        }
+      }
+    }
+  ]
+}

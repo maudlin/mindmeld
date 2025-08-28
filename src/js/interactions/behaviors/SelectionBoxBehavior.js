@@ -5,6 +5,9 @@
  * Receives input from both DesktopAdapter and TouchAdapter.
  */
 
+import { calculateOffsetPosition, throttle } from '../../utils/utils.js';
+import { noteManager } from '../../services/noteManager.js';
+
 export class SelectionBoxBehavior {
   constructor(eventBus) {
     this.eventBus = eventBus;
@@ -15,6 +18,12 @@ export class SelectionBoxBehavior {
     this.isDrawingSelectionBox = false;
     this.selectionBoxState = null;
     this.selectionBox = null;
+
+    // Create throttled update function (60fps like the working implementation)
+    this.throttledUpdateSelectionBox = throttle(
+      this.updateSelectionBoxVisual.bind(this),
+      16,
+    );
 
     console.log('SelectionBoxBehavior: Created');
   }
@@ -44,38 +53,41 @@ export class SelectionBoxBehavior {
       return;
     }
 
-    // Extract coordinates safely
-    const startX = event.clientX || 0;
-    const startY = event.clientY || 0;
-
     // Prevent default browser behavior
     if (event.preventDefault) {
       event.preventDefault();
     }
 
-    // Create visual selection box
-    this.selectionBox = this.createSelectionBoxElement();
-    if (!this.selectionBox) {
-      return;
-    }
+    this.isDrawingSelectionBox = true;
+
+    // Prevent text selection during drag operations
+    document.body.classList.add('dragging');
+
+    // Get canvas-relative coordinates using the proven utility function
+    const canvas = document.getElementById('canvas');
+    const { left: startX, top: startY } = calculateOffsetPosition(
+      canvas,
+      event,
+    );
 
     // Set up selection state
     this.selectionBoxState = {
-      startPosition: { x: startX, y: startY },
-      currentPosition: { x: startX, y: startY },
+      startX: startX,
+      startY: startY,
+      pointerId: event.pointerId,
       inputType,
     };
 
-    this.isDrawingSelectionBox = true;
-
-    // Add selection box to canvas
-    const canvas = document.getElementById('canvas');
-    if (canvas) {
-      canvas.appendChild(this.selectionBox);
+    // Use pointer capture for reliable selection box tracking (like working implementation)
+    if (canvas && canvas.setPointerCapture && event.pointerId) {
+      canvas.setPointerCapture(event.pointerId);
     }
 
-    // Set initial position
-    this.updateSelectionBoxVisuals();
+    // Clear existing selections before starting new selection box (like working implementation)
+    noteManager.clearSelections();
+
+    // Create visual selection box with canvas-relative coordinates
+    this.createSelectionBoxElement(startX, startY);
 
     // Emit interaction start
     this.eventBus.emit('interaction.start', {
@@ -85,7 +97,8 @@ export class SelectionBoxBehavior {
 
     // Emit selection-specific start event
     this.eventBus.emit('selection.started', {
-      startPosition: { x: startX, y: startY },
+      startX: startX,
+      startY: startY,
       inputType,
     });
 
@@ -103,37 +116,32 @@ export class SelectionBoxBehavior {
       return;
     }
 
-    // Extract coordinates safely
-    const currentX = event.clientX || 0;
-    const currentY = event.clientY || 0;
-
     // Prevent default browser behavior
     if (event.preventDefault) {
       event.preventDefault();
     }
 
-    // Update current position
-    this.selectionBoxState.currentPosition = { x: currentX, y: currentY };
+    // Get canvas-relative coordinates using the proven utility function
+    const canvas = document.getElementById('canvas');
+    const { left: currentX, top: currentY } = calculateOffsetPosition(
+      canvas,
+      event,
+    );
 
-    // Update visual selection box
-    this.updateSelectionBoxVisuals();
+    // Use throttled update for smooth 60fps performance (like working implementation)
+    this.throttledUpdateSelectionBox(
+      this.selectionBoxState.startX,
+      this.selectionBoxState.startY,
+      currentX,
+      currentY,
+    );
 
-    // Calculate current selection bounds
-    const bounds = this.calculateSelectionBounds();
-
-    // Detect notes within current selection
-    const selectedNotes = this.detectNotesInBounds(bounds);
-
-    // Emit selection update event
-    this.eventBus.emit('selection.updated', {
-      currentBounds: bounds,
-      selectedNotes,
-    });
+    // Provide live selection preview during dragging (like working implementation)
+    this.selectNotesWithinBox();
 
     console.log(`SelectionBoxBehavior: Selection updated from ${inputType}`, {
-      width: bounds.width,
-      height: bounds.height,
-      noteCount: selectedNotes.length,
+      currentX,
+      currentY,
     });
   }
 
@@ -145,28 +153,21 @@ export class SelectionBoxBehavior {
       return;
     }
 
-    // Extract coordinates safely
-    const endX = event?.clientX || this.selectionBoxState.currentPosition.x;
-    const endY = event?.clientY || this.selectionBoxState.currentPosition.y;
-
     // Prevent default browser behavior
     if (event?.preventDefault) {
       event.preventDefault();
     }
 
-    // Update final position
-    this.selectionBoxState.currentPosition = { x: endX, y: endY };
-
-    // Calculate final selection bounds
-    const finalBounds = this.calculateSelectionBounds();
-
-    // Detect final selected notes
-    const selectedNotes = this.detectNotesInBounds(finalBounds);
-
     const savedInputType = this.selectionBoxState.inputType;
 
+    // Select notes that fall within the current selection box (like working implementation)
+    this.selectNotesWithinBox();
+
     // Clean up visual selection box
-    this.removeSelectionBox();
+    this.clearSelectionBox();
+
+    // Remove dragging class from body
+    document.body.classList.remove('dragging');
 
     // Reset state
     this.isDrawingSelectionBox = false;
@@ -174,8 +175,6 @@ export class SelectionBoxBehavior {
 
     // Emit selection-specific end event
     this.eventBus.emit('selection.ended', {
-      selectionBounds: finalBounds,
-      selectedNotes,
       inputType: savedInputType,
     });
 
@@ -184,155 +183,133 @@ export class SelectionBoxBehavior {
       type: 'selection',
     });
 
-    console.log(`SelectionBoxBehavior: Selection ended from ${inputType}`, {
-      finalBounds,
-      noteCount: selectedNotes.length,
-    });
+    console.log(`SelectionBoxBehavior: Selection ended from ${inputType}`);
   }
 
   /**
    * Cancel selection box operation
    */
   cancel() {
-    if (!this.isDrawingSelectionBox) return;
-
     console.log('SelectionBoxBehavior: Selection cancelled');
 
-    // Clean up visual selection box
-    this.removeSelectionBox();
+    // If we're currently drawing a selection box, clean it up
+    if (this.isDrawingSelectionBox) {
+      // Clean up visual selection box
+      this.clearSelectionBox();
 
-    // Reset state
-    this.isDrawingSelectionBox = false;
-    this.selectionBoxState = null;
+      // Remove dragging class from body
+      document.body.classList.remove('dragging');
+
+      // Reset state
+      this.isDrawingSelectionBox = false;
+      this.selectionBoxState = null;
+    }
+
+    // Always clear selections when canceling (like Escape key should do)
+    noteManager.clearSelections();
   }
 
   /**
-   * Create visual selection box element
+   * Create visual selection box element (matching working implementation)
    */
-  createSelectionBoxElement() {
-    try {
-      const selectionBox = document.createElement('div');
-      selectionBox.className = 'selection-box';
+  createSelectionBoxElement(startX, startY) {
+    this.clearSelectionBox();
 
-      // Set initial styles
-      Object.assign(selectionBox.style, {
-        position: 'absolute',
-        border: '1px dashed #007acc',
-        backgroundColor: 'rgba(0, 122, 204, 0.1)',
-        display: 'none',
-        pointerEvents: 'none',
-        zIndex: '1000',
-      });
-
-      return selectionBox;
-    } catch (error) {
-      console.error(
-        'SelectionBoxBehavior: Failed to create selection box element:',
-        error,
-      );
-      return null;
-    }
-  }
-
-  /**
-   * Update visual selection box dimensions and position
-   */
-  updateSelectionBoxVisuals() {
-    if (!this.selectionBox || !this.selectionBoxState) {
-      return;
-    }
-
-    const bounds = this.calculateSelectionBounds();
-
-    // Update selection box styles
+    this.selectionBox = document.createElement('div');
+    this.selectionBox.id = 'selection-box';
     Object.assign(this.selectionBox.style, {
-      left: `${bounds.left}px`,
-      top: `${bounds.top}px`,
-      width: `${bounds.width}px`,
-      height: `${bounds.height}px`,
-      display: 'block',
+      position: 'absolute',
+      border: '1px dashed #000',
+      backgroundColor: 'rgba(0, 0, 255, 0.1)',
+      left: `${startX}px`,
+      top: `${startY}px`,
+      width: '0px',
+      height: '0px',
+      pointerEvents: 'none', // Don't interfere with pointer events
+    });
+
+    const canvas = document.getElementById('canvas');
+    if (canvas) {
+      canvas.appendChild(this.selectionBox);
+    }
+  }
+
+  /**
+   * Update selection box visual (matching working implementation)
+   */
+  updateSelectionBoxVisual(startX, startY, currentX, currentY) {
+    if (!this.selectionBox) return;
+
+    const width = currentX - startX;
+    const height = currentY - startY;
+
+    Object.assign(this.selectionBox.style, {
+      width: `${Math.abs(width)}px`,
+      height: `${Math.abs(height)}px`,
+      left: `${Math.min(currentX, startX)}px`,
+      top: `${Math.min(currentY, startY)}px`,
     });
   }
 
   /**
-   * Calculate selection bounds from start and current positions
+   * Clear selection box visual (matching working implementation)
    */
-  calculateSelectionBounds() {
-    if (!this.selectionBoxState) {
-      return { left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 };
-    }
-
-    const { startPosition, currentPosition } = this.selectionBoxState;
-
-    const left = Math.min(startPosition.x, currentPosition.x);
-    const top = Math.min(startPosition.y, currentPosition.y);
-    const right = Math.max(startPosition.x, currentPosition.x);
-    const bottom = Math.max(startPosition.y, currentPosition.y);
-
-    return {
-      left,
-      top,
-      right,
-      bottom,
-      width: right - left,
-      height: bottom - top,
-    };
-  }
-
-  /**
-   * Detect notes within selection bounds
-   */
-  detectNotesInBounds(bounds) {
-    try {
-      const notes = document.querySelectorAll('.note');
-      const selectedNotes = [];
-
-      for (const note of notes) {
-        const noteRect = note.getBoundingClientRect();
-
-        // Check if note intersects with selection bounds
-        if (this.isRectIntersecting(noteRect, bounds)) {
-          selectedNotes.push(note);
-        }
-      }
-
-      return selectedNotes;
-    } catch (error) {
-      console.error(
-        'SelectionBoxBehavior: Failed to detect notes in bounds:',
-        error,
-      );
-      return [];
-    }
-  }
-
-  /**
-   * Check if a rectangle intersects with selection bounds
-   */
-  isRectIntersecting(rect, bounds) {
-    return !(
-      rect.right < bounds.left ||
-      rect.left > bounds.right ||
-      rect.bottom < bounds.top ||
-      rect.top > bounds.bottom
-    );
-  }
-
-  /**
-   * Remove visual selection box from DOM
-   */
-  removeSelectionBox() {
+  clearSelectionBox() {
     if (this.selectionBox) {
-      try {
-        this.selectionBox.remove();
-      } catch (error) {
-        console.error(
-          'SelectionBoxBehavior: Failed to remove selection box:',
-          error,
-        );
-      }
+      this.selectionBox.remove();
       this.selectionBox = null;
     }
+  }
+
+  /**
+   * Select notes that fall within the current selection box (matching working implementation)
+   */
+  selectNotesWithinBox() {
+    if (!this.selectionBox) return;
+
+    const notes = document.querySelectorAll('.note');
+    const boxRect = this.selectionBox.getBoundingClientRect();
+
+    console.log('SelectionBoxBehavior: Selection box bounds:', {
+      left: boxRect.left,
+      top: boxRect.top,
+      right: boxRect.right,
+      bottom: boxRect.bottom,
+    });
+
+    notes.forEach((note) => {
+      const noteRect = note.getBoundingClientRect();
+
+      console.log('SelectionBoxBehavior: Checking note', {
+        noteId: note.id,
+        noteRect: {
+          left: noteRect.left,
+          top: noteRect.top,
+          right: noteRect.right,
+          bottom: noteRect.bottom,
+        },
+      });
+
+      // Use intersection-based selection instead of containment
+      // This is more user-friendly and matches typical selection behavior
+      const intersects =
+        noteRect.left < boxRect.right &&
+        noteRect.right > boxRect.left &&
+        noteRect.top < boxRect.bottom &&
+        noteRect.bottom > boxRect.top;
+
+      if (intersects) {
+        // Use noteManager to properly handle selection
+        noteManager.selectNote(note);
+        console.log(
+          'SelectionBoxBehavior: Note intersects - selected:',
+          note.id,
+        );
+      } else {
+        // Deselect notes that don't intersect
+        noteManager.deselectNote(note);
+      }
+    });
   }
 
   /**

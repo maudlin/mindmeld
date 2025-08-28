@@ -426,7 +426,7 @@ export class TouchAdapter extends BaseAdapter {
    */
   expandTouchTarget(touch) {
     const originalTarget = touch?.target;
-    
+
     // Handle null/undefined touch or target
     if (!originalTarget || typeof originalTarget.closest !== 'function') {
       return originalTarget || document.body;

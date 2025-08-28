@@ -1,6 +1,7 @@
 // src/js/interactions/adapters/DesktopAdapter.js
 
 import { BaseAdapter } from './BaseAdapter.js';
+import { noteManager } from '../../services/noteManager.js';
 
 /**
  * Desktop input adapter for mouse, keyboard, and trackpad interactions
@@ -15,6 +16,15 @@ export class DesktopAdapter extends BaseAdapter {
 
     // Behavior references
     this.interactionController = interactionController;
+
+    console.log(
+      'DesktopAdapter: Constructor called with interactionController:',
+      {
+        hasInteractionController: !!interactionController,
+        isInitialized: interactionController?.isInitialized,
+        behaviorCount: interactionController?.behaviors?.size,
+      },
+    );
     this.noteBehavior = null;
     this.dragBehavior = null;
     this.selectionBoxBehavior = null;
@@ -44,9 +54,13 @@ export class DesktopAdapter extends BaseAdapter {
   /**
    * Initialize adapter with behavior references and event listeners
    */
-  async initialize() {
-    await super.initialize();
+  async initialize(eventBus) {
+    console.log('DesktopAdapter: initialize() called');
+    await super.initialize(eventBus);
 
+    console.log(
+      'DesktopAdapter: About to get behavior references from interaction controller',
+    );
     // Get behavior references from interaction controller
     if (this.interactionController) {
       console.log('DesktopAdapter: InteractionController state:', {
@@ -183,11 +197,41 @@ export class DesktopAdapter extends BaseAdapter {
       return;
     }
 
-    // For now, handle as note click - drag detection will be added in pointer move
-    console.log(
-      'DesktopAdapter: Note click detected, delegating to NoteBehavior',
-    );
-    this.noteBehavior.handleNoteClick(noteElement, event, 'desktop');
+    const target = event.target;
+    const isSelected = noteElement.classList.contains('selected');
+
+    // Check if clicking on note content (editable area)
+    if (
+      target.classList.contains('note-content') ||
+      target.closest('.note-content')
+    ) {
+      // Handle as note click for edit mode
+      console.log(
+        'DesktopAdapter: Note content click detected, delegating to NoteBehavior for edit mode',
+      );
+      this.noteBehavior.handleNoteClick(noteElement, event, 'desktop');
+    } else {
+      // Handle as note border/non-content click for selection (like working implementation)
+      console.log(
+        'DesktopAdapter: Note border click detected, handling selection',
+      );
+
+      // Handle selection using noteManager service
+      if (event.shiftKey) {
+        // Multi-select mode - toggle selection
+        if (isSelected) {
+          noteManager.deselectNote(noteElement);
+        } else {
+          noteManager.selectNote(noteElement);
+        }
+      } else {
+        // Single select mode
+        if (!isSelected) {
+          noteManager.clearSelections();
+          noteManager.selectNote(noteElement);
+        }
+      }
+    }
   }
 
   /**
@@ -210,6 +254,13 @@ export class DesktopAdapter extends BaseAdapter {
     console.log(
       'DesktopAdapter: Canvas click detected, preparing selection box',
     );
+
+    // Clear existing selections immediately on canvas click (like working implementation)
+    noteManager.clearSelections();
+
+    // Emit canvas.clicked for edit mode handling
+    this.emit('canvas.clicked');
+
     // Don't start selection box immediately - wait for drag movement
     // This prevents accidental selection boxes on single clicks
   }
@@ -389,7 +440,8 @@ export class DesktopAdapter extends BaseAdapter {
     }, 100);
 
     // Only create notes when double-clicking on canvas (not on existing notes)
-    if (event.target === this.canvas) {
+    // Handle clicks on canvas or its children (like .background-layout)
+    if (event.target === this.canvas || event.target.closest('#canvas')) {
       this.emit('note.createAtPosition', {
         canvas: this.canvas,
         event: {
@@ -460,6 +512,8 @@ export class DesktopAdapter extends BaseAdapter {
         }
         break;
       case 'Escape':
+        // Always clear selections when Escape is pressed (regardless of active interaction)
+        noteManager.clearSelections();
         this.emit('interaction.cancel');
         break;
     }

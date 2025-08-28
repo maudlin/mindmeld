@@ -5,6 +5,10 @@
  * Receives input from both DesktopAdapter and TouchAdapter.
  */
 
+import { getZoomLevel } from '../../features/zoom/zoomManager.js';
+import { noteManager } from '../../services/noteManager.js';
+import { connectionManager } from '../../features/connection/connectionManager.js';
+
 export class DragBehavior {
   constructor(eventBus) {
     this.eventBus = eventBus;
@@ -14,6 +18,11 @@ export class DragBehavior {
     // Drag state
     this.isDragging = false;
     this.dragState = null;
+
+    // Movement state (adapted from working implementation)
+    this.shiftX = 0;
+    this.shiftY = 0;
+    this.selectedNotesOffsets = [];
 
     console.log('DragBehavior: Created');
   }
@@ -72,6 +81,15 @@ export class DragBehavior {
 
     this.isDragging = true;
 
+    // Prevent text selection during drag operations (like working implementation)
+    document.body.classList.add('dragging');
+
+    // Enable drag-optimized connection updates (like working implementation)
+    connectionManager.setDragState(true);
+
+    // Calculate movement offsets (adapted from working implementation)
+    this.calculateDragOffsets(noteElement, event);
+
     // Emit interaction start
     this.eventBus.emit('interaction.start', {
       type: 'drag',
@@ -101,7 +119,7 @@ export class DragBehavior {
 
   /**
    * Update drag operation
-   * Calculates deltas and emits position updates
+   * Calculates deltas and updates note positions
    */
   updateDrag(event, inputType) {
     if (!this.isDragging || !this.dragState || !event) {
@@ -123,6 +141,9 @@ export class DragBehavior {
 
     // Update current position
     this.dragState.currentPosition = { x: currentX, y: currentY };
+
+    // Move notes using pointer coordinates (adapted from working implementation)
+    this.updateNotePositions(event);
 
     // Emit drag update event
     this.eventBus.emit('drag.updated', {
@@ -170,6 +191,17 @@ export class DragBehavior {
 
     const savedInputType = this.dragState.inputType;
 
+    // Remove dragging class to re-enable text selection (like working implementation)
+    document.body.classList.remove('dragging');
+
+    // Disable drag-optimized connection updates (like working implementation)
+    connectionManager.setDragState(false);
+
+    // Final connection update for all moved notes (like working implementation)
+    this.selectedNotesOffsets.forEach(({ note }) => {
+      connectionManager.updateConnections(note);
+    });
+
     // Clean up drag state
     this.isDragging = false;
     this.dragState = null;
@@ -203,6 +235,88 @@ export class DragBehavior {
 
     this.isDragging = false;
     this.dragState = null;
+  }
+
+  /**
+   * Calculate movement offsets for drag operation (adapted from working implementation)
+   */
+  calculateDragOffsets(noteElement, event) {
+    const selectedNotes = noteManager.getSelectedNotes();
+    const zoomLevel = getZoomLevel();
+    const scale = zoomLevel / 5;
+
+    const canvas = document.getElementById('canvas');
+    const canvasRect = canvas
+      ? canvas.getBoundingClientRect()
+      : { left: 0, top: 0 };
+    const noteRect = noteElement.getBoundingClientRect();
+
+    // Calculate shift offsets (mouse position relative to note position)
+    this.shiftX =
+      (event.clientX - canvasRect.left) / scale -
+      (noteRect.left - canvasRect.left) / scale;
+    this.shiftY =
+      (event.clientY - canvasRect.top) / scale -
+      (noteRect.top - canvasRect.top) / scale;
+
+    // Calculate relative offsets for all selected notes
+    this.selectedNotesOffsets = selectedNotes.map((selectedNote) => {
+      const rect = selectedNote.getBoundingClientRect();
+      return {
+        note: selectedNote,
+        offsetX: (rect.left - noteRect.left) / scale,
+        offsetY: (rect.top - noteRect.top) / scale,
+      };
+    });
+
+    console.log('DragBehavior: Calculated drag offsets', {
+      shiftX: this.shiftX,
+      shiftY: this.shiftY,
+      selectedNotesCount: this.selectedNotesOffsets.length,
+    });
+  }
+
+  /**
+   * Update note positions during drag (adapted from working implementation)
+   */
+  updateNotePositions(event) {
+    const zoomLevel = getZoomLevel();
+    const scale = zoomLevel / 5;
+
+    const canvas = document.getElementById('canvas');
+    const canvasRect = canvas
+      ? canvas.getBoundingClientRect()
+      : { left: 0, top: 0 };
+
+    const canvasX = (event.clientX - canvasRect.left) / scale;
+    const canvasY = (event.clientY - canvasRect.top) / scale;
+
+    const offsetX = canvasX - this.shiftX;
+    const offsetY = canvasY - this.shiftY;
+
+    // Update positions for all selected notes
+    this.selectedNotesOffsets.forEach(
+      ({ note, offsetX: relativeX, offsetY: relativeY }) => {
+        const noteShiftX = offsetX + relativeX;
+        const noteShiftY = offsetY + relativeY;
+
+        // Update DOM position
+        note.style.left = `${noteShiftX}px`;
+        note.style.top = `${noteShiftY}px`;
+
+        // Update data store via event bus
+        this.eventBus.emit('note.updated', {
+          id: note.id,
+          left: note.style.left,
+          top: note.style.top,
+        });
+      },
+    );
+
+    // Update connections for each individual note during drag (like working implementation)
+    this.selectedNotesOffsets.forEach(({ note }) => {
+      connectionManager.updateConnections(note);
+    });
   }
 
   /**

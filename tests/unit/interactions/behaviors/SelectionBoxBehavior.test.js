@@ -67,16 +67,16 @@ describe('SelectionBoxBehavior', () => {
 
     test('should initialize successfully', async () => {
       await selectionBoxBehavior.initialize();
-      
+
       expect(selectionBoxBehavior.isInitialized).toBe(true);
     });
 
     test('should not initialize twice', async () => {
       await selectionBoxBehavior.initialize();
       const firstInitialized = selectionBoxBehavior.isInitialized;
-      
+
       await selectionBoxBehavior.initialize();
-      
+
       expect(firstInitialized).toBe(true);
       expect(selectionBoxBehavior.isInitialized).toBe(true);
     });
@@ -239,19 +239,38 @@ describe('SelectionBoxBehavior', () => {
       // Create mock notes
       mockNote1 = {
         id: 'note-1',
-        getBoundingClientRect: () => ({ left: 50, top: 50, right: 150, bottom: 100 }),
+        getBoundingClientRect: () => ({
+          left: 50,
+          top: 50,
+          right: 150,
+          bottom: 100,
+        }),
       };
       mockNote2 = {
-        id: 'note-2', 
-        getBoundingClientRect: () => ({ left: 200, top: 150, right: 300, bottom: 200 }),
+        id: 'note-2',
+        getBoundingClientRect: () => ({
+          left: 200,
+          top: 150,
+          right: 300,
+          bottom: 200,
+        }),
       };
       mockNote3 = {
         id: 'note-3',
-        getBoundingClientRect: () => ({ left: 400, top: 400, right: 500, bottom: 450 }),
+        getBoundingClientRect: () => ({
+          left: 400,
+          top: 400,
+          right: 500,
+          bottom: 450,
+        }),
       };
 
       // Mock querySelectorAll to return our test notes
-      global.document.querySelectorAll = jest.fn(() => [mockNote1, mockNote2, mockNote3]);
+      global.document.querySelectorAll = jest.fn(() => [
+        mockNote1,
+        mockNote2,
+        mockNote3,
+      ]);
     });
 
     test('should detect notes within selection bounds', () => {
@@ -271,10 +290,11 @@ describe('SelectionBoxBehavior', () => {
       selectionBoxBehavior.endSelectionBox(endEvent, 'desktop');
 
       // Should emit notes found within selection
-      expect(mockEventBus.emit).toHaveBeenCalledWith('selection.ended', 
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        'selection.ended',
         expect.objectContaining({
           selectedNotes: [mockNote1, mockNote2],
-        })
+        }),
       );
     });
 
@@ -294,10 +314,11 @@ describe('SelectionBoxBehavior', () => {
       selectionBoxBehavior.startSelectionBox(startEvent, 'desktop');
       selectionBoxBehavior.endSelectionBox(endEvent, 'desktop');
 
-      expect(mockEventBus.emit).toHaveBeenCalledWith('selection.ended', 
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        'selection.ended',
         expect.objectContaining({
           selectedNotes: [],
-        })
+        }),
       );
     });
 
@@ -359,7 +380,10 @@ describe('SelectionBoxBehavior', () => {
       global.document.getElementById = jest.fn(() => null);
 
       expect(() => {
-        selectionBoxBehavior.startSelectionBox({ clientX: 100, clientY: 200 }, 'desktop');
+        selectionBoxBehavior.startSelectionBox(
+          { clientX: 100, clientY: 200 },
+          'desktop',
+        );
       }).not.toThrow();
     });
   });
@@ -412,7 +436,7 @@ describe('SelectionBoxBehavior', () => {
   describe('Behavior Lifecycle', () => {
     test('should destroy behavior cleanly', async () => {
       await selectionBoxBehavior.initialize();
-      
+
       const mockEvent = {
         clientX: 100,
         clientY: 200,
@@ -455,8 +479,16 @@ describe('SelectionBoxBehavior', () => {
     });
 
     test('should remove selection box on end', () => {
-      const startEvent = { clientX: 100, clientY: 200, preventDefault: jest.fn() };
-      const endEvent = { clientX: 250, clientY: 350, preventDefault: jest.fn() };
+      const startEvent = {
+        clientX: 100,
+        clientY: 200,
+        preventDefault: jest.fn(),
+      };
+      const endEvent = {
+        clientX: 250,
+        clientY: 350,
+        preventDefault: jest.fn(),
+      };
 
       selectionBoxBehavior.startSelectionBox(startEvent, 'desktop');
       selectionBoxBehavior.endSelectionBox(endEvent, 'desktop');
@@ -465,7 +497,11 @@ describe('SelectionBoxBehavior', () => {
     });
 
     test('should remove selection box on cancel', () => {
-      const mockEvent = { clientX: 100, clientY: 200, preventDefault: jest.fn() };
+      const mockEvent = {
+        clientX: 100,
+        clientY: 200,
+        preventDefault: jest.fn(),
+      };
 
       selectionBoxBehavior.startSelectionBox(mockEvent, 'desktop');
       selectionBoxBehavior.cancel();

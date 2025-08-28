@@ -66,16 +66,16 @@ describe('DragBehavior', () => {
 
     test('should initialize successfully', async () => {
       await dragBehavior.initialize();
-      
+
       expect(dragBehavior.isInitialized).toBe(true);
     });
 
     test('should not initialize twice', async () => {
       await dragBehavior.initialize();
       const firstInitialized = dragBehavior.isInitialized;
-      
+
       await dragBehavior.initialize();
-      
+
       expect(firstInitialized).toBe(true);
       expect(dragBehavior.isInitialized).toBe(true);
     });
@@ -186,7 +186,10 @@ describe('DragBehavior', () => {
 
       dragBehavior.updateDrag(mockEvent, 'desktop');
 
-      expect(mockEventBus.emit).not.toHaveBeenCalledWith('drag.updated', expect.any(Object));
+      expect(mockEventBus.emit).not.toHaveBeenCalledWith(
+        'drag.updated',
+        expect.any(Object),
+      );
     });
 
     test('should not end drag when not dragging', () => {
@@ -198,7 +201,10 @@ describe('DragBehavior', () => {
 
       dragBehavior.endDrag(mockEvent, 'desktop');
 
-      expect(mockEventBus.emit).not.toHaveBeenCalledWith('drag.ended', expect.any(Object));
+      expect(mockEventBus.emit).not.toHaveBeenCalledWith(
+        'drag.ended',
+        expect.any(Object),
+      );
     });
   });
 
@@ -215,8 +221,10 @@ describe('DragBehavior', () => {
       };
 
       const selectedNotes = [mockNoteElement, mockNoteElement2];
-      
-      dragBehavior.startDrag(mockNoteElement, mockEvent, 'desktop', { selectedNotes });
+
+      dragBehavior.startDrag(mockNoteElement, mockEvent, 'desktop', {
+        selectedNotes,
+      });
 
       expect(dragBehavior.isDragging).toBe(true);
       expect(mockEventBus.emit).toHaveBeenCalledWith('drag.started', {
@@ -236,15 +244,18 @@ describe('DragBehavior', () => {
       };
 
       const selectedNotes = [mockNoteElement, mockNoteElement2];
-      
-      dragBehavior.startDrag(mockNoteElement, mockEvent, 'desktop', { selectedNotes });
-      
+
+      dragBehavior.startDrag(mockNoteElement, mockEvent, 'desktop', {
+        selectedNotes,
+      });
+
       // Should emit drag started with offset calculations
-      expect(mockEventBus.emit).toHaveBeenCalledWith('drag.started', 
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        'drag.started',
         expect.objectContaining({
           selectedNotes: selectedNotes,
           isMultiNoteDrag: true,
-        })
+        }),
       );
     });
   });
@@ -356,19 +367,25 @@ describe('DragBehavior', () => {
       dragBehavior.updateDrag(updateEvent, 'desktop');
 
       // Should emit both drag update and connection update
-      expect(mockEventBus.emit).toHaveBeenCalledWith('drag.updated', expect.any(Object));
-      expect(mockEventBus.emit).toHaveBeenCalledWith('connection.updateNeeded', {
-        noteElement: mockNoteElement,
-        deltaX: 50,
-        deltaY: 50,
-      });
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        'drag.updated',
+        expect.any(Object),
+      );
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        'connection.updateNeeded',
+        {
+          noteElement: mockNoteElement,
+          deltaX: 50,
+          deltaY: 50,
+        },
+      );
     });
   });
 
   describe('Behavior Lifecycle', () => {
     test('should destroy behavior cleanly', async () => {
       await dragBehavior.initialize();
-      
+
       const mockEvent = {
         clientX: 150,
         clientY: 250,
@@ -407,10 +424,11 @@ describe('DragBehavior', () => {
       dragBehavior.startDrag(mockNoteElement, mockTouchEvent, 'touch');
 
       expect(mockTouchEvent.preventDefault).toHaveBeenCalled();
-      expect(mockEventBus.emit).toHaveBeenCalledWith('drag.started', 
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        'drag.started',
         expect.objectContaining({
           inputType: 'touch',
-        })
+        }),
       );
     });
   });

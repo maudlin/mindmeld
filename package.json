@@ -38,6 +38,9 @@
     "version:patch": "npm version patch --no-git-tag-version && npm run version:sync",
     "version:minor": "npm version minor --no-git-tag-version && npm run version:sync",
     "version:major": "npm version major --no-git-tag-version && npm run version:sync",
+    "depcruise": "depcruise --validate .dependency-cruiser.cjs src",
+    "dupcheck": "jscpd --config .jscpd.json src",
+    "quality": "npm run depcruise && npm run dupcheck && eslint . && format:check",
     "ci:simulate": "CI=true npm run lint && npm run format:check && npm run test:unit && npm run test:e2e",
     "semgrep": "npx semgrep --error --config p/security-audit --config p/javascript --config p/owasp-top-ten"
   },
@@ -50,6 +53,7 @@
     "@jest/globals": "^30.0.5",
     "@playwright/test": "^1.54.1",
     "depcheck": "^1.4.7",
+    "dependency-cruiser": "^17.0.1",
     "eslint": "^9.31.0",
     "eslint-plugin-jest": "^28.14.0",
     "eslint-plugin-no-unsanitized": "^4.1.2",

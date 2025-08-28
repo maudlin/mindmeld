@@ -270,3 +270,32 @@ handleNoteClick(noteElement, event, inputType) {
 **Next**: Production testing and deployment validation
 
 *This refactor eliminates the fundamental complexity that causes interaction bugs while dramatically simplifying the codebase for future development.*
+
+---
+
+## Key Interaction Tests
+
+### **Core Note Interactions**
+- **Should create notes on double-click**: Double-click empty canvas → new note appears
+- **Should enter edit mode on content click**: Click note textarea → edit mode activated
+- **Should select notes on border click**: Click note border (non-textarea) → note selected
+- **Should deselect notes on canvas click**: Click empty canvas → all notes deselected
+- **Should deselect notes on Escape key**: Press Escape → all notes deselected
+
+### **Note Dragging**
+- **Should drag single notes**: Click-drag note border → note moves smoothly
+- **Should drag notes and connectors**: Drag connected note → connections move with note
+- **Should drag multiple selected notes**: Select multiple notes → drag one → all move together
+- **Should work at all zoom levels**: Test dragging at 1x, 3x, 5x zoom → consistent behavior
+
+### **Multi-Selection**
+- **Should multi-select with selection box**: Click-drag empty canvas → selection box appears
+- **Should show live selection preview**: Drag selection box over notes → notes highlight during drag
+- **Should finalize selection on release**: Release selection box → notes remain selected
+- **Should work at all zoom levels**: Test selection box at different zoom levels → accurate targeting
+
+### **Integration Points**
+- **Should handle rapid interactions**: Quick clicks/drags → no event conflicts
+- **Should prevent accidental selections during double-click**: Double-click → no selection box interference
+- **Should maintain state consistency**: Drag/select operations → UI state matches data state
+- **Should handle edge cases**: Clicking borders between elements → correct interaction type detected

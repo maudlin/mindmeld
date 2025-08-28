@@ -328,10 +328,10 @@ export class CanvasPage {
       const startY = initialBox.y + initialBox.height / 2;
       const endX = startX + deltaX;
       const endY = startY + deltaY;
-      
+
       // Simulate pointer events which the app actually uses
       await this.page.mouse.move(startX, startY);
-      
+
       // Dispatch custom pointer events
       await selectedNote.dispatchEvent('pointerdown', {
         pointerId: 1,
@@ -339,35 +339,45 @@ export class CanvasPage {
         isPrimary: true,
         clientX: startX,
         clientY: startY,
-        button: 0
+        button: 0,
       });
-      
+
       // Move to end position
       await this.page.mouse.move(endX, endY);
-      
+
       // Dispatch pointermove event
-      await this.page.evaluate(({endX, endY}) => {
-        document.dispatchEvent(new PointerEvent('pointermove', {
-          pointerId: 1,
-          bubbles: true,
-          isPrimary: true,
-          clientX: endX,
-          clientY: endY,
-          button: 0
-        }));
-      }, {endX, endY});
-      
+      await this.page.evaluate(
+        ({ endX, endY }) => {
+          document.dispatchEvent(
+            new PointerEvent('pointermove', {
+              pointerId: 1,
+              bubbles: true,
+              isPrimary: true,
+              clientX: endX,
+              clientY: endY,
+              button: 0,
+            }),
+          );
+        },
+        { endX, endY },
+      );
+
       // Dispatch pointerup event
-      await this.page.evaluate(({endX, endY}) => {
-        document.dispatchEvent(new PointerEvent('pointerup', {
-          pointerId: 1,
-          bubbles: true,
-          isPrimary: true,
-          clientX: endX,
-          clientY: endY,
-          button: 0
-        }));
-      }, {endX, endY});
+      await this.page.evaluate(
+        ({ endX, endY }) => {
+          document.dispatchEvent(
+            new PointerEvent('pointerup', {
+              pointerId: 1,
+              bubbles: true,
+              isPrimary: true,
+              clientX: endX,
+              clientY: endY,
+              button: 0,
+            }),
+          );
+        },
+        { endX, endY },
+      );
     }
 
     // Wait for movement to complete - ensure note positions have updated

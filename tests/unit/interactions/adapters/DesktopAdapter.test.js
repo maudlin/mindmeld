@@ -81,7 +81,7 @@ describe('DesktopAdapter - Unit Tests', () => {
       expect(typeof desktopAdapter.boundHandlers.pointerDown).toBe('function');
       expect(typeof desktopAdapter.boundHandlers.pointerMove).toBe('function');
       expect(typeof desktopAdapter.boundHandlers.pointerUp).toBe('function');
-      expect(typeof desktopAdapter.boundHandlers.doubleClick).toBe('function');
+      expect(typeof desktopAdapter.boundHandlers.dblclick).toBe('function');
       expect(typeof desktopAdapter.boundHandlers.wheel).toBe('function');
       expect(typeof desktopAdapter.boundHandlers.keyDown).toBe('function');
     });
@@ -89,7 +89,7 @@ describe('DesktopAdapter - Unit Tests', () => {
 
   describe('Initialization', () => {
     it('should initialize and register event listeners', async () => {
-      await desktopAdapter.init(mockEventBus);
+      await desktopAdapter.initialize(mockEventBus);
 
       expect(desktopAdapter.isInitialized).toBe(true);
       expect(desktopAdapter.canvas).toBe(mockCanvas);
@@ -101,7 +101,7 @@ describe('DesktopAdapter - Unit Tests', () => {
       );
       expect(mockCanvas.addEventListener).toHaveBeenCalledWith(
         'dblclick',
-        desktopAdapter.boundHandlers.doubleClick,
+        desktopAdapter.boundHandlers.dblclick,
       );
       expect(mockCanvas.addEventListener).toHaveBeenCalledWith(
         'wheel',
@@ -127,7 +127,7 @@ describe('DesktopAdapter - Unit Tests', () => {
     it('should throw error if canvas not found', async () => {
       global.document.getElementById.mockReturnValue(null);
 
-      await expect(desktopAdapter.init(mockEventBus)).rejects.toThrow(
+      await expect(desktopAdapter.initialize(mockEventBus)).rejects.toThrow(
         'Canvas element not found',
       );
     });
@@ -135,7 +135,7 @@ describe('DesktopAdapter - Unit Tests', () => {
 
   describe('Cleanup', () => {
     beforeEach(async () => {
-      await desktopAdapter.init(mockEventBus);
+      await desktopAdapter.initialize(mockEventBus);
     });
 
     it('should remove event listeners on destroy', async () => {
@@ -155,7 +155,7 @@ describe('DesktopAdapter - Unit Tests', () => {
 
   describe('Event Handler Logic', () => {
     beforeEach(async () => {
-      await desktopAdapter.init(mockEventBus);
+      await desktopAdapter.initialize(mockEventBus);
     });
 
     it('should handle pointer down on canvas', () => {
@@ -169,12 +169,12 @@ describe('DesktopAdapter - Unit Tests', () => {
         stopPropagation: jest.fn(),
       };
 
-      desktopAdapter.isClickOnCanvas = jest.fn(() => true);
-
       desktopAdapter.handlePointerDown(mockEvent);
 
-      expect(mockEvent.preventDefault).toHaveBeenCalled();
-      expect(mockEvent.stopPropagation).toHaveBeenCalled();
+      // Verify pointer state is set
+      expect(desktopAdapter.isPointerDown).toBe(true);
+      expect(desktopAdapter.pointerDownTarget).toBe(mockCanvas);
+      expect(desktopAdapter.pointerDownPosition).toEqual({ x: 100, y: 200 });
     });
 
     it('should handle double click for note creation', () => {
@@ -182,22 +182,21 @@ describe('DesktopAdapter - Unit Tests', () => {
         target: mockCanvas,
         clientX: 100,
         clientY: 200,
+        preventDefault: jest.fn(),
       };
-
-      desktopAdapter.isClickOnCanvas = jest.fn(() => true);
 
       desktopAdapter.handleDoubleClick(mockEvent);
 
-      // Should call throttled version, so we need to check if emit was called
-      // The throttling means we need to wait or trigger it directly
-      desktopAdapter.handleDoubleClickInternal(mockEvent);
-
+      expect(mockEvent.preventDefault).toHaveBeenCalled();
       expect(mockEventBus.emit).toHaveBeenCalledWith(
         'note.createAtPosition',
         expect.objectContaining({
           canvas: mockCanvas,
-          event: mockEvent,
-          _adapter: 'desktop',
+          event: expect.objectContaining({
+            clientX: 100,
+            clientY: 200,
+            type: 'dblclick',
+          }),
         }),
       );
     });
@@ -215,12 +214,11 @@ describe('DesktopAdapter - Unit Tests', () => {
 
       expect(mockEvent.preventDefault).toHaveBeenCalled();
       expect(mockEventBus.emit).toHaveBeenCalledWith(
-        'zoom.change',
+        'canvas.zoom',
         expect.objectContaining({
           direction: 'in',
-          centerX: 300,
-          centerY: 200,
-          _adapter: 'desktop',
+          x: 300,
+          y: 200,
         }),
       );
     });
@@ -250,74 +248,28 @@ describe('DesktopAdapter - Unit Tests', () => {
         preventDefault: jest.fn(),
       };
 
-      // Mock selected notes
-      document.querySelectorAll = jest.fn(() => []);
+      // Mock that no note is in edit mode
+      global.document.querySelector = jest.fn(() => null);
 
       desktopAdapter.handleKeyDown(mockEvent);
 
-      expect(mockEvent.preventDefault).toHaveBeenCalled();
       expect(mockEventBus.emit).toHaveBeenCalledWith(
-        'state.save',
-        expect.objectContaining({
-          _adapter: 'desktop',
-        }),
+        'notes.deleteSelected',
+        expect.anything(),
       );
     });
   });
 
   describe('Helper Methods', () => {
-    it('should correctly identify canvas clicks', () => {
-      const canvasTarget = { id: 'canvas' };
-      const backgroundTarget = {
-        classList: { contains: (c) => c === 'background-layout' },
-      };
-      const noteTarget = { classList: { contains: (c) => c === 'note' } };
+    it('should correctly identify canvas clicks', async () => {
+      // Initialize adapter to set canvas reference
+      await desktopAdapter.initialize(mockEventBus);
 
-      expect(desktopAdapter.isClickOnCanvas(canvasTarget)).toBe(true);
-      expect(desktopAdapter.isClickOnCanvas(backgroundTarget)).toBe(true);
-      expect(desktopAdapter.isClickOnCanvas(noteTarget)).toBe(false);
+      expect(desktopAdapter.isClickOnCanvas(mockCanvas)).toBe(true);
+      expect(desktopAdapter.isClickOnCanvas({ id: 'other' })).toBe(false);
     });
 
-    it('should correctly identify editing note content', () => {
-      const editingElement = {
-        classList: { contains: (c) => c === 'note-content' },
-        isContentEditable: true,
-      };
-      const nonEditingElement = {
-        classList: { contains: () => false },
-        isContentEditable: false,
-      };
-
-      // Mock document.activeElement using Object.defineProperty
-      const originalActiveElement = Object.getOwnPropertyDescriptor(
-        document,
-        'activeElement',
-      );
-      Object.defineProperty(global.document, 'activeElement', {
-        value: editingElement,
-        configurable: true,
-      });
-
-      expect(desktopAdapter.isEditingNoteContent(editingElement)).toBe(true);
-      expect(desktopAdapter.isEditingNoteContent(nonEditingElement)).toBe(
-        false,
-      );
-
-      // Test when element is not active
-      Object.defineProperty(global.document, 'activeElement', {
-        value: null,
-        configurable: true,
-      });
-      expect(desktopAdapter.isEditingNoteContent(editingElement)).toBe(false);
-
-      // Restore original descriptor
-      if (originalActiveElement) {
-        Object.defineProperty(
-          global.document,
-          'activeElement',
-          originalActiveElement,
-        );
-      }
-    });
+    // Note: isEditingNoteContent method removed in behavior-driven refactor
+    // Edit mode detection is now handled by behaviors, not adapters
   });
 });
