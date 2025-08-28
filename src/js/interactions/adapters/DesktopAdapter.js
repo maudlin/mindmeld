@@ -27,6 +27,7 @@ export class DesktopAdapter extends BaseAdapter {
     this.pointerDownTarget = null;
     this.pointerDownPosition = null;
     this.dragThreshold = 5; // pixels before drag starts
+    this.isDoubleClickInProgress = false; // Prevent selection box during double-clicks
 
     // Bound event handlers for proper cleanup
     this.boundHandlers = {
@@ -48,6 +49,14 @@ export class DesktopAdapter extends BaseAdapter {
 
     // Get behavior references from interaction controller
     if (this.interactionController) {
+      console.log('DesktopAdapter: InteractionController state:', {
+        isInitialized: this.interactionController.isInitialized,
+        behaviorCount: this.interactionController.behaviors?.size,
+        availableBehaviors: Array.from(
+          this.interactionController.behaviors?.keys() || [],
+        ),
+      });
+
       this.noteBehavior = this.interactionController.getBehavior('note');
       this.dragBehavior = this.interactionController.getBehavior('drag');
       this.selectionBoxBehavior =
@@ -58,6 +67,8 @@ export class DesktopAdapter extends BaseAdapter {
         hasDragBehavior: !!this.dragBehavior,
         hasSelectionBoxBehavior: !!this.selectionBoxBehavior,
       });
+    } else {
+      console.warn('DesktopAdapter: No InteractionController provided!');
     }
 
     await this.initializeEventListeners();
@@ -183,6 +194,14 @@ export class DesktopAdapter extends BaseAdapter {
    * Handle canvas interaction start - prepare for selection box
    */
   handleCanvasInteractionStart() {
+    // Don't start selection during double-click
+    if (this.isDoubleClickInProgress) {
+      console.log(
+        'DesktopAdapter: Skipping selection box - double-click in progress',
+      );
+      return;
+    }
+
     if (!this.selectionBoxBehavior) {
       console.warn('DesktopAdapter: SelectionBoxBehavior not available');
       return;
@@ -277,6 +296,14 @@ export class DesktopAdapter extends BaseAdapter {
    * Handle selection box start - delegate to SelectionBoxBehavior
    */
   handleSelectionBoxStart(event) {
+    // Don't start selection during double-click
+    if (this.isDoubleClickInProgress) {
+      console.log(
+        'DesktopAdapter: Skipping selection box start - double-click in progress',
+      );
+      return;
+    }
+
     if (!this.selectionBoxBehavior) {
       console.warn('DesktopAdapter: SelectionBoxBehavior not available');
       return;
@@ -352,6 +379,14 @@ export class DesktopAdapter extends BaseAdapter {
       y: event.clientY,
       target: event.target?.id,
     });
+
+    // Set flag to prevent selection box interference
+    this.isDoubleClickInProgress = true;
+
+    // Clear the flag after a short delay
+    setTimeout(() => {
+      this.isDoubleClickInProgress = false;
+    }, 100);
 
     // Only create notes when double-clicking on canvas (not on existing notes)
     if (event.target === this.canvas) {

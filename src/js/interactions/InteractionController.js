@@ -66,8 +66,13 @@ export class InteractionController {
 
       // Initialize all behaviors
       await noteBehavior.initialize();
+      console.log('InteractionController: NoteBehavior initialized');
+
       await dragBehavior.initialize();
+      console.log('InteractionController: DragBehavior initialized');
+
       await selectionBoxBehavior.initialize();
+      console.log('InteractionController: SelectionBoxBehavior initialized');
 
       console.log('InteractionController: All behaviors initialized');
     } catch (error) {
