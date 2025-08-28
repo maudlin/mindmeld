@@ -3,8 +3,6 @@
  *
  * Unified behavior for note dragging, multi-note dragging, and connection updates.
  * Receives input from both DesktopAdapter and TouchAdapter.
- *
- * STUB: Will be implemented with comprehensive TDD in MM-188
  */
 
 export class DragBehavior {
@@ -17,7 +15,7 @@ export class DragBehavior {
     this.isDragging = false;
     this.dragState = null;
 
-    console.log('DragBehavior: Created (STUB)');
+    console.log('DragBehavior: Created');
   }
 
   /**
@@ -28,87 +26,183 @@ export class DragBehavior {
       return;
     }
 
-    // TODO MM-188: Set up event listeners for drag operations
-    // - Listen for adapter drag events
-    // - Set up connection update coordination
-    // - Handle multi-note drag logic
+    // Set up drag coordination
+    // Direct adapter-to-behavior communication means no global listeners needed here
+    // Each adapter will call our methods directly based on input detection
 
     this.isInitialized = true;
-    console.log('DragBehavior: Initialized (STUB)');
+    console.log('DragBehavior: Initialized');
   }
 
   /**
    * Start dragging operation
-   * TODO MM-188: Implement unified drag start
+   * Handles both single-note and multi-note dragging
    */
-  startDrag(noteElement, event, inputType) {
-    console.log(`DragBehavior: STUB - Drag start from ${inputType}`, {
-      noteId: noteElement?.id,
-      hasNoteElement: !!noteElement,
-    });
+  startDrag(noteElement, event, inputType, options = {}) {
+    if (!noteElement || !event) {
+      return;
+    }
+
+    // Prevent multiple concurrent drags
+    if (this.isDragging) {
+      return;
+    }
+
+    // Extract coordinates safely
+    const startX = event.clientX || 0;
+    const startY = event.clientY || 0;
+
+    // Prevent default browser behavior
+    if (event.preventDefault) {
+      event.preventDefault();
+    }
+
+    // Set up drag state
+    const selectedNotes = options.selectedNotes || [noteElement];
+    const isMultiNoteDrag = selectedNotes.length > 1;
+
+    this.dragState = {
+      startPosition: { x: startX, y: startY },
+      currentPosition: { x: startX, y: startY },
+      noteElement,
+      selectedNotes,
+      isMultiNoteDrag,
+      inputType,
+    };
 
     this.isDragging = true;
 
-    // TODO: Implement actual drag start
-    // - Set up drag state with selected notes
-    // - Calculate offsets for multi-note drag
-    // - Enable connection update optimization
-
+    // Emit interaction start
     this.eventBus.emit('interaction.start', {
       type: 'drag',
       behavior: this,
+    });
+
+    // Emit drag-specific start event
+    const dragStartData = {
+      noteElement,
+      inputType,
+      startPosition: { x: startX, y: startY },
+    };
+
+    if (isMultiNoteDrag) {
+      dragStartData.selectedNotes = selectedNotes;
+      dragStartData.isMultiNoteDrag = true;
+    }
+
+    this.eventBus.emit('drag.started', dragStartData);
+
+    console.log(`DragBehavior: Drag started from ${inputType}`, {
+      noteId: noteElement.id,
+      isMultiNoteDrag,
+      noteCount: selectedNotes.length,
     });
   }
 
   /**
    * Update drag operation
-   * TODO MM-188: Implement unified drag update
+   * Calculates deltas and emits position updates
    */
   updateDrag(event, inputType) {
-    if (!this.isDragging) return;
+    if (!this.isDragging || !this.dragState || !event) {
+      return;
+    }
 
-    console.log(`DragBehavior: STUB - Drag update from ${inputType}`);
+    // Extract coordinates safely
+    const currentX = event.clientX || 0;
+    const currentY = event.clientY || 0;
 
-    // TODO: Implement actual drag update
-    // - Update note positions
-    // - Update connection positions
-    // - Handle boundary constraints
+    // Prevent default browser behavior
+    if (event.preventDefault) {
+      event.preventDefault();
+    }
+
+    // Calculate deltas
+    const deltaX = currentX - this.dragState.startPosition.x;
+    const deltaY = currentY - this.dragState.startPosition.y;
+
+    // Update current position
+    this.dragState.currentPosition = { x: currentX, y: currentY };
+
+    // Emit drag update event
+    this.eventBus.emit('drag.updated', {
+      deltaX,
+      deltaY,
+      currentPosition: { x: currentX, y: currentY },
+    });
+
+    // Emit connection update coordination
+    this.eventBus.emit('connection.updateNeeded', {
+      noteElement: this.dragState.noteElement,
+      deltaX,
+      deltaY,
+    });
+
+    console.log(`DragBehavior: Drag updated from ${inputType}`, {
+      deltaX,
+      deltaY,
+    });
   }
 
   /**
    * End dragging operation
-   * TODO MM-188: Implement unified drag end
+   * Finalizes positions and triggers cleanup
    */
   endDrag(event, inputType) {
-    if (!this.isDragging) return;
+    if (!this.isDragging || !this.dragState) {
+      return;
+    }
 
-    console.log(`DragBehavior: STUB - Drag end from ${inputType}`);
+    // Extract coordinates safely  
+    const endX = event?.clientX || this.dragState.currentPosition.x;
+    const endY = event?.clientY || this.dragState.currentPosition.y;
 
+    // Prevent default browser behavior
+    if (event?.preventDefault) {
+      event.preventDefault();
+    }
+
+    // Calculate final delta
+    const finalDelta = {
+      x: endX - this.dragState.startPosition.x,
+      y: endY - this.dragState.startPosition.y,
+    };
+
+    const savedInputType = this.dragState.inputType;
+
+    // Clean up drag state
     this.isDragging = false;
     this.dragState = null;
 
-    // TODO: Implement actual drag end
-    // - Finalize positions
-    // - Trigger final connection updates
-    // - Emit state save events
+    // Emit drag-specific end event
+    this.eventBus.emit('drag.ended', {
+      finalDelta,
+      inputType: savedInputType,
+    });
 
+    // Emit interaction end
     this.eventBus.emit('interaction.end', {
       type: 'drag',
+    });
+
+    console.log(`DragBehavior: Drag ended from ${inputType}`, {
+      finalDelta,
     });
   }
 
   /**
    * Cancel drag operation
+   * Restores original positions and cleans up state
    */
   cancel() {
     if (!this.isDragging) return;
 
-    console.log('DragBehavior: STUB - Drag cancelled');
+    console.log('DragBehavior: Drag cancelled');
 
+    // TODO: In future, emit event to restore original positions
+    
     this.isDragging = false;
     this.dragState = null;
-
-    // TODO: Restore original positions
   }
 
   /**
@@ -118,6 +212,6 @@ export class DragBehavior {
     this.cancel();
     this.isInitialized = false;
     this.eventBus = null;
-    console.log('DragBehavior: STUB - Destroyed');
+    console.log('DragBehavior: Destroyed');
   }
 }

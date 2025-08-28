@@ -4,17 +4,29 @@ import { BaseAdapter } from './BaseAdapter.js';
 
 /**
  * Desktop input adapter for mouse, keyboard, and trackpad interactions
- * Handles raw input detection and delegates interaction logic to behaviors
- *
- * REFACTORED: Only handles input detection, all interaction logic moved to behaviors
+ * Thin input layer that detects desktop-specific interactions and delegates to behaviors
+ * 
+ * MM-203: Rebuilt as thin input layer with behavior delegation
  */
 export class DesktopAdapter extends BaseAdapter {
-  constructor() {
+  constructor(interactionController) {
     super();
     this.name = 'desktop';
 
+    // Behavior references
+    this.interactionController = interactionController;
+    this.noteBehavior = null;
+    this.dragBehavior = null;
+    this.selectionBoxBehavior = null;
+
     // Canvas reference
     this.canvas = null;
+
+    // Desktop-specific interaction state
+    this.isPointerDown = false;
+    this.pointerDownTarget = null;
+    this.pointerDownPosition = null;
+    this.dragThreshold = 5; // pixels before drag starts
 
     // Bound event handlers for proper cleanup
     this.boundHandlers = {
@@ -25,6 +37,28 @@ export class DesktopAdapter extends BaseAdapter {
       keyDown: this.handleKeyDown.bind(this),
       contextMenu: this.preventContextMenu.bind(this),
     };
+  }
+
+  /**
+   * Initialize adapter with behavior references and event listeners
+   */
+  async initialize() {
+    await super.initialize();
+
+    // Get behavior references from interaction controller
+    if (this.interactionController) {
+      this.noteBehavior = this.interactionController.getBehavior('note');
+      this.dragBehavior = this.interactionController.getBehavior('drag');
+      this.selectionBoxBehavior = this.interactionController.getBehavior('selectionBox');
+      
+      console.log('DesktopAdapter: Behavior references initialized', {
+        hasNoteBehavior: !!this.noteBehavior,
+        hasDragBehavior: !!this.dragBehavior,
+        hasSelectionBoxBehavior: !!this.selectionBoxBehavior,
+      });
+    }
+
+    await this.initializeEventListeners();
   }
 
   /**
@@ -80,44 +114,213 @@ export class DesktopAdapter extends BaseAdapter {
   }
 
   /**
-   * Handle pointer down events - RAW INPUT ONLY
-   * TODO: Will delegate to behaviors after behavior implementation
+   * Handle pointer down events - detect interaction type and delegate to behaviors
    */
   handlePointerDown(event) {
     // Only handle left button (primary pointer)
     if (event.button !== 0) return;
 
+    // Store pointer state for drag detection
+    this.isPointerDown = true;
+    this.pointerDownTarget = event.target;
+    this.pointerDownPosition = { x: event.clientX, y: event.clientY };
+
     const target = event.target;
     console.log('DesktopAdapter: Pointer down detected', {
       target: target.tagName,
       targetClass: target.className,
+      x: event.clientX,
+      y: event.clientY,
     });
 
-    // TODO: Delegate to appropriate behavior based on target
-    // - Note clicks → NoteBehavior
-    // - Canvas clicks → SelectionBoxBehavior
-    // For now, just log
+    // Detect interaction type and delegate to appropriate behavior
+    this.detectInteractionStart(event);
   }
 
   /**
-   * Handle pointer move events - RAW INPUT ONLY
-   * TODO: Will delegate to active behavior (drag, selection box)
+   * Detect what type of interaction is starting and delegate to appropriate behavior
    */
-  handlePointerMove() {
-    // TODO: Delegate to active behavior
-    // - If dragging → DragBehavior
-    // - If selection box → SelectionBoxBehavior
-    // For now, just detect movement
+  detectInteractionStart(event) {
+    const target = event.target;
+
+    // Check for note interaction
+    const noteElement = target.closest('.note');
+    if (noteElement) {
+      this.handleNoteInteractionStart(noteElement, event);
+      return;
+    }
+
+    // Check for canvas interaction (selection box)
+    if (target.id === 'canvas' || target.closest('#canvas')) {
+      this.handleCanvasInteractionStart(event);
+      return;
+    }
+
+    console.log('DesktopAdapter: No recognized interaction target');
   }
 
   /**
-   * Handle pointer up events - RAW INPUT ONLY
-   * TODO: Will delegate to active behavior to end interaction
+   * Handle note interaction start - delegate to NoteBehavior
    */
-  handlePointerUp() {
-    // TODO: End current interaction via behavior
-    // For now, just log
+  handleNoteInteractionStart(noteElement, event) {
+    if (!this.noteBehavior) {
+      console.warn('DesktopAdapter: NoteBehavior not available');
+      return;
+    }
+
+    // For now, handle as note click - drag detection will be added in pointer move
+    console.log('DesktopAdapter: Note click detected, delegating to NoteBehavior');
+    this.noteBehavior.handleNoteClick(noteElement, event, 'desktop');
+  }
+
+  /**
+   * Handle canvas interaction start - prepare for selection box
+   */
+  handleCanvasInteractionStart(event) {
+    if (!this.selectionBoxBehavior) {
+      console.warn('DesktopAdapter: SelectionBoxBehavior not available');
+      return;
+    }
+
+    console.log('DesktopAdapter: Canvas click detected, preparing selection box');
+    // Don't start selection box immediately - wait for drag movement
+    // This prevents accidental selection boxes on single clicks
+  }
+
+  /**
+   * Handle pointer move events - detect drags and delegate to behaviors
+   */
+  handlePointerMove(event) {
+    if (!this.isPointerDown || !this.pointerDownPosition) return;
+
+    // Check if we already have active interactions
+    if (this.dragBehavior && this.dragBehavior.isDragging) {
+      this.dragBehavior.updateDrag(event, 'desktop');
+      return;
+    }
+
+    if (this.selectionBoxBehavior && this.selectionBoxBehavior.isDrawingSelectionBox) {
+      this.selectionBoxBehavior.updateSelectionBox(event, 'desktop');
+      return;
+    }
+
+    // Check if we've exceeded the drag threshold to start new interaction
+    const deltaX = event.clientX - this.pointerDownPosition.x;
+    const deltaY = event.clientY - this.pointerDownPosition.y;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+    if (distance < this.dragThreshold) return;
+
+    // Determine what type of drag this is
+    this.handleDragStart(event);
+  }
+
+  /**
+   * Handle drag start detection - delegate to appropriate behavior
+   */
+  handleDragStart(event) {
+    const target = this.pointerDownTarget;
+
+    // Check for note drag
+    const noteElement = target.closest('.note');
+    if (noteElement) {
+      this.handleNoteDragStart(noteElement, event);
+      return;
+    }
+
+    // Check for canvas selection box
+    if (target.id === 'canvas' || target.closest('#canvas')) {
+      this.handleSelectionBoxStart(event);
+      return;
+    }
+  }
+
+  /**
+   * Handle note drag start - delegate to DragBehavior
+   */
+  handleNoteDragStart(noteElement, event) {
+    if (!this.dragBehavior) {
+      console.warn('DesktopAdapter: DragBehavior not available');
+      return;
+    }
+
+    console.log('DesktopAdapter: Note drag detected, delegating to DragBehavior');
+    
+    // Create synthetic start event with original position
+    const startEvent = {
+      ...this.pointerDownPosition,
+      clientX: this.pointerDownPosition.x,
+      clientY: this.pointerDownPosition.y,
+      preventDefault: () => {},
+    };
+
+    this.dragBehavior.startDrag(noteElement, startEvent, 'desktop');
+
+    // Continue with current position
+    this.dragBehavior.updateDrag(event, 'desktop');
+  }
+
+  /**
+   * Handle selection box start - delegate to SelectionBoxBehavior
+   */
+  handleSelectionBoxStart(event) {
+    if (!this.selectionBoxBehavior) {
+      console.warn('DesktopAdapter: SelectionBoxBehavior not available');
+      return;
+    }
+
+    console.log('DesktopAdapter: Selection box detected, delegating to SelectionBoxBehavior');
+    
+    // Create synthetic start event with original position
+    const startEvent = {
+      ...this.pointerDownPosition,
+      clientX: this.pointerDownPosition.x,
+      clientY: this.pointerDownPosition.y,
+      preventDefault: () => {},
+    };
+
+    this.selectionBoxBehavior.startSelectionBox(startEvent, 'desktop');
+
+    // Continue with current position
+    this.selectionBoxBehavior.updateSelectionBox(event, 'desktop');
+  }
+
+  /**
+   * Handle pointer up events - end interactions and delegate to behaviors
+   */
+  handlePointerUp(event) {
+    if (!this.isPointerDown) return;
+
     console.log('DesktopAdapter: Pointer up detected');
+
+    // End any active interactions
+    this.handleInteractionEnd(event);
+
+    // Reset pointer state
+    this.isPointerDown = false;
+    this.pointerDownTarget = null;
+    this.pointerDownPosition = null;
+  }
+
+  /**
+   * Handle interaction end - delegate to active behaviors
+   */
+  handleInteractionEnd(event) {
+    // Check if we have an active drag behavior
+    if (this.dragBehavior && this.dragBehavior.isDragging) {
+      console.log('DesktopAdapter: Ending drag interaction');
+      this.dragBehavior.endDrag(event, 'desktop');
+      return;
+    }
+
+    // Check if we have an active selection box
+    if (this.selectionBoxBehavior && this.selectionBoxBehavior.isDrawingSelectionBox) {
+      console.log('DesktopAdapter: Ending selection box interaction');
+      this.selectionBoxBehavior.endSelectionBox(event, 'desktop');
+      return;
+    }
+
+    // If no active interactions, this was just a click - already handled in pointer down
   }
 
   /**
