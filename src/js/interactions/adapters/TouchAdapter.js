@@ -425,7 +425,12 @@ export class TouchAdapter extends BaseAdapter {
    * Expand touch target for better touch interaction (touch-specific enhancement)
    */
   expandTouchTarget(touch) {
-    const originalTarget = touch.target;
+    const originalTarget = touch?.target;
+    
+    // Handle null/undefined touch or target
+    if (!originalTarget || typeof originalTarget.closest !== 'function') {
+      return originalTarget || document.body;
+    }
 
     // If we hit a note or its content, that's good enough
     if (originalTarget.closest('.note')) {

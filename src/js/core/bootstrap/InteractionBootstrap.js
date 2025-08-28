@@ -52,8 +52,8 @@ export class InteractionBootstrap extends BaseBootstrap {
       );
 
       // Initialize InteractionController for behavior management
-      this.interactionController = new InteractionController(eventBus);
-      await this.interactionController.initialize();
+      this.interactionController = new InteractionController();
+      await this.interactionController.initialize(eventBus);
 
       const capabilityDetector = new CapabilityDetector();
       this.inputController = new InputController(

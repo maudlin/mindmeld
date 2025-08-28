@@ -10,7 +10,7 @@ import { NoteBehavior } from './behaviors/NoteBehavior.js';
 import { DragBehavior } from './behaviors/DragBehavior.js';
 import { SelectionBoxBehavior } from './behaviors/SelectionBoxBehavior.js';
 
-class InteractionController {
+export class InteractionController {
   constructor() {
     this.eventBus = null;
     this.isInitialized = false;
@@ -185,6 +185,13 @@ class InteractionController {
       activeInteraction: this.activeInteraction,
       hasActiveBehavior: !!this.activeBehavior,
     };
+  }
+
+  /**
+   * Clean up controller and behaviors
+   */
+  async cleanup() {
+    await this.destroy();
   }
 
   /**

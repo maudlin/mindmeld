@@ -33,6 +33,7 @@ export class DesktopAdapter extends BaseAdapter {
       pointerDown: this.handlePointerDown.bind(this),
       pointerMove: this.handlePointerMove.bind(this),
       pointerUp: this.handlePointerUp.bind(this),
+      dblclick: this.handleDoubleClick.bind(this),
       wheel: this.handleWheel.bind(this),
       keyDown: this.handleKeyDown.bind(this),
       contextMenu: this.preventContextMenu.bind(this),
@@ -79,6 +80,7 @@ export class DesktopAdapter extends BaseAdapter {
 
     // Canvas-specific events
     this.canvas.addEventListener('pointerdown', this.boundHandlers.pointerDown);
+    this.canvas.addEventListener('dblclick', this.boundHandlers.dblclick);
     this.canvas.addEventListener('wheel', this.boundHandlers.wheel);
 
     // Document-level events for dragging and keyboard
@@ -99,6 +101,7 @@ export class DesktopAdapter extends BaseAdapter {
         'pointerdown',
         this.boundHandlers.pointerDown,
       );
+      this.canvas.removeEventListener('dblclick', this.boundHandlers.dblclick);
       this.canvas.removeEventListener('wheel', this.boundHandlers.wheel);
     }
 
@@ -336,6 +339,31 @@ export class DesktopAdapter extends BaseAdapter {
     }
 
     // If no active interactions, this was just a click - already handled in pointer down
+  }
+
+  /**
+   * Handle double-click events for note creation
+   */
+  handleDoubleClick(event) {
+    event.preventDefault();
+
+    console.log('DesktopAdapter: Double-click detected', {
+      x: event.clientX,
+      y: event.clientY,
+      target: event.target?.id,
+    });
+
+    // Only create notes when double-clicking on canvas (not on existing notes)
+    if (event.target === this.canvas) {
+      this.emit('note.createAtPosition', {
+        canvas: this.canvas,
+        event: {
+          clientX: event.clientX,
+          clientY: event.clientY,
+          type: 'dblclick',
+        },
+      });
+    }
   }
 
   /**
