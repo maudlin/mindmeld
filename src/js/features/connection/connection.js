@@ -42,14 +42,12 @@ export function initializeConnectionDrawing(canvas) {
   const svgContainer = connectionManager.initializeSVGContainer(canvas);
 
   // Remove existing event listeners
-  canvas.removeEventListener('mousedown', handleCanvasMouseDown);
   svgContainer.removeEventListener('click', handleSvgClick);
   svgContainer.removeEventListener('mousemove', handleSvgMouseMove);
   svgContainer.removeEventListener('mouseleave', handleSvgMouseLeave);
   document.removeEventListener('keydown', handleKeyDown);
 
-  // Add event listeners
-  canvas.addEventListener('mousedown', handleCanvasMouseDown);
+  // Add event listeners (NO canvas mousedown - handled by adapters now)
   svgContainer.addEventListener('click', handleSvgClick);
   svgContainer.addEventListener('mousemove', handleSvgMouseMove);
   svgContainer.addEventListener('mouseleave', handleSvgMouseLeave);
@@ -61,15 +59,6 @@ export function initializeConnectionDrawing(canvas) {
   return svgContainer;
 }
 
-function handleCanvasMouseDown(event) {
-  if (event.target.classList.contains('ghost-connector')) {
-    handleMouseDown(
-      event,
-      event.target.closest('#canvas'),
-      document.getElementById('svg-container'),
-    );
-  }
-}
 
 export function deleteConnectionsByNote(note) {
   connectionManager.deleteConnectionsByNote(note);

@@ -6,6 +6,8 @@
  * Fixes MM-183: Styled content can now be clicked to enter edit mode.
  */
 
+import { noteManager } from '../../services/noteManager.js';
+
 export class NoteBehavior {
   constructor(eventBus) {
     this.eventBus = eventBus;
@@ -90,6 +92,7 @@ export class NoteBehavior {
     }
 
     this.eventBus.emit('note.requestEdit', {
+      noteId: noteElement.id,
       noteElement,
       behavior: this,
       inputType,
@@ -107,6 +110,14 @@ export class NoteBehavior {
       return;
     }
 
+    // Use NoteManager to actually select the note (adds 'selected' class to DOM)
+    if (!isMultiSelect) {
+      // Clear existing selections first for single select
+      noteManager.clearSelections();
+    }
+    noteManager.selectNote(noteElement);
+
+    // Also emit event for other listeners
     this.eventBus.emit('note.selected', {
       noteElement,
       isMultiSelect,
@@ -116,7 +127,40 @@ export class NoteBehavior {
     console.log('NoteBehavior: Note selection handled', {
       noteId: noteElement.id,
       isMultiSelect,
+      hasSelectedClass: noteElement.classList.contains('selected'),
     });
+  }
+
+  /**
+   * Handle note double-click for edit mode entry
+   * Used by both DesktopAdapter and TouchAdapter
+   */
+  handleNoteDoubleClick(noteElement, event, inputType) {
+    if (!noteElement) {
+      console.warn('NoteBehavior: No note element provided for double-click');
+      return;
+    }
+
+    console.log('NoteBehavior: Note double-click detected', {
+      noteId: noteElement.id,
+      inputType,
+      isSelected: noteElement.classList.contains('selected'),
+    });
+
+    // Ensure note is selected first
+    if (!noteElement.classList.contains('selected')) {
+      this.handleNoteSelection(noteElement, false);
+    }
+
+    // Request edit mode
+    this.eventBus.emit('note.requestEdit', {
+      noteId: noteElement.id,
+      noteElement,
+      inputType,
+      behavior: this,
+    });
+
+    console.log('NoteBehavior: Edit mode requested for note:', noteElement.id);
   }
 
   /**

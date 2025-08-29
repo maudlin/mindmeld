@@ -75,11 +75,18 @@ test.describe('Touch Interactions - Core Functionality', () => {
     const noteContent = note.locator('.note-content');
     await expect(noteContent).toHaveClass(/view-mode/);
 
-    // Double-tap the note to enter edit mode (following working pattern from edit-view-mode-toggle.spec.js)
+    // First single tap to select the note
     const bbox = await noteContent.boundingBox();
     await page.touchscreen.tap(bbox.x + 50, bbox.y + 20);
+    await page.waitForTimeout(100); // Wait for selection
+    
+    // Verify note is selected
+    await expect(note).toHaveClass(/selected/);
+
+    // Now double-tap the selected note to enter edit mode
+    await page.touchscreen.tap(bbox.x + 50, bbox.y + 20);
     await page.waitForTimeout(50);
-    await page.touchscreen.tap(bbox.x + 50, bbox.y + 20); // Double tap
+    await page.touchscreen.tap(bbox.x + 50, bbox.y + 20); // Double tap selected note
     await page.waitForTimeout(100); // Wait for element replacement
 
     // Now should be in edit mode

@@ -19,7 +19,7 @@ The system uses the **CapabilityDetector** (`src/js/interactions/capabilities/de
   - **Event Consolidation**: Unified event handling for complex touch interactions  
   - **Canvas Integration**: Direct integration with zoom, pan, and selection systems
   - **Visual Feedback**: Touch-optimized visual responses including jiggle animations
-  - **Enhanced Ghost Connectors**: Larger touch targets with visual feedback
+  - **Enhanced Ghost Connectors**: Tap-to-tap connection creation with visual connection mode
 
 - **DesktopAdapter** for desktop-first devices with traditional mouse/keyboard optimization
 
@@ -38,6 +38,9 @@ TouchAdapter implements a sophisticated interaction model automatically activate
 - **Long-press**: Prepare for note movement with jiggle animation (500ms hold time)
 - **Drag on canvas**: Multi-select lasso selection
 - **Long-press and drag**: Move notes after long-press detection with visual feedback
+- **Tap ghost connector**: Enter connection mode (all ghost connectors become visible)
+- **Tap note during connection mode**: Complete connection between source and target notes
+- **Tap canvas during connection mode**: Cancel connection creation
 
 **Two-Finger Gestures:**
 - **Pinch**: Zoom in/out with scale detection
@@ -103,9 +106,57 @@ The TouchAdapter uses a sophisticated state machine for gesture recognition:
 
 The TouchAdapter system includes several advanced features for improved mobile experience:
 
+#### Connection Creation System (ConnectionBehavior)
+
+**Platform-Specific Connection Patterns:**
+
+**Desktop Connection Flow:**
+- Click ghost connector → immediate drag line follows cursor
+- Drag to target note → connection creates on mouse release  
+- Drag to empty space → cancels connection
+
+**Touch Connection Flow:**
+- Tap ghost connector → enters "connection mode"
+- **Visual feedback**: ALL ghost connectors become visible on all notes
+- Tap any note → completes connection between source and target
+- Tap canvas → cancels connection mode
+- **CSS class**: `.connection-mode` added to body during active connection mode
+
+**Implementation Details:**
+```javascript
+// ConnectionBehavior handles both desktop and touch patterns
+// Desktop: immediate drag interaction
+connectionBehavior.startDesktopDrag(sourceNote, event, 'desktop');
+
+// Touch: tap-to-tap with visual mode indication  
+connectionBehavior.startTouchDrag(sourceNote, event, 'touch');
+// This automatically calls showAllGhostConnectors()
+```
+
+**CSS Requirements for Connection Mode:**
+```css
+/* Normal state - ghost connectors hidden */
+.ghost-connector {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Connection mode - show all ghost connectors */
+.connection-mode .ghost-connector {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Source note visual feedback */
+.connection-source {
+  border: 2px dashed #007acc;
+  animation: pulse-connection 1s infinite;
+}
+```
+
 #### Ghost Connector Enhancements
 - **Automatic sizing**: Ghost connectors adapt to device type (larger on touch devices)
-- **Visual feedback**: Selected connectors show enhanced glow effects with scaling transforms
+- **Visual feedback**: Connection mode shows all ghost connectors simultaneously  
 - **Touch-friendly targets**: Expanded hit areas for easier connection creation
 - **CSS transitions**: Smooth animations scoped to touch devices only using `@media (pointer: coarse)`
 
@@ -333,21 +384,33 @@ attachClickHandler(element) {
 ```javascript
 // TouchAdapter handles canvas-level gestures
 handleTap(touch) {
-  // Check for ghost connector (TouchAdapter responsibility)
+  // Check for ghost connector (delegates to ConnectionBehavior)
   if (target.classList.contains('ghost-connector')) {
-    this.handleGhostConnectorTap(target);
+    this.handleGhostConnectorTap(touch, target);
     return;
   }
   
-  // Check for delete buttons - let them handle their own events
-  if (target.classList.contains('shared-delete-button--note')) {
-    return; // Don't interfere with existing button handlers
+  // Check for note interaction (connection mode vs selection)
+  const noteElement = target.closest('.note');
+  if (noteElement) {
+    // Check if we're in connection mode first
+    if (this.connectionBehavior && this.connectionBehavior.isConnecting) {
+      // Complete connection between source and this note
+      this.connectionBehavior.handleTouchNoteTap(noteElement);
+      return;
+    }
+    
+    // Normal note selection (TouchAdapter responsibility)
+    this.handleNoteTap(noteElement, touch);
+    return;
   }
   
-  // Handle note selection (TouchAdapter responsibility)  
-  const note = target.closest('.note');
-  if (note) {
-    this.handleNoteSelection(note);
+  // Canvas interaction (cancel connection mode if active)
+  if (target.id === 'canvas' || target.closest('#canvas')) {
+    if (this.connectionBehavior && this.connectionBehavior.isConnecting) {
+      this.connectionBehavior.cancel();
+      return;
+    }
   }
 }
 ```

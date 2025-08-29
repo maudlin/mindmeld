@@ -25,6 +25,12 @@ export class SelectionBoxBehavior {
       16,
     );
 
+    // CRITICAL: Throttle the expensive note selection checking (this was causing lag!)
+    this.throttledSelectNotesWithinBox = throttle(
+      this.selectNotesWithinBox.bind(this),
+      32, // 30fps for note selection checking - less frequent than visual updates
+    );
+
     console.log('SelectionBoxBehavior: Created');
   }
 
@@ -137,7 +143,8 @@ export class SelectionBoxBehavior {
     );
 
     // Provide live selection preview during dragging (like working implementation)
-    this.selectNotesWithinBox();
+    // CRITICAL: Use throttled version to prevent lag
+    this.throttledSelectNotesWithinBox();
 
     console.log(`SelectionBoxBehavior: Selection updated from ${inputType}`, {
       currentX,
@@ -270,25 +277,14 @@ export class SelectionBoxBehavior {
     const notes = document.querySelectorAll('.note');
     const boxRect = this.selectionBox.getBoundingClientRect();
 
-    console.log('SelectionBoxBehavior: Selection box bounds:', {
-      left: boxRect.left,
-      top: boxRect.top,
-      right: boxRect.right,
-      bottom: boxRect.bottom,
-    });
+    // Performance: Only log box bounds, not every note check
+    // console.log('SelectionBoxBehavior: Selection box bounds:', boxRect);
 
     notes.forEach((note) => {
       const noteRect = note.getBoundingClientRect();
 
-      console.log('SelectionBoxBehavior: Checking note', {
-        noteId: note.id,
-        noteRect: {
-          left: noteRect.left,
-          top: noteRect.top,
-          right: noteRect.right,
-          bottom: noteRect.bottom,
-        },
-      });
+      // Performance: Removed per-note logging to prevent lag
+      // console.log('SelectionBoxBehavior: Checking note', { noteId: note.id, noteRect });
 
       // Use intersection-based selection instead of containment
       // This is more user-friendly and matches typical selection behavior
@@ -301,10 +297,8 @@ export class SelectionBoxBehavior {
       if (intersects) {
         // Use noteManager to properly handle selection
         noteManager.selectNote(note);
-        console.log(
-          'SelectionBoxBehavior: Note intersects - selected:',
-          note.id,
-        );
+        // Performance: Reduced logging frequency
+        // console.log('SelectionBoxBehavior: Note intersects - selected:', note.id);
       } else {
         // Deselect notes that don't intersect
         noteManager.deselectNote(note);

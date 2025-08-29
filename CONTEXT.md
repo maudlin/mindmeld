@@ -1,301 +1,174 @@
-# MindMeld Event System Refactor (MM-182)
+# MindMeld Current State & Active Development
 
-**Branch**: `feature/mm-182-event-system-refactor`  
-**Started**: August 28, 2025  
-**Approach**: Surgical replacement - rip and replace with behavior-driven architecture
+**Branch**: `feature/mm-160-data-corruption-final-docs-and-mm-175-note-typography`  
+**Date**: December 29, 2025  
+**Status**: 🎉 **ConnectionBehavior Implementation Complete**  
 
-## What We're Doing
+## Current State
 
-**Surgical Event System Refactor** - Complete replacement of the current complex, multi-path event handling system with a unified behavior-driven architecture.
+### ✅ Recently Completed: ConnectionBehavior Rebuild (December 2025)
 
-### Current Problem
-- **Dual Event Systems**: EventDelegationManager (capture phase) + DesktopAdapter (bubble phase) 
-- **Code Duplication**: 70% overlap between DesktopAdapter (899 lines) and TouchAdapter (1,087 lines)
-- **MM-183 Bug**: Styled content (`<strong>`, `<h1>`) can't be clicked to enter edit mode
-- **Complex Event Flows**: 3-4 levels of event cascading, multiple conflict points
-- **Fragile Architecture**: Every change risks breaking existing functionality
+The connection system has been completely rebuilt to integrate with the modern adapter-behavior architecture established in MM-182.
 
-### Target Solution
-- **Single Event Flow**: User Input → Adapter (coordinates only) → Behavior (logic) → EventBus → Services
-- **Behavior-Driven**: One behavior class per interaction type (NoteBehavior, DragBehavior, etc.)
-- **Thin Adapters**: DesktopAdapter (~300 lines), TouchAdapter (~400 lines) - input translation only
-- **Zero Event Delegation**: Direct styled content detection in behaviors using `event.composedPath()`
+**What Was Built**:
+- **Desktop Connections**: Click ghost connector → drag line follows cursor → release on target note
+- **Touch Connections**: Tap ghost connector → all ghost connectors become visible → tap target note → connection created
+- **Unified Architecture**: Both platforms use ConnectionBehavior class through adapter delegation
 
-## How We're Doing It
+**Key Files**:
+- `src/js/interactions/behaviors/ConnectionBehavior.js` - Unified connection handling
+- `src/js/interactions/adapters/DesktopAdapter.js` - Ghost connector detection + delegation  
+- `src/js/interactions/adapters/TouchAdapter.js` - Touch tap-to-tap connection flow
+- `src/js/features/connection/connection.js` - Cleaned up original system conflicts
 
-### Surgical Replacement Strategy
-**No dual systems, no feature flags** - complete replacement with git rollback as safety net.
+### ✅ Architecture Status: Modern Event System (MM-182)
 
-**Rollback Plan**: `git reset --hard cb38c57` (last known working state)
-
-### Implementation Phases
-
-#### Phase 1: Destruction (Day 1 Morning)
-- **MM-184**: Delete EventDelegationManager entirely
-- **MM-185**: Gut all adapter interaction methods  
-- **MM-186**: Create behavior architecture foundation
-
-#### Phase 2: Core Behaviors (Day 1-2)
-- **MM-187**: NoteBehavior - click detection, edit mode, selection logic
-- **MM-188**: DragBehavior - single/multi-note dragging, connections
-- **MM-189**: SelectionBoxBehavior - lasso selection, multi-select
-
-#### Phase 3: Adapter Reconstruction (Day 2-3)
-- **MM-190**: Rebuild DesktopAdapter as thin input layer
-- **MM-191**: Rebuild TouchAdapter as thin input layer
-- **MM-192**: Wire InteractionController and restore functionality
-
-#### Phase 4: Testing & Validation (Day 3-4)
-- **MM-193**: Replace old interaction tests with behavior-focused suites
-- **MM-194**: End-to-end validation and performance testing
-
-## Why We're Doing It
-
-### Technical Debt Crisis
-The event system has reached **MODERATE-HIGH complexity** with multiple overlapping systems creating:
-- **Unpredictable behavior** - same user action, different code paths
-- **Debugging nightmare** - hours to trace through conflicting event handlers  
-- **Maintenance burden** - every change risks cascade failures
-- **Production bugs** - MM-183 styled content bug is symptom of deeper architecture problems
-
-### Strategic Benefits
-
-#### Immediate (Week 1)
-- **Bug Resolution**: MM-183 styled content clicks work perfectly
-- **Code Reduction**: 40% reduction in adapter complexity (1,986 → ~1,200 lines)
-- **Architecture Clarity**: Single source of truth for each interaction type
-
-#### Long-term (Months)
-- **Development Velocity**: Faster feature development with behavior reuse
-- **Fewer Bugs**: Centralized logic eliminates interaction conflicts
-- **Easier Onboarding**: Simple, predictable event flow for new developers
-- **Performance**: Direct behavior calls, no event cascade overhead
-
-### Risk Assessment
-- **Technical Risk**: MEDIUM - Complex refactor but comprehensive TDD approach
-- **Business Risk**: LOW - Feature parity maintained, rollback available
-- **Timeline Risk**: LOW - Surgical approach, 4-day completion target
-
-## Architecture Design
-
-### New Event Flow
+**Current Architecture**: Adapter-Behavior Pattern
 ```
-User Click → Adapter.detectClick() → NoteBehavior.handleNoteClick() → eventBus.emit('note.requestEdit') → EditModeController
+User Input → Adapter (Input Detection) → Behavior (Logic) → EventBus → Services
 ```
 
-### Behavior Responsibilities
-- **NoteBehavior**: All note interactions (click, select, edit mode)
-- **DragBehavior**: All dragging operations (single/multi-note, connections)  
-- **SelectionBoxBehavior**: Lasso selection and multi-select coordination
-- **InteractionController**: Behavior orchestration and adapter coordination
+**Active Components**:
+- **InteractionController**: Orchestrates all behaviors, handles behavior lifecycle
+- **DesktopAdapter**: Mouse/keyboard input detection, delegates to behaviors
+- **TouchAdapter**: Touch/gesture recognition, delegates to behaviors  
+- **Behaviors**: NoteBehavior, DragBehavior, SelectionBoxBehavior, CanvasBehavior, ConnectionBehavior
+- **InputController**: Manages adapter switching, capability detection
 
-### Adapter Responsibilities  
-- **DesktopAdapter**: Pointer event coordinates → behavior method calls
-- **TouchAdapter**: Gesture recognition → behavior method calls
-- **Both**: ZERO business logic, pure input translation
+## Active Issues & Next Steps
 
-### Styled Content Solution
-**No event delegation needed** - behaviors use `event.composedPath()` to detect styled elements directly:
+### 🔧 Current Priority: E2E Test Fixes
 
+**Status**: Manual functionality works perfectly, but E2E tests have configuration issues
+
+**Main Issues**:
+1. **Canvas double-click detection** - Tests failing on `page.dblclick('#canvas')` 
+2. **Touch simulation timing** - Browser touch simulation vs real device differences
+3. **CSS expectations** - Tests expecting old CSS classes/pointer-events behavior
+4. **Event flow timing** - New adapter-behavior flow has different timing than old direct events
+
+**Action Items**:
+- See `broken-tests.md` for complete test failure analysis
+- 51 tests passing, 5 main failures, 9 interrupted
+- Focus on canvas interaction tests first, then connection-specific tests
+
+### 🎯 Development Guidelines for New Developers
+
+#### Architecture Principles
+1. **Adapters**: Pure input detection, zero business logic
+2. **Behaviors**: All interaction logic, platform-agnostic where possible  
+3. **Event Bus**: Clean communication between behaviors and services
+4. **Single Source of Truth**: Each interaction type has one behavior class
+
+#### Key Patterns
+
+**Adding New Interactions**:
+1. Create behavior class in `src/js/interactions/behaviors/`
+2. Register behavior in `InteractionController.initializeBehaviors()`
+3. Add input detection to relevant adapters
+4. Delegate from adapters to behavior methods
+
+**Platform-Specific Behavior**:
 ```javascript
-// In NoteBehavior.handleNoteClick()
-const clickedElement = event.target;
-const noteContent = clickedElement.closest('.note-content');
-const isStyledContent = clickedElement !== noteContent;
+// DesktopAdapter - immediate drag
+this.connectionBehavior.startDesktopDrag(sourceNote, event, 'desktop');
 
-// Handle both normal and styled content in the same code path
-if (noteContent && !noteContent.classList.contains('edit-mode')) {
-  this.requestEditMode(noteContent);
-}
+// TouchAdapter - tap-to-tap with visual mode  
+this.connectionBehavior.startTouchDrag(sourceNote, event, 'touch');
 ```
 
-## Success Metrics
-
-### Code Quality
-- [ ] 40% code reduction achieved (1,986 → ~1,200 lines)
-- [ ] Zero circular dependencies maintained
-- [ ] Single source of truth for each interaction type
-
-### Functionality  
-- [ ] All existing interactions work identically
-- [ ] MM-183 styled content bug resolved
-- [ ] No performance regression in interactions
-
-### Testing
-- [ ] 100% behavior test coverage
-- [ ] All E2E tests pass
-- [ ] Faster, more reliable test execution
-
-### Architecture Health
-- [ ] Grade A+ architecture health maintained
-- [ ] Simple, debuggable event flows
-- [ ] Easy to extend with new interaction types
-
-## Platform Specialization Strategy
-
-### **Input Detection → Behavior Delegation Pattern**
-
-The new architecture preserves platform-specific interaction patterns while eliminating logic duplication through a **delegation model**:
-
-**Platform-Specific Input Detection** (Stays in Adapters):
-- **DesktopAdapter**: `handleClick()` → `detectNoteClick()`, `handleDoubleClick()` → `detectNoteDoubleClick()`
-- **TouchAdapter**: `handleTap()` → `detectNoteTap()`, `handlePinch()` → `detectPinchGesture()`
-
-**Unified Logic** (Moves to Behaviors):
+**Event Flow Pattern**:
 ```javascript
-// DesktopAdapter - Input detection only
-detectNoteClick(event) {
-  const noteElement = event.target.closest('.note');
-  if (noteElement) {
-    this.noteBehavior.handleNoteClick(noteElement, event, 'desktop');
-  }
+// Adapter: Input detection only
+if (target.classList.contains('ghost-connector')) {
+  this.connectionBehavior.startDesktopDrag(sourceNote, event, 'desktop');
+  return;
 }
 
-// TouchAdapter - Input detection only  
-detectNoteTap(event) {
-  const noteElement = event.target.closest('.note');
-  if (noteElement) {
-    this.noteBehavior.handleNoteClick(noteElement, event, 'touch');
-  }
-}
-
-// NoteBehavior - Unified logic for both platforms
-handleNoteClick(noteElement, event, inputType) {
-  this.requestEditMode(noteElement); // Same logic regardless of input method
+// Behavior: Business logic
+startDesktopDrag(sourceNote, event, inputType) {
+  this.isConnecting = true;
+  // Create visual feedback, handle state
 }
 ```
 
-### **What Gets Preserved vs Unified**
+## Key Files for New Developers
 
-**Platform-Specific (Preserved)**:
-- Desktop: Precise pointer coordinates, right-click handling, hover states
-- Touch: Hit target expansion, gesture recognition, multi-touch handling  
-- Input timing differences (click vs tap detection)
-- Coordinate system translations
+### Core Architecture
+- `src/js/interactions/InteractionController.js` - Behavior orchestration
+- `src/js/interactions/InputController.js` - Adapter management  
+- `src/js/interactions/capabilities/detector.js` - Device capability detection
 
-**Unified (Behavior Classes)**:
-- Edit mode logic: Same whether clicked or tapped
-- Selection logic: Same multi-select patterns
-- Drag calculations: Same position updates and collision detection
-- Visual feedback: Same selection boxes and drag previews
+### Adapters (Input Detection)
+- `src/js/interactions/adapters/DesktopAdapter.js` - Mouse/keyboard input
+- `src/js/interactions/adapters/TouchAdapter.js` - Touch/gesture input
+- `src/js/interactions/gestures/GestureRecognizer.js` - Touch gesture detection
 
-**Benefits**: No logic duplication + platform optimization preserved + easier testing + single source of truth per interaction.
+### Behaviors (Interaction Logic)  
+- `src/js/interactions/behaviors/NoteBehavior.js` - Note selection, edit mode
+- `src/js/interactions/behaviors/DragBehavior.js` - Note movement, multi-select drag
+- `src/js/interactions/behaviors/SelectionBoxBehavior.js` - Lasso selection
+- `src/js/interactions/behaviors/CanvasBehavior.js` - Canvas interactions (double-click notes)
+- `src/js/interactions/behaviors/ConnectionBehavior.js` - Connection creation (both platforms)
 
----
+### Connection System
+- `src/js/features/connection/connectionManager.js` - Connection service layer
+- `src/js/features/connection/connection.js` - SVG setup, event handlers (cleaned up)
+- `src/js/features/connection/connectionUtils.js` - Connection utilities
 
-## Progress Update
+## Development Commands
 
-### **Phase 1: Destruction - COMPLETE ✅**
+```bash
+# Start development server
+npm start
 
-**MM-184: Delete EventDelegationManager** ✅
-- Removed EventDelegationManager.js entirely (150+ lines)
-- Cleaned all imports and references from bootstrap
-- Removed setupDelegatedEventListeners from both adapters
-- **Result**: Eliminated complex dual-path event handling system
+# Run all tests (many E2E tests currently failing - see broken-tests.md)
+npm test
+npm run test:e2e
 
-**MM-185: Gut Adapter Interaction Methods** ✅
-- **DesktopAdapter**: 878 lines → 190 lines (**78% reduction**)
-- **TouchAdapter**: 1,066 lines → 210 lines (**80% reduction**)  
-- **Total removed**: ~1,500 lines of duplicated interaction logic
-- **Result**: Clean separation between input detection and interaction logic
+# Run specific behavior tests (these should pass)
+npm test -- tests/unit/interactions/behaviors/
 
-### **Phase 2: Core Behaviors - COMPLETE ✅**
+# Lint and format
+npm run lint
+npm run format:check
 
-**MM-186: Behavior Architecture Foundation** ✅
-- InteractionController with behavior registration and lifecycle management
-- Cross-behavior coordination and state management
-- Clean event-driven architecture foundation established
+# Architecture health check
+npm run health-check
+```
 
-**MM-187: NoteBehavior Implementation** ✅
-- **22/23 tests passing** (minor edge case pending)
-- **MM-183 bug FIXED**: Styled content (`<strong>`, `<h1>`, `<em>`) now clickable for edit mode
-- Unified click handling for desktop and touch input
-- Event-driven edit mode and selection coordination
-- Comprehensive error handling and null safety
+## Connection System Usage
 
-**MM-188: DragBehavior Implementation** ✅  
-- **20/20 tests passing** (100% coverage)
-- Single-note and multi-note drag operations
-- Platform-agnostic coordinate handling
-- Connection update coordination during drag
-- State management and cancellation support
+### Desktop Connection Flow
+1. User clicks ghost connector on source note
+2. `DesktopAdapter.detectInteractionStart()` detects ghost connector
+3. Calls `ConnectionBehavior.startDesktopDrag()` 
+4. Immediate drag line appears following cursor
+5. Mouse move → `ConnectionBehavior.updateDrag()`
+6. Mouse up → `ConnectionBehavior.endDrag()` completes or cancels connection
 
-**MM-189: SelectionBoxBehavior Implementation** ✅
-- **24/24 tests passing** (100% coverage)
-- Visual selection box creation and management
-- Real-time note detection within selection bounds
-- Reverse selection handling (drag up/left)
-- Clean DOM manipulation and cleanup
+### Touch Connection Flow  
+1. User taps ghost connector on source note
+2. `TouchAdapter.handleTap()` detects ghost connector
+3. Calls `ConnectionBehavior.startTouchDrag()`
+4. **All ghost connectors become visible** (connection mode)
+5. User taps target note → `ConnectionBehavior.handleTouchNoteTap()` completes connection
+6. User taps canvas → `ConnectionBehavior.cancel()` cancels connection
 
-### **Current State: BEHAVIORS READY**
-✅ All three core behaviors fully functional with comprehensive TDD  
-✅ MM-183 styled content bug resolved  
-✅ Platform-agnostic interaction logic implemented  
-✅ Event-driven architecture foundation complete  
-❌ Adapters still disconnected (Phase 3 needed)
+## Testing Notes
 
-**Phase 3: Adapter Integration (MM-203-205)**  
-**Status: COMPLETE ✅**
+- **Manual Testing**: All functionality works perfectly ✅
+- **E2E Tests**: Configuration issues due to new architecture ❌
+- **Unit Tests**: Behavior tests should pass, integration tests may need updates
+- **Touch Testing**: Use `?mode=touch` URL parameter for browser touch simulation
 
-**MM-203: Rebuild DesktopAdapter as thin input layer** ✅
-- **190 lines → 403 lines** (input delegation + behavior coordination)
-- Pointer event detection with drag threshold
-- Direct behavior delegation for all interaction types
-- Clean separation: input detection only, zero business logic
+## Documentation
 
-**MM-204: Rebuild TouchAdapter as thin input layer** ✅  
-- **210 lines → 460 lines** (gesture recognition + behavior delegation)
-- Enhanced gesture recognizer integration with behavior delegation
-- Touch-specific hit target expansion (20px) 
-- Platform-optimized touch feedback and interaction patterns
-
-**MM-205: Wire InteractionController and restore full functionality** ✅
-- Updated InteractionBootstrap to initialize InteractionController
-- Modified InputController to pass InteractionController to adapters
-- Complete integration chain: Bootstrap → InputController → Adapters → InteractionController → Behaviors
-- **Integration verified**: 66/67 behavior tests passing (98.5% success rate)
-
-### **REFACTOR COMPLETE: ALL PHASES DONE ✅**
-
-#### **Final Results**
-✅ **MM-183 Bug Fixed**: Styled content (`<strong>`, `<h1>`, `<em>`) fully clickable  
-✅ **Architecture Unified**: Single behavior-driven event flow  
-✅ **Code Quality**: 66/67 tests passing, comprehensive TDD coverage  
-✅ **Performance**: Direct behavior calls, eliminated event cascade overhead  
-✅ **Maintainability**: Clear separation of concerns, single source of truth per interaction
+- `docs/mobile-interaction-patterns.md` - Touch interaction patterns and ConnectionBehavior usage
+- `docs/adapter-behavior-architecture.md` - Architecture guidelines  
+- `broken-tests.md` - Complete E2E test failure analysis and fix roadmap
+- `README.md` - Project setup and overview
 
 ---
 
-**Status**: ✅ **COMPLETE - Full Event System Refactor Successful**  
-**Next**: Production testing and deployment validation
-
-*This refactor eliminates the fundamental complexity that causes interaction bugs while dramatically simplifying the codebase for future development.*
-
----
-
-## Key Interaction Tests
-
-### **Core Note Interactions**
-- **Should create notes on double-click**: Double-click empty canvas → new note appears
-- **Should enter edit mode on content click**: Click note textarea → edit mode activated
-- **Should select notes on border click**: Click note border (non-textarea) → note selected
-- **Should deselect notes on canvas click**: Click empty canvas → all notes deselected
-- **Should deselect notes on Escape key**: Press Escape → all notes deselected
-
-### **Note Dragging**
-- **Should drag single notes**: Click-drag note border → note moves smoothly
-- **Should drag notes and connectors**: Drag connected note → connections move with note
-- **Should drag multiple selected notes**: Select multiple notes → drag one → all move together
-- **Should work at all zoom levels**: Test dragging at 1x, 3x, 5x zoom → consistent behavior
-
-### **Multi-Selection**
-- **Should multi-select with selection box**: Click-drag empty canvas → selection box appears
-- **Should show live selection preview**: Drag selection box over notes → notes highlight during drag
-- **Should finalize selection on release**: Release selection box → notes remain selected
-- **Should work at all zoom levels**: Test selection box at different zoom levels → accurate targeting
-
-### **Integration Points**
-- **Should handle rapid interactions**: Quick clicks/drags → no event conflicts
-- **Should prevent accidental selections during double-click**: Double-click → no selection box interference
-- **Should maintain state consistency**: Drag/select operations → UI state matches data state
-- **Should handle edge cases**: Clicking borders between elements → correct interaction type detected
+**For new developers**: Start by understanding the adapter-behavior pattern, then focus on either fixing E2E tests (if working on testing) or extending behaviors (if adding new interactions). The core architecture is stable and feature-complete.

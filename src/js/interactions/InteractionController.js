@@ -9,6 +9,8 @@ import { eventBus } from '../core/eventBus.js';
 import { NoteBehavior } from './behaviors/NoteBehavior.js';
 import { DragBehavior } from './behaviors/DragBehavior.js';
 import { SelectionBoxBehavior } from './behaviors/SelectionBoxBehavior.js';
+import { CanvasBehavior } from './behaviors/CanvasBehavior.js';
+import { ConnectionBehavior } from './behaviors/ConnectionBehavior.js';
 
 export class InteractionController {
   constructor() {
@@ -58,11 +60,15 @@ export class InteractionController {
       const noteBehavior = new NoteBehavior(this.eventBus);
       const dragBehavior = new DragBehavior(this.eventBus);
       const selectionBoxBehavior = new SelectionBoxBehavior(this.eventBus);
+      const canvasBehavior = new CanvasBehavior(this.eventBus);
+      const connectionBehavior = new ConnectionBehavior(this.eventBus);
 
       // Register behaviors
       this.registerBehavior('note', noteBehavior);
       this.registerBehavior('drag', dragBehavior);
       this.registerBehavior('selectionBox', selectionBoxBehavior);
+      this.registerBehavior('canvas', canvasBehavior);
+      this.registerBehavior('connection', connectionBehavior);
 
       // Initialize all behaviors
       await noteBehavior.initialize();
@@ -73,6 +79,12 @@ export class InteractionController {
 
       await selectionBoxBehavior.initialize();
       console.log('InteractionController: SelectionBoxBehavior initialized');
+
+      await canvasBehavior.initialize();
+      console.log('InteractionController: CanvasBehavior initialized');
+
+      await connectionBehavior.initialize();
+      console.log('InteractionController: ConnectionBehavior initialized');
 
       console.log('InteractionController: All behaviors initialized');
     } catch (error) {

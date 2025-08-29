@@ -1,6 +1,6 @@
 {
   "statistics": {
-    "detectionDate": "2025-08-28T19:17:53.716Z",
+    "detectionDate": "2025-08-29T17:14:59.359Z",
     "formats": {
       "javascript": {
         "sources": {
@@ -53,8 +53,8 @@
             "newClones": 0
           },
           "src/js/interactions/gestures/TouchState.js": {
-            "lines": 189,
-            "tokens": 1145,
+            "lines": 191,
+            "tokens": 1161,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -65,8 +65,8 @@
             "newClones": 0
           },
           "src/js/interactions/gestures/GestureRecognizer.js": {
-            "lines": 574,
-            "tokens": 3839,
+            "lines": 592,
+            "tokens": 3960,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -89,8 +89,8 @@
             "newClones": 0
           },
           "src/js/interactions/behaviors/SelectionBoxBehavior.js": {
-            "lines": 312,
-            "tokens": 1863,
+            "lines": 317,
+            "tokens": 1810,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -101,8 +101,8 @@
             "newClones": 0
           },
           "src/js/interactions/behaviors/NoteBehavior.js": {
-            "lines": 138,
-            "tokens": 692,
+            "lines": 182,
+            "tokens": 955,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -113,8 +113,32 @@
             "newClones": 0
           },
           "src/js/interactions/behaviors/DragBehavior.js": {
-            "lines": 216,
-            "tokens": 1285,
+            "lines": 330,
+            "tokens": 2222,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 9,
+            "duplicatedTokens": 93,
+            "percentage": 2.73,
+            "percentageTokens": 4.19,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/interactions/behaviors/ConnectionBehavior.js": {
+            "lines": 255,
+            "tokens": 1819,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/js/interactions/behaviors/CanvasBehavior.js": {
+            "lines": 111,
+            "tokens": 553,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -125,26 +149,26 @@
             "newClones": 0
           },
           "src/js/interactions/adapters/TouchAdapter.js": {
-            "lines": 475,
-            "tokens": 2701,
+            "lines": 556,
+            "tokens": 3304,
             "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
+            "clones": 1,
+            "duplicatedLines": 7,
+            "duplicatedTokens": 91,
+            "percentage": 1.26,
+            "percentageTokens": 2.75,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
           "src/js/interactions/adapters/DesktopAdapter.js": {
-            "lines": 522,
-            "tokens": 3299,
+            "lines": 610,
+            "tokens": 3822,
             "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
+            "clones": 1,
+            "duplicatedLines": 7,
+            "duplicatedTokens": 91,
+            "percentage": 1.15,
+            "percentageTokens": 2.38,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
@@ -377,8 +401,8 @@
             "newClones": 0
           },
           "src/js/features/connection/connection.js": {
-            "lines": 103,
-            "tokens": 715,
+            "lines": 92,
+            "tokens": 627,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -665,8 +689,8 @@
             "newClones": 0
           },
           "src/js/interactions/InteractionController.js": {
-            "lines": 236,
-            "tokens": 1354,
+            "lines": 248,
+            "tokens": 1478,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -764,11 +788,11 @@
             "lines": 112,
             "tokens": 1007,
             "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
+            "clones": 1,
+            "duplicatedLines": 9,
+            "duplicatedTokens": 93,
+            "percentage": 8.04,
+            "percentageTokens": 9.24,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
@@ -845,8 +869,8 @@
             "newClones": 0
           },
           "src/js/accessibility/adaptiveHelp.js": {
-            "lines": 250,
-            "tokens": 1667,
+            "lines": 320,
+            "tokens": 2256,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -870,14 +894,14 @@
           }
         },
         "total": {
-          "lines": 12145,
-          "tokens": 79659,
-          "sources": 72,
-          "clones": 12,
-          "duplicatedLines": 144,
-          "duplicatedTokens": 1166,
-          "percentage": 1.19,
-          "percentageTokens": 1.46,
+          "lines": 12934,
+          "tokens": 85066,
+          "sources": 74,
+          "clones": 14,
+          "duplicatedLines": 160,
+          "duplicatedTokens": 1350,
+          "percentage": 1.24,
+          "percentageTokens": 1.59,
           "newDuplicatedLines": 0,
           "newClones": 0
         }
@@ -988,14 +1012,14 @@
       }
     },
     "total": {
-      "lines": 12851,
-      "tokens": 86115,
-      "sources": 78,
-      "clones": 16,
-      "duplicatedLines": 198,
-      "duplicatedTokens": 1601,
-      "percentage": 1.54,
-      "percentageTokens": 1.86,
+      "lines": 13640,
+      "tokens": 91522,
+      "sources": 80,
+      "clones": 18,
+      "duplicatedLines": 214,
+      "duplicatedTokens": 1785,
+      "percentage": 1.57,
+      "percentageTokens": 1.95,
       "newDuplicatedLines": 0,
       "newClones": 0
     }
@@ -1034,6 +1058,42 @@
           "line": 83,
           "column": 12,
           "position": 845
+        }
+      }
+    },
+    {
+      "format": "javascript",
+      "lines": 8,
+      "fragment": "this.noteBehavior = this.interactionController.getBehavior('note');\n      this.dragBehavior = this.interactionController.getBehavior('drag');\n      this.selectionBoxBehavior =\n        this.interactionController.getBehavior('selectionBox');\n      this.canvasBehavior = this.interactionController.getBehavior('canvas');\n      this.connectionBehavior = this.interactionController.getBehavior('connection');\n\n      console.log('DesktopAdapter: Behavior references initialized'",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/js/interactions/adapters/DesktopAdapter.js",
+        "start": 80,
+        "end": 87,
+        "startLoc": {
+          "line": 80,
+          "column": 7,
+          "position": 537
+        },
+        "endLoc": {
+          "line": 87,
+          "column": 50,
+          "position": 628
+        }
+      },
+      "secondFile": {
+        "name": "src/js/interactions/adapters/TouchAdapter.js",
+        "start": 45,
+        "end": 52,
+        "startLoc": {
+          "line": 45,
+          "column": 7,
+          "position": 240
+        },
+        "endLoc": {
+          "line": 52,
+          "column": 48,
+          "position": 331
         }
       }
     },
@@ -1430,6 +1490,42 @@
           "line": 165,
           "column": 34,
           "position": 1103
+        }
+      }
+    },
+    {
+      "format": "javascript",
+      "lines": 10,
+      "fragment": "= selectedNotes.map((selectedNote) => {\n    const rect = selectedNote.getBoundingClientRect();\n    return {\n      note: selectedNote,\n      offsetX: (rect.left - noteRect.left) / scale,\n      offsetY: (rect.top - noteRect.top) / scale,\n    };\n  });\n\n  document",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/js/core/movement.js",
+        "start": 73,
+        "end": 82,
+        "startLoc": {
+          "line": 73,
+          "column": 2,
+          "position": 593
+        },
+        "endLoc": {
+          "line": 82,
+          "column": 9,
+          "position": 686
+        }
+      },
+      "secondFile": {
+        "name": "src/js/interactions/behaviors/DragBehavior.js",
+        "start": 263,
+        "end": 272,
+        "startLoc": {
+          "line": 263,
+          "column": 2,
+          "position": 1656
+        },
+        "endLoc": {
+          "line": 272,
+          "column": 8,
+          "position": 1749
         }
       }
     },

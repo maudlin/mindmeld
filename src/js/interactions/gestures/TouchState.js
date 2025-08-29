@@ -23,8 +23,9 @@ export class TouchState {
   /**
    * Add or update touch point
    * @param {Touch} touch - Touch object from TouchEvent
+   * @param {Element} target - Target element from the touch event
    */
-  addTouch(touch) {
+  addTouch(touch, target = null) {
     const touchData = {
       id: touch.identifier,
       startX: touch.clientX,
@@ -35,6 +36,7 @@ export class TouchState {
       lastY: touch.clientY,
       startTime: Date.now(),
       lastMoveTime: Date.now(),
+      target: target, // Preserve target element for adapter use
     };
 
     this.touches.set(touch.identifier, touchData);
