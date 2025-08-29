@@ -39,6 +39,7 @@ export class GestureRecognizer {
     this.lastCanvasTapPosition = null;
     this.longPressTimer = null;
     this.initialPinchDistance = 0;
+    this.lastPanCenter = null;
 
     // Bind methods for event listeners
     this.handleTouchStart = this.handleTouchStart.bind(this);
@@ -417,17 +418,40 @@ export class GestureRecognizer {
       this.transitionTo(this.STATES.IDLE);
       this.touchState.reset();
       this.initialPinchDistance = 0;
+      this.lastPanCenter = null;
     } else if (touchCount === 2) {
-      // Check for pinch gesture
-      const currentDistance = this.touchState.getTouchDistance();
-      if (currentDistance !== null && this.initialPinchDistance > 0) {
-        if (
-          Math.abs(currentDistance - this.initialPinchDistance) >=
-          this.PINCH_MIN_DISTANCE_CHANGE
-        ) {
-          this.transitionTo(this.STATES.PINCHING);
-          this.emitPinchStart();
+      // Get center point of two touches for pan detection
+      const touches = this.touchState.getAllTouches();
+      if (touches.length === 2) {
+        const centerX = (touches[0].currentX + touches[1].currentX) / 2;
+        const centerY = (touches[0].currentY + touches[1].currentY) / 2;
+        
+        // Check for pinch gesture first
+        const currentDistance = this.touchState.getTouchDistance();
+        if (currentDistance !== null && this.initialPinchDistance > 0) {
+          const distanceChange = Math.abs(currentDistance - this.initialPinchDistance);
+          
+          if (distanceChange >= this.PINCH_MIN_DISTANCE_CHANGE) {
+            this.transitionTo(this.STATES.PINCHING);
+            this.emitPinchStart();
+            return;
+          }
         }
+        
+        // Check for pan gesture (two fingers moving together without significant pinch)
+        if (this.lastPanCenter) {
+          const deltaX = centerX - this.lastPanCenter.x;
+          const deltaY = centerY - this.lastPanCenter.y;
+          const panDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+          
+          // Emit pan if there's significant movement
+          if (panDistance > 5) { // 5px threshold to avoid jitter
+            this.emitPan(deltaX, deltaY);
+          }
+        }
+        
+        // Store current center for next comparison
+        this.lastPanCenter = { x: centerX, y: centerY };
       }
     }
   }
@@ -699,6 +723,17 @@ export class GestureRecognizer {
       centerX: center.x,
       centerY: center.y,
       _gesture: 'pinch',
+    });
+  }
+
+  /**
+   * Emit pan gesture event → canvas.pan
+   */
+  emitPan(deltaX, deltaY) {
+    this.eventBus.emit('canvas.pan', {
+      deltaX,
+      deltaY,
+      _gesture: 'pan',
     });
   }
 
