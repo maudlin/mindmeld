@@ -1,29 +1,34 @@
 # MindMeld Current State & Active Development
 
-**Branch**: `feature/mm-160-data-corruption-final-docs-and-mm-175-note-typography`  
-**Date**: December 29, 2025  
-**Status**: 🎉 **ConnectionBehavior Implementation Complete**
+**Branch**: `feature/mm-182-event-system-refactor`  
+**Date**: August 29, 2025  
+**Status**: 🎉 **MM-182 Event System Refactor Complete - PR Ready for Merge**
 
 ## Current State
 
-### ✅ Recently Completed: ConnectionBehavior Rebuild (December 2025)
+### ✅ MM-182 Event System Refactor - COMPLETED (August 2025)
 
-The connection system has been completely rebuilt to integrate with the modern adapter-behavior architecture established in MM-182.
+**PR Created**: https://github.com/maudlin/mindmeld/pull/91
 
-**What Was Built**:
+The complete adapter-behavior architecture has been successfully implemented and all interaction issues resolved.
 
-- **Desktop Connections**: Click ghost connector → drag line follows cursor → release on target note
-- **Touch Connections**: Tap ghost connector → all ghost connectors become visible → tap target note → connection created
-- **Unified Architecture**: Both platforms use ConnectionBehavior class through adapter delegation
+**What Was Accomplished**:
 
-**Key Files**:
+- **Complete Architecture Implementation**: Adapter-behavior pattern fully functional
+- **Desktop Connection Creation**: Fixed ghost connector initialization and pointer event issues
+- **Touch Interaction Fixes**: Double-tap reliability, note selection, canvas deselection
+- **Two-Finger Pan**: Added missing gesture detection and emission to GestureRecognizer
+- **Visual & Performance**: Doubled jiggle animation speed, improved touch feedback
+- **Code Quality**: Removed unused functions, fixed formatting issues
 
-- `src/js/interactions/behaviors/ConnectionBehavior.js` - Unified connection handling
-- `src/js/interactions/adapters/DesktopAdapter.js` - Ghost connector detection + delegation
-- `src/js/interactions/adapters/TouchAdapter.js` - Touch tap-to-tap connection flow
-- `src/js/features/connection/connection.js` - Cleaned up original system conflicts
+**Key Technical Fixes**:
 
-### ✅ Architecture Status: Modern Event System (MM-182)
+- **ConnectionBehavior lazy loading**: Fixed SVG container initialization timing in `src/js/interactions/behaviors/ConnectionBehavior.js:56-67`
+- **GestureRecognizer state management**: Proper state transitions prevent multiple event processing in `src/js/interactions/gestures/GestureRecognizer.js:353-365`
+- **Touch adapter deselection**: Canvas tap properly clears selections and exits edit mode in `src/js/interactions/adapters/TouchAdapter.js:287-298`
+- **Connection creation unification**: Both desktop drag and touch tap-to-tap work through same ConnectionBehavior methods
+
+### ✅ Architecture Status: Modern Event System
 
 **Current Architecture**: Adapter-Behavior Pattern
 
@@ -31,39 +36,33 @@ The connection system has been completely rebuilt to integrate with the modern a
 User Input → Adapter (Input Detection) → Behavior (Logic) → EventBus → Services
 ```
 
-**Active Components**:
+**Fully Implemented Components**:
 
-- **InteractionController**: Orchestrates all behaviors, handles behavior lifecycle
-- **DesktopAdapter**: Mouse/keyboard input detection, delegates to behaviors
-- **TouchAdapter**: Touch/gesture recognition, delegates to behaviors
-- **Behaviors**: NoteBehavior, DragBehavior, SelectionBoxBehavior, CanvasBehavior, ConnectionBehavior
-- **InputController**: Manages adapter switching, capability detection
+- **InteractionController**: Orchestrates all behaviors and their lifecycle
+- **DesktopAdapter**: Mouse/keyboard input detection with delegation to behaviors
+- **TouchAdapter**: Touch/gesture recognition with delegation to behaviors  
+- **ConnectionBehavior**: Unified connection handling for both desktop and touch
+- **GestureRecognizer**: Touch gesture detection with proper state machine management
+- **All Core Behaviors**: NoteBehavior, DragBehavior, SelectionBoxBehavior, CanvasBehavior
 
-## Active Issues & Next Steps
+## Next Steps & Pending Tasks
 
-### 🔧 Current Priority: E2E Test Fixes
+### 🔧 Immediate Priority: Post-Merge Tasks
 
-**Status**: Manual functionality works perfectly, but E2E tests have configuration issues
+**After PR #91 is merged**:
 
-**Main Issues**:
+1. **Update GestureRecognizer Unit Tests** - Tests expect old event emission format but GestureRecognizer now emits `gesture.*` events that are handled by adapters. Tests need updating to match new architecture.
 
-1. **Canvas double-click detection** - Tests failing on `page.dblclick('#canvas')`
-2. **Touch simulation timing** - Browser touch simulation vs real device differences
-3. **CSS expectations** - Tests expecting old CSS classes/pointer-events behavior
-4. **Event flow timing** - New adapter-behavior flow has different timing than old direct events
+2. **Monitor E2E Test Stability** - All core functionality works, but some E2E tests may need adjustments for new adapter timing.
 
-**Action Items**:
-
-- See `broken-tests.md` for complete test failure analysis
-- 51 tests passing, 5 main failures, 9 interrupted
-- Focus on canvas interaction tests first, then connection-specific tests
+3. **Clean Up Debug Logging** - Remove development console.log statements added during debugging phase.
 
 ### 🎯 Development Guidelines for New Developers
 
 #### Architecture Principles
 
 1. **Adapters**: Pure input detection, zero business logic
-2. **Behaviors**: All interaction logic, platform-agnostic where possible
+2. **Behaviors**: All interaction logic, emit events via EventBus
 3. **Event Bus**: Clean communication between behaviors and services
 4. **Single Source of Truth**: Each interaction type has one behavior class
 
@@ -80,25 +79,26 @@ User Input → Adapter (Input Detection) → Behavior (Logic) → EventBus → S
 
 ```javascript
 // DesktopAdapter - immediate drag
-this.connectionBehavior.startDesktopDrag(sourceNote, event, 'desktop');
+this.connectionBehavior.startConnectionCreation(sourceNote, event);
 
 // TouchAdapter - tap-to-tap with visual mode
-this.connectionBehavior.startTouchDrag(sourceNote, event, 'touch');
+this.connectionBehavior.handleConnectorTap(sourceNote, event);
 ```
 
 **Event Flow Pattern**:
 
 ```javascript
 // Adapter: Input detection only
-if (target.classList.contains('ghost-connector')) {
-  this.connectionBehavior.startDesktopDrag(sourceNote, event, 'desktop');
+if (target.closest('.ghost-connector')) {
+  this.connectionBehavior.startConnectionCreation(note, event);
   return;
 }
 
 // Behavior: Business logic
-startDesktopDrag(sourceNote, event, inputType) {
+startConnectionCreation(sourceNote, event) {
   this.isConnecting = true;
-  // Create visual feedback, handle state
+  this.initializeSVGContainer(); // Lazy loading
+  // Handle business logic, emit events
 }
 ```
 
@@ -106,29 +106,28 @@ startDesktopDrag(sourceNote, event, inputType) {
 
 ### Core Architecture
 
-- `src/js/interactions/InteractionController.js` - Behavior orchestration
-- `src/js/interactions/InputController.js` - Adapter management
+- `src/js/interactions/InteractionController.js` - Behavior orchestration and lifecycle
+- `src/js/interactions/InputController.js` - Adapter management and capability detection
 - `src/js/interactions/capabilities/detector.js` - Device capability detection
 
 ### Adapters (Input Detection)
 
-- `src/js/interactions/adapters/DesktopAdapter.js` - Mouse/keyboard input
-- `src/js/interactions/adapters/TouchAdapter.js` - Touch/gesture input
-- `src/js/interactions/gestures/GestureRecognizer.js` - Touch gesture detection
+- `src/js/interactions/adapters/DesktopAdapter.js` - Mouse/keyboard input detection
+- `src/js/interactions/adapters/TouchAdapter.js` - Touch/gesture input with enhanced hit targets
+- `src/js/interactions/gestures/GestureRecognizer.js` - Touch gesture detection and state machine
 
 ### Behaviors (Interaction Logic)
 
 - `src/js/interactions/behaviors/NoteBehavior.js` - Note selection, edit mode
-- `src/js/interactions/behaviors/DragBehavior.js` - Note movement, multi-select drag
+- `src/js/interactions/behaviors/DragBehavior.js` - Note movement, multi-select drag  
 - `src/js/interactions/behaviors/SelectionBoxBehavior.js` - Lasso selection
 - `src/js/interactions/behaviors/CanvasBehavior.js` - Canvas interactions (double-click notes)
-- `src/js/interactions/behaviors/ConnectionBehavior.js` - Connection creation (both platforms)
+- `src/js/interactions/behaviors/ConnectionBehavior.js` - Unified connection creation
 
 ### Connection System
 
 - `src/js/features/connection/connectionManager.js` - Connection service layer
-- `src/js/features/connection/connection.js` - SVG setup, event handlers (cleaned up)
-- `src/js/features/connection/connectionUtils.js` - Connection utilities
+- `src/js/features/connection/connection.js` - SVG setup and event handlers (cleaned up)
 
 ## Development Commands
 
@@ -136,19 +135,16 @@ startDesktopDrag(sourceNote, event, inputType) {
 # Start development server
 npm start
 
-# Run all tests (many E2E tests currently failing - see broken-tests.md)
-npm test
-npm run test:e2e
+# Run tests
+npm test                    # Unit tests (most should pass)
+npm run test:e2e           # E2E tests (core functionality works)
 
-# Run specific behavior tests (these should pass)
-npm test -- tests/unit/interactions/behaviors/
-
-# Lint and format
-npm run lint
-npm run format:check
+# Code quality
+npm run lint               # ESLint (should pass)
+npm run format:check       # Prettier formatting
 
 # Architecture health check
-npm run health-check
+npm run health-check       # Dependency analysis
 ```
 
 ## Connection System Usage
@@ -156,35 +152,36 @@ npm run health-check
 ### Desktop Connection Flow
 
 1. User clicks ghost connector on source note
-2. `DesktopAdapter.detectInteractionStart()` detects ghost connector
-3. Calls `ConnectionBehavior.startDesktopDrag()`
-4. Immediate drag line appears following cursor
-5. Mouse move → `ConnectionBehavior.updateDrag()`
-6. Mouse up → `ConnectionBehavior.endDrag()` completes or cancels connection
+2. `DesktopAdapter` detects ghost connector in `detectInteractionStart()`
+3. Calls `ConnectionBehavior.startConnectionCreation()`
+4. SVG container lazy loads, drag line appears following cursor
+5. Mouse move → `ConnectionBehavior.handleMouseMove()`
+6. Mouse up → `ConnectionBehavior.handleMouseUp()` completes or cancels
 
 ### Touch Connection Flow
 
-1. User taps ghost connector on source note
+1. User taps ghost connector on source note  
 2. `TouchAdapter.handleTap()` detects ghost connector
-3. Calls `ConnectionBehavior.startTouchDrag()`
+3. Calls `ConnectionBehavior.handleConnectorTap()`
 4. **All ghost connectors become visible** (connection mode)
-5. User taps target note → `ConnectionBehavior.handleTouchNoteTap()` completes connection
-6. User taps canvas → `ConnectionBehavior.cancel()` cancels connection
+5. User taps target note → connection created via `ConnectionBehavior.createFinalConnection()`
+6. User taps canvas → `ConnectionBehavior.cancel()` cancels connection mode
 
-## Testing Notes
+## Testing Status
 
 - **Manual Testing**: All functionality works perfectly ✅
-- **E2E Tests**: Configuration issues due to new architecture ❌
-- **Unit Tests**: Behavior tests should pass, integration tests may need updates
-- **Touch Testing**: Use `?mode=touch` URL parameter for browser touch simulation
+- **Core Unit Tests**: Behavior tests pass, adapter tests pass ✅
+- **GestureRecognizer Tests**: Need updating for new event format ❌
+- **E2E Tests**: Core functionality works, timing may need adjustment ⚠️
+- **Touch Testing**: Use `?mode=touch` URL parameter for browser simulation
 
 ## Documentation
 
-- `docs/mobile-interaction-patterns.md` - Touch interaction patterns and ConnectionBehavior usage
-- `docs/adapter-behavior-architecture.md` - Architecture guidelines
-- `broken-tests.md` - Complete E2E test failure analysis and fix roadmap
+- `docs/mobile-interaction-patterns.md` - Touch interaction patterns and behavior usage
+- `docs/adapter-behavior-architecture.md` - Architecture implementation guidelines
+- `CLAUDE.md` - Project development guidelines and testing patterns
 - `README.md` - Project setup and overview
 
 ---
 
-**For new developers**: Start by understanding the adapter-behavior pattern, then focus on either fixing E2E tests (if working on testing) or extending behaviors (if adding new interactions). The core architecture is stable and feature-complete.
+**For new developers**: The core architecture is complete and stable. Focus on post-merge cleanup tasks or extending functionality through the established adapter-behavior pattern. All major interaction issues have been resolved.

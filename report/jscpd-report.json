@@ -1,6 +1,6 @@
 {
   "statistics": {
-    "detectionDate": "2025-08-29T17:14:59.359Z",
+    "detectionDate": "2025-08-29T23:43:53.323Z",
     "formats": {
       "javascript": {
         "sources": {
@@ -65,14 +65,14 @@
             "newClones": 0
           },
           "src/js/interactions/gestures/GestureRecognizer.js": {
-            "lines": 592,
-            "tokens": 3960,
+            "lines": 753,
+            "tokens": 5205,
             "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
+            "clones": 2,
+            "duplicatedLines": 52,
+            "duplicatedTokens": 424,
+            "percentage": 6.91,
+            "percentageTokens": 8.15,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
@@ -125,8 +125,8 @@
             "newClones": 0
           },
           "src/js/interactions/behaviors/ConnectionBehavior.js": {
-            "lines": 255,
-            "tokens": 1819,
+            "lines": 309,
+            "tokens": 2063,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -149,26 +149,26 @@
             "newClones": 0
           },
           "src/js/interactions/adapters/TouchAdapter.js": {
-            "lines": 556,
-            "tokens": 3304,
+            "lines": 601,
+            "tokens": 3560,
             "sources": 1,
             "clones": 1,
-            "duplicatedLines": 7,
-            "duplicatedTokens": 91,
-            "percentage": 1.26,
-            "percentageTokens": 2.75,
+            "duplicatedLines": 8,
+            "duplicatedTokens": 92,
+            "percentage": 1.33,
+            "percentageTokens": 2.58,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
           "src/js/interactions/adapters/DesktopAdapter.js": {
-            "lines": 610,
-            "tokens": 3822,
+            "lines": 614,
+            "tokens": 3843,
             "sources": 1,
             "clones": 1,
-            "duplicatedLines": 7,
-            "duplicatedTokens": 91,
-            "percentage": 1.15,
-            "percentageTokens": 2.38,
+            "duplicatedLines": 8,
+            "duplicatedTokens": 92,
+            "percentage": 1.3,
+            "percentageTokens": 2.39,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
@@ -284,23 +284,11 @@
             "lines": 346,
             "tokens": 2234,
             "sources": 1,
-            "clones": 5,
-            "duplicatedLines": 70,
-            "duplicatedTokens": 526,
-            "percentage": 20.23,
-            "percentageTokens": 23.55,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/js/features/markdown/isolatedMarkdownEngine.js": {
-            "lines": 363,
-            "tokens": 2449,
-            "sources": 1,
-            "clones": 5,
-            "duplicatedLines": 70,
-            "duplicatedTokens": 526,
-            "percentage": 19.28,
-            "percentageTokens": 21.48,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
@@ -389,8 +377,8 @@
             "newClones": 0
           },
           "src/js/features/connection/connectionCreation.js": {
-            "lines": 136,
-            "tokens": 1016,
+            "lines": 140,
+            "tokens": 1050,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -401,8 +389,8 @@
             "newClones": 0
           },
           "src/js/features/connection/connection.js": {
-            "lines": 92,
-            "tokens": 627,
+            "lines": 81,
+            "tokens": 547,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -869,8 +857,8 @@
             "newClones": 0
           },
           "src/js/accessibility/adaptiveHelp.js": {
-            "lines": 320,
-            "tokens": 2256,
+            "lines": 331,
+            "tokens": 2275,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -894,14 +882,14 @@
           }
         },
         "total": {
-          "lines": 12934,
-          "tokens": 85066,
-          "sources": 74,
-          "clones": 14,
-          "duplicatedLines": 160,
-          "duplicatedTokens": 1350,
-          "percentage": 1.24,
-          "percentageTokens": 1.59,
+          "lines": 12839,
+          "tokens": 84356,
+          "sources": 73,
+          "clones": 10,
+          "duplicatedLines": 117,
+          "duplicatedTokens": 1037,
+          "percentage": 0.91,
+          "percentageTokens": 1.23,
           "newDuplicatedLines": 0,
           "newClones": 0
         }
@@ -962,7 +950,7 @@
         "sources": {
           "src/index.html": {
             "lines": 193,
-            "tokens": 1546,
+            "tokens": 1548,
             "sources": 1,
             "clones": 1,
             "duplicatedLines": 8,
@@ -999,7 +987,7 @@
         },
         "total": {
           "lines": 617,
-          "tokens": 5943,
+          "tokens": 5945,
           "sources": 3,
           "clones": 4,
           "duplicatedLines": 54,
@@ -1012,14 +1000,14 @@
       }
     },
     "total": {
-      "lines": 13640,
-      "tokens": 91522,
-      "sources": 80,
-      "clones": 18,
-      "duplicatedLines": 214,
-      "duplicatedTokens": 1785,
-      "percentage": 1.57,
-      "percentageTokens": 1.95,
+      "lines": 13545,
+      "tokens": 90814,
+      "sources": 79,
+      "clones": 14,
+      "duplicatedLines": 171,
+      "duplicatedTokens": 1472,
+      "percentage": 1.26,
+      "percentageTokens": 1.62,
       "newDuplicatedLines": 0,
       "newClones": 0
     }
@@ -1063,37 +1051,73 @@
     },
     {
       "format": "javascript",
-      "lines": 8,
-      "fragment": "this.noteBehavior = this.interactionController.getBehavior('note');\n      this.dragBehavior = this.interactionController.getBehavior('drag');\n      this.selectionBoxBehavior =\n        this.interactionController.getBehavior('selectionBox');\n      this.canvasBehavior = this.interactionController.getBehavior('canvas');\n      this.connectionBehavior = this.interactionController.getBehavior('connection');\n\n      console.log('DesktopAdapter: Behavior references initialized'",
+      "lines": 27,
+      "fragment": ".target;\n    const isNoteTarget =\n      target &&\n      (target.closest('.note') ||\n        target.classList?.contains('note-content') ||\n        target.tagName === 'H1' ||\n        target.tagName === 'P');\n\n    const isCanvasTarget =\n      target &&\n      (target.id === 'canvas' ||\n        target.closest('#canvas') ||\n        target.classList?.contains('background-layout'));\n\n    let lastTapTime, lastTapPosition;\n    if (isNoteTarget) {\n      lastTapTime = this.lastNoteTapTime;\n      lastTapPosition = this.lastNoteTapPosition;\n    } else if (isCanvasTarget) {\n      lastTapTime = this.lastCanvasTapTime;\n      lastTapPosition = this.lastCanvasTapPosition;\n    } else {\n      lastTapTime = 0; // Unknown target, no double-tap\n      lastTapPosition = null;\n    }\n\n    // Check if this could be a double tap",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/js/interactions/gestures/GestureRecognizer.js",
+        "start": 535,
+        "end": 561,
+        "startLoc": {
+          "line": 535,
+          "column": 6,
+          "position": 3774
+        },
+        "endLoc": {
+          "line": 561,
+          "column": 39,
+          "position": 3986
+        }
+      },
+      "secondFile": {
+        "name": "src/js/interactions/gestures/GestureRecognizer.js",
+        "start": 310,
+        "end": 336,
+        "startLoc": {
+          "line": 310,
+          "column": 10,
+          "position": 2098
+        },
+        "endLoc": {
+          "line": 336,
+          "column": 6,
+          "position": 2310
+        }
+      }
+    },
+    {
+      "format": "javascript",
+      "lines": 9,
+      "fragment": "this.noteBehavior = this.interactionController.getBehavior('note');\n      this.dragBehavior = this.interactionController.getBehavior('drag');\n      this.selectionBoxBehavior =\n        this.interactionController.getBehavior('selectionBox');\n      this.canvasBehavior = this.interactionController.getBehavior('canvas');\n      this.connectionBehavior =\n        this.interactionController.getBehavior('connection');\n\n      console.log('DesktopAdapter: Behavior references initialized'",
       "tokens": 0,
       "firstFile": {
         "name": "src/js/interactions/adapters/DesktopAdapter.js",
         "start": 80,
-        "end": 87,
+        "end": 88,
         "startLoc": {
           "line": 80,
           "column": 7,
-          "position": 537
+          "position": 536
         },
         "endLoc": {
-          "line": 87,
+          "line": 88,
           "column": 50,
           "position": 628
         }
       },
       "secondFile": {
         "name": "src/js/interactions/adapters/TouchAdapter.js",
-        "start": 45,
-        "end": 52,
+        "start": 46,
+        "end": 54,
         "startLoc": {
-          "line": 45,
+          "line": 46,
           "column": 7,
-          "position": 240
+          "position": 253
         },
         "endLoc": {
-          "line": 52,
+          "line": 54,
           "column": 48,
-          "position": 331
+          "position": 345
         }
       }
     },
@@ -1130,186 +1154,6 @@
           "line": 142,
           "column": 12,
           "position": 1316
-        }
-      }
-    },
-    {
-      "format": "javascript",
-      "lines": 16,
-      "fragment": "function escapeHtml(text) {\n  if (typeof text !== 'string') return '';\n\n  return text\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&#x27;');\n}\n\n/**\n * Safe whitespace normalization - preserves markdown structure\n * @param {string} text - Input text\n * @returns {string} Normalized text with preserved structure\n */",
-      "tokens": 0,
-      "firstFile": {
-        "name": "src/js/features/markdown/isolatedMarkdownEngine.js",
-        "start": 17,
-        "end": 32,
-        "startLoc": {
-          "line": 17,
-          "column": 1,
-          "position": 11
-        },
-        "endLoc": {
-          "line": 32,
-          "column": 4,
-          "position": 98
-        }
-      },
-      "secondFile": {
-        "name": "src/js/features/markdown/markdownRenderer.js",
-        "start": 20,
-        "end": 35,
-        "startLoc": {
-          "line": 20,
-          "column": 1,
-          "position": 8
-        },
-        "endLoc": {
-          "line": 35,
-          "column": 4,
-          "position": 95
-        }
-      }
-    },
-    {
-      "format": "javascript",
-      "lines": 17,
-      "fragment": "if (trimmed.startsWith('## ') && trimmed.length > 3) {\n    return { level: 2, content: trimmed.slice(3).trim() };\n  }\n\n  // Check for # (h1)\n  if (trimmed.startsWith('# ') && trimmed.length > 2) {\n    return { level: 1, content: trimmed.slice(2).trim() };\n  }\n\n  return null;\n}\n\n/**\n * Parse a single line to detect if it's a list item\n * @param {string} line - Line to parse\n * @returns {object|null} {marker, content} or null\n */",
-      "tokens": 0,
-      "firstFile": {
-        "name": "src/js/features/markdown/isolatedMarkdownEngine.js",
-        "start": 62,
-        "end": 78,
-        "startLoc": {
-          "line": 62,
-          "column": 3,
-          "position": 310
-        },
-        "endLoc": {
-          "line": 78,
-          "column": 4,
-          "position": 433
-        }
-      },
-      "secondFile": {
-        "name": "src/js/features/markdown/markdownRenderer.js",
-        "start": 116,
-        "end": 132,
-        "startLoc": {
-          "line": 116,
-          "column": 3,
-          "position": 737
-        },
-        "endLoc": {
-          "line": 132,
-          "column": 4,
-          "position": 860
-        }
-      }
-    },
-    {
-      "format": "javascript",
-      "lines": 19,
-      "fragment": "const markers = ['-', '*', '•'];\n\n  for (const marker of markers) {\n    if (trimmed.startsWith(marker + ' ')) {\n      return {\n        marker,\n        content: trimmed.slice(2).trim(),\n      };\n    }\n  }\n\n  return null;\n}\n\n/**\n * Process inline formatting (*italic*, **bold**) - pure function\n * @param {string} text - Text to process\n * @returns {string} Text with HTML formatting\n */",
-      "tokens": 0,
-      "firstFile": {
-        "name": "src/js/features/markdown/isolatedMarkdownEngine.js",
-        "start": 83,
-        "end": 101,
-        "startLoc": {
-          "line": 83,
-          "column": 3,
-          "position": 480
-        },
-        "endLoc": {
-          "line": 101,
-          "column": 4,
-          "position": 576
-        }
-      },
-      "secondFile": {
-        "name": "src/js/features/markdown/markdownRenderer.js",
-        "start": 137,
-        "end": 154,
-        "startLoc": {
-          "line": 137,
-          "column": 3,
-          "position": 890
-        },
-        "endLoc": {
-          "line": 154,
-          "column": 4,
-          "position": 985
-        }
-      }
-    },
-    {
-      "format": "javascript",
-      "lines": 12,
-      "fragment": "let j = i + 2;\n      let foundClosing = false;\n\n      while (j <= chars.length - 2) {\n        if (chars[j] === '*' && chars[j + 1] === '*') {\n          foundClosing = true;\n          break;\n        }\n        j++;\n      }\n\n      if (foundClosing &&",
-      "tokens": 0,
-      "firstFile": {
-        "name": "src/js/features/markdown/isolatedMarkdownEngine.js",
-        "start": 116,
-        "end": 127,
-        "startLoc": {
-          "line": 116,
-          "column": 7,
-          "position": 729
-        },
-        "endLoc": {
-          "line": 127,
-          "column": 3,
-          "position": 833
-        }
-      },
-      "secondFile": {
-        "name": "src/js/features/markdown/markdownRenderer.js",
-        "start": 51,
-        "end": 62,
-        "startLoc": {
-          "line": 51,
-          "column": 7,
-          "position": 234
-        },
-        "endLoc": {
-          "line": 62,
-          "column": 2,
-          "position": 337
-        }
-      }
-    },
-    {
-      "format": "javascript",
-      "lines": 11,
-      "fragment": "if (chars[j] === '<' || chars[j] === '>') {\n          break;\n        }\n        j++;\n      }\n\n      if (foundClosing && j > i + 1) {\n        const content = chars.slice(i + 1, j).join('');\n        output.push(`<em>${content}</em>`);\n        i = j + 1;\n        continue",
-      "tokens": 0,
-      "firstFile": {
-        "name": "src/js/features/markdown/isolatedMarkdownEngine.js",
-        "start": 148,
-        "end": 158,
-        "startLoc": {
-          "line": 148,
-          "column": 9,
-          "position": 1040
-        },
-        "endLoc": {
-          "line": 158,
-          "column": 9,
-          "position": 1156
-        }
-      },
-      "secondFile": {
-        "name": "src/js/features/markdown/markdownRenderer.js",
-        "start": 85,
-        "end": 94,
-        "startLoc": {
-          "line": 85,
-          "column": 9,
-          "position": 541
-        },
-        "endLoc": {
-          "line": 94,
-          "column": 23,
-          "position": 656
         }
       }
     },
@@ -1556,12 +1400,12 @@
         "startLoc": {
           "line": 37,
           "column": 5,
-          "position": 285
+          "position": 287
         },
         "endLoc": {
           "line": 45,
           "column": 7,
-          "position": 373
+          "position": 375
         }
       }
     },
