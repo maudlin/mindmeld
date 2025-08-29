@@ -1,18 +1,18 @@
-name: CI Tests
-on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
-permissions:
-  contents: read
-  security-events: write
-  actions: read
-jobs:
-  test:
-    timeout-minutes: 60
-    runs-on: ubuntu-latest
-    steps:
+  name: CI Tests
+  on:
+    push:
+      branches: [ main, master ]
+    pull_request:
+      branches: [ main, master ]
+  permissions:
+    contents: read
+    security-events: write
+    actions: read
+  jobs:
+    test:
+      timeout-minutes: 60
+      runs-on: ubuntu-latest
+      steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -26,22 +26,22 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit
 
-  semgrep:
-    runs-on: ubuntu-latest
-    name: Security Scanning (Semgrep)
-    steps:
-      - uses: actions/checkout@v4
-      - uses: semgrep/semgrep-action@v1
-        with:
-          config: >-
-            p/security-audit
-            p/javascript
-            p/owasp-top-ten
-          generateSarif: '1'
-        env:
-          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
-      - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: semgrep.sarif
-        if: always()
+    semgrep:
+      runs-on: ubuntu-latest
+      name: Security Scanning (Semgrep)
+      steps:
+        - uses: actions/checkout@v4
+        - uses: semgrep/semgrep-action@v1
+          with:
+            config: >-
+              p/security-audit
+              p/javascript
+              p/owasp-top-ten
+            generateSarif: "1"
+          env:
+            SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+        - name: Upload SARIF file
+          uses: github/codeql-action/upload-sarif@v3
+          with:
+            sarif_file: semgrep.sarif
+          if: always()
