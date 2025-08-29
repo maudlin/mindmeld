@@ -80,13 +80,3 @@ function handleKeyDown(event) {
     connectionManager.handleLineDeletion();
   }
 }
-
-function handleMouseDown(event, canvas, svgContainer) {
-  event.preventDefault();
-  event.stopPropagation();
-
-  const startNote = event.target.closest('.note');
-  if (!startNote) return;
-
-  connectionManager.startConnectionCreation(event, canvas, svgContainer);
-}
