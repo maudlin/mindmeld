@@ -121,7 +121,8 @@ export class TouchAdapter extends BaseAdapter {
 
     this.eventBus.on('gesture.doubletap', (event) => {
       const touch = event.touch;
-      console.log('TouchAdapter: Gesture doubletap detected', {
+      const eventId = `${touch.clientX},${touch.clientY},${Date.now()}`;
+      console.log(`TouchAdapter: Gesture doubletap detected [${eventId}]`, {
         x: touch.clientX,
         y: touch.clientY,
         target: touch.target?.tagName,
@@ -248,8 +249,12 @@ export class TouchAdapter extends BaseAdapter {
         return;
       }
 
-      // Single tap on canvas - no action needed
-      console.log('TouchAdapter: Canvas tap detected (no action)');
+      // Single tap on canvas - clear note selections and exit edit mode
+      console.log(
+        'TouchAdapter: Canvas tap detected - clearing selections and exiting edit mode',
+      );
+      noteManager.clearSelections();
+      this.emit('canvas.clicked');
       return;
     }
 

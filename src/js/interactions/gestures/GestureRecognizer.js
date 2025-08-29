@@ -31,8 +31,12 @@ export class GestureRecognizer {
     };
 
     this.currentState = this.STATES.IDLE;
-    this.lastTapTime = 0;
-    this.lastTapPosition = null;
+
+    // Double tap detection - separate tracking for different target types
+    this.lastNoteTapTime = 0;
+    this.lastNoteTapPosition = null;
+    this.lastCanvasTapTime = 0;
+    this.lastCanvasTapPosition = null;
     this.longPressTimer = null;
     this.initialPinchDistance = 0;
 
@@ -100,7 +104,7 @@ export class GestureRecognizer {
 
     // Add all new touches to state
     for (let i = 0; i < event.changedTouches.length; i++) {
-      this.touchState.addTouch(event.changedTouches[i]);
+      this.touchState.addTouch(event.changedTouches[i], event.target);
     }
 
     this.updateStateMachine();
@@ -127,6 +131,11 @@ export class GestureRecognizer {
    */
   handleTouchEnd(event) {
     event.preventDefault();
+    console.log(
+      'GestureRecognizer: handleTouchEnd called with',
+      event.changedTouches?.length,
+      'changed touches',
+    );
 
     // Store touch data before removing from state
     const endedTouches = [];
@@ -167,6 +176,9 @@ export class GestureRecognizer {
   updateStateMachine() {
     const touchCount = this.touchState.getTouchCount();
     const primary = this.touchState.getPrimaryTouch();
+    console.log(
+      `GestureRecognizer: updateStateMachine called - state: ${this.currentState}, touchCount: ${touchCount}`,
+    );
 
     switch (this.currentState) {
       case this.STATES.IDLE:
@@ -275,6 +287,10 @@ export class GestureRecognizer {
    * Handle potential double tap state
    */
   handlePotentialDoubleTapState(touchCount) {
+    console.log(
+      'GestureRecognizer: handlePotentialDoubleTapState called with touchCount:',
+      touchCount,
+    );
     if (touchCount === 0) {
       this.clearLongPressTimer();
 
@@ -288,21 +304,85 @@ export class GestureRecognizer {
         // Check if this tap is close enough to the last tap for double tap
         const tapPosition = { x: touchData.currentX, y: touchData.currentY };
         const now = Date.now();
+
+        // Determine target type and get appropriate timing data
+        const target = touchData.target;
+        const isNoteTarget =
+          target &&
+          (target.closest('.note') ||
+            target.classList?.contains('note-content') ||
+            target.tagName === 'H1' ||
+            target.tagName === 'P');
+
+        const isCanvasTarget =
+          target &&
+          (target.id === 'canvas' ||
+            target.closest('#canvas') ||
+            target.classList?.contains('background-layout'));
+
+        let lastTapTime, lastTapPosition;
+        if (isNoteTarget) {
+          lastTapTime = this.lastNoteTapTime;
+          lastTapPosition = this.lastNoteTapPosition;
+        } else if (isCanvasTarget) {
+          lastTapTime = this.lastCanvasTapTime;
+          lastTapPosition = this.lastCanvasTapPosition;
+        } else {
+          lastTapTime = 0; // Unknown target, no double-tap
+          lastTapPosition = null;
+        }
+
+        const timeDiff = lastTapTime ? now - lastTapTime : 0;
+        const distance = lastTapPosition
+          ? this.calculateDistance(tapPosition, lastTapPosition)
+          : 0;
+
+        console.log(
+          `GestureRecognizer: Tap analysis - target: ${isNoteTarget ? 'note' : isCanvasTarget ? 'canvas' : 'other'}, timeDiff: ${timeDiff}ms, distance: ${distance}px, hasLastTap: ${!!lastTapTime}`,
+        );
+
         if (
-          this.lastTapTime &&
-          now - this.lastTapTime <= this.DOUBLE_TAP_MAX_DELAY &&
-          this.lastTapPosition &&
-          this.calculateDistance(tapPosition, this.lastTapPosition) <=
+          lastTapTime &&
+          now - lastTapTime <= this.DOUBLE_TAP_MAX_DELAY &&
+          lastTapPosition &&
+          this.calculateDistance(tapPosition, lastTapPosition) <=
             this.TAP_MAX_MOVEMENT
         ) {
+          console.log('GestureRecognizer: Double-tap detected!');
           this.emitDoubleTap(touchData);
-          this.lastTapTime = 0;
-          this.lastTapPosition = null;
+
+          // Clear the appropriate timing data
+          if (isNoteTarget) {
+            this.lastNoteTapTime = 0;
+            this.lastNoteTapPosition = null;
+          } else if (isCanvasTarget) {
+            this.lastCanvasTapTime = 0;
+            this.lastCanvasTapPosition = null;
+          }
+
+          // IMPORTANT: Transition to IDLE to prevent processing more touchend events for this gesture
+          this.transitionTo(this.STATES.IDLE);
         } else {
-          // Too far apart, emit single tap instead
+          // Emit single tap and store timing for appropriate target type
           this.emitTap(touchData);
-          this.lastTapTime = Date.now();
-          this.lastTapPosition = tapPosition;
+
+          if (isNoteTarget) {
+            console.log(
+              'GestureRecognizer: Single tap on note - storing for potential double-tap',
+            );
+            this.lastNoteTapTime = Date.now();
+            this.lastNoteTapPosition = tapPosition;
+          } else if (isCanvasTarget) {
+            console.log(
+              'GestureRecognizer: Single tap on canvas - storing for potential double-tap',
+            );
+            this.lastCanvasTapTime = Date.now();
+            this.lastCanvasTapPosition = tapPosition;
+          } else {
+            console.log(
+              'GestureRecognizer: Single tap on other target - not storing timing data',
+            );
+          }
         }
       }
 
@@ -424,22 +504,61 @@ export class GestureRecognizer {
     const now = Date.now();
     const tapPosition = { x: touch.currentX, y: touch.currentY };
 
+    // Determine target type and get appropriate timing data
+    const target = touch.target;
+    const isNoteTarget =
+      target &&
+      (target.closest('.note') ||
+        target.classList?.contains('note-content') ||
+        target.tagName === 'H1' ||
+        target.tagName === 'P');
+
+    const isCanvasTarget =
+      target &&
+      (target.id === 'canvas' ||
+        target.closest('#canvas') ||
+        target.classList?.contains('background-layout'));
+
+    let lastTapTime, lastTapPosition;
+    if (isNoteTarget) {
+      lastTapTime = this.lastNoteTapTime;
+      lastTapPosition = this.lastNoteTapPosition;
+    } else if (isCanvasTarget) {
+      lastTapTime = this.lastCanvasTapTime;
+      lastTapPosition = this.lastCanvasTapPosition;
+    } else {
+      lastTapTime = 0; // Unknown target, no double-tap
+      lastTapPosition = null;
+    }
+
     // Check if this could be a double tap
     if (
-      this.lastTapTime &&
-      now - this.lastTapTime <= this.DOUBLE_TAP_MAX_DELAY &&
-      this.lastTapPosition &&
-      this.calculateDistance(tapPosition, this.lastTapPosition) <=
+      lastTapTime &&
+      now - lastTapTime <= this.DOUBLE_TAP_MAX_DELAY &&
+      lastTapPosition &&
+      this.calculateDistance(tapPosition, lastTapPosition) <=
         this.TAP_MAX_MOVEMENT
     ) {
-      // This is a double tap - don't emit single tap, reset tap tracking
-      this.lastTapTime = 0;
-      this.lastTapPosition = null;
+      // This is a double tap - don't emit single tap, reset appropriate tap tracking
+      if (isNoteTarget) {
+        this.lastNoteTapTime = 0;
+        this.lastNoteTapPosition = null;
+      } else if (isCanvasTarget) {
+        this.lastCanvasTapTime = 0;
+        this.lastCanvasTapPosition = null;
+      }
     } else {
       // Single tap
       this.emitTap(touch);
-      this.lastTapTime = now;
-      this.lastTapPosition = tapPosition;
+
+      // Store timing for appropriate target type
+      if (isNoteTarget) {
+        this.lastNoteTapTime = now;
+        this.lastNoteTapPosition = tapPosition;
+      } else if (isCanvasTarget) {
+        this.lastCanvasTapTime = now;
+        this.lastCanvasTapPosition = tapPosition;
+      }
     }
   }
 
@@ -452,27 +571,34 @@ export class GestureRecognizer {
     return Math.sqrt(dx * dx + dy * dy);
   }
 
-  // Event emission methods - map to MindMeld's event bus
+  // Event emission methods - Pure gesture detection only (no business logic)
 
   /**
-   * Emit single tap event → note.select
+   * Emit single tap gesture detection → gesture.tap
    */
   emitTap(touch) {
-    this.eventBus.emit('note.select', {
-      x: touch.currentX,
-      y: touch.currentY,
-      type: 'tap',
+    this.eventBus.emit('gesture.tap', {
+      touch: {
+        target: touch.target,
+        clientX: touch.currentX,
+        clientY: touch.currentY,
+        type: 'tap',
+      },
       _gesture: 'tap',
     });
   }
 
   /**
-   * Emit double tap event → note.createAtPosition
+   * Emit double tap gesture detection → gesture.doubletap
    */
   emitDoubleTap(touch) {
-    this.eventBus.emit('note.createAtPosition', {
-      canvas: this.element,
-      event: {
+    console.log(
+      'GestureRecognizer: emitDoubleTap called for target:',
+      touch.target?.tagName || touch.target?.className,
+    );
+    this.eventBus.emit('gesture.doubletap', {
+      touch: {
+        target: touch.target,
         clientX: touch.currentX,
         clientY: touch.currentY,
         type: 'doubletap',
@@ -482,52 +608,67 @@ export class GestureRecognizer {
   }
 
   /**
-   * Emit long press event → contextmenu.show
+   * Emit long press gesture detection → gesture.longpress
    */
   emitLongPress(touch) {
-    this.eventBus.emit('contextmenu.show', {
-      x: touch.currentX,
-      y: touch.currentY,
-      type: 'longpress',
+    this.eventBus.emit('gesture.longpress', {
+      touch: {
+        target: touch.target,
+        clientX: touch.currentX,
+        clientY: touch.currentY,
+        type: 'longpress',
+      },
       _gesture: 'longpress',
     });
   }
 
   /**
-   * Emit drag start event → note.dragStart
+   * Emit drag start gesture detection → gesture.dragstart
    */
   emitDragStart(touch) {
-    this.eventBus.emit('note.dragStart', {
-      x: touch.currentX,
-      y: touch.currentY,
-      startX: touch.startX,
-      startY: touch.startY,
+    this.eventBus.emit('gesture.dragstart', {
+      touch: {
+        target: touch.target,
+        clientX: touch.currentX,
+        clientY: touch.currentY,
+        startX: touch.startX,
+        startY: touch.startY,
+        type: 'dragstart',
+      },
       _gesture: 'drag',
     });
   }
 
   /**
-   * Emit drag move event → note.dragUpdate
+   * Emit drag move gesture detection → gesture.dragmove
    */
   emitDragMove(touch) {
-    this.eventBus.emit('note.dragUpdate', {
-      x: touch.currentX,
-      y: touch.currentY,
-      deltaX: touch.currentX - touch.lastX,
-      deltaY: touch.currentY - touch.lastY,
+    this.eventBus.emit('gesture.dragmove', {
+      touch: {
+        target: touch.target,
+        clientX: touch.currentX,
+        clientY: touch.currentY,
+        deltaX: touch.currentX - touch.lastX,
+        deltaY: touch.currentY - touch.lastY,
+        type: 'dragmove',
+      },
       _gesture: 'drag',
     });
   }
 
   /**
-   * Emit drag end event → note.dragEnd
+   * Emit drag end gesture detection → gesture.dragend
    */
   emitDragEnd(touch) {
-    this.eventBus.emit('note.dragEnd', {
-      x: touch.currentX,
-      y: touch.currentY,
-      endX: touch.currentX,
-      endY: touch.currentY,
+    this.eventBus.emit('gesture.dragend', {
+      touch: {
+        target: touch.target,
+        clientX: touch.currentX,
+        clientY: touch.currentY,
+        endX: touch.currentX,
+        endY: touch.currentY,
+        type: 'dragend',
+      },
       _gesture: 'drag',
     });
   }

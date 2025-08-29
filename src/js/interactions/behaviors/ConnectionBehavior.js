@@ -10,6 +10,7 @@ export class ConnectionBehavior {
     this.sourceNote = null;
     this.activeConnectionGroup = null;
     this.svgContainer = null;
+    this.activeGhostConnector = null;
   }
 
   async initialize() {
@@ -74,11 +75,23 @@ export class ConnectionBehavior {
     this.isConnecting = true;
     this.sourceNote = sourceNote;
 
+    // Store the specific ghost connector that was tapped for styling
+    this.activeGhostConnector = event.target?.classList?.contains(
+      'ghost-connector',
+    )
+      ? event.target
+      : event.target?.closest('.ghost-connector');
+
     // Show ALL ghost connectors to indicate connection mode is active
     this.showAllGhostConnectors();
 
     // Provide visual feedback that we're in connection mode
     sourceNote.classList.add('connection-source');
+
+    // Add special styling to the activated ghost connector
+    if (this.activeGhostConnector) {
+      this.activeGhostConnector.classList.add('connector-selected');
+    }
 
     log(
       'ConnectionBehavior: Started touch connection mode from note',
@@ -169,34 +182,41 @@ export class ConnectionBehavior {
   }
 
   createFinalConnection(startNote, endNote) {
-    if (!this.activeConnectionGroup) {
-      return;
-    }
-
     // Check if connection already exists
     if (connectionManager.connectionExists(startNote.id, endNote.id)) {
       log('ConnectionBehavior: Connection already exists between these notes');
-      if (this.svgContainer && this.activeConnectionGroup.group) {
+      if (this.svgContainer && this.activeConnectionGroup?.group) {
         this.svgContainer.removeChild(this.activeConnectionGroup.group);
       }
       return;
     }
 
-    // Set the connection group data for permanent connection
-    this.activeConnectionGroup.group.dataset.start = startNote.id;
-    this.activeConnectionGroup.group.dataset.end = endNote.id;
-    this.activeConnectionGroup.group.dataset.type =
-      connectionManager.CONNECTION_TYPES.UNI_FORWARD;
+    // For desktop drag connections, we have an activeConnectionGroup to finalize
+    if (this.activeConnectionGroup) {
+      // Set the connection group data for permanent connection
+      this.activeConnectionGroup.group.dataset.start = startNote.id;
+      this.activeConnectionGroup.group.dataset.end = endNote.id;
+      this.activeConnectionGroup.group.dataset.type =
+        connectionManager.CONNECTION_TYPES.UNI_FORWARD;
 
-    // Update the data store through connectionManager
+      // Update the visual connection to connect to proper endpoints
+      connectionManager.updateConnections(this.activeConnectionGroup.group);
+    } else {
+      // For touch tap-to-tap connections, create the connection directly
+      log('ConnectionBehavior: Creating touch connection directly');
+      connectionManager.createConnection(
+        startNote.id,
+        endNote.id,
+        connectionManager.CONNECTION_TYPES.UNI_FORWARD,
+      );
+    }
+
+    // Update the data store through connectionManager (for both desktop and touch)
     connectionManager.updateConnectionInDataStore(
       startNote.id,
       endNote.id,
       connectionManager.CONNECTION_TYPES.UNI_FORWARD,
     );
-
-    // Update the visual connection to connect to proper endpoints
-    connectionManager.updateConnections(this.activeConnectionGroup.group);
   }
 
   cancel() {
@@ -266,6 +286,12 @@ export class ConnectionBehavior {
     // Remove visual feedback from source note
     if (this.sourceNote) {
       this.sourceNote.classList.remove('connection-source');
+    }
+
+    // Remove special styling from the activated ghost connector
+    if (this.activeGhostConnector) {
+      this.activeGhostConnector.classList.remove('connector-selected');
+      this.activeGhostConnector = null;
     }
 
     this.isConnecting = false;
