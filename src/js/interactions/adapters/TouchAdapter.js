@@ -2,6 +2,7 @@
 
 import { BaseAdapter } from './BaseAdapter.js';
 import { GestureRecognizer } from '../gestures/GestureRecognizer.js';
+import { noteManager } from '../../services/noteManager.js';
 
 /**
  * Touch input adapter for mobile and tablet interactions
@@ -19,6 +20,8 @@ export class TouchAdapter extends BaseAdapter {
     this.noteBehavior = null;
     this.dragBehavior = null;
     this.selectionBoxBehavior = null;
+    this.canvasBehavior = null;
+    this.connectionBehavior = null;
 
     // Core components
     this.gestureRecognizer = null;
@@ -35,8 +38,8 @@ export class TouchAdapter extends BaseAdapter {
   /**
    * Initialize adapter with behavior references and event listeners
    */
-  async initialize() {
-    await super.initialize();
+  async initialize(eventBus) {
+    await super.initialize(eventBus);
 
     // Get behavior references from interaction controller
     if (this.interactionController) {
@@ -44,11 +47,16 @@ export class TouchAdapter extends BaseAdapter {
       this.dragBehavior = this.interactionController.getBehavior('drag');
       this.selectionBoxBehavior =
         this.interactionController.getBehavior('selectionBox');
+      this.canvasBehavior = this.interactionController.getBehavior('canvas');
+      this.connectionBehavior =
+        this.interactionController.getBehavior('connection');
 
       console.log('TouchAdapter: Behavior references initialized', {
         hasNoteBehavior: !!this.noteBehavior,
         hasDragBehavior: !!this.dragBehavior,
         hasSelectionBoxBehavior: !!this.selectionBoxBehavior,
+        hasCanvasBehavior: !!this.canvasBehavior,
+        hasConnectionBehavior: !!this.connectionBehavior,
       });
     }
 
@@ -105,95 +113,53 @@ export class TouchAdapter extends BaseAdapter {
   setupGestureDetection() {
     if (!this.gestureRecognizer) return;
 
-    // Override gesture recognizer methods to delegate to behaviors
-    const originalEmitTap = this.gestureRecognizer.emitTap.bind(
-      this.gestureRecognizer,
-    );
-    this.gestureRecognizer.emitTap = (touch) => {
-      console.log('TouchAdapter: Tap detected', {
+    // Listen to pure gesture detection events
+    this.eventBus.on('gesture.tap', (event) => {
+      console.log('TouchAdapter: Gesture tap detected', event.touch);
+      this.handleTap(event.touch);
+    });
+
+    this.eventBus.on('gesture.doubletap', (event) => {
+      const touch = event.touch;
+      console.log('TouchAdapter: Gesture doubletap detected', {
         x: touch.clientX,
         y: touch.clientY,
         target: touch.target?.tagName,
       });
 
-      // Detect interaction type and delegate to behavior
-      this.handleTap(touch);
+      // Determine interaction type and delegate to behaviors
+      const target = this.expandTouchTarget(touch);
+      const noteElement = target.closest('.note');
 
-      // Still emit original event for any legacy listeners
-      originalEmitTap(touch);
-    };
+      if (noteElement) {
+        // Note double-tap → NoteBehavior for edit mode
+        this.handleNoteDoubleTap(noteElement);
+      } else {
+        // Canvas double-tap → CanvasBehavior for note creation
+        this.handleCanvasDoubleTap(touch);
+      }
+    });
 
-    const originalEmitDoubleTap = this.gestureRecognizer.emitDoubleTap.bind(
-      this.gestureRecognizer,
-    );
-    this.gestureRecognizer.emitDoubleTap = (touch) => {
-      console.log('TouchAdapter: Double-tap detected', {
-        x: touch.clientX,
-        y: touch.clientY,
-        target: touch.target?.tagName,
-      });
+    this.eventBus.on('gesture.dragstart', (event) => {
+      console.log('TouchAdapter: Gesture drag start detected', event.touch);
+      this.handleDragStart(event.touch);
+    });
 
-      // Handle double-tap as note interaction (edit mode)
-      this.handleDoubleTap(touch);
+    this.eventBus.on('gesture.dragmove', (event) => {
+      this.handleDragMove(event.touch);
+    });
 
-      // Still emit original event for any legacy listeners
-      originalEmitDoubleTap(touch);
-    };
+    this.eventBus.on('gesture.dragend', (event) => {
+      console.log('TouchAdapter: Gesture drag end detected');
+      this.handleDragEnd(event.touch);
+    });
 
-    const originalEmitDragStart = this.gestureRecognizer.emitDragStart.bind(
-      this.gestureRecognizer,
-    );
-    this.gestureRecognizer.emitDragStart = (touch) => {
-      console.log('TouchAdapter: Drag start detected', {
-        x: touch.clientX,
-        y: touch.clientY,
-        target: touch.target?.tagName,
-      });
+    this.eventBus.on('gesture.longpress', (event) => {
+      console.log('TouchAdapter: Gesture long press detected', event.touch);
+      this.handleLongPress(event.touch);
+    });
 
-      // Handle drag start - delegate to appropriate behavior
-      this.handleDragStart(touch);
-
-      // Still emit original event for any legacy listeners
-      originalEmitDragStart(touch);
-    };
-
-    const originalEmitDragMove = this.gestureRecognizer.emitDragMove.bind(
-      this.gestureRecognizer,
-    );
-    this.gestureRecognizer.emitDragMove = (touch) => {
-      // Handle drag move - delegate to active behavior
-      this.handleDragMove(touch);
-
-      // Still emit original event for any legacy listeners
-      originalEmitDragMove(touch);
-    };
-
-    const originalEmitDragEnd = this.gestureRecognizer.emitDragEnd.bind(
-      this.gestureRecognizer,
-    );
-    this.gestureRecognizer.emitDragEnd = (touch) => {
-      console.log('TouchAdapter: Drag end detected');
-
-      // Handle drag end - delegate to active behavior
-      this.handleDragEnd(touch);
-
-      // Still emit original event for any legacy listeners
-      originalEmitDragEnd(touch);
-    };
-
-    const originalEmitPinchStart = this.gestureRecognizer.emitPinchStart.bind(
-      this.gestureRecognizer,
-    );
-    this.gestureRecognizer.emitPinchStart = (touches) => {
-      console.log('TouchAdapter: Pinch start detected');
-
-      // Pinch is canvas-specific (zoom) - keep as direct event
-      originalEmitPinchStart(touches);
-    };
-
-    console.log(
-      'TouchAdapter: Gesture detection with behavior delegation configured',
-    );
+    console.log('TouchAdapter: Pure gesture event listeners configured');
   }
 
   /**
@@ -243,9 +209,8 @@ export class TouchAdapter extends BaseAdapter {
           min-width: 44px;
         }
         
-        .note-content {
-          min-height: 44px;
-        }
+        /* Remove min-height from note-content to prevent double-height appearance */
+        /* The parent .note min-height is sufficient for touch targets */
       }
     `;
     document.head.appendChild(touchStyle);
@@ -259,15 +224,30 @@ export class TouchAdapter extends BaseAdapter {
 
     const target = this.expandTouchTarget(touch);
 
-    // Check for note interaction
-    const noteElement = target.closest('.note');
-    if (noteElement) {
-      this.handleNoteTap(noteElement, touch);
+    // Check for ghost connector interaction
+    if (target.classList.contains('ghost-connector')) {
+      this.handleGhostConnectorTap(touch, target);
       return;
     }
 
-    // Check for canvas interaction (future: selection start on long press)
+    // Check for note interaction
+    const noteElement = target.closest('.note');
+    if (noteElement) {
+      this.handleNoteTap(noteElement);
+      return;
+    }
+
+    // Check for canvas interaction
     if (target.id === 'canvas' || target.closest('#canvas')) {
+      // Check if we're in connection mode - cancel it
+      if (this.connectionBehavior && this.connectionBehavior.isConnecting) {
+        console.log(
+          'TouchAdapter: Canvas tap during connection mode - cancelling connection',
+        );
+        this.connectionBehavior.cancel();
+        return;
+      }
+
       // Single tap on canvas - no action needed
       console.log('TouchAdapter: Canvas tap detected (no action)');
       return;
@@ -287,7 +267,7 @@ export class TouchAdapter extends BaseAdapter {
     // Check for note interaction - double tap always tries to edit
     const noteElement = target.closest('.note');
     if (noteElement) {
-      this.handleNoteDoubleTap(noteElement, touch);
+      this.handleNoteDoubleTap(noteElement);
       return;
     }
 
@@ -364,31 +344,103 @@ export class TouchAdapter extends BaseAdapter {
   }
 
   /**
-   * Handle note tap - delegate to NoteBehavior
+   * Handle ghost connector tap - delegate to ConnectionBehavior
    */
-  handleNoteTap(noteElement, touch) {
-    if (!this.noteBehavior) {
-      console.warn('TouchAdapter: NoteBehavior not available');
+  handleGhostConnectorTap(touch, target) {
+    console.log(
+      'TouchAdapter: Ghost connector tap detected - delegating to ConnectionBehavior',
+    );
+
+    if (!this.connectionBehavior) {
+      console.warn('TouchAdapter: ConnectionBehavior not available');
       return;
     }
 
-    console.log('TouchAdapter: Note tap detected, delegating to NoteBehavior');
-    this.noteBehavior.handleNoteClick(noteElement, touch, 'touch');
+    const sourceNote = target.closest('.note');
+    if (!sourceNote) {
+      console.warn('TouchAdapter: No source note found for ghost connector');
+      return;
+    }
+
+    // Convert touch to event-like object for ConnectionBehavior
+    const touchEvent = {
+      preventDefault: () => {},
+      stopPropagation: () => {},
+      touches: [touch],
+      target: target,
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+    };
+
+    // Delegate to ConnectionBehavior for unified touch connection handling
+    this.connectionBehavior.startTouchDrag(sourceNote, touchEvent, 'touch');
   }
 
   /**
-   * Handle note double-tap - delegate to NoteBehavior for edit mode
+   * Handle note tap - check for connection mode first, then delegate to NoteBehavior
    */
-  handleNoteDoubleTap(noteElement, touch) {
+  handleNoteTap(noteElement) {
+    // Check if we're in connection mode first
+    if (this.connectionBehavior && this.connectionBehavior.isConnecting) {
+      console.log(
+        'TouchAdapter: Note tap during connection mode - completing connection',
+      );
+      const connectionHandled =
+        this.connectionBehavior.handleTouchNoteTap(noteElement);
+      if (connectionHandled) {
+        return; // Connection was completed or cancelled
+      }
+    }
+
     if (!this.noteBehavior) {
       console.warn('TouchAdapter: NoteBehavior not available');
       return;
     }
 
     console.log(
-      'TouchAdapter: Note double-tap detected, delegating to NoteBehavior',
+      'TouchAdapter: Note tap detected, delegating to NoteBehavior for selection',
     );
-    this.noteBehavior.handleNoteClick(noteElement, touch, 'touch');
+    // Single tap should select the note, not enter edit mode
+    this.noteBehavior.handleNoteSelection(noteElement, false);
+  }
+
+  /**
+   * Handle note double-tap - enter edit mode if note is selected, otherwise select first
+   */
+  handleNoteDoubleTap(noteElement) {
+    if (!this.noteBehavior) {
+      console.warn('TouchAdapter: NoteBehavior not available');
+      return;
+    }
+
+    console.log('TouchAdapter: Note double-tap detected', {
+      noteElementId: noteElement?.id,
+      noteElementClasses: noteElement?.className,
+      isSelected: noteElement?.classList.contains('selected'),
+    });
+
+    // Double-tap on note should ALWAYS enter edit mode
+    // Use direct approach like old TouchAdapter for reliability
+    console.log(
+      'TouchAdapter: Double-tap on note, ensuring selection and entering edit mode',
+    );
+
+    // Select the note first if not already selected (using NoteManager directly)
+    if (!noteElement.classList.contains('selected')) {
+      if (this.noteBehavior) {
+        this.noteBehavior.handleNoteSelection(noteElement, false);
+      }
+    }
+
+    // Directly emit edit request (like old TouchAdapter) to bypass target validation issues
+    this.eventBus.emit('note.requestEdit', {
+      noteId: noteElement.id,
+      noteElement: noteElement,
+      _gesture: 'doubletap',
+      inputType: 'touch',
+    });
+
+    console.log('TouchAdapter: Edit request emitted for note:', noteElement.id);
   }
 
   /**
@@ -406,6 +458,38 @@ export class TouchAdapter extends BaseAdapter {
   }
 
   /**
+   * Handle long press gesture - add jiggle animation to notes
+   */
+  handleLongPress(touch) {
+    if (!touch) return;
+
+    // Check if long press is on a note
+    const noteElement = touch.target?.closest('.note');
+    if (noteElement) {
+      console.log('TouchAdapter: Long press on note, adding jiggle animation');
+
+      // Ensure note is selected
+      if (!noteElement.classList.contains('selected')) {
+        noteManager.clearSelections();
+        noteManager.selectNote(noteElement);
+      }
+
+      // Add jiggle animation class
+      noteElement.classList.add('jiggle');
+
+      // Remove jiggle class after animation completes
+      setTimeout(() => {
+        noteElement.classList.remove('jiggle');
+      }, 300); // 0.15s * 2 iterations = 0.3s
+
+      return;
+    }
+
+    // Future: Handle long press for context menu on other elements
+    console.log('TouchAdapter: Long press on non-note element');
+  }
+
+  /**
    * Handle selection box start - delegate to SelectionBoxBehavior
    */
   handleSelectionBoxStart(touch) {
@@ -419,6 +503,24 @@ export class TouchAdapter extends BaseAdapter {
     );
     this.currentGesture = 'selection-box';
     this.selectionBoxBehavior.startSelectionBox(touch, 'touch');
+  }
+
+  /**
+   * Handle canvas double-tap - delegate to CanvasBehavior for note creation
+   */
+  handleCanvasDoubleTap(touch) {
+    if (!this.canvasBehavior) {
+      console.warn('TouchAdapter: CanvasBehavior not available');
+      return;
+    }
+
+    console.log(
+      'TouchAdapter: Canvas double-tap detected, delegating to CanvasBehavior for note creation',
+    );
+
+    // Create event-like object for CanvasBehavior
+    const event = this.createEventFromTouch(touch);
+    this.canvasBehavior.handleCanvasDoubleClick(event, 'touch');
   }
 
   /**
@@ -459,6 +561,25 @@ export class TouchAdapter extends BaseAdapter {
     }
 
     return originalTarget;
+  }
+
+  /**
+   * Convert touch object to event-like object for NoteBehavior compatibility
+   */
+  createEventFromTouch(touch) {
+    if (!touch) {
+      return null;
+    }
+
+    // Create an event-like object with the target property that NoteBehavior expects
+    return {
+      target: touch.target,
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      type: 'touchend', // Indicate this was converted from touch
+      preventDefault: () => {}, // Stub method
+      stopPropagation: () => {}, // Stub method
+    };
   }
 
   /**

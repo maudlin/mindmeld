@@ -28,6 +28,8 @@ export class DesktopAdapter extends BaseAdapter {
     this.noteBehavior = null;
     this.dragBehavior = null;
     this.selectionBoxBehavior = null;
+    this.canvasBehavior = null;
+    this.connectionBehavior = null;
 
     // Canvas reference
     this.canvas = null;
@@ -38,6 +40,10 @@ export class DesktopAdapter extends BaseAdapter {
     this.pointerDownPosition = null;
     this.dragThreshold = 5; // pixels before drag starts
     this.isDoubleClickInProgress = false; // Prevent selection box during double-clicks
+
+    // Desktop connection drag state
+    this.isConnectionDragging = false;
+    this.connectionStartNote = null;
 
     // Bound event handlers for proper cleanup
     this.boundHandlers = {
@@ -75,11 +81,16 @@ export class DesktopAdapter extends BaseAdapter {
       this.dragBehavior = this.interactionController.getBehavior('drag');
       this.selectionBoxBehavior =
         this.interactionController.getBehavior('selectionBox');
+      this.canvasBehavior = this.interactionController.getBehavior('canvas');
+      this.connectionBehavior =
+        this.interactionController.getBehavior('connection');
 
       console.log('DesktopAdapter: Behavior references initialized', {
         hasNoteBehavior: !!this.noteBehavior,
         hasDragBehavior: !!this.dragBehavior,
         hasSelectionBoxBehavior: !!this.selectionBoxBehavior,
+        hasCanvasBehavior: !!this.canvasBehavior,
+        hasConnectionBehavior: !!this.connectionBehavior,
       });
     } else {
       console.warn('DesktopAdapter: No InteractionController provided!');
@@ -172,6 +183,15 @@ export class DesktopAdapter extends BaseAdapter {
   detectInteractionStart(event) {
     const target = event.target;
 
+    // Check for ghost connector interaction (CRITICAL - missing from refactor!)
+    if (target.classList.contains('ghost-connector')) {
+      console.log(
+        'DesktopAdapter: Ghost connector click detected, delegating to connection system',
+      );
+      this.handleGhostConnectorInteraction(event);
+      return;
+    }
+
     // Check for note interaction
     const noteElement = target.closest('.note');
     if (noteElement) {
@@ -186,6 +206,33 @@ export class DesktopAdapter extends BaseAdapter {
     }
 
     console.log('DesktopAdapter: No recognized interaction target');
+  }
+
+  /**
+   * Handle ghost connector interaction - delegate to ConnectionBehavior
+   */
+  handleGhostConnectorInteraction(event) {
+    console.log(
+      'DesktopAdapter: Ghost connector click detected - delegating to ConnectionBehavior',
+    );
+
+    if (!this.connectionBehavior) {
+      console.warn('DesktopAdapter: ConnectionBehavior not available');
+      return;
+    }
+
+    const sourceNote = event.target.closest('.note');
+    if (!sourceNote) {
+      console.warn('DesktopAdapter: No source note found for ghost connector');
+      return;
+    }
+
+    // Set our state to prevent other interactions during connection drag
+    this.isConnectionDragging = true;
+    this.connectionStartNote = sourceNote;
+
+    // Delegate to ConnectionBehavior for unified desktop connection handling
+    this.connectionBehavior.startDesktopDrag(sourceNote, event, 'desktop');
   }
 
   /**
@@ -270,6 +317,13 @@ export class DesktopAdapter extends BaseAdapter {
    */
   handlePointerMove(event) {
     if (!this.isPointerDown || !this.pointerDownPosition) return;
+
+    // Check if we're dragging a connection (desktop behavior)
+    if (this.isConnectionDragging && this.connectionBehavior) {
+      // Delegate to ConnectionBehavior for drag updates
+      this.connectionBehavior.updateDrag(event, 'desktop');
+      return;
+    }
 
     // Check if we already have active interactions
     if (this.dragBehavior && this.dragBehavior.isDragging) {
@@ -399,6 +453,17 @@ export class DesktopAdapter extends BaseAdapter {
    * Handle interaction end - delegate to active behaviors
    */
   handleInteractionEnd(event) {
+    // Check if we're ending a connection drag (desktop behavior)
+    if (this.isConnectionDragging && this.connectionBehavior) {
+      console.log('DesktopAdapter: Connection drag ended');
+      // Delegate to ConnectionBehavior to complete/cancel connection
+      this.connectionBehavior.endDrag(event, 'desktop');
+      // Reset our state
+      this.isConnectionDragging = false;
+      this.connectionStartNote = null;
+      return;
+    }
+
     // Check if we have an active drag behavior
     if (this.dragBehavior && this.dragBehavior.isDragging) {
       console.log('DesktopAdapter: Ending drag interaction');
@@ -439,17 +504,32 @@ export class DesktopAdapter extends BaseAdapter {
       this.isDoubleClickInProgress = false;
     }, 100);
 
-    // Only create notes when double-clicking on canvas (not on existing notes)
-    // Handle clicks on canvas or its children (like .background-layout)
-    if (event.target === this.canvas || event.target.closest('#canvas')) {
-      this.emit('note.createAtPosition', {
-        canvas: this.canvas,
-        event: {
-          clientX: event.clientX,
-          clientY: event.clientY,
-          type: 'dblclick',
-        },
-      });
+    // Determine interaction type and delegate to behaviors
+    const noteElement = event.target.closest('.note');
+
+    if (noteElement) {
+      // Note double-click → NoteBehavior for edit mode
+      if (this.noteBehavior) {
+        console.log(
+          'DesktopAdapter: Note double-click detected, delegating to NoteBehavior',
+        );
+        this.noteBehavior.handleNoteDoubleClick(noteElement, event, 'desktop');
+      }
+    } else if (
+      (event.target === this.canvas || event.target.closest('#canvas')) &&
+      !event.target.closest('.context-menu')
+    ) {
+      // Canvas double-click → CanvasBehavior for note creation (but not on context menus)
+      if (this.canvasBehavior) {
+        console.log(
+          'DesktopAdapter: Canvas double-click detected, delegating to CanvasBehavior',
+        );
+        this.canvasBehavior.handleCanvasDoubleClick(event, 'desktop');
+      } else {
+        console.warn(
+          'DesktopAdapter: CanvasBehavior not available for note creation',
+        );
+      }
     }
   }
 

@@ -202,14 +202,76 @@ html {
 /* Help Text Styles */
 #help-text {
   position: fixed;
-  bottom: 10px;
-  left: 10px;
-  color: rgba(94, 94, 94, 0.5); /* 50% gray */
+  bottom: 70px; /* Position above help button */
+  left: 20px;
+  color: rgba(94, 94, 94, 0.8);
   font-family: var(--font-family);
   font-size: 10pt;
   line-height: 1.5;
   pointer-events: none;
   user-select: none;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-width: 300px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+  z-index: 1001;
+}
+
+#help-text.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Help Button Styles */
+.help-button {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  color: #374151;
+  font-family: var(--font-family);
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+  z-index: 1002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+
+.help-button:hover {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.help-button:active {
+  transform: scale(0.95);
+}
+
+.help-button:focus {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 0 0 2px #4198ff;
+}
+
+/* Touch-specific help button adjustments */
+@media (pointer: coarse) {
+  .help-button {
+    width: 48px;
+    height: 48px;
+    font-size: 18px;
+  }
 }
 
 /* Zoom Display Styles */
@@ -1297,7 +1359,7 @@ line.connection-line {
 /* Jiggle animation for selected notes on touch devices - indicates ready to drag */
 @media (pointer: coarse) {
   .note.selected.jiggle {
-    animation: noteJiggle 0.3s ease-out 2;
+    animation: noteJiggle 0.15s ease-out 2;
     animation-fill-mode: forwards;
   }
 }
