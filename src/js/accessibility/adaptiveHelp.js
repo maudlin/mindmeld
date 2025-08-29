@@ -164,7 +164,10 @@ export class AdaptiveHelp {
     this.helpButton.id = 'help-button';
     this.helpButton.className = 'help-button';
     this.helpButton.innerHTML = '?';
-    this.helpButton.setAttribute('aria-label', this.isTouch ? 'Tap to show help' : 'Click to show help');
+    this.helpButton.setAttribute(
+      'aria-label',
+      this.isTouch ? 'Tap to show help' : 'Click to show help',
+    );
     this.helpButton.setAttribute('role', 'button');
     this.helpButton.setAttribute('tabindex', '0');
 
@@ -194,14 +197,20 @@ export class AdaptiveHelp {
     if (!this.helpElement) return;
 
     this.isHelpVisible = !this.isHelpVisible;
-    
+
     if (this.isHelpVisible) {
       this.helpElement.classList.add('visible');
-      this.helpButton.setAttribute('aria-label', this.isTouch ? 'Tap to hide help' : 'Click to hide help');
+      this.helpButton.setAttribute(
+        'aria-label',
+        this.isTouch ? 'Tap to hide help' : 'Click to hide help',
+      );
       this.helpButton.setAttribute('aria-expanded', 'true');
     } else {
       this.helpElement.classList.remove('visible');
-      this.helpButton.setAttribute('aria-label', this.isTouch ? 'Tap to show help' : 'Click to show help');
+      this.helpButton.setAttribute(
+        'aria-label',
+        this.isTouch ? 'Tap to show help' : 'Click to show help',
+      );
       this.helpButton.setAttribute('aria-expanded', 'false');
     }
   }
@@ -227,9 +236,11 @@ export class AdaptiveHelp {
 
     // Close help when clicking outside
     document.addEventListener('click', (e) => {
-      if (this.isHelpVisible && 
-          !this.helpElement.contains(e.target) && 
-          !this.helpButton.contains(e.target)) {
+      if (
+        this.isHelpVisible &&
+        !this.helpElement.contains(e.target) &&
+        !this.helpButton.contains(e.target)
+      ) {
         this.toggleHelp();
       }
     });

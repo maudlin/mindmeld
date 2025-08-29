@@ -218,7 +218,10 @@ html {
   opacity: 0;
   visibility: hidden;
   transform: translateY(10px);
-  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease,
+    transform 0.2s ease;
   z-index: 1001;
 }
 
@@ -244,7 +247,10 @@ html {
   font-weight: bold;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.1s ease;
   z-index: 1002;
   display: flex;
   align-items: center;
@@ -262,7 +268,9 @@ html {
 }
 
 .help-button:focus {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 0 0 2px #4198ff;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    0 0 0 2px #4198ff;
 }
 
 /* Touch-specific help button adjustments */

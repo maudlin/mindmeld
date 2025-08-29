@@ -59,7 +59,6 @@ export function initializeConnectionDrawing(canvas) {
   return svgContainer;
 }
 
-
 export function deleteConnectionsByNote(note) {
   connectionManager.deleteConnectionsByNote(note);
 }
