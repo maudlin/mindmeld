@@ -16,7 +16,7 @@ The system uses the **CapabilityDetector** (`src/js/interactions/capabilities/de
 
 - **TouchAdapter** (`src/js/interactions/adapters/TouchAdapter.js`) for touch-first devices:
   - **Gesture Recognition**: Advanced multi-touch gesture detection with GestureRecognizer
-  - **Event Consolidation**: Unified event handling for complex touch interactions  
+  - **Event Consolidation**: Unified event handling for complex touch interactions
   - **Canvas Integration**: Direct integration with zoom, pan, and selection systems
   - **Visual Feedback**: Touch-optimized visual responses including jiggle animations
   - **Enhanced Ghost Connectors**: Tap-to-tap connection creation with visual connection mode
@@ -32,8 +32,9 @@ TouchAdapter implements a sophisticated interaction model automatically activate
 #### Core Interaction Patterns
 
 **Single-Finger Gestures:**
+
 - **Tap**: Select notes, activate UI elements
-- **Double-tap on canvas**: Create new notes  
+- **Double-tap on canvas**: Create new notes
 - **Double-tap on notes**: Enter edit mode
 - **Long-press**: Prepare for note movement with jiggle animation (500ms hold time)
 - **Drag on canvas**: Multi-select lasso selection
@@ -43,6 +44,7 @@ TouchAdapter implements a sophisticated interaction model automatically activate
 - **Tap canvas during connection mode**: Cancel connection creation
 
 **Two-Finger Gestures:**
+
 - **Pinch**: Zoom in/out with scale detection
 - **Two-finger drag**: Canvas panning
 - **Combined gestures**: Simultaneous zoom and pan
@@ -53,16 +55,23 @@ TouchAdapter implements a sophisticated interaction model automatically activate
 
 ```javascript
 // ❌ BROKEN - Missing timing check (causes all touch interactions to fail)
-if (this.lastTapPosition && this.calculateDistance(tapPosition, this.lastTapPosition) <= this.TAP_MAX_MOVEMENT) {
+if (
+  this.lastTapPosition &&
+  this.calculateDistance(tapPosition, this.lastTapPosition) <=
+    this.TAP_MAX_MOVEMENT
+) {
   this.emitDoubleTap(touchData);
 }
 
 // ✅ CORRECT - Proper timing validation prevents state machine corruption
 const now = Date.now();
-if (this.lastTapTime && 
-    now - this.lastTapTime <= this.DOUBLE_TAP_MAX_DELAY &&
-    this.lastTapPosition && 
-    this.calculateDistance(tapPosition, this.lastTapPosition) <= this.TAP_MAX_MOVEMENT) {
+if (
+  this.lastTapTime &&
+  now - this.lastTapTime <= this.DOUBLE_TAP_MAX_DELAY &&
+  this.lastTapPosition &&
+  this.calculateDistance(tapPosition, this.lastTapPosition) <=
+    this.TAP_MAX_MOVEMENT
+) {
   this.emitDoubleTap(touchData);
 }
 ```
@@ -70,8 +79,9 @@ if (this.lastTapTime &&
 **Why This Matters**: Without proper timing checks, GestureRecognizer gets stuck in `POTENTIAL_DOUBLE_TAP` state, blocking ALL subsequent touch gestures including zoom, pan, and note interactions.
 
 **Symptoms of Broken Timing**:
+
 - ❌ Double-tap note creation fails
-- ❌ Zoom/pinch gestures don't work  
+- ❌ Zoom/pinch gestures don't work
 - ❌ Canvas panning broken
 - ❌ Note editing via touch fails
 - ❌ Connection creation fails
@@ -84,7 +94,7 @@ if (this.lastTapTime &&
 
 // The system automatically:
 // 1. Detects device capabilities using media queries
-// 2. Routes to TouchAdapter for touch-first devices  
+// 2. Routes to TouchAdapter for touch-first devices
 // 3. Enables advanced gesture recognition with GestureRecognizer
 // 4. Provides visual feedback including jiggle animations
 // 5. Enhances ghost connectors for touch interaction
@@ -111,11 +121,13 @@ The TouchAdapter system includes several advanced features for improved mobile e
 **Platform-Specific Connection Patterns:**
 
 **Desktop Connection Flow:**
+
 - Click ghost connector → immediate drag line follows cursor
-- Drag to target note → connection creates on mouse release  
+- Drag to target note → connection creates on mouse release
 - Drag to empty space → cancels connection
 
 **Touch Connection Flow:**
+
 - Tap ghost connector → enters "connection mode"
 - **Visual feedback**: ALL ghost connectors become visible on all notes
 - Tap any note → completes connection between source and target
@@ -123,17 +135,19 @@ The TouchAdapter system includes several advanced features for improved mobile e
 - **CSS class**: `.connection-mode` added to body during active connection mode
 
 **Implementation Details:**
+
 ```javascript
 // ConnectionBehavior handles both desktop and touch patterns
 // Desktop: immediate drag interaction
 connectionBehavior.startDesktopDrag(sourceNote, event, 'desktop');
 
-// Touch: tap-to-tap with visual mode indication  
+// Touch: tap-to-tap with visual mode indication
 connectionBehavior.startTouchDrag(sourceNote, event, 'touch');
 // This automatically calls showAllGhostConnectors()
 ```
 
 **CSS Requirements for Connection Mode:**
+
 ```css
 /* Normal state - ghost connectors hidden */
 .ghost-connector {
@@ -155,18 +169,21 @@ connectionBehavior.startTouchDrag(sourceNote, event, 'touch');
 ```
 
 #### Ghost Connector Enhancements
+
 - **Automatic sizing**: Ghost connectors adapt to device type (larger on touch devices)
-- **Visual feedback**: Connection mode shows all ghost connectors simultaneously  
+- **Visual feedback**: Connection mode shows all ghost connectors simultaneously
 - **Touch-friendly targets**: Expanded hit areas for easier connection creation
 - **CSS transitions**: Smooth animations scoped to touch devices only using `@media (pointer: coarse)`
 
 #### Jiggle Animation System
+
 - **Ready-to-drag feedback**: Notes show subtle jiggle animation after long-press timeout
 - **Visual confirmation**: Users know when a note is ready to be moved
 - **Automatic cleanup**: Animation automatically removes after completion or cancellation
 - **Touch-only activation**: Animation only appears on touch devices
 
 #### Advanced Device Detection
+
 - **CapabilityDetector**: Uses CSS media queries to detect device capabilities
 - **Desktop-first priority**: Hybrid devices (laptops with touchscreens) prefer desktop interactions
 - **Touch-first detection**: Pure touch devices (phones, tablets) get full touch optimization
@@ -182,7 +199,7 @@ if (detector.isDesktopFirst()) {
   // Touch support as secondary
 }
 
-// Touch-first devices (phones, tablets)  
+// Touch-first devices (phones, tablets)
 if (detector.isTouchFirst()) {
   // Use TouchAdapter - touch optimized
   // Enhanced ghost connectors, jiggle animations, etc.
@@ -198,6 +215,7 @@ For basic mobile compatibility, these utilities are available in `src/js/utils/m
 Converts hover-based dropdown menus to touch-friendly click-to-open/click-away-to-close behavior.
 
 **Usage:**
+
 ```javascript
 import { setupMobileDropdown } from '../utils/mobileInteractions.js';
 
@@ -210,11 +228,12 @@ setupMobileDropdown('.menu-item', {
   preventDefaultClick: true,
   singleDropdown: true,
   onOpen: (dropdown) => console.log('Opened:', dropdown),
-  onClose: (dropdown) => console.log('Closed:', dropdown)
+  onClose: (dropdown) => console.log('Closed:', dropdown),
 });
 ```
 
 **Features:**
+
 - Click menu item to toggle dropdown
 - Click outside to close
 - Escape key to close
@@ -229,6 +248,7 @@ See `src/js/core/uiSetup.js` - About menu dropdown behavior.
 Provides consistent modal/overlay behavior with touch-friendly interactions.
 
 **Usage:**
+
 ```javascript
 import { setupMobileModal } from '../utils/mobileInteractions.js';
 
@@ -237,11 +257,12 @@ setupMobileModal('#open-button', '#modal', '#close-button', {
   escapeClose: true,
   preventScroll: true,
   onOpen: (modal) => console.log('Modal opened'),
-  onClose: (modal) => console.log('Modal closed')
+  onClose: (modal) => console.log('Modal closed'),
 });
 ```
 
 **Features:**
+
 - Click backdrop to close (configurable)
 - Escape key to close
 - Prevents body scrolling when open
@@ -253,17 +274,19 @@ setupMobileModal('#open-button', '#modal', '#close-button', {
 Adds visual feedback for touch interactions on buttons and interactive elements.
 
 **Usage:**
+
 ```javascript
 import { setupTouchFeedback } from '../utils/mobileInteractions.js';
 
 // Add touch feedback to all buttons
 setupTouchFeedback('button', {
   feedbackClass: 'touch-active',
-  duration: 150
+  duration: 150,
 });
 ```
 
 **CSS Required:**
+
 ```css
 .touch-active {
   transform: scale(0.95);
@@ -277,6 +300,7 @@ setupTouchFeedback('button', {
 Helper functions for responsive behavior.
 
 **Usage:**
+
 ```javascript
 import { isTouchDevice, getViewportInfo } from '../utils/mobileInteractions.js';
 
@@ -299,6 +323,7 @@ Based on real-world debugging experiences, these patterns ensure robust touch in
 **Principle:** Leverage existing desktop event systems rather than replacing them.
 
 **Example: Connection Context Menu**
+
 - **Desktop**: `mousemove` over connector-hotspot shows context menu
 - **Touch**: Extend existing `handleClick` to detect connector-hotspot taps
 
@@ -312,7 +337,7 @@ handleClick(event) {
     this.show(hotspot);
     return;
   }
-  
+
   // Then handle menu item clicks (existing logic)
   const menuItem = event.target.closest('.menu-item');
   if (!menuItem) return;
@@ -323,13 +348,14 @@ handleClick(event) {
 TouchAdapter.handleTap(touch) {
   if (isConnectionElement(target)) {
     // This intercepted events before they reached existing handlers
-    this.handleConnectionTap(target); 
+    this.handleConnectionTap(target);
     return; // Prevented event bubbling
   }
 }
 ```
 
 **Why this works:**
+
 - Reuses existing SVG container event delegation
 - Maintains single source of truth for menu logic
 - No event handler conflicts or race conditions
@@ -358,12 +384,12 @@ TouchAdapter.handleTap(touch) {
 // Add touch support to SVG event handlers
 attachClickHandler(element) {
   element.addEventListener('click', this.handleClick);
-  
+
   // Add touch support for mobile devices
   element.addEventListener('touchstart', (event) => {
     event.stopPropagation();
   }, { passive: true });
-  
+
   element.addEventListener('touchend', this.handleClick);
 }
 ```
@@ -371,16 +397,19 @@ attachClickHandler(element) {
 ### Pattern 3: TouchAdapter Integration Guidelines
 
 **When to use TouchAdapter:**
+
 - New touch-specific gestures (pinch, long-press, multi-touch)
 - Canvas-level interactions (pan, zoom, selection)
 - Note movement and connection creation
 
 **When NOT to use TouchAdapter:**
+
 - Extending existing UI element interactions
 - Context menus that already have desktop handlers
 - Button clicks and form interactions
 
 **Example: Proper TouchAdapter boundaries**
+
 ```javascript
 // TouchAdapter handles canvas-level gestures
 handleTap(touch) {
@@ -389,7 +418,7 @@ handleTap(touch) {
     this.handleGhostConnectorTap(touch, target);
     return;
   }
-  
+
   // Check for note interaction (connection mode vs selection)
   const noteElement = target.closest('.note');
   if (noteElement) {
@@ -399,12 +428,12 @@ handleTap(touch) {
       this.connectionBehavior.handleTouchNoteTap(noteElement);
       return;
     }
-    
+
     // Normal note selection (TouchAdapter responsibility)
     this.handleNoteTap(noteElement, touch);
     return;
   }
-  
+
   // Canvas interaction (cancel connection mode if active)
   if (target.id === 'canvas' || target.closest('#canvas')) {
     if (this.connectionBehavior && this.connectionBehavior.isConnecting) {
@@ -422,11 +451,13 @@ handleTap(touch) {
 **Problem:** E2E tests fail on styled content while manual testing works perfectly.
 
 **Root Cause Discovery:**
+
 - Empty/unstyled notes: E2E tests pass ✅
 - Styled content with HTML: E2E tests fail ❌
 - Manual testing: All scenarios work ✅
 
 **Technical Analysis:**
+
 ```javascript
 // Test scenarios that reveal the pattern
 test('Empty note works in E2E', () => {
@@ -436,28 +467,30 @@ test('Empty note works in E2E', () => {
 });
 
 test('Styled content fails in E2E', () => {
-  // ❌ FAILS: Note with rendered HTML, click detection fails  
+  // ❌ FAILS: Note with rendered HTML, click detection fails
   noteContent.innerHTML = '<h1>Header</h1><p><strong>Bold</strong></p>';
   await noteContent.click(); // Doesn't trigger edit mode
 });
 ```
 
 **Playwright vs Real User Clicks:**
+
 - **Real user clicks**: `event.target` properly bubbles through HTML elements
 - **Playwright `.click()`**: May target child HTML elements directly
 - **Detection logic**: `target.closest('.note-content')` works differently
 
 **Solution Pattern:**
+
 ```javascript
 // Robust click detection for both E2E and manual testing
 handleClick(event) {
   const target = event.target;
-  
+
   // Check multiple scenarios for reliable detection
-  const noteContent = target.classList.contains('note-content') 
-    ? target 
+  const noteContent = target.classList.contains('note-content')
+    ? target
     : target.closest('.note-content');
-    
+
   // Additional E2E-specific checks may be needed
   if (noteContent) {
     // Process edit mode request
@@ -466,6 +499,7 @@ handleClick(event) {
 ```
 
 **CSS Requirements:**
+
 ```css
 /* Ensure minimum clickable areas for E2E testing */
 .note {
@@ -478,16 +512,21 @@ handleClick(event) {
 ```
 
 **Testing Strategy:**
+
 ```javascript
 // Comprehensive test matrix for regression prevention
 const scenarios = [
   { name: 'Empty note', content: '', shouldPass: true },
   { name: 'Plain text', content: 'Simple text', shouldPass: true },
   { name: 'Styled HTML', content: '<h1>Header</h1>', shouldPass: true },
-  { name: 'Nested HTML', content: '<p><strong><em>Deep</em></strong></p>', shouldPass: true }
+  {
+    name: 'Nested HTML',
+    content: '<p><strong><em>Deep</em></strong></p>',
+    shouldPass: true,
+  },
 ];
 
-scenarios.forEach(scenario => {
+scenarios.forEach((scenario) => {
   test(`Click detection: ${scenario.name}`, async () => {
     await setupNote(scenario.content);
     await noteContent.click();
@@ -505,17 +544,19 @@ Common issues and debugging techniques learned from real-world troubleshooting:
 **Symptom:** "Touch events aren't reaching the right elements"
 
 **Debug technique:**
+
 ```javascript
 // Add to TouchAdapter or event handlers
 console.log('🔥 Touch target debug:', {
   target: target,
   tagName: target?.tagName,
   className: target?.className,
-  elementFromPoint: document.elementFromPoint(x, y)
+  elementFromPoint: document.elementFromPoint(x, y),
 });
 ```
 
 **Common causes:**
+
 - CSS `pointer-events: none` on wrong elements
 - Z-index layering preventing event detection
 - Missing touch event handlers on SVG elements
@@ -525,6 +566,7 @@ console.log('🔥 Touch target debug:', {
 **Symptom:** "Touch interactions work inconsistently or stop working"
 
 **Debug technique:**
+
 ```javascript
 // Trace event flow through multiple handlers
 handleTap(touch) {
@@ -539,6 +581,7 @@ handleClick(event) {
 ```
 
 **Common causes:**
+
 - TouchAdapter intercepting events before they reach existing handlers
 - `event.preventDefault()` or `event.stopPropagation()` called too early
 - Multiple event handlers competing for same elements
@@ -548,6 +591,7 @@ handleClick(event) {
 **Problem:** Touch events don't bubble the same way as expected
 
 **Solution:** Verify event delegation path
+
 ```javascript
 // Test event bubbling path
 element.addEventListener('touchend', (event) => {
@@ -581,14 +625,17 @@ Before adding new touch handlers:
 ### 3. Common Regression Patterns
 
 **Pattern A: New TouchAdapter code intercepting existing events**
+
 - **Fix**: Check if existing desktop handlers can be extended instead
 - **Test**: Verify both touch and desktop interactions work
 
 **Pattern B: CSS changes affecting pointer events**
+
 - **Fix**: Use specific selectors rather than broad `pointer-events` changes
 - **Test**: Verify all interactive elements still respond to touch
 
 **Pattern C: Event handler order dependencies**
+
 - **Fix**: Use event delegation rather than direct element handlers
 - **Test**: Verify interactions work regardless of handler registration order
 
@@ -599,17 +646,19 @@ Before adding new touch handlers:
 **Problem:** Hover-based menus don't work on touch devices.
 
 **Solution:**
+
 1. Convert to click-to-open behavior
 2. Add click-away-to-close
 3. Support escape key
 4. Maintain desktop hover compatibility
 
 **Implementation:**
+
 ```javascript
 // In component setup
 setupMobileDropdown('.menu-item', {
   dropdownSelector: '.dropdown',
-  singleDropdown: true
+  singleDropdown: true,
 });
 ```
 
@@ -618,11 +667,13 @@ setupMobileDropdown('.menu-item', {
 **Problem:** Right-click context menus need touch alternatives.
 
 **Solution:**
+
 1. Long-press to open on mobile
 2. Click-away to close
 3. Position intelligently within viewport
 
 **Implementation:**
+
 ```javascript
 // Custom context menu setup
 element.addEventListener('contextmenu', (e) => {
@@ -649,38 +700,44 @@ element.addEventListener('touchend', () => {
 **Problem:** Modals need consistent touch interaction patterns.
 
 **Solution:**
+
 1. Backdrop click to close
 2. Escape key support
 3. Prevent body scroll
 4. Focus management
 
 **Implementation:**
+
 ```javascript
 setupMobileModal('#trigger', '#modal', '.close-button', {
   backdropClose: true,
   escapeClose: true,
-  preventScroll: true
+  preventScroll: true,
 });
 ```
 
 ## Best Practices
 
 ### 1. Progressive Enhancement
+
 - Start with basic functionality that works everywhere
 - Add mobile enhancements as layers
 - Ensure keyboard accessibility
 
 ### 2. Touch Targets
+
 - Minimum 44px touch targets
 - Add padding around small interactive elements
 - Use `setupTouchFeedback` for visual confirmation
 
 ### 3. Viewport Considerations
+
 - Use `getViewportInfo()` for responsive decisions
 - Test on actual devices, not just browser dev tools
 - Consider different screen orientations
 
 ### 4. Performance
+
 - Use passive event listeners where possible
 - Debounce resize handlers
 - Minimize DOM queries in touch handlers
@@ -688,22 +745,24 @@ setupMobileModal('#trigger', '#modal', '.close-button', {
 ## Testing Mobile Patterns
 
 ### Manual Testing
+
 1. Test on actual mobile devices
 2. Verify all interactive elements are reachable
 3. Check touch target sizes
 4. Confirm click-away behavior works
 
 ### Automated Testing
+
 ```javascript
 // Example E2E test for mobile dropdown
 test('Mobile dropdown behavior', async ({ page }) => {
   // Set mobile viewport
   await page.setViewportSize({ width: 375, height: 667 });
-  
+
   // Test click to open
   await page.click('.menu-item');
   await expect(page.locator('.dropdown')).toBeVisible();
-  
+
   // Test click away to close
   await page.click('body');
   await expect(page.locator('.dropdown')).not.toBeVisible();
@@ -713,12 +772,14 @@ test('Mobile dropdown behavior', async ({ page }) => {
 ## Migration Guide
 
 ### Converting Existing Hover Menus
+
 1. Identify hover-based interactions
 2. Replace custom implementations with `setupMobileDropdown`
 3. Add appropriate CSS for mobile states
 4. Test on mobile devices
 
 ### Before:
+
 ```javascript
 // Old hover-only implementation
 menuItem.addEventListener('mouseenter', () => {
@@ -730,10 +791,11 @@ menuItem.addEventListener('mouseleave', () => {
 ```
 
 ### After:
+
 ```javascript
 // New mobile-friendly implementation
 setupMobileDropdown('.menu-item', {
-  dropdownSelector: '.dropdown'
+  dropdownSelector: '.dropdown',
 });
 ```
 
@@ -759,13 +821,21 @@ Consider adding these utility classes for consistent mobile behavior:
 
 /* Mobile-only visibility */
 @media (max-width: 768px) {
-  .mobile-only { display: block; }
-  .desktop-only { display: none; }
+  .mobile-only {
+    display: block;
+  }
+  .desktop-only {
+    display: none;
+  }
 }
 
 @media (min-width: 769px) {
-  .mobile-only { display: none; }
-  .desktop-only { display: block; }
+  .mobile-only {
+    display: none;
+  }
+  .desktop-only {
+    display: block;
+  }
 }
 
 /* Touch-safe spacing */

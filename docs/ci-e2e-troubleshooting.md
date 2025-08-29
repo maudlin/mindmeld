@@ -7,27 +7,32 @@ For which tests to run and approximate runtimes, see [Testing Environments](test
 ### Key Differences Between Environments
 
 #### 1. **Browser Engine & Display System**
+
 - **Local**: Full browser with GPU acceleration, window manager, display server
 - **GitHub Actions**: Headless browser in containerized Ubuntu without X11/Wayland
 - **Impact**: Mouse events, focus handling, and DOM event propagation behave differently
 
 #### 2. **System Resources**
+
 - **Local**: Dedicated CPU, full RAM, fast disk I/O
 - **GitHub Actions**: Shared 2-core VM, limited RAM, network-attached storage
 - **Impact**: Timing-sensitive operations (like double-click detection) can be inconsistent
 
 #### 3. **Network & Timing**
+
 - **Local**: Localhost requests ~0ms latency
 - **GitHub Actions**: Internal networking with variable latency, potential throttling
 - **Impact**: WebServer startup and page loading can be slower
 
 #### 4. **Browser Configuration**
+
 ```javascript
 // Current config in playwright.config.js
 use: {
   ...devices['Desktop Chrome'],
 }
 ```
+
 - **Missing CI-specific optimizations** for headless environment
 - **No retry logic** for flaky operations
 - **No viewport or timing configuration** for CI
@@ -35,24 +40,29 @@ use: {
 ### Specific Issues Identified
 
 #### 1. **Double-Click Event Handling**
+
 ```javascript
 // Problematic in CI
 await this.page.mouse.dblclick(x, y);
 ```
+
 - **Local**: Browser window has focus, proper event handling
 - **CI**: Headless environment may not process click timing consistently
 - **Solution**: JavaScript event dispatch (already implemented)
 
 #### 2. **DOM Timing & Throttling**
+
 ```javascript
 // 500ms throttle in application + variable CI timing
 const note = await canvasPage.createNoteWithThrottleWait(x, y);
 ```
+
 - **Local**: Predictable timing, fast DOM updates
 - **CI**: Variable timing due to resource constraints
 - **Solution**: Increased timeouts and more reliable wait conditions
 
 #### 3. **Resource Loading**
+
 - **CI**: `npm start` server startup can be slower
 - **No warmup period** for the application
 - **Server readiness detection** is basic (just URL ping)
@@ -60,6 +70,7 @@ const note = await canvasPage.createNoteWithThrottleWait(x, y);
 ## Preventive Measures & Improvements
 
 ### 1. **Enhanced Playwright Configuration**
+
 ```javascript
 // Recommended playwright.config.js improvements
 export default defineConfig({
@@ -67,14 +78,14 @@ export default defineConfig({
   fullyParallel: false, // Reduce CI load
   retries: process.env.CI ? 2 : 0, // Retry flaky tests in CI
   reporter: process.env.CI ? 'github' : 'list',
-  
+
   webServer: {
     command: 'npm start',
     url: 'http://localhost:8080',
     reuseExistingServer: !process.env.CI, // Always fresh in CI
     timeout: 180000, // 3 minutes in CI
   },
-  
+
   use: {
     ...devices['Desktop Chrome'],
     // CI-specific settings
@@ -83,27 +94,29 @@ export default defineConfig({
     ignoreHTTPSErrors: true,
     video: process.env.CI ? 'retain-on-failure' : 'off',
     screenshot: process.env.CI ? 'only-on-failure' : 'off',
-    
+
     // Increased timeouts for CI
     actionTimeout: process.env.CI ? 15000 : 5000,
     navigationTimeout: process.env.CI ? 30000 : 10000,
   },
-  
+
   projects: [
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
         // CI browser optimizations
-        launchOptions: process.env.CI ? {
-          args: [
-            '--no-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-gpu',
-            '--disable-web-security',
-            '--disable-background-timer-throttling',
-          ]
-        } : {},
+        launchOptions: process.env.CI
+          ? {
+              args: [
+                '--no-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-gpu',
+                '--disable-web-security',
+                '--disable-background-timer-throttling',
+              ],
+            }
+          : {},
       },
     },
   ],
@@ -111,6 +124,7 @@ export default defineConfig({
 ```
 
 ### 2. **CI-Specific Test Patterns**
+
 ```javascript
 // Enhanced helper with CI detection
 class CanvasPage {
@@ -140,18 +154,19 @@ class CanvasPage {
 ```
 
 ### 3. **GitHub Actions Optimizations**
+
 ```yaml
 # Enhanced CI workflow
 - name: Install Playwright Browsers
   run: npx playwright install --with-deps chromium
-  
+
 - name: Run Playwright tests
   run: npx playwright test
   env:
     CI: true
-    NODE_OPTIONS: "--max_old_space_size=4096"
-    PLAYWRIGHT_BROWSER_PATH: "/home/runner/.cache/ms-playwright"
-    
+    NODE_OPTIONS: '--max_old_space_size=4096'
+    PLAYWRIGHT_BROWSER_PATH: '/home/runner/.cache/ms-playwright'
+
 - name: Upload test results
   uses: actions/upload-artifact@v4
   if: failure()
@@ -167,6 +182,7 @@ class CanvasPage {
 Note on throttling: The application enforces a 500ms throttle on note creation; use ~600ms locally and 800–1000ms in CI between creations.
 
 #### Local CI Simulation
+
 ```bash
 # Run tests in "CI mode" locally
 CI=true npx playwright test --headed=false --workers=1
@@ -180,6 +196,7 @@ docker run -it --rm \
 ```
 
 #### Test Health Monitoring
+
 ```javascript
 // Add to test suite
 test.describe.configure({ mode: 'serial' });
@@ -196,6 +213,7 @@ test.beforeAll(async () => {
 ## Resolution Status (Updated)
 
 ### ✅ **Issues Resolved**
+
 - ✅ **Root cause identified**: `waitForAppReady()` checking non-existent `window.mindMeldTestState`
 - ✅ **Browser closure errors eliminated**: Fixed unstable test state dependencies
 - ✅ **Note creation stabilized**: Fixed `createNote()` to return correct note instances
@@ -204,6 +222,7 @@ test.beforeAll(async () => {
 - ✅ **Consistent CI runs**: All current E2E tests pass reliably in CI
 
 ### ✅ **Current Configuration**
+
 ```javascript
 // playwright.config.js - optimized for CI/CD
 retries: process.env.CI ? 2 : 0, // Retry flaky tests in CI
@@ -212,6 +231,7 @@ reuseExistingServer: !process.env.CI, // Always fresh server in CI
 ```
 
 ### 📋 **Lessons Learned**
+
 - **State-based waits**: Checking non-existent global state causes browser instability
 - **Throttling respect**: The app enforces a 500ms throttle; add buffers (e.g., ~600ms local, 800–1000ms in CI)
 - **Method simplicity**: Complex fallback methods often cause more problems than they solve
@@ -220,6 +240,7 @@ reuseExistingServer: !process.env.CI, // Always fresh server in CI
 ## Monitoring & Alerting
 
 ### Test Performance Tracking
+
 ```javascript
 // Add to CI workflow
 - name: Analyze test performance
@@ -230,6 +251,7 @@ reuseExistingServer: !process.env.CI, // Always fresh server in CI
 ```
 
 ### Success Metrics
+
 - **Target**: High E2E test success rate in CI (consistently green runs)
 - **Current**: CI runs are consistently green for the current suite
 - **Monitoring**: Track test execution times and failure patterns
@@ -237,8 +259,9 @@ reuseExistingServer: !process.env.CI, // Always fresh server in CI
 ## Future Prevention
 
 This resolution demonstrates the importance of:
+
 1. **Root cause analysis** over symptom fixes
-2. **Simple, reliable patterns** over complex fallback mechanisms  
+2. **Simple, reliable patterns** over complex fallback mechanisms
 3. **Respecting application timing** (throttling, state changes)
 4. **Environment-specific considerations** for CI stability
 

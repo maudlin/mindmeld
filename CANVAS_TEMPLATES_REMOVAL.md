@@ -1,28 +1,32 @@
 # Canvas Templates Removal - V1 Simplification
 
 ## Overview
+
 Canvas templates (Hero's Journey, Now/Next/Future, Wardley Map) were temporarily **removed for V1 simplification** to focus on core functionality and eliminate complexity-related bugs.
 
 **Status**: Templates disabled but files preserved for future restoration  
 **Date**: August 26, 2025  
-**Reason**: V1 focus, eliminate multi-select/centering bugs, improve test success rate  
+**Reason**: V1 focus, eliminate multi-select/centering bugs, improve test success rate
 
 ---
 
 ## What Was Changed
 
 ### ✅ **Removed UI Elements**
+
 - **HTML**: Kebab menu "Change Template" option removed from `src/index.html`
 - **Kebab Menu Events**: `changeTemplate()` method removed from `kebabMenuEvents.js`
 - **Kebab Menu Logic**: `change-template` action case removed from `kebabMenu.js`
 
 ### ✅ **Simplified Core Logic**
+
 - **Config**: `src/js/core/config.js` - Removed `canvasTypes` object, kept `defaultCanvasType`
 - **Canvas Manager**: `src/js/core/canvasManager.js` - Only loads Standard Canvas module
 - **Canvas State Service**: `src/js/services/canvasStateService.js` - Only accepts 'Standard Canvas'
 - **Data Store**: `src/js/data/dataStore.js` - Always uses Standard Canvas, ignores imported canvas types
 
 ### ✅ **Disabled Tests**
+
 - `tests/unit/services/canvasStateService.test.js.disabled`
 - `tests/e2e/canvas-template-switching.spec.js.disabled`
 - `tests/e2e/color-picker-templates.spec.js.disabled`
@@ -30,7 +34,9 @@ Canvas templates (Hero's Journey, Now/Next/Future, Wardley Map) were temporarily
 - `tests/helpers/journeyHelpers.js.disabled`
 
 ### ✅ **Preserved Template Files**
+
 **Template modules remain untouched for future restoration:**
+
 - `src/js/features/canvas/templates/herosJourney/`
 - `src/js/features/canvas/templates/nowNextFuture/`
 - `src/js/features/canvas/templates/wardleyMap/`
@@ -43,22 +49,24 @@ Canvas templates (Hero's Journey, Now/Next/Future, Wardley Map) were temporarily
 ### 1. **Restore UI Elements**
 
 **Add back to `src/index.html`:**
+
 ```html
-      <div class="kebab-menu-divider"></div>
-      <div class="kebab-menu-group">
-        <div class="kebab-menu-subtitle">Templates</div>
-        <div
-          class="kebab-menu-item"
-          role="menuitem"
-          data-action="change-template"
-          tabindex="0"
-        >
-          <span>Change Template</span>
-        </div>
-      </div>
+<div class="kebab-menu-divider"></div>
+<div class="kebab-menu-group">
+  <div class="kebab-menu-subtitle">Templates</div>
+  <div
+    class="kebab-menu-item"
+    role="menuitem"
+    data-action="change-template"
+    tabindex="0"
+  >
+    <span>Change Template</span>
+  </div>
+</div>
 ```
 
 **Restore in `src/js/features/kebabMenu/kebabMenuEvents.js`:**
+
 ```javascript
 case 'change-template':
   this.changeTemplate();
@@ -68,6 +76,7 @@ case 'change-template':
 ```
 
 **Restore in `src/js/features/kebabMenu/kebabMenu.js`:**
+
 ```javascript
 case 'change-template':
   this.dispatchAction('change-template');
@@ -77,6 +86,7 @@ case 'change-template':
 ### 2. **Restore Core Configuration**
 
 **Update `src/js/core/config.js`:**
+
 ```javascript
 export default {
   // ... other config
@@ -105,6 +115,7 @@ export default {
 ### 3. **Restore Canvas Manager**
 
 **Update `src/js/core/canvasManager.js` `loadModules()` method:**
+
 ```javascript
 async loadModules() {
   log('Loading modules...');
@@ -143,6 +154,7 @@ async loadModules() {
 ### 4. **Restore Canvas State Service**
 
 **Update `src/js/services/canvasStateService.js`:**
+
 ```javascript
 static get VALID_CANVAS_TYPES() {
   return Object.values(config.canvasTypes).map(
@@ -161,6 +173,7 @@ static isValidCanvasType(canvasType) {
 ### 5. **Restore Data Handling**
 
 **Update `src/js/data/dataStore.js`:**
+
 ```javascript
 // Restore canvas type export
 if (canvasType && canvasType !== 'Standard Canvas') {
@@ -178,9 +191,10 @@ if (data.ct && CanvasStateService.isValidCanvasType(data.ct)) {
 ### 6. **Re-enable Tests**
 
 **Restore test files:**
+
 ```bash
 mv tests/unit/services/canvasStateService.test.js.disabled tests/unit/services/canvasStateService.test.js
-mv tests/e2e/canvas-template-switching.spec.js.disabled tests/e2e/canvas-template-switching.spec.js  
+mv tests/e2e/canvas-template-switching.spec.js.disabled tests/e2e/canvas-template-switching.spec.js
 mv tests/e2e/color-picker-templates.spec.js.disabled tests/e2e/color-picker-templates.spec.js
 mv tests/unit/data/exportImport.test.js.disabled tests/unit/data/exportImport.test.js
 mv tests/helpers/journeyHelpers.js.disabled tests/helpers/journeyHelpers.js
@@ -198,16 +212,19 @@ mv tests/helpers/journeyHelpers.js.disabled tests/helpers/journeyHelpers.js
 ## V1 Benefits Achieved
 
 ### ✅ **Simplified Architecture**
+
 - Eliminated template switching complexity
-- Removed background layout management issues  
+- Removed background layout management issues
 - Single canvas type reduces state management complexity
 
 ### ✅ **Fixed Template-Related Bugs**
+
 - No more canvas centering inconsistencies across templates
 - No more multi-select issues on Hero's Journey/Wardley backgrounds
 - Eliminated template switching test failures
 
 ### ✅ **Improved Test Success Rate**
+
 - Removed 4-6 failing E2E tests related to templates
 - Eliminated unit test complications with template validation
 - Focus on core functionality testing
@@ -217,18 +234,24 @@ mv tests/helpers/journeyHelpers.js.disabled tests/helpers/journeyHelpers.js
 ## Technical Notes
 
 ### **Template Files Preserved**
+
 All template modules remain fully functional and untouched:
+
 - CSS files, background layouts, and module definitions intact
 - Can be immediately re-enabled by reversing the changes above
 
-### **Migration Strategy** 
+### **Migration Strategy**
+
 When restoring templates:
+
 1. **Test thoroughly** - Template switching had bugs that need fixing
 2. **Update E2E tests** - Some template tests may need adjustment for current architecture
 3. **Consider phased rollout** - Re-enable one template at a time to identify issues
 
 ### **Future Improvements Needed**
+
 Before full restoration, consider fixing:
+
 - Canvas centering consistency across all template types
 - Multi-select drag behavior on templates with background graphics
 - Touch interaction compatibility with template backgrounds

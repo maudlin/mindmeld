@@ -9,11 +9,13 @@ MindMeld is a web-based mind mapping tool that allows users to create, organize,
 ## Prerequisites
 
 For development:
+
 - Node.js LTS (v18+ recommended)
 - npm
 - Note: Playwright installs Chromium automatically on first install in non-production environments.
 
 For hosting/deployment:
+
 - None required beyond a static file host. The app is plain HTML/CSS/JS served from the `src/` directory and can be hosted on any static server or CDN (e.g., GitHub Pages, Netlify, Vercel static, Nginx).
 
 ## Quick Start
@@ -30,9 +32,11 @@ npm install && npm start
 Visit `http://localhost:8080` to begin mind mapping.
 
 ### Mobile & Touch Support
+
 MindMeld automatically detects your device capabilities and provides optimized interactions:
 
 **Touch Device Features:**
+
 - **Long-press and drag**: Move notes with visual "jiggle" feedback
 - **Single-finger drag on canvas**: Multi-select lasso selection
 - **Double-tap**: Create or edit notes
@@ -58,9 +62,11 @@ MindMeld automatically detects your device capabilities and provides optimized i
 See the full documentation index in docs/README.md.
 
 ### For Users
+
 - **[User Guide](docs/user-guide.md)** - Complete feature overview and usage instructions
 
 ### For Developers
+
 - **[Developer Guide](docs/developer-guide.md)** - Architecture, setup, and development workflow
 - **[Canvas Templates](docs/canvas-templates.md)** - How to implement new canvas template modules
 - **[Contributing Guide](CONTRIBUTING.md)** - Code standards, testing, and contribution process
@@ -69,6 +75,7 @@ See the full documentation index in docs/README.md.
 - **[Scripts Reference](docs/scripts.md)** - Complete npm scripts documentation
 
 ### Technical Documentation
+
 - **[CI/CD Guide](docs/ci-cd.md)** - GitHub Actions workflows and deployment
 - **[CI vs Local E2E Troubleshooting](docs/ci-e2e-troubleshooting.md)** - Stabilizing tests across environments
 - **[Git Workflow Troubleshooting](docs/git-workflow-troubleshooting.md)** - Rebases, branch protection, dependency handling
@@ -99,6 +106,7 @@ Commands: [Scripts Reference](docs/scripts.md) | Setup: [Developer Guide](docs/d
 - E2E tests: `npm run test:e2e`
 - CI/dev/smoke/critical suites and tag usage: see [Testing Environments](docs/testing-environments.md)
 - Testing philosophy and patterns: see [Testing Guide](docs/testing.md)
+
 ## Data Format
 
 Mind maps are stored as JSON with this structure:
@@ -106,12 +114,8 @@ Mind maps are stored as JSON with this structure:
 ```json
 {
   "data": {
-    "n": [
-      { "i": "1", "p": [100, 200], "c": "Note content", "cl": "pink" }
-    ],
-    "c": [
-      ["1", "2", 1]
-    ]
+    "n": [{ "i": "1", "p": [100, 200], "c": "Note content", "cl": "pink" }],
+    "c": [["1", "2", 1]]
   }
 }
 ```

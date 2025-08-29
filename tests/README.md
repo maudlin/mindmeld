@@ -401,16 +401,18 @@ console.log('Note count:', await page.locator('.note').count());
 ### 📊 **Test Metrics**
 
 **Unit Tests**: Comprehensive test suite covering:
+
 - **MM-160 Data Corruption Resistance Epic**: Enterprise-grade data integrity testing
   - Storage quota exhaustion handling
   - Browser compatibility testing (Chrome, Safari, Edge support)
-  - Data corruption recovery scenarios  
+  - Data corruption recovery scenarios
   - Session integrity and multi-tab consistency
 - Core architecture, event bus, services, and business logic
 - Touch/desktop interaction adapters and gesture recognition
 - Data integrity, export/import, and state management
 
 **E2E Tests**: Core user workflows (basic, note operations, connections, multi-select, template switching, menu, touch, zoom)
+
 - Runtimes vary by environment; see Testing Environments for suite guidance
 
 ## 🔒 **Security Testing Framework**
@@ -552,7 +554,7 @@ MindMeld's TouchAdapter system requires specific testing patterns for advanced t
 test('TouchAdapter gesture behavior', async ({ page }) => {
   await page.goto('http://localhost:8080/?mode=touch');
   await page.waitForTimeout(1000); // Allow TouchAdapter initialization
-  
+
   // Test TouchAdapter-specific interactions
 });
 
@@ -565,42 +567,44 @@ const isUsingTouchAdapter = await page.evaluate(() => {
 #### **Key Touch Interaction Test Patterns**
 
 **Single-Finger Drag Lasso Selection:**
+
 ```javascript
 test('Single-finger drag creates lasso selection', async ({ page }) => {
   await page.goto('http://localhost:8080/?mode=touch');
-  
+
   // Create notes for selection
   const canvasPage = new CanvasPage(page);
   const note1 = await canvasPage.createNote(400, 300);
   await page.waitForTimeout(800);
   const note2 = await canvasPage.createNote(600, 300);
-  
+
   // Test single-finger drag lasso
   await page.mouse.move(350, 250);
   await page.mouse.down();
   await page.mouse.move(650, 350);
   await page.mouse.up();
-  
+
   // Verify selection
   await expect(page.locator('.note.selected')).toHaveCount(2);
 });
 ```
 
 **Press-Hold-Drag Note Movement:**
+
 ```javascript
 test('Press-hold-drag moves notes in touch mode', async ({ page }) => {
   await page.goto('http://localhost:8080/?mode=touch');
-  
+
   const canvasPage = new CanvasPage(page);
   const note = await canvasPage.createNote(400, 300);
-  
+
   // Test press-hold-drag (wait for long-press detection)
   await page.mouse.move(400, 300);
   await page.mouse.down();
   await page.waitForTimeout(500); // Long-press threshold
   await page.mouse.move(500, 400);
   await page.mouse.up();
-  
+
   // Verify note moved
   const noteBox = await note.boundingBox();
   expect(noteBox.x).toBeGreaterThan(450);
@@ -608,26 +612,27 @@ test('Press-hold-drag moves notes in touch mode', async ({ page }) => {
 ```
 
 **Canvas Panning Conflict Prevention:**
+
 ```javascript
 test('Single touch hold does not move canvas', async ({ page }) => {
   await page.goto('http://localhost:8080/?mode=touch');
-  
+
   const canvas = page.locator('#canvas');
-  
+
   // Get initial canvas position
-  const initialTransform = await canvas.evaluate(el => 
-    getComputedStyle(el).transform
+  const initialTransform = await canvas.evaluate(
+    (el) => getComputedStyle(el).transform,
   );
-  
+
   // Perform single touch and hold on canvas
   await page.mouse.move(400, 300);
   await page.mouse.down();
   await page.waitForTimeout(600); // Hold longer than long-press
   await page.mouse.up();
-  
+
   // Verify canvas did not move
-  const finalTransform = await canvas.evaluate(el => 
-    getComputedStyle(el).transform
+  const finalTransform = await canvas.evaluate(
+    (el) => getComputedStyle(el).transform,
   );
   expect(finalTransform).toBe(initialTransform);
 });
@@ -636,30 +641,31 @@ test('Single touch hold does not move canvas', async ({ page }) => {
 #### **Two-Finger Gesture Testing**
 
 **Two-Finger Pan:**
+
 ```javascript
 test('Two-finger drag pans canvas', async ({ page }) => {
   await page.goto('http://localhost:8080/?mode=touch');
-  
+
   // Simulate two-finger pan using mouse events
   // (Playwright doesn't support native multi-touch, use pointer events)
   await page.evaluate(() => {
     const canvas = document.querySelector('#canvas');
-    
+
     // Create synthetic two-finger pan
     const touchStart = new TouchEvent('touchstart', {
       touches: [
         { clientX: 400, clientY: 300, identifier: 0 },
-        { clientX: 500, clientY: 300, identifier: 1 }
-      ]
+        { clientX: 500, clientY: 300, identifier: 1 },
+      ],
     });
-    
+
     const touchMove = new TouchEvent('touchmove', {
       touches: [
         { clientX: 450, clientY: 350, identifier: 0 },
-        { clientX: 550, clientY: 350, identifier: 1 }
-      ]
+        { clientX: 550, clientY: 350, identifier: 1 },
+      ],
     });
-    
+
     canvas.dispatchEvent(touchStart);
     canvas.dispatchEvent(touchMove);
   });
@@ -669,21 +675,22 @@ test('Two-finger drag pans canvas', async ({ page }) => {
 #### **Touch vs Desktop Mode Isolation**
 
 **Verify Interaction Mode Separation:**
+
 ```javascript
 test.describe('Touch vs Desktop Isolation', () => {
   test('Desktop mode uses DesktopAdapter', async ({ page }) => {
     await page.goto('http://localhost:8080'); // No touch mode
-    
+
     // Verify DesktopAdapter behaviors
     // - Right-click drag for canvas pan
     // - Immediate drag for multi-select lasso
     // - No long-press requirements
   });
-  
+
   test('Touch mode uses TouchAdapter', async ({ page }) => {
     await page.goto('http://localhost:8080/?mode=touch');
-    
-    // Verify TouchAdapter behaviors  
+
+    // Verify TouchAdapter behaviors
     // - Two-finger drag for canvas pan
     // - Single-finger drag for lasso
     // - Long-press for note movement
@@ -694,16 +701,19 @@ test.describe('Touch vs Desktop Isolation', () => {
 #### **Legacy Touch System Testing**
 
 **Mobile Device Legacy Mode:**
+
 ```javascript
-test('Mobile devices without touch mode use legacy system', async ({ page }) => {
+test('Mobile devices without touch mode use legacy system', async ({
+  page,
+}) => {
   // Simulate mobile device without ?mode=touch
   await page.emulate({
     userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)',
-    viewport: { width: 375, height: 667 }
+    viewport: { width: 375, height: 667 },
   });
-  
+
   await page.goto('http://localhost:8080');
-  
+
   // Verify legacy touch panning is available
   // (TouchAdapter should NOT be active)
 });
@@ -712,17 +722,18 @@ test('Mobile devices without touch mode use legacy system', async ({ page }) => 
 ### **TouchAdapter Unit Testing**
 
 **Test TouchAdapter Gesture State Machine:**
+
 ```javascript
 // tests/unit/interactions/adapters/TouchAdapter.test.js
 describe('TouchAdapter Gesture Recognition', () => {
   it('detects long-press for note movement', () => {
     // Test gesture state transitions
   });
-  
+
   it('distinguishes single-finger vs two-finger gestures', () => {
     // Test multi-touch detection
   });
-  
+
   it('prevents canvas pan conflicts with note interactions', () => {
     // Test event handling isolation
   });

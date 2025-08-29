@@ -11,7 +11,8 @@ During the major MM-56 test suite recovery, we discovered critical patterns and 
 **Problem**: E2E tests were failing because Playwright's browser environment auto-detects as "touch mode" due to `navigator.maxTouchPoints > 0`, but tests were using mouse events that TouchAdapter doesn't handle.
 
 **Solution**: Explicit mode control using URL parameters:
-- **Desktop mode**: `http://localhost:8080/?mode=desktop`  
+
+- **Desktop mode**: `http://localhost:8080/?mode=desktop`
 - **Touch mode**: `http://localhost:8080/?mode=touch`
 
 ### 🚨 **CRITICAL: GestureRecognizer State Machine Bug (Fixed)**
@@ -24,22 +25,24 @@ During the major MM-56 test suite recovery, we discovered critical patterns and 
 // ❌ BROKEN (missing timing validation)
 if (this.lastTapPosition && this.calculateDistance(...) <= this.TAP_MAX_MOVEMENT) {
 
-// ✅ FIXED (proper timing validation)  
+// ✅ FIXED (proper timing validation)
 const now = Date.now();
-if (this.lastTapTime && now - this.lastTapTime <= this.DOUBLE_TAP_MAX_DELAY && 
+if (this.lastTapTime && now - this.lastTapTime <= this.DOUBLE_TAP_MAX_DELAY &&
     this.lastTapPosition && this.calculateDistance(...) <= this.TAP_MAX_MOVEMENT) {
 ```
 
 **Impact**: Single fix resolved multiple "unrelated" touch interaction bugs:
+
 - Canvas zoom/pan failures
-- Double-tap note creation failures  
+- Double-tap note creation failures
 - Touch editing mode failures
 - Ghost connector interaction failures
 
 **Testing Lesson**: **Manual testing is essential** - automated tests can mask fundamental gesture recognition failures because Playwright's touch simulation might bypass broken gesture logic.
 
 **Debugging Pattern That Worked**:
-1. **Automated tests showed TouchAdapter initialized** ✅ 
+
+1. **Automated tests showed TouchAdapter initialized** ✅
 2. **Manual testing revealed complete touch failure** ❌
 3. **Root cause**: Playwright's `page.touchscreen.tap()` bypasses GestureRecognizer
 4. **Real touch events**: Chrome DevTools simulation goes through actual gesture detection
@@ -50,14 +53,16 @@ if (this.lastTapTime && now - this.lastTapTime <= this.DOUBLE_TAP_MAX_DELAY &&
 ### 🔧 **CanvasPage Helper Patterns**
 
 #### ✅ **Correct Pattern: Mode-Aware CanvasPage**
+
 ```javascript
 // Enhanced CanvasPage with mode detection
 class CanvasPage {
   async load(mode = 'desktop') {
     this.currentMode = mode; // Track mode for later use
-    const url = mode === 'touch' 
-      ? 'http://localhost:8080/?mode=touch'
-      : 'http://localhost:8080/?mode=desktop';
+    const url =
+      mode === 'touch'
+        ? 'http://localhost:8080/?mode=touch'
+        : 'http://localhost:8080/?mode=desktop';
     await this.page.goto(url);
   }
 
@@ -76,6 +81,7 @@ class CanvasPage {
 ```
 
 #### ❌ **Anti-Pattern: Bypassing CanvasPage.load()**
+
 ```javascript
 // DON'T DO THIS - breaks mode tracking
 await page.goto('http://localhost:8080/?mode=touch');
@@ -89,6 +95,7 @@ const note = await canvasPage.createNote(); // currentMode is undefined!
 ### 🚫 **Element.click() vs page.mouse.click()**
 
 **Problem**: Large canvas elements and SVG paths often fail with element.click():
+
 ```
 <html lang="en">…</html> intercepts pointer events
 element is not visible (for SVG paths)
@@ -97,15 +104,17 @@ element is not visible (for SVG paths)
 **Solutions**:
 
 #### Canvas Clicks:
+
 ```javascript
 // ❌ Unreliable
 await page.click('#canvas', { position: { x: 100, y: 100 } });
 
-// ✅ Reliable  
+// ✅ Reliable
 await page.mouse.click(100, 100);
 ```
 
 #### SVG Element Clicks:
+
 ```javascript
 // ❌ Fails with "not visible"
 await connectionPath.click();
@@ -120,13 +129,20 @@ await page.mouse.click(centerX, centerY);
 ### 📱 **Touch Events: Playwright API vs Manual Injection**
 
 **What We Tried**: Manual TouchEvent injection
+
 ```javascript
 // ❌ Doesn't work - adapters don't process synthetic events
-const touch = new Touch({ identifier: 1, target: canvas, clientX: x, clientY: y });
+const touch = new Touch({
+  identifier: 1,
+  target: canvas,
+  clientX: x,
+  clientY: y,
+});
 canvas.dispatchEvent(new TouchEvent('touchstart', { touches: [touch] }));
 ```
 
 **What Works**: Playwright's touchscreen API
+
 ```javascript
 // ✅ Works in both desktop and touch modes
 await page.touchscreen.tap(x, y);
@@ -143,9 +159,9 @@ await page.touchscreen.tap(x, y); // Double-tap
 await note.click({ modifiers: ['Shift'] });
 
 // ✅ Works - clicks on note border
-await note.click({ 
-  modifiers: ['Shift'], 
-  position: { x: 3, y: 3 } // Border area
+await note.click({
+  modifiers: ['Shift'],
+  position: { x: 3, y: 3 }, // Border area
 });
 ```
 
@@ -154,6 +170,7 @@ await note.click({
 **Problem**: `navigator.clipboard` requires user permission in Chromium.
 
 **Solution**: Mock the clipboard API
+
 ```javascript
 await page.evaluate(() => {
   let clipboardData = '';
@@ -163,9 +180,9 @@ await page.evaluate(() => {
         clipboardData = text;
         return Promise.resolve();
       },
-      readText: () => Promise.resolve(clipboardData)
+      readText: () => Promise.resolve(clipboardData),
     },
-    writable: true
+    writable: true,
   });
 });
 ```
@@ -175,10 +192,11 @@ await page.evaluate(() => {
 **Problem**: `page.mouse.wheel()` doesn't work reliably on large canvas elements in Playwright.
 
 **Solution**: Skip these tests with clear documentation:
+
 ```javascript
 // Skip zoom tests due to known Playwright limitation
 test.skip('Mouse wheel zoom', async ({ page }) => {
-  // Zoom functionality works manually but wheel events 
+  // Zoom functionality works manually but wheel events
   // don't trigger properly in test environment
 });
 ```
@@ -190,11 +208,12 @@ test.skip('Mouse wheel zoom', async ({ page }) => {
 ```
 tests/e2e/
 ├── desktop-*.spec.js     # Desktop-only features (hover, keyboard shortcuts)
-├── touch-*.spec.js       # Touch-only features (gestures, mobile context menus)  
+├── touch-*.spec.js       # Touch-only features (gestures, mobile context menus)
 └── *.spec.js             # Platform-agnostic (default to desktop mode)
 ```
 
 ### 📝 **Test Naming Convention**
+
 ```javascript
 // Platform-specific tests
 test.describe('Desktop Zoom Functionality', () => {
@@ -205,7 +224,9 @@ test.describe('Desktop Zoom Functionality', () => {
 });
 
 test.describe('Touch Connection Context Menu', () => {
-  test('should show context menu when tapping in touch mode', async ({ page }) => {
+  test('should show context menu when tapping in touch mode', async ({
+    page,
+  }) => {
     const canvasPage = new CanvasPage(page);
     await canvasPage.load('touch'); // Explicit mode
   });
@@ -215,11 +236,13 @@ test.describe('Touch Connection Context Menu', () => {
 ## Performance & Reliability
 
 ### ⏱️ **Throttling Considerations**
+
 - **Note creation**: 500ms throttle requires 600ms+ waits between creations
 - **Touch mode**: Extra 1000ms initialization time needed
 - **CI environments**: May need additional stability delays
 
 ### 🔄 **Retry Patterns**
+
 ```javascript
 // Give operations time to complete
 await page.waitForTimeout(500); // Let zoom process
@@ -229,14 +252,16 @@ await expect(element).toBeVisible({ timeout: 10000 }); // Generous timeouts
 ## Quick Reference
 
 ### ✅ **Do This**
+
 - Always use `canvasPage.load(mode)` to track mode properly
-- Use `page.mouse.click()` for canvas and SVG interactions  
+- Use `page.mouse.click()` for canvas and SVG interactions
 - Use `page.touchscreen.tap()` for touch gestures
 - Click on note borders (not content) for multi-selection
 - Mock `navigator.clipboard` for clipboard tests
 - Skip mouse wheel tests with clear comments
 
 ### ❌ **Don't Do This**
+
 - Don't bypass `canvasPage.load()` with direct `page.goto()`
 - Don't use `element.click()` on large canvas or SVG elements
 - Don't try to manually inject TouchEvent objects
@@ -253,4 +278,4 @@ await expect(element).toBeVisible({ timeout: 10000 }); // Generous timeouts
 
 ---
 
-*This document was created during MM-56 test suite recovery - update as new patterns emerge.*
+_This document was created during MM-56 test suite recovery - update as new patterns emerge._

@@ -14,11 +14,7 @@
       "actualWorkers": 10
     },
     "preserveOutput": "always",
-    "reporter": [
-      [
-        "json"
-      ]
-    ],
+    "reporter": [["json"]],
     "reportSlowTests": {
       "max": 5,
       "threshold": 300000
@@ -36,9 +32,7 @@
         "name": "chromium",
         "testDir": "/home/mark/project/mindmeld/tests/e2e",
         "testIgnore": [],
-        "testMatch": [
-          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
-        ],
+        "testMatch": ["**/*.@(spec|test).?(c|m)[jt]s?(x)"],
         "timeout": 30000
       },
       {
@@ -71,9 +65,7 @@
         "name": "dev",
         "testDir": "/home/mark/project/mindmeld/tests/e2e",
         "testIgnore": [],
-        "testMatch": [
-          "tests/e2e/**/*.spec.js"
-        ],
+        "testMatch": ["tests/e2e/**/*.spec.js"],
         "timeout": 30000
       }
     ],
@@ -106,10 +98,7 @@
             {
               "title": "Page loads successfully @smoke @critical",
               "ok": true,
-              "tags": [
-                "smoke",
-                "critical"
-              ],
+              "tags": ["smoke", "critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -174,10 +163,7 @@
             {
               "title": "Page loads successfully @smoke @critical",
               "ok": true,
-              "tags": [
-                "smoke",
-                "critical"
-              ],
+              "tags": ["smoke", "critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -242,10 +228,7 @@
             {
               "title": "Page loads successfully @smoke @critical",
               "ok": true,
-              "tags": [
-                "smoke",
-                "critical"
-              ],
+              "tags": ["smoke", "critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -327,9 +310,7 @@
             {
               "title": "Should support keyboard navigation between color swatches @smoke",
               "ok": true,
-              "tags": [
-                "smoke"
-              ],
+              "tags": ["smoke"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -737,9 +718,7 @@
             {
               "title": "Should support keyboard navigation between color swatches @smoke",
               "ok": true,
-              "tags": [
-                "smoke"
-              ],
+              "tags": ["smoke"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -1249,9 +1228,7 @@
             {
               "title": "Should display color picker with all color swatches @smoke",
               "ok": true,
-              "tags": [
-                "smoke"
-              ],
+              "tags": ["smoke"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -1557,9 +1534,7 @@
             {
               "title": "Should display color picker with all color swatches @smoke",
               "ok": true,
-              "tags": [
-                "smoke"
-              ],
+              "tags": ["smoke"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -1593,9 +1568,7 @@
             {
               "title": "Should display color picker with all color swatches @smoke",
               "ok": true,
-              "tags": [
-                "smoke"
-              ],
+              "tags": ["smoke"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -2003,9 +1976,7 @@
             {
               "title": "Should apply color to multiple selected notes @smoke",
               "ok": true,
-              "tags": [
-                "smoke"
-              ],
+              "tags": ["smoke"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -2311,9 +2282,7 @@
             {
               "title": "Should apply color to multiple selected notes @smoke",
               "ok": true,
-              "tags": [
-                "smoke"
-              ],
+              "tags": ["smoke"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -2721,9 +2690,7 @@
             {
               "title": "Should persist colors across page refresh @smoke",
               "ok": true,
-              "tags": [
-                "smoke"
-              ],
+              "tags": ["smoke"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -2791,9 +2758,7 @@
             {
               "title": "Should persist colors across page refresh @smoke",
               "ok": true,
-              "tags": [
-                "smoke"
-              ],
+              "tags": ["smoke"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -3726,9 +3691,7 @@
             {
               "title": "Should delete note via left-click on delete button @critical",
               "ok": true,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -3762,9 +3725,7 @@
             {
               "title": "Should delete connection via left-click on delete button @critical",
               "ok": true,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -3832,9 +3793,7 @@
             {
               "title": "Should delete note via left-click on delete button @critical",
               "ok": true,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -3868,9 +3827,7 @@
             {
               "title": "Should delete connection via left-click on delete button @critical",
               "ok": true,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -4058,9 +4015,7 @@
             {
               "title": "Empty note should enter edit mode when clicked @critical",
               "ok": true,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -4094,9 +4049,7 @@
             {
               "title": "Unstyled text note should enter edit mode when clicked @critical",
               "ok": true,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -4130,9 +4083,7 @@
             {
               "title": "Styled note (with HTML) should enter edit mode when clicked @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -4196,9 +4147,7 @@
             {
               "title": "Clicking on HTML elements inside styled note should still trigger edit mode @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -4262,9 +4211,7 @@
             {
               "title": "Clicking on deeply nested HTML elements should trigger edit mode @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -4328,9 +4275,7 @@
             {
               "title": "Edit mode to view mode transition preserves content @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -4394,9 +4339,7 @@
             {
               "title": "Empty note should enter edit mode when clicked @critical",
               "ok": true,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -4430,9 +4373,7 @@
             {
               "title": "Unstyled text note should enter edit mode when clicked @critical",
               "ok": true,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -4466,9 +4407,7 @@
             {
               "title": "Styled note (with HTML) should enter edit mode when clicked @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -4532,9 +4471,7 @@
             {
               "title": "Clicking on HTML elements inside styled note should still trigger edit mode @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -4598,9 +4535,7 @@
             {
               "title": "Clicking on deeply nested HTML elements should trigger edit mode @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -4664,9 +4599,7 @@
             {
               "title": "Edit mode to view mode transition preserves content @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -4747,10 +4680,7 @@
             {
               "title": "Note starts in view mode with rendered markdown @smoke @critical",
               "ok": true,
-              "tags": [
-                "smoke",
-                "critical"
-              ],
+              "tags": ["smoke", "critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -4784,10 +4714,7 @@
             {
               "title": "Clicking note switches from view mode to edit mode @smoke @critical",
               "ok": false,
-              "tags": [
-                "smoke",
-                "critical"
-              ],
+              "tags": ["smoke", "critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -4851,10 +4778,7 @@
             {
               "title": "Blur event switches from edit mode back to view mode @smoke @critical",
               "ok": true,
-              "tags": [
-                "smoke",
-                "critical"
-              ],
+              "tags": ["smoke", "critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -4952,9 +4876,7 @@
             {
               "title": "Security: HTML injection is prevented in edit mode @security",
               "ok": true,
-              "tags": [
-                "security"
-              ],
+              "tags": ["security"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -5022,9 +4944,7 @@
             {
               "title": "Mode toggle works on mobile/touch devices @mobile",
               "ok": true,
-              "tags": [
-                "mobile"
-              ],
+              "tags": ["mobile"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -5092,10 +5012,7 @@
             {
               "title": "Note starts in view mode with rendered markdown @smoke @critical",
               "ok": true,
-              "tags": [
-                "smoke",
-                "critical"
-              ],
+              "tags": ["smoke", "critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -5129,10 +5046,7 @@
             {
               "title": "Clicking note switches from view mode to edit mode @smoke @critical",
               "ok": false,
-              "tags": [
-                "smoke",
-                "critical"
-              ],
+              "tags": ["smoke", "critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -5196,10 +5110,7 @@
             {
               "title": "Blur event switches from edit mode back to view mode @smoke @critical",
               "ok": true,
-              "tags": [
-                "smoke",
-                "critical"
-              ],
+              "tags": ["smoke", "critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -5297,9 +5208,7 @@
             {
               "title": "Security: HTML injection is prevented in edit mode @security",
               "ok": true,
-              "tags": [
-                "security"
-              ],
+              "tags": ["security"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -5367,9 +5276,7 @@
             {
               "title": "Mode toggle works on mobile/touch devices @mobile",
               "ok": true,
-              "tags": [
-                "mobile"
-              ],
+              "tags": ["mobile"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -6233,9 +6140,7 @@
                 {
                   "title": "Clear Canvas action should work correctly @smoke",
                   "ok": true,
-                  "tags": [
-                    "smoke"
-                  ],
+                  "tags": ["smoke"],
                   "tests": [
                     {
                       "timeout": 30000,
@@ -6269,9 +6174,7 @@
                 {
                   "title": "Export to clipboard should work correctly @smoke",
                   "ok": true,
-                  "tags": [
-                    "smoke"
-                  ],
+                  "tags": ["smoke"],
                   "tests": [
                     {
                       "timeout": 30000,
@@ -6373,9 +6276,7 @@
                 {
                   "title": "Clear Canvas action should work correctly @smoke",
                   "ok": true,
-                  "tags": [
-                    "smoke"
-                  ],
+                  "tags": ["smoke"],
                   "tests": [
                     {
                       "timeout": 30000,
@@ -6409,9 +6310,7 @@
                 {
                   "title": "Export to clipboard should work correctly @smoke",
                   "ok": true,
-                  "tags": [
-                    "smoke"
-                  ],
+                  "tags": ["smoke"],
                   "tests": [
                     {
                       "timeout": 30000,
@@ -7107,9 +7006,7 @@
                 {
                   "title": "Should export to clipboard via kebab menu and show notification @smoke",
                   "ok": true,
-                  "tags": [
-                    "smoke"
-                  ],
+                  "tags": ["smoke"],
                   "tests": [
                     {
                       "timeout": 30000,
@@ -7321,9 +7218,7 @@
                 {
                   "title": "Should export to clipboard via kebab menu and show notification @smoke",
                   "ok": true,
-                  "tags": [
-                    "smoke"
-                  ],
+                  "tags": ["smoke"],
                   "tests": [
                     {
                       "timeout": 30000,
@@ -7357,9 +7252,7 @@
                 {
                   "title": "Should export to clipboard via kebab menu and show notification @smoke",
                   "ok": true,
-                  "tags": [
-                    "smoke"
-                  ],
+                  "tags": ["smoke"],
                   "tests": [
                     {
                       "timeout": 30000,
@@ -7666,9 +7559,7 @@
             {
               "title": "Create multiple notes and select them with selection box @smoke",
               "ok": true,
-              "tags": [
-                "smoke"
-              ],
+              "tags": ["smoke"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -7770,9 +7661,7 @@
             {
               "title": "Create multiple notes and select them with selection box @smoke",
               "ok": true,
-              "tags": [
-                "smoke"
-              ],
+              "tags": ["smoke"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -7891,9 +7780,7 @@
             {
               "title": "MANUAL SCENARIO: Typing \"# heading one\\n## heading two\" should preserve newlines in real-time @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -7957,9 +7844,7 @@
             {
               "title": "MANUAL SCENARIO: Edit existing note with markdown should preserve newlines @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -8023,9 +7908,7 @@
             {
               "title": "CLASS STATE BUG: Note should never have both view-mode and edit-mode classes @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -8089,9 +7972,7 @@
             {
               "title": "MANUAL SCENARIO: Typing \"# heading one\\n## heading two\" should preserve newlines in real-time @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -8155,9 +8036,7 @@
             {
               "title": "MANUAL SCENARIO: Edit existing note with markdown should preserve newlines @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -8221,9 +8100,7 @@
             {
               "title": "CLASS STATE BUG: Note should never have both view-mode and edit-mode classes @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -8304,10 +8181,7 @@
             {
               "title": "Create two notes and connect them @smoke @critical",
               "ok": true,
-              "tags": [
-                "smoke",
-                "critical"
-              ],
+              "tags": ["smoke", "critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -8341,10 +8215,7 @@
             {
               "title": "Create two notes and connect them @smoke @critical",
               "ok": true,
-              "tags": [
-                "smoke",
-                "critical"
-              ],
+              "tags": ["smoke", "critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -8395,10 +8266,7 @@
             {
               "title": "Create, edit, move, and delete a note @smoke @critical",
               "ok": true,
-              "tags": [
-                "smoke",
-                "critical"
-              ],
+              "tags": ["smoke", "critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -8432,10 +8300,7 @@
             {
               "title": "Create, edit, move, and delete a note @smoke @critical",
               "ok": true,
-              "tags": [
-                "smoke",
-                "critical"
-              ],
+              "tags": ["smoke", "critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -8469,10 +8334,7 @@
             {
               "title": "Create, edit, move, and delete a note @smoke @critical",
               "ok": true,
-              "tags": [
-                "smoke",
-                "critical"
-              ],
+              "tags": ["smoke", "critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -8530,9 +8392,7 @@
                 {
                   "title": "Should show success notification for export to clipboard @smoke",
                   "ok": true,
-                  "tags": [
-                    "smoke"
-                  ],
+                  "tags": ["smoke"],
                   "tests": [
                     {
                       "timeout": 30000,
@@ -8702,9 +8562,7 @@
                 {
                   "title": "Should show success notification for export to clipboard @smoke",
                   "ok": true,
-                  "tags": [
-                    "smoke"
-                  ],
+                  "tags": ["smoke"],
                   "tests": [
                     {
                       "timeout": 30000,
@@ -8882,9 +8740,7 @@
                 {
                   "title": "Should show confirmation modal for clear canvas @smoke",
                   "ok": true,
-                  "tags": [
-                    "smoke"
-                  ],
+                  "tags": ["smoke"],
                   "tests": [
                     {
                       "timeout": 30000,
@@ -9054,9 +8910,7 @@
                 {
                   "title": "Should show confirmation modal for clear canvas @smoke",
                   "ok": true,
-                  "tags": [
-                    "smoke"
-                  ],
+                  "tags": ["smoke"],
                   "tests": [
                     {
                       "timeout": 30000,
@@ -9830,9 +9684,7 @@
             {
               "title": "Touch mode should allow tapping on styled content to enter edit mode @failing",
               "ok": false,
-              "tags": [
-                "failing"
-              ],
+              "tags": ["failing"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -9896,9 +9748,7 @@
             {
               "title": "Touch mode should allow double-tap on canvas to create notes @failing",
               "ok": false,
-              "tags": [
-                "failing"
-              ],
+              "tags": ["failing"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -10090,9 +9940,7 @@
             {
               "title": "Touch mode should allow tapping on styled content to enter edit mode @failing",
               "ok": false,
-              "tags": [
-                "failing"
-              ],
+              "tags": ["failing"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -10156,9 +10004,7 @@
             {
               "title": "Touch mode should allow double-tap on canvas to create notes @failing",
               "ok": false,
-              "tags": [
-                "failing"
-              ],
+              "tags": ["failing"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -10367,9 +10213,7 @@
             {
               "title": "Touch: Create note with double-tap @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -10443,9 +10287,7 @@
             {
               "title": "Touch: Enter and exit edit mode @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -10513,9 +10355,7 @@
             {
               "title": "Touch: Select single note with tap @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -10583,9 +10423,7 @@
             {
               "title": "Touch: Move single note with drag @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -10653,9 +10491,7 @@
             {
               "title": "Touch: Multi-select notes with selection box @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -10723,9 +10559,7 @@
             {
               "title": "Touch: Move multiple selected notes @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -10793,9 +10627,7 @@
             {
               "title": "Touch: Delete single note with long press @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -10863,9 +10695,7 @@
             {
               "title": "Touch: Verify pointer-events bug - clicks on styled content @failing",
               "ok": false,
-              "tags": [
-                "failing"
-              ],
+              "tags": ["failing"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -10933,9 +10763,7 @@
             {
               "title": "Touch: Create note with double-tap @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -11009,9 +10837,7 @@
             {
               "title": "Touch: Enter and exit edit mode @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -11079,9 +10905,7 @@
             {
               "title": "Touch: Select single note with tap @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -11149,9 +10973,7 @@
             {
               "title": "Touch: Move single note with drag @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -11219,9 +11041,7 @@
             {
               "title": "Touch: Multi-select notes with selection box @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -11289,9 +11109,7 @@
             {
               "title": "Touch: Move multiple selected notes @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -11359,9 +11177,7 @@
             {
               "title": "Touch: Delete single note with long press @critical",
               "ok": false,
-              "tags": [
-                "critical"
-              ],
+              "tags": ["critical"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -11429,9 +11245,7 @@
             {
               "title": "Touch: Verify pointer-events bug - clicks on styled content @failing",
               "ok": false,
-              "tags": [
-                "failing"
-              ],
+              "tags": ["failing"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -11507,9 +11321,7 @@
             {
               "title": "Touch: Pinch to zoom @smoke",
               "ok": false,
-              "tags": [
-                "smoke"
-              ],
+              "tags": ["smoke"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -11573,9 +11385,7 @@
             {
               "title": "Touch: Two-finger pan @smoke",
               "ok": false,
-              "tags": [
-                "smoke"
-              ],
+              "tags": ["smoke"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -11639,9 +11449,7 @@
             {
               "title": "Touch: Pinch to zoom @smoke",
               "ok": false,
-              "tags": [
-                "smoke"
-              ],
+              "tags": ["smoke"],
               "tests": [
                 {
                   "timeout": 30000,
@@ -11705,9 +11513,7 @@
             {
               "title": "Touch: Two-finger pan @smoke",
               "ok": false,
-              "tags": [
-                "smoke"
-              ],
+              "tags": ["smoke"],
               "tests": [
                 {
                   "timeout": 30000,

@@ -7,16 +7,19 @@ MindMeld uses a **clean separation** between input detection and business logic 
 ## Core Principles
 
 ### 1. **Single Responsibility Separation**
+
 - **Adapters**: Pure input detection and translation
 - **Behaviors**: Pure business logic and coordination
 - **No mixed responsibilities** - adapters never emit business events, behaviors never handle platform input
 
 ### 2. **Platform Abstraction**
+
 - **Desktop interactions** (mouse, keyboard) and **Touch interactions** (gestures) are completely different input mechanisms
 - **Business logic** (note creation, editing, dragging) is identical regardless of input method
 - Adapters translate platform-specific input into universal behavior calls
 
 ### 3. **Behavior Reuse**
+
 - One behavior class handles the same interaction across all platforms
 - Example: `NoteBehavior.requestEditMode()` works identically for desktop clicks and touch taps
 - Zero code duplication between platforms
@@ -24,6 +27,7 @@ MindMeld uses a **clean separation** between input detection and business logic 
 ## Architecture Components
 
 ### Input Flow
+
 ```
 User Interaction → Adapter (Input Detection) → Behavior (Business Logic) → EventBus → Services
 ```
@@ -31,9 +35,11 @@ User Interaction → Adapter (Input Detection) → Behavior (Business Logic) →
 ### Component Responsibilities
 
 #### **Adapters** (Input Translation Layer)
+
 **Purpose**: Detect platform-specific input patterns and delegate to appropriate behaviors
 
 **Responsibilities**:
+
 - ✅ Detect input events (clicks, taps, drags, gestures)
 - ✅ Identify interaction targets (note, canvas, connector)
 - ✅ Call appropriate behavior methods with normalized parameters
@@ -42,16 +48,17 @@ User Interaction → Adapter (Input Detection) → Behavior (Business Logic) →
 - ❌ **Never** manipulate DOM or application state
 
 **Examples**:
+
 ```javascript
 // DesktopAdapter - Input detection only
 handleDoubleClick(event) {
   const noteElement = event.target.closest('.note');
-  
+
   if (noteElement) {
     // Delegate to behavior - no business logic here
     this.noteBehavior.handleNoteDoubleClick(noteElement, event, 'desktop');
   } else if (this.isCanvasClick(event.target)) {
-    // Delegate to behavior - no business logic here  
+    // Delegate to behavior - no business logic here
     this.canvasBehavior.handleCanvasDoubleClick(event, 'desktop');
   }
 }
@@ -60,7 +67,7 @@ handleDoubleClick(event) {
 handleDoubleTap(touch) {
   const target = this.expandTouchTarget(touch);
   const noteElement = target.closest('.note');
-  
+
   if (noteElement) {
     // Same behavior call, different input type
     this.noteBehavior.handleNoteDoubleClick(noteElement, touch, 'touch');
@@ -72,9 +79,11 @@ handleDoubleTap(touch) {
 ```
 
 #### **Behaviors** (Business Logic Layer)
+
 **Purpose**: Handle interaction logic and coordinate with services
 
 **Responsibilities**:
+
 - ✅ Implement all business logic for interaction types
 - ✅ Emit events to EventBus for service coordination
 - ✅ Manage interaction state and validation
@@ -83,6 +92,7 @@ handleDoubleTap(touch) {
 - ❌ **Never** contain input detection logic
 
 **Examples**:
+
 ```javascript
 // NoteBehavior - Business logic only
 handleNoteDoubleClick(noteElement, inputEvent, inputType) {
@@ -90,7 +100,7 @@ handleNoteDoubleClick(noteElement, inputEvent, inputType) {
   if (!noteElement.classList.contains('selected')) {
     noteManager.selectNote(noteElement);
   }
-  
+
   // Business logic: request edit mode
   this.eventBus.emit('note.requestEdit', {
     noteId: noteElement.id,
@@ -117,22 +127,26 @@ handleCanvasDoubleClick(inputEvent, inputType) {
 ## Interaction Types and Ownership
 
 ### **Note Interactions** → `NoteBehavior`
+
 - **Single click/tap**: Note selection
-- **Double click/tap**: Edit mode entry  
+- **Double click/tap**: Edit mode entry
 - **Click/tap + drag**: Note movement (coordinates with DragBehavior)
 - **Right click/long press**: Context menu
 
 ### **Canvas Interactions** → `CanvasBehavior` (Future)
+
 - **Double click/tap**: Note creation
 - **Click/tap + drag**: Selection box (coordinates with SelectionBoxBehavior)
 - **Single click/tap**: Clear selections
 
 ### **Drag Operations** → `DragBehavior`
+
 - **Note dragging**: Single and multi-note movement
 - **Connection updates**: During note drag operations
 - **Drag state management**: Start, update, end, cancel
 
 ### **Multi-Selection** → `SelectionBoxBehavior`
+
 - **Selection box creation**: Visual selection rectangle
 - **Live selection feedback**: Highlight notes during drag
 - **Selection finalization**: Apply selections on drag end
@@ -140,51 +154,70 @@ handleCanvasDoubleClick(inputEvent, inputType) {
 ## Platform Differences (Preserved in Adapters)
 
 ### **DesktopAdapter Specializations**
+
 ```javascript
 // Desktop-specific optimizations
 class DesktopAdapter {
   // Precise pointer coordinates
-  handlePointerDown(event) { /* Fine pointer control */ }
-  
+  handlePointerDown(event) {
+    /* Fine pointer control */
+  }
+
   // Right-click context menus
-  handleRightClick(event) { /* Desktop context menu patterns */ }
-  
+  handleRightClick(event) {
+    /* Desktop context menu patterns */
+  }
+
   // Hover states for desktop
-  handlePointerMove(event) { /* Hover feedback */ }
-  
+  handlePointerMove(event) {
+    /* Hover feedback */
+  }
+
   // Keyboard shortcuts
-  handleKeyDown(event) { /* Desktop keyboard patterns */ }
+  handleKeyDown(event) {
+    /* Desktop keyboard patterns */
+  }
 }
 ```
 
 ### **TouchAdapter Specializations**
+
 ```javascript
-// Touch-specific optimizations  
+// Touch-specific optimizations
 class TouchAdapter {
   // Hit target expansion for mobile
-  expandTouchTarget(touch) { /* 20px hit target expansion */ }
-  
+  expandTouchTarget(touch) {
+    /* 20px hit target expansion */
+  }
+
   // Gesture recognition
-  handlePinch(touches) { /* Multi-touch zoom */ }
-  
+  handlePinch(touches) {
+    /* Multi-touch zoom */
+  }
+
   // Touch feedback
-  addTouchFeedbackStyles() { /* Visual touch feedback */ }
-  
+  addTouchFeedbackStyles() {
+    /* Visual touch feedback */
+  }
+
   // Long press detection
-  handleLongPress(touch) { /* Touch-specific timing */ }
+  handleLongPress(touch) {
+    /* Touch-specific timing */
+  }
 }
 ```
 
 ## Implementation Guidelines
 
 ### **DO: Clean Adapter Implementation**
+
 ```javascript
 class DesktopAdapter {
   handleDoubleClick(event) {
     // ✅ Input detection
     const noteElement = event.target.closest('.note');
-    
-    // ✅ Target identification  
+
+    // ✅ Target identification
     if (noteElement) {
       // ✅ Behavior delegation
       this.noteBehavior.handleNoteDoubleClick(noteElement, event, 'desktop');
@@ -194,15 +227,16 @@ class DesktopAdapter {
 ```
 
 ### **DON'T: Mixed Responsibilities**
+
 ```javascript
 class DesktopAdapter {
   handleDoubleClick(event) {
     // ❌ Don't emit business events from adapters
     this.eventBus.emit('note.createAtPosition', {...});
-    
+
     // ❌ Don't manipulate DOM from adapters
     noteElement.classList.add('selected');
-    
+
     // ❌ Don't implement business logic in adapters
     if (noteElement.classList.contains('edit-mode')) {
       return; // This belongs in NoteBehavior
@@ -212,6 +246,7 @@ class DesktopAdapter {
 ```
 
 ### **DO: Clean Behavior Implementation**
+
 ```javascript
 class NoteBehavior {
   handleNoteDoubleClick(noteElement, event, inputType) {
@@ -219,20 +254,21 @@ class NoteBehavior {
     if (this.isNoteInEditMode(noteElement)) {
       return;
     }
-    
+
     // ✅ State management
     this.ensureNoteSelected(noteElement);
-    
+
     // ✅ Event emission
     this.eventBus.emit('note.requestEdit', {
       noteId: noteElement.id,
-      inputType
+      inputType,
     });
   }
 }
 ```
 
 ### **DON'T: Platform-Specific Code in Behaviors**
+
 ```javascript
 class NoteBehavior {
   handleNoteDoubleClick(noteElement, event, inputType) {
@@ -240,7 +276,7 @@ class NoteBehavior {
     if (inputType === 'touch') {
       // Touch-specific logic belongs in TouchAdapter
     }
-    
+
     // ❌ Don't access raw DOM events in behaviors
     if (event.touches) {
       // Platform detection belongs in adapters
@@ -252,50 +288,57 @@ class NoteBehavior {
 ## Error Handling and Debugging
 
 ### **Adapter Debugging**
+
 ```javascript
 // Log input detection, not business outcomes
 console.log('DesktopAdapter: Double-click detected', {
   target: event.target.tagName,
-  coordinates: { x: event.clientX, y: event.clientY }
+  coordinates: { x: event.clientX, y: event.clientY },
 });
 ```
 
 ### **Behavior Debugging**
+
 ```javascript
 // Log business logic outcomes, not input details
 console.log('NoteBehavior: Edit mode requested', {
   noteId: noteElement.id,
-  wasSelected: noteElement.classList.contains('selected')
+  wasSelected: noteElement.classList.contains('selected'),
 });
 ```
 
 ## Testing Strategy
 
 ### **Adapter Tests**: Focus on input detection
+
 ```javascript
 describe('DesktopAdapter', () => {
   test('should delegate note double-clicks to NoteBehavior', () => {
     // Test that correct behavior method is called with correct parameters
     const mockNoteBehavior = { handleNoteDoubleClick: jest.fn() };
     adapter.noteBehavior = mockNoteBehavior;
-    
+
     adapter.handleDoubleClick(mockClickEvent);
-    
+
     expect(mockNoteBehavior.handleNoteDoubleClick).toHaveBeenCalled();
   });
 });
 ```
 
 ### **Behavior Tests**: Focus on business logic
+
 ```javascript
 describe('NoteBehavior', () => {
   test('should select note before requesting edit mode', () => {
     const unselectedNote = createMockNote();
-    
+
     behavior.handleNoteDoubleClick(unselectedNote, mockEvent, 'desktop');
-    
+
     expect(noteManager.selectNote).toHaveBeenCalledWith(unselectedNote);
-    expect(eventBus.emit).toHaveBeenCalledWith('note.requestEdit', expect.any(Object));
+    expect(eventBus.emit).toHaveBeenCalledWith(
+      'note.requestEdit',
+      expect.any(Object),
+    );
   });
 });
 ```
@@ -303,6 +346,7 @@ describe('NoteBehavior', () => {
 ## Migration Guide
 
 ### **From Direct Event Emission** (Old Pattern)
+
 ```javascript
 // Old: Direct event emission from adapter
 handleDoubleClick(event) {
@@ -310,7 +354,8 @@ handleDoubleClick(event) {
 }
 ```
 
-### **To Behavior Delegation** (New Pattern)  
+### **To Behavior Delegation** (New Pattern)
+
 ```javascript
 // New: Behavior delegation from adapter
 handleDoubleClick(event) {
@@ -329,18 +374,21 @@ handleDoubleClick(event) {
 ## Benefits of This Architecture
 
 ### **For Developers**
+
 - **Single Source of Truth**: Each interaction type has one authoritative implementation
 - **Easy Debugging**: Clear separation makes issues easier to trace
 - **Faster Development**: Behavior reuse eliminates duplicate implementation
 - **Platform Freedom**: Easy to add new input methods (VR, voice, etc.)
 
 ### **For Testing**
+
 - **Focused Tests**: Test input detection separately from business logic
 - **Better Coverage**: Easier to achieve comprehensive test coverage
 - **Reliable Mocks**: Clear interfaces make mocking straightforward
 - **Fast Execution**: Business logic tests don't need DOM manipulation
 
 ### **For Maintenance**
+
 - **Predictable Changes**: Input changes affect adapters, business changes affect behaviors
 - **Safe Refactoring**: Clear boundaries reduce unintended side effects
 - **Easy Extensions**: New platforms or interactions follow established patterns

@@ -79,7 +79,7 @@ test.describe('Touch Interactions - Core Functionality', () => {
     const bbox = await noteContent.boundingBox();
     await page.touchscreen.tap(bbox.x + 50, bbox.y + 20);
     await page.waitForTimeout(100); // Wait for selection
-    
+
     // Verify note is selected
     await expect(note).toHaveClass(/selected/);
 
