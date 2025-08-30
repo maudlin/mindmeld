@@ -188,9 +188,7 @@ export class GestureRecognizer {
         this.handlePotentialTapState(touchCount, primary);
         break;
 
-      case this.STATES.POTENTIAL_DOUBLE_TAP:
-        this.handlePotentialDoubleTapState(touchCount);
-        break;
+      // POTENTIAL_DOUBLE_TAP removed - double-tap handled by native TouchAdapter
 
       case this.STATES.DRAGGING:
         this.handleDraggingState(touchCount, primary);
@@ -264,8 +262,9 @@ export class GestureRecognizer {
    */
   handlePotentialTapState(touchCount) {
     if (touchCount === 1) {
-      // New touch started - potential double tap
-      this.transitionTo(this.STATES.POTENTIAL_DOUBLE_TAP);
+      // Skip double-tap detection - handled by native TouchAdapter approach
+      // Start new single touch gesture instead
+      this.transitionTo(this.STATES.SINGLE_TOUCH);
       this.startLongPressTimer();
     } else if (touchCount === 0) {
       // Wait briefly for potential second tap
@@ -324,8 +323,7 @@ export class GestureRecognizer {
           lastTapPosition = null;
         }
 
-
-    // Debug logging removed
+        // Debug logging removed
 
         if (
           lastTapTime &&
@@ -334,7 +332,7 @@ export class GestureRecognizer {
           this.calculateDistance(tapPosition, lastTapPosition) <=
             this.TAP_MAX_MOVEMENT
         ) {
-          this.emitDoubleTap(touchData);
+          // this.emitDoubleTap(touchData); // Disabled - handled by native TouchAdapter
 
           // Clear the appropriate timing data
           if (isNoteTarget) {
@@ -352,15 +350,15 @@ export class GestureRecognizer {
           this.emitTap(touchData);
 
           if (isNoteTarget) {
-    // Debug logging removed
+            // Debug logging removed
             this.lastNoteTapTime = Date.now();
             this.lastNoteTapPosition = tapPosition;
           } else if (isCanvasTarget) {
-    // Debug logging removed
+            // Debug logging removed
             this.lastCanvasTapTime = Date.now();
             this.lastCanvasTapPosition = tapPosition;
           } else {
-    // Debug logging removed
+            // Debug logging removed
           }
         }
       }
@@ -593,21 +591,7 @@ export class GestureRecognizer {
     });
   }
 
-  /**
-   * Emit double tap gesture detection → gesture.doubletap
-   */
-  emitDoubleTap(touch) {
-    console.log('🔥 EMITTING DOUBLETAP:', Date.now(), 'at', touch.currentX, touch.currentY);
-    this.eventBus.emit('gesture.doubletap', {
-      touch: {
-        target: touch.target,
-        clientX: touch.currentX,
-        clientY: touch.currentY,
-        type: 'doubletap',
-      },
-      _gesture: 'doubletap',
-    });
-  }
+  // emitDoubleTap removed - double-tap handled by native TouchAdapter
 
   /**
    * Emit long press gesture detection → gesture.longpress
