@@ -164,10 +164,10 @@ describe('Refresh Bug Diagnosis', () => {
 
     const brokenContent = getCurrentMarkdownContent(brokenNote);
     console.log('Broken getAttribute extraction:', brokenContent);
-    expect(brokenContent).toBe('Header'); // Falls back to textContent
+    expect(brokenContent).toBe(''); // FIXED: No longer falls back to textContent (corruption prevention)
 
-    // This could be a source of corruption - if getAttribute fails,
-    // we get the stripped text instead of markdown
+    // This used to be a source of corruption - if getAttribute failed,
+    // we would get the stripped text instead of markdown. NOW FIXED!
   });
 
   it('should test the defang pipeline behavior with different inputs', () => {

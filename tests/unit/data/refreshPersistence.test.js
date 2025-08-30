@@ -221,13 +221,15 @@ describe('Page Refresh Persistence Issue', () => {
     it('should test the critical getCurrentMarkdownContent function', () => {
       // This function is critical - it determines what content gets saved
 
-      // Test with note in edit mode (should return textContent)
+      // Test with note in edit mode (should return textarea value)
+      const mockTextarea = { value: '# Header' };
       const editModeNote = {
-        innerHTML: '<h1>Header</h1>',
+        innerHTML: '<textarea class="edit-textarea"># Header</textarea>',
         textContent: '# Header',
         dataset: { markdown: '# Header' },
         contentEditable: 'true',
         getAttribute: jest.fn(() => 'true'),
+        querySelector: jest.fn(() => mockTextarea), // Mock textarea element
         classList: {
           contains: jest.fn(() => true), // Simulates edit-mode class
         },
@@ -235,7 +237,7 @@ describe('Page Refresh Persistence Issue', () => {
 
       const editModeContent = getCurrentMarkdownContent(editModeNote);
       console.log('Edit mode content:', editModeContent);
-      expect(editModeContent).toBe('# Header'); // Should return textContent
+      expect(editModeContent).toBe('# Header'); // Should return textarea value
 
       // Test with note in view mode (should return dataset.markdown)
       const viewModeNote = {

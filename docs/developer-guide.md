@@ -22,7 +22,8 @@ Before opening a PR, review the CI Quick Checklist below.
 **Service layer**: Clean separation with dependency injection (`src/js/services/`)  
 **Factory pattern**: Pure, testable functions (`src/js/factories/`)  
 **Zero circular deps**: Maintained via automated health checks  
-**Test coverage**: Run `npm run test:coverage` for current status
+**Enterprise data integrity**: Comprehensive corruption resistance with browser compatibility  
+**Test coverage**: Comprehensive unit test suite with enterprise-grade data integrity testing
 
 ```
 src/js/
@@ -39,7 +40,8 @@ src/js/
 ├── services/                # Service layer (noteService, colorService)
 ├── factories/               # Pure factory functions
 ├── features/                # Feature modules (colorPicker, note, connection)
-└── data/                    # Data management (with color persistence)
+├── utils/                   # Utilities (browserDetection, mobileInteractions)
+└── data/                    # Data management with enterprise-grade integrity
 ```
 
 ## Standards
@@ -52,6 +54,7 @@ src/js/
 ## Git Workflow & Branch Protection
 
 **Branch Protection**: The `main` branch has comprehensive protection enabled:
+
 - ✅ **Requires PR reviews** (1 approver minimum)
 - ✅ **Requires up-to-date branches** (prevents the merge conflict scenario)
 - ✅ **Requires linear history** (enforces clean commit history)
@@ -61,21 +64,25 @@ src/js/
 ### Workflow Best Practices
 
 **Starting New Work:**
+
 1. **Always branch from latest main**: `git checkout main && git pull && git checkout -b feature/your-feature`
 2. **Check for conflicting PRs**: Review open PRs that might modify similar files
 3. **Use descriptive branch names**: `feature/MM-123-smoke-test-categorization`
 
 **Creating Pull Requests:**
+
 1. **Use PR template**: Automatically provided, includes dependency checks
 2. **Verify independence**: Ensure your PR can be merged without dependencies
 3. **Mark dependencies**: If your work depends on other open PRs, mark them clearly
 
 **Handling Dependencies:**
+
 - ✅ **Sequential approach**: Wait for infrastructure PRs to merge before starting overlapping work
 - ✅ **Communication**: Coordinate with team when working on related areas
 - ❌ **Avoid parallel overlapping work**: Prevents the complex rebase scenarios
 
 **Branch Protection Benefits:**
+
 - **Prevents merge conflicts**: "Require up-to-date branches" forces automatic conflict resolution
 - **Maintains history quality**: Linear history requirement keeps commits clean
 - **Ensures review**: All changes get proper code review before merge
@@ -83,6 +90,7 @@ src/js/
 ### Common Scenarios
 
 **Scenario 1: Your PR conflicts with main**
+
 ```bash
 # Branch protection will require you to update before merge
 git checkout your-branch
@@ -91,11 +99,13 @@ git push --force-with-lease origin your-branch
 ```
 
 **Scenario 2: Working on dependent features**
+
 1. Wait for base PR to merge to main
 2. Branch from updated main for dependent work
 3. This prevents the "wrong base branch" problem
 
 **Scenario 3: Emergency hotfixes**
+
 1. Still follow protection rules (no direct pushes to main)
 2. Create hotfix PR with expedited review
 3. Branch protection ensures quality even in emergencies
@@ -169,7 +179,7 @@ npm run version:major   # Breaking changes (0.8.0 → 1.0.0)
 - **Event Bus**: `src/js/core/eventBus.js` - Central communication hub
 - **Services**: `src/js/services/` - Business logic layer
   - `colorService.js` - Color state management and validation
-  - `noteService.js` - Note creation and manipulation  
+  - `noteService.js` - Note creation and manipulation
   - `connectionService.js` - Note connection handling
 - **Features**: `src/js/features/` - UI components and interactions
   - `colorPicker/` - Color selection interface and events
@@ -202,18 +212,21 @@ npm run version:major   # Breaking changes (0.8.0 → 1.0.0)
 **Problem**: Touch events not working or behaving inconsistently
 
 **Debug steps:**
+
 1. **Check element detection**:
+
 ```javascript
 // Add to TouchAdapter.handleTap or relevant handler
 console.log('🔥 Touch target debug:', {
   target: event.target,
   tagName: event.target?.tagName,
   className: event.target?.className,
-  elementFromPoint: document.elementFromPoint(x, y)
+  elementFromPoint: document.elementFromPoint(x, y),
 });
 ```
 
 2. **Verify CSS pointer events**:
+
 ```javascript
 // Check computed styles for pointer-events
 const computedStyle = getComputedStyle(element);
@@ -221,12 +234,13 @@ console.log('Pointer events:', computedStyle.pointerEvents);
 ```
 
 3. **Trace event bubbling**:
+
 ```javascript
 element.addEventListener('touchend', (event) => {
   console.log('Event path:', event.composedPath());
   console.log('Target vs currentTarget:', {
     target: event.target,
-    currentTarget: event.currentTarget
+    currentTarget: event.currentTarget,
   });
 });
 ```
@@ -236,22 +250,24 @@ element.addEventListener('touchend', (event) => {
 **Problem**: Touch interactions work inconsistently or stop working after changes
 
 **Common patterns:**
+
 - TouchAdapter intercepting events before existing handlers
 - `event.preventDefault()` called too early
 - Event handler registration order dependencies
 
 **Debug technique:**
+
 ```javascript
 // Add to both TouchAdapter and desktop handlers
-TouchAdapter.handleTap = function(touch) {
+TouchAdapter.handleTap = function (touch) {
   console.log('TouchAdapter intercepted:', touch.target);
   // Check if you're calling preventDefault/stopPropagation
-}
+};
 
-contextMenu.handleClick = function(event) {
+contextMenu.handleClick = function (event) {
   console.log('Desktop handler received:', event.target);
   // Verify event still has correct properties
-}
+};
 ```
 
 ### SVG Element Issues
@@ -259,7 +275,9 @@ contextMenu.handleClick = function(event) {
 **Problem**: SVG elements (PATH, circle) not responding to touch
 
 **Check:**
+
 1. CSS `pointer-events` configuration:
+
 ```css
 #svg-container {
   pointer-events: none; /* Container should not intercept */
@@ -273,6 +291,7 @@ contextMenu.handleClick = function(event) {
 ```
 
 2. Touch event handlers on SVG container:
+
 ```javascript
 // SVG container should have touch handlers
 svgContainer.addEventListener('touchend', this.handleClick);
@@ -284,11 +303,12 @@ When making touch-related changes:
 
 1. **Manual test checklist**:
    - Test with `?mode=touch` parameter
-   - Use browser dev tools mobile viewport  
+   - Use browser dev tools mobile viewport
    - Test on actual mobile device
    - Verify desktop interactions still work
 
 2. **Event handler audit**:
+
 ```javascript
 // Check existing listeners in dev tools
 getEventListeners(document.getElementById('svg-container'));
@@ -296,7 +316,7 @@ getEventListeners(document.getElementById('svg-container'));
 
 3. **Common regression patterns**:
    - New code intercepting existing event flows
-   - CSS changes affecting `pointer-events` 
+   - CSS changes affecting `pointer-events`
    - Event handler registration order changes
 
 ### Performance Issues
@@ -304,17 +324,21 @@ getEventListeners(document.getElementById('svg-container'));
 **Problem**: Touch interactions feel laggy or unresponsive
 
 **Optimization checklist:**
+
 1. Use passive event listeners where possible:
+
 ```javascript
 element.addEventListener('touchstart', handler, { passive: true });
 ```
 
 2. Debounce expensive operations:
+
 ```javascript
 const throttledUpdate = throttle(updateFunction, 16); // 60fps
 ```
 
 3. Minimize DOM queries in touch handlers:
+
 ```javascript
 // Cache elements instead of querying repeatedly
 const cachedElement = document.querySelector('.target');
@@ -323,17 +347,20 @@ const cachedElement = document.querySelector('.target');
 ### Browser DevTools Tips
 
 **Touch simulation:**
+
 1. Open DevTools → Device Toolbar
-2. Select mobile device or set custom viewport  
+2. Select mobile device or set custom viewport
 3. Enable "Touch" option
 4. Use `?mode=touch` parameter for MindMeld-specific touch mode
 
 **Event debugging:**
+
 1. Elements tab → Event Listeners panel
-2. Console: `getEventListeners(element)`  
+2. Console: `getEventListeners(element)`
 3. Network tab: Check for event handler conflicts causing multiple requests
 
 **Performance:**
+
 1. Performance tab → Record during touch interactions
 2. Look for long tasks during touch events
 3. Check for memory leaks in touch event handlers

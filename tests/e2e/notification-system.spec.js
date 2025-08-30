@@ -463,28 +463,8 @@ test.describe('Notification System', () => {
       // File chooser should have been triggered (verified by event listener)
     });
 
-    test('Should integrate notifications with canvas template switching', async ({
-      page,
-    }) => {
-      const canvasPage = new CanvasPage(page);
-      await canvasPage.load();
-
-      // Switch templates to see if any notifications appear
-      await canvasPage.switchToTemplate("Hero's Journey");
-
-      // Template switching might show notifications for errors
-      // If a notification appears, it should be properly formatted
-      const toasts = page.locator('.notification-toast');
-      const toastCount = await toasts.count();
-
-      if (toastCount > 0) {
-        const toast = toasts.first();
-        await expect(toast).toHaveClass(
-          /notification-toast-(success|error|warning|info)/,
-        );
-        await expect(page.locator('.notification-toast-icon')).toBeVisible();
-        await expect(page.locator('.notification-toast-message')).toBeVisible();
-      }
-    });
+    // Template switching functionality removed for V1 simplification
+    // See CANVAS_TEMPLATES_REMOVAL.md for restoration instructions
+    // test('Should integrate notifications with canvas template switching', async ({ page }) => {
   });
 });

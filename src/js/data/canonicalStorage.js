@@ -15,6 +15,10 @@
  */
 
 import { defangToPlainText } from '../features/markdown/defangPipeline.js';
+import {
+  detectBrowser,
+  getStorageErrorMessage,
+} from '../utils/browserDetection.js';
 
 // Storage format version for migration compatibility
 const STORAGE_VERSION = '1.0.0-markdown';
@@ -136,8 +140,29 @@ export function saveNotesToStorage(notes) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(storageData));
     return true;
   } catch (error) {
-    // Handle quota exceeded or other localStorage errors
-    console.warn('Failed to save to localStorage:', error.message);
+    // Enhanced error handling with browser-specific messaging
+    const browserInfo = detectBrowser();
+    let isPrivateMode = false;
+
+    // Try to detect private mode synchronously for error reporting
+    try {
+      const testKey = 'mindmeld-private-test';
+      localStorage.setItem(testKey, 'test');
+      if (localStorage.getItem(testKey) !== 'test') {
+        isPrivateMode = true;
+      } else {
+        localStorage.removeItem(testKey);
+      }
+    } catch {
+      isPrivateMode = true;
+    }
+
+    const userFriendlyMessage = getStorageErrorMessage(
+      error,
+      browserInfo,
+      isPrivateMode,
+    );
+    console.warn('Failed to save to localStorage:', userFriendlyMessage);
     return false;
   }
 }
@@ -166,7 +191,29 @@ export function loadNotesFromStorage() {
       recovered: true,
     };
   } catch (error) {
-    console.warn('Failed to load from localStorage:', error.message);
+    // Enhanced error handling with browser-specific messaging for load failures
+    const browserInfo = detectBrowser();
+    let isPrivateMode = false;
+
+    // Try to detect private mode for better error context
+    try {
+      const testKey = 'mindmeld-load-test';
+      localStorage.setItem(testKey, 'test');
+      if (localStorage.getItem(testKey) !== 'test') {
+        isPrivateMode = true;
+      } else {
+        localStorage.removeItem(testKey);
+      }
+    } catch {
+      isPrivateMode = true;
+    }
+
+    const userFriendlyMessage = getStorageErrorMessage(
+      error,
+      browserInfo,
+      isPrivateMode,
+    );
+    console.warn('Failed to load from localStorage:', userFriendlyMessage);
     return { notes: [], recovered: false };
   }
 }
@@ -240,7 +287,14 @@ export function clearStorage() {
     localStorage.removeItem(STORAGE_KEY);
     return true;
   } catch (error) {
-    console.warn('Failed to clear localStorage:', error.message);
+    // Enhanced error handling for clear operation
+    const browserInfo = detectBrowser();
+    const userFriendlyMessage = getStorageErrorMessage(
+      error,
+      browserInfo,
+      false,
+    );
+    console.warn('Failed to clear localStorage:', userFriendlyMessage);
     return false;
   }
 }

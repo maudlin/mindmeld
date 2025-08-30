@@ -129,17 +129,20 @@ describe('getCurrentState Fix', () => {
 
     const noteContent = document.createElement('div');
     noteContent.className = 'note-content';
+    // Instead of relying on textContent fallback (which corrupts content),
+    // properly set the data-markdown attribute
+    noteContent.setAttribute('data-markdown', 'Plain text fallback');
     noteContent.textContent = 'Plain text fallback';
 
     noteElement.appendChild(noteContent);
     document.body.appendChild(noteElement);
 
-    // Mock getCurrentMarkdownContent to return null/empty
+    // Mock getCurrentMarkdownContent to return null to test fallback to data-markdown
     getCurrentMarkdownContent.mockReturnValue(null);
 
     const result = getCurrentState();
 
-    // Should fall back to textContent
+    // Should use data-markdown attribute as fallback (prevents corruption)
     expect(result.notes[0].content).toBe('Plain text fallback');
   });
 });

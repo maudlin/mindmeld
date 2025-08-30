@@ -1,6 +1,9 @@
 // noteEventService.js - Handles note-related events from the event bus
 import { createNoteAtPosition } from '../factories/noteFactory.js';
-import { deleteNoteWithConnections } from '../features/note/noteDeletion.js';
+import {
+  deleteNoteWithConnections,
+  deleteNote,
+} from '../features/note/noteDeletion.js';
 // MM-171: Legacy event system disabled - using adapter architecture
 // import { addNoteEventListeners } from '../features/note/noteEvents.js';
 import { eventBus } from '../core/eventBus.js';
@@ -24,6 +27,12 @@ export class NoteEventService {
         'NoteEventService: Received note.deleteWithConnections event',
       );
       deleteNoteWithConnections(note, canvas);
+    });
+
+    // Handle selected note deletion from keyboard shortcuts
+    eventBus.on('notes.deleteSelected', () => {
+      console.log('NoteEventService: Received notes.deleteSelected event');
+      deleteNote();
     });
 
     console.log('NoteEventService: Event listeners initialized');

@@ -1,9 +1,11 @@
 # MindMeld Development Context
 
 ## Project Overview
+
 Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven system with clean separation between services, features, and UI components.
 
 ## Essential Commands
+
 - `npm start`: Start development server (http://localhost:8080)
 - `npm test`: Run unit tests (Jest)
 - `npm run test:e2e`: Run E2E tests (Playwright)
@@ -12,6 +14,7 @@ Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven s
 - `npm run health-check`: Architecture health assessment
 
 ## Testing Guidelines
+
 - **E2E Tests**: Always use `createNote()` from CanvasPage helper
 - **Throttling**: The app enforces a 500ms note-creation throttle. Use ~600ms between creations locally and 800–1000ms in CI.
 - **CI Stability**: Some tests need `await page.waitForTimeout(1000)` after page load
@@ -19,6 +22,7 @@ Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven s
 - **DO NOT** skip failing tests for convenience, or refactor tests to pass. Quality is queen.
 
 ## Code Style
+
 - ES6+ modules (import/export), no CommonJS
 - camelCase for files/functions, PascalCase for classes
 - Events named as `noun.verb` (e.g., `note.created`)
@@ -27,6 +31,7 @@ Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven s
 - Document in code, but avoid parenthetical comments (like this that add uneccessary detail)
 
 ## Architecture
+
 - **Bootstrap system**: `src/js/core/bootstrap/` - initialization modules
 - **Event bus**: `src/js/core/eventBus.js` - central communication
 - **Services**: `src/js/services/` - business logic layer
@@ -34,6 +39,7 @@ Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven s
 - **Zero circular dependencies** - monitored automatically
 
 ## Git Workflow
+
 - Branch: `feature/description`
 - All tests must pass before merge
 - Use conventional commits
@@ -41,12 +47,14 @@ Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven s
 - Do NOT skip pre-commit tests
 
 ## Key Files
+
 - `src/js/app.js`: Main entry (minimal dependencies)
 - `README.md` : start here for information about the app
 - `docs/README.md` : start here for detailed information about test standards
 - `playwright.config.js`: E2E configuration with CI optimizations
 
 ## Documentation
+
 - **README.md**: Start here for project overview and setup
 - **/docs folder**: Comprehensive guides including:
   - `testing.md`: Complete testing patterns and debugging
@@ -56,23 +64,28 @@ Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven s
   - Additional specialized documentation
 
 ## Project Management
+
 - **Code**: GitHub repository
 - **Tickets**: Managed in Jira
 
 ## Task Management
+
 - **New Tasks**: Create Jira tickets for all development work
 - **Related Tasks**: Group multiple related tasks under Jira epics
 - **Work Progress**: Move tickets to "In Progress" when starting work
 - **Task Completion**: Move tickets to "Done" only after user confirmation
 
 ## Common Issues
+
 - **"Notes at same position"**: Missing throttle delay between creations
 - **"Browser context closed"**: Use CanvasPage helpers, not direct DOM
 - **CI test failures**: Usually need stability delays
 
 ## Version Management
+
 - `npm run version:patch|minor|major`: Automated semver with HTML sync
 - Updates both package.json and HTML version references
 
 ## Health Monitoring
+
 Run `npm run health-check` for full architecture assessment. Circular dependencies are automatically detected and must be resolved.

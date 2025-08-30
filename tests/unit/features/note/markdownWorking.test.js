@@ -8,17 +8,21 @@ import {
 } from '../../../../src/js/features/note/editViewMode.js';
 
 describe('Working Markdown Integration Tests', () => {
-  let noteContent;
+  let noteContent, noteContainer;
 
   beforeEach(() => {
+    // Create a mock note content element with a parent container
+    noteContainer = document.createElement('div');
+    noteContainer.className = 'note';
     noteContent = document.createElement('div');
     noteContent.className = 'note-content';
     noteContent.contentEditable = true;
-    document.body.appendChild(noteContent);
+    noteContainer.appendChild(noteContent);
+    document.body.appendChild(noteContainer);
   });
 
   afterEach(() => {
-    document.body.removeChild(noteContent);
+    document.body.removeChild(noteContainer);
   });
 
   describe('Basic Functionality', () => {
@@ -59,9 +63,10 @@ describe('Working Markdown Integration Tests', () => {
 
   describe('Edit Mode', () => {
     test('should show raw markdown in edit mode', () => {
-      displayAsEditMode(noteContent, '# Test Header');
-      expect(noteContent.textContent).toBe('# Test Header');
-      expect(noteContent.classList.contains('edit-mode')).toBe(true);
+      const textarea = displayAsEditMode(noteContent, '# Test Header');
+      expect(textarea.tagName).toBe('TEXTAREA');
+      expect(textarea.value).toBe('# Test Header');
+      expect(textarea.classList.contains('edit-mode')).toBe(true);
     });
 
     test('should retrieve markdown from storage', () => {
@@ -69,10 +74,11 @@ describe('Working Markdown Integration Tests', () => {
       displayAsViewMode(noteContent, '# Test');
 
       // Switch to edit mode without providing content
-      displayAsEditMode(noteContent);
+      const textarea = displayAsEditMode(noteContent);
 
-      // Should show the stored markdown
-      expect(noteContent.textContent).toBe('# Test');
+      // Should show the stored markdown in textarea
+      expect(textarea.tagName).toBe('TEXTAREA');
+      expect(textarea.value).toBe('# Test');
     });
   });
 
@@ -84,16 +90,19 @@ describe('Working Markdown Integration Tests', () => {
       displayAsViewMode(noteContent, original);
       expect(noteContent.innerHTML).toBe('<h1>Header</h1>');
 
-      // Edit mode
-      displayAsEditMode(noteContent);
-      expect(noteContent.textContent).toBe(original);
+      // Edit mode - element gets replaced
+      const textarea = displayAsEditMode(noteContent);
+      expect(textarea.value).toBe(original);
 
-      // Back to view mode
-      displayAsViewMode(noteContent, getCurrentMarkdownContent(noteContent));
-      expect(noteContent.innerHTML).toBe('<h1>Header</h1>');
+      // Back to view mode - need to create new div for this test
+      const newDiv = document.createElement('div');
+      newDiv.className = 'note-content';
+      textarea.parentNode.replaceChild(newDiv, textarea);
+      displayAsViewMode(newDiv, getCurrentMarkdownContent(textarea));
+      expect(newDiv.innerHTML).toBe('<h1>Header</h1>');
 
       // Should preserve original
-      expect(getCurrentMarkdownContent(noteContent)).toBe(original);
+      expect(getCurrentMarkdownContent(newDiv)).toBe(original);
     });
 
     test('should handle empty content gracefully', () => {

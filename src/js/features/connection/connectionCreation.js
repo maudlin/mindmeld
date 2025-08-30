@@ -9,12 +9,16 @@ export class ConnectionCreation {
   initializeSVGContainer(canvas) {
     let svgContainer = document.getElementById('svg-container');
     if (!svgContainer) {
+      console.log('🏗️ Creating SVG container');
       svgContainer = this.connectionManager.createSVGElement('svg', {
         id: 'svg-container',
         style:
           'position:absolute; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none;',
       });
       canvas.appendChild(svgContainer);
+      console.log('✅ SVG container created and added to canvas');
+    } else {
+      console.log('♻️ SVG container already exists');
     }
 
     // Clear existing content

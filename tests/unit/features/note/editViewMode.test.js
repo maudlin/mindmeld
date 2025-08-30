@@ -7,18 +7,21 @@ import {
 } from '../../../../src/js/features/note/editViewMode.js';
 
 describe('Edit/View Mode Functions', () => {
-  let noteContent;
+  let noteContent, noteContainer;
 
   beforeEach(() => {
-    // Create a mock note content element
+    // Create a mock note content element with a parent container
+    noteContainer = document.createElement('div');
+    noteContainer.className = 'note';
     noteContent = document.createElement('div');
     noteContent.className = 'note-content';
     noteContent.contentEditable = true;
-    document.body.appendChild(noteContent);
+    noteContainer.appendChild(noteContent);
+    document.body.appendChild(noteContainer);
   });
 
   afterEach(() => {
-    document.body.removeChild(noteContent);
+    document.body.removeChild(noteContainer);
   });
 
   describe('displayAsViewMode', () => {
@@ -83,27 +86,31 @@ describe('Edit/View Mode Functions', () => {
     test('should show raw markdown text for editing', () => {
       const markdown = '# Test Header\n**Bold text**';
 
-      displayAsEditMode(noteContent, markdown);
+      const result = displayAsEditMode(noteContent, markdown);
 
-      expect(noteContent.textContent).toBe('# Test Header\n**Bold text**');
-      expect(noteContent.classList.contains('edit-mode')).toBe(true);
-      expect(noteContent.contentEditable).toBe(true);
+      // displayAsEditMode now returns the textarea that replaced the original element
+      expect(result.tagName).toBe('TEXTAREA');
+      expect(result.value).toBe('# Test Header\n**Bold text**');
+      expect(result.classList.contains('edit-mode')).toBe(true);
+      expect(result.classList.contains('note-content')).toBe(true);
     });
 
     test('should retrieve markdown from data attribute if no parameter provided', () => {
       noteContent.setAttribute('data-markdown', '# Stored Header');
 
-      displayAsEditMode(noteContent);
+      const result = displayAsEditMode(noteContent);
 
-      expect(noteContent.textContent).toBe('# Stored Header');
+      // displayAsEditMode now returns the textarea that replaced the original element
+      expect(result.tagName).toBe('TEXTAREA');
+      expect(result.value).toBe('# Stored Header');
     });
   });
 
   describe('getCurrentMarkdownContent', () => {
     test('should return raw text content in edit mode', () => {
-      displayAsEditMode(noteContent, '# Test');
+      const textarea = displayAsEditMode(noteContent, '# Test');
 
-      const result = getCurrentMarkdownContent(noteContent);
+      const result = getCurrentMarkdownContent(textarea);
 
       expect(result).toBe('# Test');
     });
@@ -127,15 +134,19 @@ describe('Edit/View Mode Functions', () => {
       expect(noteContent.innerHTML).toContain('<strong>Bold text</strong>');
       expect(noteContent.classList.contains('view-mode')).toBe(true);
 
-      // Switch to edit mode (raw markdown)
-      displayAsEditMode(noteContent, markdown);
-      expect(noteContent.textContent).toBe(markdown);
-      expect(noteContent.classList.contains('edit-mode')).toBe(true);
+      // Switch to edit mode (raw markdown) - element gets replaced
+      const textarea = displayAsEditMode(noteContent, markdown);
+      expect(textarea.tagName).toBe('TEXTAREA');
+      expect(textarea.value).toBe(markdown);
+      expect(textarea.classList.contains('edit-mode')).toBe(true);
 
-      // Switch back to view mode
-      displayAsViewMode(noteContent, markdown);
-      expect(noteContent.innerHTML).toContain('<h1>Test Header</h1>');
-      expect(noteContent.classList.contains('view-mode')).toBe(true);
+      // Switch back to view mode - need to create new div for this test
+      const newDiv = document.createElement('div');
+      newDiv.className = 'note-content';
+      textarea.parentNode.replaceChild(newDiv, textarea);
+      displayAsViewMode(newDiv, markdown);
+      expect(newDiv.innerHTML).toContain('<h1>Test Header</h1>');
+      expect(newDiv.classList.contains('view-mode')).toBe(true);
     });
   });
 });

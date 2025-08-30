@@ -48,6 +48,7 @@ export function createNote(x, y, canvas, addEventListeners = null) {
 
   const noteId = toBase62(nextNoteId++);
   note.id = noteId;
+  note.dataset.id = noteId;
 
   // Emit event instead of direct dataStore call
   eventBus.emit('note.created', {
@@ -59,7 +60,10 @@ export function createNote(x, y, canvas, addEventListeners = null) {
 
   // Prevent accidental note deletion with backspace/delete on empty content
   noteContent.addEventListener('keydown', function (event) {
-    const isEmpty = !this.textContent || this.textContent.trim() === '';
+    // Check for textarea in edit mode
+    const textarea = this.querySelector('textarea.edit-textarea');
+    const content = textarea ? textarea.value : this.textContent;
+    const isEmpty = !content || content.trim() === '';
 
     // Prevent backspace and delete (Mac) when content is empty
     if (isEmpty && (event.key === 'Backspace' || event.key === 'Delete')) {
@@ -71,19 +75,31 @@ export function createNote(x, y, canvas, addEventListeners = null) {
   });
 
   noteContent.addEventListener('input', function () {
-    if (this.innerText.length > NOTE_CONTENT_LIMIT) {
-      this.innerText = this.innerText.slice(0, NOTE_CONTENT_LIMIT);
+    // Only handle content length limiting - NO SAVING ON EVERY KEYSTROKE
+    const textarea = this.querySelector('textarea.edit-textarea');
+    if (textarea) {
+      // Handle textarea length limiting
+      if (textarea.value.length > NOTE_CONTENT_LIMIT) {
+        textarea.value = textarea.value.slice(0, NOTE_CONTENT_LIMIT);
+        // Set cursor to end
+        textarea.setSelectionRange(NOTE_CONTENT_LIMIT, NOTE_CONTENT_LIMIT);
+      }
+    } else {
+      // Handle contentEditable (fallback for view mode)
+      if (this.textContent.length > NOTE_CONTENT_LIMIT) {
+        this.textContent = this.textContent.slice(0, NOTE_CONTENT_LIMIT);
 
-      const range = document.createRange();
-      const sel = window.getSelection();
-      range.setStart(this.firstChild, NOTE_CONTENT_LIMIT);
-      range.collapse(true);
-      sel.removeAllRanges();
-      sel.addRange(range);
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.setStart(this.firstChild, NOTE_CONTENT_LIMIT);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
     }
-    // Emit events instead of direct calls
-    eventBus.emit('note.updated', { id: noteId, content: this.textContent });
-    eventBus.emit('state.save');
+
+    // Content length limiting only - save happens on blur/exit
+    // This prevents real-time corruption feedback loops
   });
 
   // Add event listeners if callback provided

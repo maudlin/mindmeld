@@ -15,7 +15,7 @@ export class BaseAdapter {
    * Initialize the adapter with event bus
    * @param {Object} eventBus - Event bus instance for communication
    */
-  async init(eventBus) {
+  async initialize(eventBus) {
     if (this.isInitialized) {
       throw new Error('Adapter is already initialized');
     }

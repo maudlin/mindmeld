@@ -3,6 +3,7 @@
 ## Quick Start
 
 Before contributing, please familiarize yourself with:
+
 - docs/README.md — Documentation index (start here)
 - docs/testing-environments.md — How to run the right test suites locally and in CI
 - docs/ci-e2e-troubleshooting.md — CI vs local Playwright stability guidance
@@ -18,7 +19,7 @@ cd mindmeld && npm install && npm start
 
 **Code**: ES6+, camelCase, events as `noun.verb`  
 **Testing**: Unit tests for logic, E2E for workflows  
-**Architecture**: Event-driven, zero circular deps  
+**Architecture**: Event-driven, zero circular deps
 
 See [Developer Guide](docs/developer-guide.md) for setup details.
 
@@ -28,6 +29,7 @@ Run before submitting: `npm run lint && npm run format && npm test && npm run te
 Commands: See [Scripts Reference](docs/scripts.md)
 
 ### Security scanning (Semgrep)
+
 - Local: `npm run semgrep` (uses the same packs as CI: p/security-audit, p/javascript, p/owasp-top-ten)
 - CI: Runs automatically in GitHub Actions and uploads SARIF to the Security tab
 
@@ -36,7 +38,7 @@ Tip: Semgrep is also part of the `pre-push` script, so it will run before you pu
 ## Testing
 
 **Requirements**: New features need tests. Bug fixes need regression tests.  
-**E2E Testing**: Use `CanvasPage` helper for consistent E2E tests  
+**E2E Testing**: Use `CanvasPage` helper for consistent E2E tests
 
 See [Testing Guide](docs/testing.md) for patterns and [Developer Guide](docs/developer-guide.md) for architecture.
 
@@ -50,7 +52,7 @@ Update docs when changing functionality. Keep it concise and pragmatic.
 
 ```bash
 npm run version:patch   # Bug fixes
-npm run version:minor   # New features  
+npm run version:minor   # New features
 npm run version:major   # Breaking changes
 ```
 

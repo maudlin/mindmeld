@@ -64,7 +64,11 @@ class EditModeController {
    * Handle request to enter edit mode for a note
    */
   handleEditRequest(data) {
-    console.log('EditModeController: Received edit request', data);
+    console.log('EditModeController: Received edit request', {
+      ...data,
+      hasNoteElement: !!data.noteElement,
+      noteElementId: data.noteElement?.id,
+    });
     const { noteId, noteElement } = data;
 
     if (!noteElement) {
@@ -120,40 +124,30 @@ class EditModeController {
       contentElement: noteContent,
     };
 
-    // Get current markdown content
+    // Get current markdown content - NEVER fall back to textContent (corrupted HTML-derived)
     const currentContent =
       getCurrentMarkdownContent(noteContent) ||
       noteContent.dataset.markdown ||
-      noteContent.textContent ||
       '';
 
-    // Switch to edit mode display
-    displayAsEditMode(noteContent, currentContent);
-
-    // Note: contentEditable is already set by displayAsEditMode
-    // We don't set it on noteElement, only on noteContent
-
-    // Focus and select all text for easy editing
-    // For mobile devices, add a small delay to ensure keyboard invocation
-    const isMobile = 'ontouchstart' in window;
-    if (isMobile) {
-      setTimeout(() => {
-        noteContent.focus();
-        // On mobile, select all content for easy editing
-        const range = document.createRange();
-        range.selectNodeContents(noteContent);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-      }, 100);
-    } else {
-      noteContent.focus();
-      const range = document.createRange();
-      range.selectNodeContents(noteContent);
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(range);
+    // Debug warning if no content found
+    if (!currentContent) {
+      console.warn(
+        'EditModeController: No markdown content found for note',
+        noteElement.id,
+      );
     }
+
+    // Switch to edit mode display
+    const newElement = displayAsEditMode(noteContent, currentContent);
+
+    // Update our reference if the element was replaced
+    if (newElement && newElement !== noteContent) {
+      this.currentEditingNote.contentElement = newElement;
+    }
+
+    // Note: The textarea handles its own focus in displayAsEditMode
+    // We don't need to manually focus or select text here
 
     // Blur handling is now done through adapters (DesktopAdapter/TouchAdapter)
     // which emit note.requestView events
@@ -181,19 +175,40 @@ class EditModeController {
     const { element: noteElement, contentElement: noteContent } =
       this.currentEditingNote;
 
-    // Get the current markdown content
-    const rawText =
-      getCurrentMarkdownContent(noteContent) || noteContent.textContent || '';
+    // Get the current markdown content - NO DANGEROUS FALLBACKS
+    const rawText = getCurrentMarkdownContent(noteContent) || '';
 
-    // Store markdown in dataset for persistence
-    noteContent.dataset.markdown = rawText;
+    if (!rawText) {
+      console.warn(
+        'EditModeController: Failed to extract content during exit. Content may be lost.',
+      );
+    }
+
+    // Check if noteContent is a textarea that needs to be replaced with div
+    let targetElement = noteContent;
+    if (noteContent.tagName === 'TEXTAREA') {
+      // Create a new div to replace the textarea
+      const newDiv = document.createElement('div');
+      newDiv.className = 'note-content';
+      newDiv.setAttribute('data-markdown', rawText);
+
+      // Replace the textarea with the new div
+      noteContent.parentNode.replaceChild(newDiv, noteContent);
+      targetElement = newDiv;
+
+      // Update the reference in currentEditingNote
+      this.currentEditingNote.contentElement = newDiv;
+    } else {
+      // Store markdown in dataset for persistence (old approach)
+      noteContent.dataset.markdown = rawText;
+    }
 
     // Switch to view mode display
-    displayAsViewMode(noteContent, rawText);
+    displayAsViewMode(targetElement, rawText);
 
     // Remove editable state
     noteElement.removeAttribute('contenteditable');
-    noteContent.removeAttribute('contenteditable');
+    targetElement.removeAttribute('contenteditable');
 
     // Blur handling is now done through adapters
     // this.removeBlurHandler(noteElement);

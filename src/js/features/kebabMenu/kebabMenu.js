@@ -60,6 +60,14 @@ export class KebabMenu {
 
     // Click-away to close
     document.addEventListener('click', (e) => {
+      // Don't close menu when clicking on textarea in edit mode
+      if (
+        e.target.tagName === 'TEXTAREA' &&
+        e.target.classList.contains('note-content')
+      ) {
+        return;
+      }
+
       if (!this.menu.contains(e.target) && !this.button.contains(e.target)) {
         this.closeMenu();
       }
@@ -236,9 +244,6 @@ export class KebabMenu {
         break;
       case 'paste-clipboard':
         this.dispatchAction('import-from-clipboard');
-        break;
-      case 'change-template':
-        this.dispatchAction('change-template');
         break;
       default:
         console.warn(`Unknown kebab menu action: ${action}`);

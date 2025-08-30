@@ -9,6 +9,7 @@ For which test suite to run (CI/dev/smoke/critical) and tag usage, see Testing E
 ## Development Scripts
 
 ### Server and Development
+
 ```bash
 # Start development server
 npm start
@@ -23,6 +24,7 @@ npm run dev
 ## Code Quality Scripts
 
 ### Linting
+
 ```bash
 # Run ESLint on all JavaScript files
 npm run lint
@@ -38,6 +40,7 @@ npm run security:fix
 ```
 
 ### Code Formatting
+
 ```bash
 # Format all code with Prettier
 npm run format
@@ -52,6 +55,7 @@ npm run format -- "src/**/*.js"
 ## Testing Scripts
 
 ### Unit Testing
+
 ```bash
 # Run all unit tests
 npm test
@@ -71,6 +75,7 @@ npm run test:unit -- --testPathPattern=eventBus
 ```
 
 ### End-to-End Testing
+
 ```bash
 # Run all E2E tests
 npm run test:e2e
@@ -89,6 +94,7 @@ npx playwright test --project=chromium
 ```
 
 ### Combined Testing
+
 ```bash
 # Run all tests (unit + E2E)
 npm test && npm run test:e2e
@@ -100,6 +106,7 @@ npm test && npm run test:e2e
 ## Build and Deployment Scripts
 
 ### Production Build
+
 ```bash
 # Currently using vanilla JavaScript (no build step required)
 # Static files served directly from src/
@@ -109,6 +116,7 @@ npm run validate
 ```
 
 ### Version Management
+
 ```bash
 # Semver Version Bumping (NEW - Automated)
 npm run version:patch   # 0.8.0 -> 0.8.1 (bug fixes)
@@ -126,6 +134,7 @@ npm run version:minor  # Updates package.json + HTML files automatically
 ## Quality Assurance Scripts
 
 ### Architecture Health
+
 ```bash
 # Run comprehensive architecture health check
 npm run health-check
@@ -138,6 +147,7 @@ npx madge --summary src/
 ```
 
 ### Security Scanning
+
 ```bash
 # Run security-focused ESLint rules
 npm run security
@@ -155,6 +165,7 @@ npm audit fix
 ## Utility Scripts
 
 ### Dependencies
+
 ```bash
 # Install all dependencies
 npm install
@@ -171,6 +182,7 @@ npm outdated
 ```
 
 ### Cleanup
+
 ```bash
 # Clean node_modules and reinstall
 rm -rf node_modules package-lock.json && npm install
@@ -185,6 +197,7 @@ rm -rf coverage/
 ## Custom Development Scripts
 
 ### Local Development Helpers
+
 ```bash
 # Watch files and run tests automatically
 npm run test:watch
@@ -197,6 +210,7 @@ npm run pre-push
 ```
 
 ### Debugging
+
 ```bash
 # Run tests with verbose output
 npm run test:unit -- --verbose
@@ -211,6 +225,7 @@ npx playwright test --debug
 ## Script Combinations
 
 ### Pre-commit Validation
+
 ```bash
 # Complete validation before committing
 npm run lint && npm run format:check && npm test
@@ -220,6 +235,7 @@ npm run security && npm run test:unit
 ```
 
 ### CI Simulation
+
 ```bash
 # Simulate CI pipeline locally
 npm run lint
@@ -230,6 +246,7 @@ npm run security
 ```
 
 ### Release Preparation
+
 ```bash
 # Prepare for release
 npm run lint -- --fix
@@ -242,18 +259,21 @@ npm run security
 ## Environment-Specific Scripts
 
 ### Development Environment
+
 ```bash
 NODE_ENV=development npm start
 NODE_ENV=development npm test
 ```
 
 ### Production Environment
+
 ```bash
 NODE_ENV=production npm run validate
 NODE_ENV=production npm run security
 ```
 
 ### Testing Environment
+
 ```bash
 NODE_ENV=test npm run test:unit
 NODE_ENV=test npm run test:e2e
@@ -262,7 +282,9 @@ NODE_ENV=test npm run test:e2e
 ## Script Configuration
 
 ### Jest Configuration
+
 Unit test scripts use configuration from `jest.config.js`:
+
 ```javascript
 // Key configurations:
 - testEnvironment: 'jsdom'
@@ -271,7 +293,9 @@ Unit test scripts use configuration from `jest.config.js`:
 ```
 
 ### Playwright Configuration
+
 E2E test scripts use configuration from `playwright.config.js`:
+
 ```javascript
 // Key configurations:
 - testDir: './tests/e2e'
@@ -281,7 +305,9 @@ E2E test scripts use configuration from `playwright.config.js`:
 ```
 
 ### ESLint Configuration
+
 Linting scripts use configuration from `eslint.config.js`:
+
 ```javascript
 // Key features:
 - Security plugins
@@ -292,6 +318,7 @@ Linting scripts use configuration from `eslint.config.js`:
 ## Advanced Usage
 
 ### Script Parameters
+
 ```bash
 # Pass additional parameters to underlying tools
 npm run lint -- --ext .js,.jsx
@@ -300,6 +327,7 @@ npm run test:e2e -- --project=firefox
 ```
 
 ### Environment Variables
+
 ```bash
 # Set environment variables for scripts
 DEBUG=true npm run test:e2e
@@ -307,6 +335,7 @@ HEADLESS=false npm run test:e2e
 ```
 
 ### Parallel Execution
+
 ```bash
 # Run multiple scripts in parallel
 npm run lint & npm run test:unit & wait
@@ -318,12 +347,14 @@ npm-run-all --parallel lint test:unit
 ## Troubleshooting
 
 ### Common Issues
+
 1. **Permission Errors**: Ensure proper file permissions
 2. **Port Conflicts**: Check if development server port is available
 3. **Cache Issues**: Clear npm cache with `npm cache clean --force`
 4. **Dependency Issues**: Run `npm ci` for clean dependency installation
 
 ### Debug Mode
+
 ```bash
 # Enable debug output for npm scripts
 npm run test:unit --verbose
@@ -331,6 +362,7 @@ DEBUG=* npm run test:e2e
 ```
 
 ### Performance Optimization
+
 ```bash
 # Use npm ci instead of npm install in CI
 npm ci

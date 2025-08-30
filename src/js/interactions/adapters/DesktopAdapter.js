@@ -1,63 +1,102 @@
 // src/js/interactions/adapters/DesktopAdapter.js
 
 import { BaseAdapter } from './BaseAdapter.js';
-import { calculateOffsetPosition, throttle } from '../../utils/utils.js';
 import { noteManager } from '../../services/noteManager.js';
-import { getZoomLevel } from '../../features/zoom/zoomManager.js';
-import { connectionManager } from '../../features/connection/connectionManager.js';
-import { appState } from '../../data/observableState.js';
-import { eventBus } from '../../core/eventBus.js';
 
 /**
  * Desktop input adapter for mouse, keyboard, and trackpad interactions
- * Handles traditional desktop interaction patterns using Pointer Events
+ * Thin input layer that detects desktop-specific interactions and delegates to behaviors
+ *
+ * MM-203: Rebuilt as thin input layer with behavior delegation
  */
 export class DesktopAdapter extends BaseAdapter {
-  constructor() {
+  constructor(interactionController) {
     super();
     this.name = 'desktop';
 
-    // State tracking
+    // Behavior references
+    this.interactionController = interactionController;
+
+    console.log(
+      'DesktopAdapter: Constructor called with interactionController:',
+      {
+        hasInteractionController: !!interactionController,
+        isInitialized: interactionController?.isInitialized,
+        behaviorCount: interactionController?.behaviors?.size,
+      },
+    );
+    this.noteBehavior = null;
+    this.dragBehavior = null;
+    this.selectionBoxBehavior = null;
+    this.canvasBehavior = null;
+    this.connectionBehavior = null;
+
+    // Canvas reference
     this.canvas = null;
-    this.isDragging = false;
-    this.isDrawingSelectionBox = false;
-    this.dragState = null;
-    this.selectionBoxState = null;
-    this.selectionBox = null;
 
-    // Movement state (similar to movement.js)
-    this.shiftX = 0;
-    this.shiftY = 0;
-    this.selectedNotesOffsets = [];
-    this.hasStateChanged = false;
+    // Desktop-specific interaction state
+    this.isPointerDown = false;
+    this.pointerDownTarget = null;
+    this.pointerDownPosition = null;
+    this.dragThreshold = 5; // pixels before drag starts
+    this.isDoubleClickInProgress = false; // Prevent selection box during double-clicks
 
-    // Throttled connection updates
-    this.throttledUpdateConnections = throttle(
-      (noteOrGroup) => connectionManager.updateConnections(noteOrGroup),
-      16,
-    );
-
-    // Throttled functions for performance
-    this.throttledHandleDoubleClick = throttle(
-      this.handleDoubleClickInternal.bind(this),
-      500,
-    );
-    this.throttledUpdateSelectionBox = throttle(
-      this.updateSelectionBox.bind(this),
-      16,
-    ); // ~60fps
+    // Desktop connection drag state
+    this.isConnectionDragging = false;
+    this.connectionStartNote = null;
 
     // Bound event handlers for proper cleanup
     this.boundHandlers = {
       pointerDown: this.handlePointerDown.bind(this),
       pointerMove: this.handlePointerMove.bind(this),
       pointerUp: this.handlePointerUp.bind(this),
-      click: this.handleClick.bind(this), // MM-168: Click-based edit mode
-      doubleClick: this.handleDoubleClick.bind(this),
+      dblclick: this.handleDoubleClick.bind(this),
       wheel: this.handleWheel.bind(this),
       keyDown: this.handleKeyDown.bind(this),
       contextMenu: this.preventContextMenu.bind(this),
     };
+  }
+
+  /**
+   * Initialize adapter with behavior references and event listeners
+   */
+  async initialize(eventBus) {
+    console.log('DesktopAdapter: initialize() called');
+    await super.initialize(eventBus);
+
+    console.log(
+      'DesktopAdapter: About to get behavior references from interaction controller',
+    );
+    // Get behavior references from interaction controller
+    if (this.interactionController) {
+      console.log('DesktopAdapter: InteractionController state:', {
+        isInitialized: this.interactionController.isInitialized,
+        behaviorCount: this.interactionController.behaviors?.size,
+        availableBehaviors: Array.from(
+          this.interactionController.behaviors?.keys() || [],
+        ),
+      });
+
+      this.noteBehavior = this.interactionController.getBehavior('note');
+      this.dragBehavior = this.interactionController.getBehavior('drag');
+      this.selectionBoxBehavior =
+        this.interactionController.getBehavior('selectionBox');
+      this.canvasBehavior = this.interactionController.getBehavior('canvas');
+      this.connectionBehavior =
+        this.interactionController.getBehavior('connection');
+
+      console.log('DesktopAdapter: Behavior references initialized', {
+        hasNoteBehavior: !!this.noteBehavior,
+        hasDragBehavior: !!this.dragBehavior,
+        hasSelectionBoxBehavior: !!this.selectionBoxBehavior,
+        hasCanvasBehavior: !!this.canvasBehavior,
+        hasConnectionBehavior: !!this.connectionBehavior,
+      });
+    } else {
+      console.warn('DesktopAdapter: No InteractionController provided!');
+    }
+
+    await this.initializeEventListeners();
   }
 
   /**
@@ -77,14 +116,13 @@ export class DesktopAdapter extends BaseAdapter {
 
     // Canvas-specific events
     this.canvas.addEventListener('pointerdown', this.boundHandlers.pointerDown);
-    this.canvas.addEventListener('dblclick', this.boundHandlers.doubleClick);
+    this.canvas.addEventListener('dblclick', this.boundHandlers.dblclick);
     this.canvas.addEventListener('wheel', this.boundHandlers.wheel);
 
     // Document-level events for dragging and keyboard
     document.addEventListener('pointermove', this.boundHandlers.pointerMove);
     document.addEventListener('pointerup', this.boundHandlers.pointerUp);
-    document.addEventListener('click', this.boundHandlers.click); // MM-168: Click-based edit mode
-    document.addEventListener('keydown', this.boundHandlers.keyDown);
+    document.addEventListener('keydown', this.boundHandlers.keyDown, true); // Use capture phase for priority
     document.addEventListener('contextmenu', this.boundHandlers.contextMenu);
 
     console.log('DesktopAdapter: Event listeners initialized successfully');
@@ -99,580 +137,479 @@ export class DesktopAdapter extends BaseAdapter {
         'pointerdown',
         this.boundHandlers.pointerDown,
       );
-      this.canvas.removeEventListener(
-        'dblclick',
-        this.boundHandlers.doubleClick,
-      );
+      this.canvas.removeEventListener('dblclick', this.boundHandlers.dblclick);
       this.canvas.removeEventListener('wheel', this.boundHandlers.wheel);
     }
 
+    // Remove document-level event listeners
     document.removeEventListener('pointermove', this.boundHandlers.pointerMove);
     document.removeEventListener('pointerup', this.boundHandlers.pointerUp);
-    document.removeEventListener('click', this.boundHandlers.click);
-    document.removeEventListener('keydown', this.boundHandlers.keyDown);
+    document.removeEventListener('keydown', this.boundHandlers.keyDown, true);
     document.removeEventListener('contextmenu', this.boundHandlers.contextMenu);
-
-    // Cleanup any active selection box
-    this.clearSelectionBox();
 
     // Reset state
     this.canvas = null;
-    this.isDragging = false;
-    this.isDrawingSelectionBox = false;
-    this.dragState = null;
-    this.selectionBoxState = null;
+
+    console.log('DesktopAdapter: Event listeners destroyed');
   }
 
   /**
-   * Handle pointer down events (replaces mousedown)
+   * Handle pointer down events - detect interaction type and delegate to behaviors
    */
   handlePointerDown(event) {
     // Only handle left button (primary pointer)
     if (event.button !== 0) return;
 
+    // Store pointer state for drag detection
+    this.isPointerDown = true;
+    this.pointerDownTarget = event.target;
+    this.pointerDownPosition = { x: event.clientX, y: event.clientY };
+
+    const target = event.target;
+    console.log('DesktopAdapter: Pointer down detected', {
+      target: target.tagName,
+      targetClass: target.className,
+      x: event.clientX,
+      y: event.clientY,
+    });
+
+    // Detect interaction type and delegate to appropriate behavior
+    this.detectInteractionStart(event);
+  }
+
+  /**
+   * Detect what type of interaction is starting and delegate to appropriate behavior
+   */
+  detectInteractionStart(event) {
     const target = event.target;
 
-    // Check if clicking on a note
-    const note = target.classList.contains('note')
-      ? target
-      : target.closest('.note');
-
-    if (note && !target.classList.contains('ghost-connector')) {
-      // Early return for delete button clicks - let the button handle its own event
-      if (target.closest('.shared-delete-button--note')) {
-        return; // No interaction handling, no pointer capture, no dragging
-      }
-
-      // Don't prevent default for note-content clicks (allows editing)
-      if (!target.classList.contains('note-content')) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-      this.handleNoteInteraction(event, note);
-    } else if (this.isClickOnCanvas(target)) {
-      event.preventDefault();
-      event.stopPropagation();
-      // Clear selections immediately on canvas click
-      noteManager.clearSelections();
-      // Exit any active edit mode
-      this.emit('canvas.clicked');
-      this.startSelectionBox(event);
-    }
-  }
-
-  /**
-   * Handle note interaction (selection and drag start)
-   * MM-168: Edit mode now handled by handleClick method
-   */
-  handleNoteInteraction(event, note) {
-    const target = event.target;
-    const isSelected = note.classList.contains('selected');
-
-    // MM-168: Skip note-content clicks - let handleClick manage edit mode
-    if (target.classList.contains('note-content')) {
-      return; // Edit mode handled by handleClick method
-    }
-
-    // Handle selection using noteManager service
-    if (event.shiftKey) {
-      // Multi-select mode - toggle selection
-      if (isSelected) {
-        noteManager.deselectNote(note);
-      } else {
-        noteManager.selectNote(note);
-      }
-    } else {
-      // Single select mode
-      if (!isSelected) {
-        noteManager.clearSelections();
-        noteManager.selectNote(note);
-      }
-    }
-
-    // Start dragging (only if not clicking on content)
-    this.startNoteDrag(event, note);
-  }
-
-  /**
-   * Start note dragging operation
-   */
-  startNoteDrag(event, note) {
-    this.isDragging = true;
-
-    // Prevent text selection during drag operations
-    document.body.classList.add('dragging');
-
-    // Enable drag-optimized connection updates
-    connectionManager.setDragState(true);
-
-    this.dragState = {
-      note: note,
-      pointerId: event.pointerId,
-    };
-
-    // Use pointer capture for reliable dragging
-    if (this.canvas.setPointerCapture) {
-      this.canvas.setPointerCapture(event.pointerId);
-    }
-
-    // Calculate movement offsets (adapted from movement.js)
-    const selectedNotes = noteManager.getSelectedNotes();
-    const zoomLevel = getZoomLevel();
-    const scale = zoomLevel / 5;
-
-    const canvasRect = this.canvas.getBoundingClientRect();
-    const noteRect = note.getBoundingClientRect();
-
-    this.shiftX =
-      (event.clientX - canvasRect.left) / scale -
-      (noteRect.left - canvasRect.left) / scale;
-    this.shiftY =
-      (event.clientY - canvasRect.top) / scale -
-      (noteRect.top - canvasRect.top) / scale;
-
-    this.selectedNotesOffsets = selectedNotes.map((selectedNote) => {
-      const rect = selectedNote.getBoundingClientRect();
-      return {
-        note: selectedNote,
-        offsetX: (rect.left - noteRect.left) / scale,
-        offsetY: (rect.top - noteRect.top) / scale,
-      };
-    });
-
-    this.hasStateChanged = false;
-  }
-
-  /**
-   * Start selection box drawing
-   */
-  startSelectionBox(event) {
-    this.isDrawingSelectionBox = true;
-
-    // Prevent text selection during drag operations
-    document.body.classList.add('dragging');
-
-    const { left: startX, top: startY } = calculateOffsetPosition(
-      this.canvas,
-      event,
-    );
-
-    this.selectionBoxState = {
-      startX: startX,
-      startY: startY,
-      pointerId: event.pointerId,
-    };
-
-    // Use pointer capture for reliable selection box
-    if (this.canvas.setPointerCapture) {
-      this.canvas.setPointerCapture(event.pointerId);
-    }
-
-    // Clear existing selections and create visual selection box
-    noteManager.clearSelections();
-    this.createSelectionBoxElement(startX, startY);
-
-    this.emit('selection.boxStart', {
-      startX: startX,
-      startY: startY,
-    });
-  }
-
-  /**
-   * Handle pointer move events (replaces mousemove)
-   */
-  handlePointerMove(event) {
-    if (this.isDragging && this.dragState) {
-      this.handleNoteDrag(event);
-    } else if (this.isDrawingSelectionBox && this.selectionBoxState) {
-      this.handleSelectionBoxDrag(event);
-    }
-  }
-
-  /**
-   * Handle note dragging during pointer move
-   */
-  handleNoteDrag(event) {
-    if (!this.dragState?.note) return;
-
-    // Move notes using pointer coordinates (adapted from movement.js moveAt function)
-    const zoomLevel = getZoomLevel();
-    const scale = zoomLevel / 5;
-
-    const canvasRect = this.canvas.getBoundingClientRect();
-
-    const canvasX = (event.clientX - canvasRect.left) / scale;
-    const canvasY = (event.clientY - canvasRect.top) / scale;
-
-    const offsetX = canvasX - this.shiftX;
-    const offsetY = canvasY - this.shiftY;
-
-    this.selectedNotesOffsets.forEach(
-      ({ note, offsetX: relativeX, offsetY: relativeY }) => {
-        const noteShiftX = offsetX + relativeX;
-        const noteShiftY = offsetY + relativeY;
-        note.style.left = `${noteShiftX}px`;
-        note.style.top = `${noteShiftY}px`;
-
-        // Update data store via event bus
-        eventBus.emit('note.updated', {
-          id: note.id,
-          left: note.style.left,
-          top: note.style.top,
-        });
-      },
-    );
-
-    // Update connections for each individual note during drag (immediate for smooth movement)
-    this.selectedNotesOffsets.forEach(({ note }) => {
-      connectionManager.updateConnections(note);
-    });
-
-    this.hasStateChanged = true;
-
-    this.emit('note.dragUpdate', {
-      note: this.dragState.note,
-      clientX: event.clientX,
-      clientY: event.clientY,
-    });
-  }
-
-  /**
-   * Handle selection box update during pointer move
-   */
-  handleSelectionBoxDrag(event) {
-    const { left: currentX, top: currentY } = calculateOffsetPosition(
-      this.canvas,
-      event,
-    );
-
-    this.throttledUpdateSelectionBox(
-      this.selectionBoxState.startX,
-      this.selectionBoxState.startY,
-      currentX,
-      currentY,
-    );
-
-    this.emit('selection.boxUpdate', {
-      startX: this.selectionBoxState.startX,
-      startY: this.selectionBoxState.startY,
-      endX: currentX,
-      endY: currentY,
-    });
-
-    // Select notes within the selection box
-    this.selectNotesWithinBox();
-  }
-
-  /**
-   * Handle click events for edit mode (MM-168)
-   */
-  handleClick(event) {
-    const target = event.target;
-
-    // Check if clicking on a note
-    const note = target.classList.contains('note')
-      ? target
-      : target.closest('.note');
-
-    // Check if the click is inside note-content (target itself or parent)
-    const noteContent = target.classList.contains('note-content')
-      ? target
-      : target.closest('.note-content');
-
-    if (note && noteContent) {
+    // Check for ghost connector interaction (CRITICAL - missing from refactor!)
+    if (target.classList.contains('ghost-connector')) {
       console.log(
-        'DesktopAdapter: Click on note-content detected, emitting edit request',
-        note.id,
+        'DesktopAdapter: Ghost connector click detected, delegating to connection system',
       );
-      event.preventDefault();
-      event.stopPropagation();
-
-      // Emit edit mode request via EventBus
-      this.emit('note.requestEdit', {
-        noteId: note.id,
-        noteElement: note,
-        trigger: 'click',
-      });
-
-      // Track editing note for click-outside handling
-      this.editingNote = note;
+      this.handleGhostConnectorInteraction(event);
       return;
     }
 
-    // Handle click-outside for edit mode exit
-    if (this.editingNote && !target.closest('.note')) {
-      this.emit('note.requestView', {
-        noteId: this.editingNote.id,
-        noteElement: this.editingNote,
-        trigger: 'clickOutside',
-      });
-      this.editingNote = null;
+    // Check for note interaction
+    const noteElement = target.closest('.note');
+    if (noteElement) {
+      this.handleNoteInteractionStart(noteElement, event);
+      return;
     }
+
+    // Check for canvas interaction (selection box)
+    if (target.id === 'canvas' || target.closest('#canvas')) {
+      this.handleCanvasInteractionStart();
+      return;
+    }
+
+    console.log('DesktopAdapter: No recognized interaction target');
   }
 
   /**
-   * Handle pointer up events (replaces mouseup)
+   * Handle ghost connector interaction - delegate to ConnectionBehavior
    */
-  handlePointerUp(event) {
-    // Release pointer capture
-    if (this.canvas.releasePointerCapture) {
-      this.canvas.releasePointerCapture(event.pointerId);
+  handleGhostConnectorInteraction(event) {
+    console.log(
+      'DesktopAdapter: Ghost connector click detected - delegating to ConnectionBehavior',
+    );
+
+    if (!this.connectionBehavior) {
+      console.warn('DesktopAdapter: ConnectionBehavior not available');
+      return;
     }
 
-    if (this.isDragging) {
-      this.endNoteDrag(event);
+    const sourceNote = event.target.closest('.note');
+    if (!sourceNote) {
+      console.warn('DesktopAdapter: No source note found for ghost connector');
+      return;
     }
 
-    if (this.isDrawingSelectionBox) {
-      this.endSelectionBox(event);
-    }
+    // Set our state to prevent other interactions during connection drag
+    this.isConnectionDragging = true;
+    this.connectionStartNote = sourceNote;
+
+    // Delegate to ConnectionBehavior for unified desktop connection handling
+    this.connectionBehavior.startDesktopDrag(sourceNote, event, 'desktop');
   }
 
   /**
-   * End note dragging operation
+   * Handle note interaction start - delegate to NoteBehavior
    */
-  endNoteDrag(event) {
-    // Remove dragging class to re-enable text selection
-    document.body.classList.remove('dragging');
+  handleNoteInteractionStart(noteElement, event) {
+    if (!this.noteBehavior) {
+      console.warn('DesktopAdapter: NoteBehavior not available');
+      return;
+    }
 
-    // Disable drag-optimized connection updates
-    connectionManager.setDragState(false);
+    const target = event.target;
+    const isSelected = noteElement.classList.contains('selected');
 
-    if (this.dragState?.note) {
-      // Final connection update for all moved notes (immediate, not throttled)
-      this.selectedNotesOffsets.forEach(({ note }) => {
-        connectionManager.updateConnections(note, this.canvas);
-      });
+    // Check if clicking on note content (editable area)
+    if (
+      target.classList.contains('note-content') ||
+      target.closest('.note-content')
+    ) {
+      // Handle as note click for edit mode
+      console.log(
+        'DesktopAdapter: Note content click detected, delegating to NoteBehavior for edit mode',
+      );
+      this.noteBehavior.handleNoteClick(noteElement, event, 'desktop');
+    } else {
+      // Handle as note border/non-content click for selection (like working implementation)
+      console.log(
+        'DesktopAdapter: Note border click detected, handling selection',
+      );
 
-      // Save state if changes were made
-      if (this.hasStateChanged) {
-        appState.saveToLocalStorage();
+      // Handle selection using noteManager service
+      if (event.shiftKey) {
+        // Multi-select mode - toggle selection
+        if (isSelected) {
+          noteManager.deselectNote(noteElement);
+        } else {
+          noteManager.selectNote(noteElement);
+        }
+      } else {
+        // Single select mode
+        if (!isSelected) {
+          noteManager.clearSelections();
+          noteManager.selectNote(noteElement);
+        }
       }
     }
-
-    this.emit('note.dragEnd', {
-      note: this.dragState.note,
-      endX: event.clientX,
-      endY: event.clientY,
-    });
-
-    // Reset state
-    this.isDragging = false;
-    this.dragState = null;
-    this.hasStateChanged = false;
-    this.selectedNotesOffsets = [];
   }
 
   /**
-   * End selection box operation
+   * Handle canvas interaction start - prepare for selection box
    */
-  endSelectionBox() {
-    // Remove dragging class to re-enable text selection
-    document.body.classList.remove('dragging');
+  handleCanvasInteractionStart() {
+    // Don't start selection during double-click
+    if (this.isDoubleClickInProgress) {
+      console.log(
+        'DesktopAdapter: Skipping selection box - double-click in progress',
+      );
+      return;
+    }
 
-    this.emit('selection.boxEnd');
-    this.clearSelectionBox();
+    if (!this.selectionBoxBehavior) {
+      console.warn('DesktopAdapter: SelectionBoxBehavior not available');
+      return;
+    }
 
-    this.isDrawingSelectionBox = false;
-    this.selectionBoxState = null;
+    console.log(
+      'DesktopAdapter: Canvas click detected, preparing selection box',
+    );
+
+    // Clear existing selections immediately on canvas click (like working implementation)
+    noteManager.clearSelections();
+
+    // Emit canvas.clicked for edit mode handling
+    this.emit('canvas.clicked');
+
+    // Don't start selection box immediately - wait for drag movement
+    // This prevents accidental selection boxes on single clicks
+  }
+
+  /**
+   * Handle pointer move events - detect drags and delegate to behaviors
+   */
+  handlePointerMove(event) {
+    if (!this.isPointerDown || !this.pointerDownPosition) return;
+
+    // Check if we're dragging a connection (desktop behavior)
+    if (this.isConnectionDragging && this.connectionBehavior) {
+      // Delegate to ConnectionBehavior for drag updates
+      this.connectionBehavior.updateDrag(event, 'desktop');
+      return;
+    }
+
+    // Check if we already have active interactions
+    if (this.dragBehavior && this.dragBehavior.isDragging) {
+      this.dragBehavior.updateDrag(event, 'desktop');
+      return;
+    }
+
+    if (
+      this.selectionBoxBehavior &&
+      this.selectionBoxBehavior.isDrawingSelectionBox
+    ) {
+      this.selectionBoxBehavior.updateSelectionBox(event, 'desktop');
+      return;
+    }
+
+    // Check if we've exceeded the drag threshold to start new interaction
+    const deltaX = event.clientX - this.pointerDownPosition.x;
+    const deltaY = event.clientY - this.pointerDownPosition.y;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+    if (distance < this.dragThreshold) return;
+
+    // Determine what type of drag this is
+    this.handleDragStart(event);
+  }
+
+  /**
+   * Handle drag start detection - delegate to appropriate behavior
+   */
+  handleDragStart(event) {
+    const target = this.pointerDownTarget;
+
+    // Check for note drag
+    const noteElement = target.closest('.note');
+    if (noteElement) {
+      this.handleNoteDragStart(noteElement, event);
+      return;
+    }
+
+    // Check for canvas selection box
+    if (target.id === 'canvas' || target.closest('#canvas')) {
+      this.handleSelectionBoxStart(event);
+      return;
+    }
+  }
+
+  /**
+   * Handle note drag start - delegate to DragBehavior
+   */
+  handleNoteDragStart(noteElement, event) {
+    if (!this.dragBehavior) {
+      console.warn('DesktopAdapter: DragBehavior not available');
+      return;
+    }
+
+    console.log(
+      'DesktopAdapter: Note drag detected, delegating to DragBehavior',
+    );
+
+    // Create synthetic start event with original position
+    const startEvent = {
+      ...this.pointerDownPosition,
+      clientX: this.pointerDownPosition.x,
+      clientY: this.pointerDownPosition.y,
+      preventDefault: () => {},
+    };
+
+    this.dragBehavior.startDrag(noteElement, startEvent, 'desktop');
+
+    // Continue with current position
+    this.dragBehavior.updateDrag(event, 'desktop');
+  }
+
+  /**
+   * Handle selection box start - delegate to SelectionBoxBehavior
+   */
+  handleSelectionBoxStart(event) {
+    // Don't start selection during double-click
+    if (this.isDoubleClickInProgress) {
+      console.log(
+        'DesktopAdapter: Skipping selection box start - double-click in progress',
+      );
+      return;
+    }
+
+    if (!this.selectionBoxBehavior) {
+      console.warn('DesktopAdapter: SelectionBoxBehavior not available');
+      return;
+    }
+
+    console.log(
+      'DesktopAdapter: Selection box detected, delegating to SelectionBoxBehavior',
+    );
+
+    // Create synthetic start event with original position
+    const startEvent = {
+      ...this.pointerDownPosition,
+      clientX: this.pointerDownPosition.x,
+      clientY: this.pointerDownPosition.y,
+      preventDefault: () => {},
+    };
+
+    this.selectionBoxBehavior.startSelectionBox(startEvent, 'desktop');
+
+    // Continue with current position
+    this.selectionBoxBehavior.updateSelectionBox(event, 'desktop');
+  }
+
+  /**
+   * Handle pointer up events - end interactions and delegate to behaviors
+   */
+  handlePointerUp(event) {
+    if (!this.isPointerDown) return;
+
+    console.log('DesktopAdapter: Pointer up detected');
+
+    // End any active interactions
+    this.handleInteractionEnd(event);
+
+    // Reset pointer state
+    this.isPointerDown = false;
+    this.pointerDownTarget = null;
+    this.pointerDownPosition = null;
+  }
+
+  /**
+   * Handle interaction end - delegate to active behaviors
+   */
+  handleInteractionEnd(event) {
+    // Check if we're ending a connection drag (desktop behavior)
+    if (this.isConnectionDragging && this.connectionBehavior) {
+      console.log('DesktopAdapter: Connection drag ended');
+      // Delegate to ConnectionBehavior to complete/cancel connection
+      this.connectionBehavior.endDrag(event, 'desktop');
+      // Reset our state
+      this.isConnectionDragging = false;
+      this.connectionStartNote = null;
+      return;
+    }
+
+    // Check if we have an active drag behavior
+    if (this.dragBehavior && this.dragBehavior.isDragging) {
+      console.log('DesktopAdapter: Ending drag interaction');
+      this.dragBehavior.endDrag(event, 'desktop');
+      return;
+    }
+
+    // Check if we have an active selection box
+    if (
+      this.selectionBoxBehavior &&
+      this.selectionBoxBehavior.isDrawingSelectionBox
+    ) {
+      console.log('DesktopAdapter: Ending selection box interaction');
+      this.selectionBoxBehavior.endSelectionBox(event, 'desktop');
+      return;
+    }
+
+    // If no active interactions, this was just a click - already handled in pointer down
   }
 
   /**
    * Handle double-click events for note creation
    */
   handleDoubleClick(event) {
-    console.log(
-      'DesktopAdapter: Double-click detected on target:',
-      event.target,
-      'isClickOnCanvas:',
-      this.isClickOnCanvas(event.target),
-    );
+    event.preventDefault();
 
-    // Check if clicking directly on canvas (not on notes)
-    if (this.isClickOnCanvas(event.target)) {
-      console.log('DesktopAdapter: Processing double-click for note creation');
-      this.throttledHandleDoubleClick(event);
-    }
-  }
-
-  /**
-   * Internal double-click handler (throttled)
-   */
-  handleDoubleClickInternal(event) {
-    console.log('DesktopAdapter: Emitting note.createAtPosition event');
-
-    this.emit('note.createAtPosition', {
-      canvas: this.canvas,
-      event: event,
+    console.log('DesktopAdapter: Double-click detected', {
+      x: event.clientX,
+      y: event.clientY,
+      target: event.target?.id,
     });
 
-    this.emit('state.save');
-    console.log('DesktopAdapter: Note creation event emitted');
+    // Set flag to prevent selection box interference
+    this.isDoubleClickInProgress = true;
+
+    // Clear the flag after a short delay
+    setTimeout(() => {
+      this.isDoubleClickInProgress = false;
+    }, 100);
+
+    // Determine interaction type and delegate to behaviors
+    const noteElement = event.target.closest('.note');
+
+    if (noteElement) {
+      // Note double-click → NoteBehavior for edit mode
+      if (this.noteBehavior) {
+        console.log(
+          'DesktopAdapter: Note double-click detected, delegating to NoteBehavior',
+        );
+        this.noteBehavior.handleNoteDoubleClick(noteElement, event, 'desktop');
+      }
+    } else if (
+      (event.target === this.canvas || event.target.closest('#canvas')) &&
+      !event.target.closest('.context-menu')
+    ) {
+      // Canvas double-click → CanvasBehavior for note creation (but not on context menus)
+      if (this.canvasBehavior) {
+        console.log(
+          'DesktopAdapter: Canvas double-click detected, delegating to CanvasBehavior',
+        );
+        this.canvasBehavior.handleCanvasDoubleClick(event, 'desktop');
+      } else {
+        console.warn(
+          'DesktopAdapter: CanvasBehavior not available for note creation',
+        );
+      }
+    }
   }
 
   /**
-   * Handle wheel events for zoom and pan
+   * Handle wheel events for zoom (KEEP - this is input-specific)
    */
   handleWheel(event) {
-    if (event.ctrlKey || event.metaKey) {
-      // Zoom with Ctrl/Cmd + wheel
-      event.preventDefault();
+    event.preventDefault();
 
-      const direction = event.deltaY < 0 ? 'in' : 'out';
+    const rect = this.canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
 
-      this.emit('zoom.change', {
-        direction: direction,
-        centerX: event.clientX,
-        centerY: event.clientY,
-      });
-    }
-    // Note: Desktop wheel without modifier keys should not pan
-    // Pan functionality is available via right-click drag in zoomManager
+    const direction = event.deltaY > 0 ? 'out' : 'in';
+    this.emit('canvas.zoom', { direction, x, y });
   }
 
   /**
-   * Handle keyboard events
+   * Handle keyboard events (KEEP - this is input-specific)
    */
   handleKeyDown(event) {
-    const isEditingNote = this.isEditingNoteContent(event.target);
-
-    if (event.key === 'Delete' || event.key === 'Backspace') {
-      if (!isEditingNote) {
-        // Not editing: delete selected items
-        event.preventDefault();
-        // Get selected notes and emit delete events for each
-        const selectedNotes = document.querySelectorAll('.note.selected');
-        selectedNotes.forEach((note) => {
-          this.emit('note.deleteWithConnections', {
-            note,
-            canvas: this.canvas,
-          });
-        });
-        this.emit('state.save');
-      } else if (
-        event.key === 'Backspace' &&
-        event.target.textContent.length === 0
-      ) {
-        // Editing but content is empty: delete the note
-        event.preventDefault();
-        const note = event.target.closest('.note');
-        if (note) {
-          this.emit('note.deleteWithConnections', {
-            note,
-            canvas: this.canvas,
-          });
-          this.emit('state.save');
-        }
+    // Handle keyboard shortcuts
+    if (event.ctrlKey || event.metaKey) {
+      switch (event.key) {
+        case 'a':
+          event.preventDefault();
+          this.emit('notes.selectAll');
+          break;
+        case 'z':
+          event.preventDefault();
+          if (event.shiftKey) {
+            this.emit('canvas.redo');
+          } else {
+            this.emit('canvas.undo');
+          }
+          break;
+        case '=':
+        case '+':
+          event.preventDefault();
+          this.emit('canvas.zoomIn');
+          break;
+        case '-':
+          event.preventDefault();
+          this.emit('canvas.zoomOut');
+          break;
+        case '0':
+          event.preventDefault();
+          this.emit('canvas.resetZoom');
+          break;
       }
-      // If editing with content, allow default behavior
+    }
+
+    // Handle standalone keys
+    switch (event.key) {
+      case 'Delete':
+      case 'Backspace':
+        // Only delete if not in edit mode
+        if (!document.querySelector('.note-content.edit-mode')) {
+          this.emit('notes.deleteSelected');
+        }
+        break;
+      case 'Escape':
+        // Always clear selections when Escape is pressed (regardless of active interaction)
+        noteManager.clearSelections();
+        this.emit('interaction.cancel');
+        break;
     }
   }
 
   /**
-   * Prevent default context menu
+   * Prevent context menu (KEEP - this is input-specific)
    */
   preventContextMenu(event) {
     event.preventDefault();
   }
 
   /**
-   * Check if target is the canvas (not a note or other element)
+   * Check if click target is canvas (UTILITY - keep)
    */
   isClickOnCanvas(target) {
-    return (
-      target.id === 'canvas' ||
-      target.classList.contains('background-layout') ||
-      (target === this.canvas &&
-        !target.classList.contains('note') &&
-        !target.closest('.note'))
-    );
-  }
-
-  /**
-   * Check if currently editing note content
-   */
-  isEditingNoteContent(element) {
-    return (
-      element.classList.contains('note-content') &&
-      element.isContentEditable &&
-      document.activeElement === element
-    );
-  }
-
-  /**
-   * Create visual selection box element
-   */
-  createSelectionBoxElement(startX, startY) {
-    this.clearSelectionBox();
-
-    this.selectionBox = document.createElement('div');
-    this.selectionBox.id = 'selection-box';
-    Object.assign(this.selectionBox.style, {
-      position: 'absolute',
-      border: '1px dashed #000',
-      backgroundColor: 'rgba(0, 0, 255, 0.1)',
-      left: `${startX}px`,
-      top: `${startY}px`,
-      width: '0px',
-      height: '0px',
-      pointerEvents: 'none', // Don't interfere with pointer events
-    });
-
-    this.canvas.appendChild(this.selectionBox);
-  }
-
-  /**
-   * Update selection box visual
-   */
-  updateSelectionBox(startX, startY, currentX, currentY) {
-    if (!this.selectionBox) return;
-
-    const width = currentX - startX;
-    const height = currentY - startY;
-
-    Object.assign(this.selectionBox.style, {
-      width: `${Math.abs(width)}px`,
-      height: `${Math.abs(height)}px`,
-      left: `${Math.min(currentX, startX)}px`,
-      top: `${Math.min(currentY, startY)}px`,
-    });
-  }
-
-  /**
-   * Clear selection box visual
-   */
-  clearSelectionBox() {
-    if (this.selectionBox) {
-      this.selectionBox.remove();
-      this.selectionBox = null;
-    }
-  }
-
-  /**
-   * Select notes that fall within the current selection box
-   */
-  selectNotesWithinBox() {
-    if (!this.selectionBox) return;
-
-    const notes = document.querySelectorAll('.note');
-    const boxRect = this.selectionBox.getBoundingClientRect();
-
-    notes.forEach((note) => {
-      const noteRect = note.getBoundingClientRect();
-
-      // Use intersection-based selection instead of containment
-      // This is more user-friendly and matches typical selection behavior
-      const intersects =
-        noteRect.left < boxRect.right &&
-        noteRect.right > boxRect.left &&
-        noteRect.top < boxRect.bottom &&
-        noteRect.bottom > boxRect.top;
-
-      if (intersects) {
-        noteManager.selectNote(note);
-      } else {
-        noteManager.deselectNote(note);
-      }
-    });
+    return target === this.canvas;
   }
 }

@@ -10,7 +10,9 @@ export class AdaptiveHelp {
   constructor() {
     this.capabilityDetector = new CapabilityDetector();
     this.helpElement = null;
+    this.helpButton = null;
     this.isTouch = false;
+    this.isHelpVisible = false;
   }
 
   /**
@@ -20,6 +22,7 @@ export class AdaptiveHelp {
     this.helpElement = document.getElementById('help-text');
     this.isTouch = this.capabilityDetector.isTouchFirst();
 
+    this.createHelpButton();
     this.updateHelpText();
     this.updateAriaLabels();
     this.setupEventListeners();
@@ -51,9 +54,9 @@ export class AdaptiveHelp {
         ['Create a note:', 'double-tap on the canvas'],
         ['Select notes:', 'tap to select'],
         ['Color notes:', 'use the color picker at the top'],
-        ['Connect notes:', 'drag from one connector to another'],
+        ['Connect notes:', 'tap connecting point on one note, tap second note'],
         ['Pan & Zoom:', 'drag to pan, pinch to zoom'],
-        ['Long press:', 'for context menu'],
+        ['Long press on note:', 'start moving note'],
       );
     } else if (isHybrid) {
       lines.push(
@@ -79,7 +82,7 @@ export class AdaptiveHelp {
         ],
         [
           'Connect two notes:',
-          'drag a line from one blue connector to another',
+          'drag a line from one blue connector to another note',
         ],
         [
           'Select multiple notes:',
@@ -153,6 +156,66 @@ export class AdaptiveHelp {
   }
 
   /**
+   * Create the help button element
+   */
+  createHelpButton() {
+    // Create help button
+    this.helpButton = document.createElement('button');
+    this.helpButton.id = 'help-button';
+    this.helpButton.className = 'help-button';
+    this.helpButton.innerHTML = '?';
+    this.helpButton.setAttribute(
+      'aria-label',
+      this.isTouch ? 'Tap to show help' : 'Click to show help',
+    );
+    this.helpButton.setAttribute('role', 'button');
+    this.helpButton.setAttribute('tabindex', '0');
+
+    // Add click/tap event listener
+    this.helpButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.toggleHelp();
+    });
+
+    // Add keyboard support
+    this.helpButton.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        this.toggleHelp();
+      }
+    });
+
+    // Insert into DOM
+    document.body.appendChild(this.helpButton);
+  }
+
+  /**
+   * Toggle help text visibility
+   */
+  toggleHelp() {
+    if (!this.helpElement) return;
+
+    this.isHelpVisible = !this.isHelpVisible;
+
+    if (this.isHelpVisible) {
+      this.helpElement.classList.add('visible');
+      this.helpButton.setAttribute(
+        'aria-label',
+        this.isTouch ? 'Tap to hide help' : 'Click to hide help',
+      );
+      this.helpButton.setAttribute('aria-expanded', 'true');
+    } else {
+      this.helpElement.classList.remove('visible');
+      this.helpButton.setAttribute(
+        'aria-label',
+        this.isTouch ? 'Tap to show help' : 'Click to show help',
+      );
+      this.helpButton.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  /**
    * Setup event listeners for input mode changes
    */
   setupEventListeners() {
@@ -169,6 +232,24 @@ export class AdaptiveHelp {
       setTimeout(() => {
         this.updateHelpText();
       }, 100);
+    });
+
+    // Close help when clicking outside
+    document.addEventListener('click', (e) => {
+      if (
+        this.isHelpVisible &&
+        !this.helpElement.contains(e.target) &&
+        !this.helpButton.contains(e.target)
+      ) {
+        this.toggleHelp();
+      }
+    });
+
+    // Close help on escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.isHelpVisible) {
+        this.toggleHelp();
+      }
     });
   }
 

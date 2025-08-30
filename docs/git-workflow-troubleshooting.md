@@ -22,13 +22,15 @@ gh pr list --state open --json number,title,files
 These files/directories are frequently modified and require coordination:
 
 **High-Risk Areas:**
+
 - Core testing infrastructure files (e.g., helpers, page objects)
-- `package.json` - Scripts and dependencies  
+- `package.json` - Scripts and dependencies
 - `docs/testing.md` - Test documentation
 - `CLAUDE.md` - Development context
 - Any files in `src/js/core/` - Core architecture
 
 **Medium-Risk Areas:**
+
 - Test spec files (`*.spec.js`, `*.test.js`)
 - Service files (`src/js/services/`)
 - Documentation files (`docs/*.md`)
@@ -36,6 +38,7 @@ These files/directories are frequently modified and require coordination:
 ### Dependency Resolution Strategies
 
 **Strategy 1: Sequential Development (Recommended)**
+
 ```bash
 # Wait for infrastructure PRs to merge first
 git checkout main
@@ -44,6 +47,7 @@ git checkout -b feature/your-dependent-work
 ```
 
 **Strategy 2: Stacked PRs (Advanced)**
+
 ```bash
 # Base your work on another open PR branch
 git checkout feature/base-pr-branch
@@ -52,6 +56,7 @@ git checkout -b feature/dependent-work
 ```
 
 **Strategy 3: Coordinate with Team**
+
 - Comment on related PRs about your intended changes
 - Use draft PRs for early coordination
 - Plan work sequencing in team meetings
@@ -63,6 +68,7 @@ git checkout -b feature/dependent-work
 **What it means**: Another PR merged while yours was open
 
 **Solution**:
+
 ```bash
 git checkout your-branch
 git fetch origin
@@ -76,9 +82,10 @@ git push --force-with-lease origin your-branch
 **What it means**: You have merge commits instead of a linear history
 
 **Solution**:
+
 ```bash
 # Use rebase instead of merge
-git checkout your-branch  
+git checkout your-branch
 git rebase origin/main  # Instead of git merge main
 git push --force-with-lease origin your-branch
 ```
@@ -88,6 +95,7 @@ git push --force-with-lease origin your-branch
 **What it means**: Tests or lint checks are failing
 
 **Solution**:
+
 ```bash
 # Run checks locally first
 npm test && npm run test:e2e
@@ -153,7 +161,7 @@ For substantial infrastructure work (like the E2E test infrastructure):
 # 1. Sync with main
 git checkout main && git pull origin main
 
-# 2. Check open PRs  
+# 2. Check open PRs
 gh pr list --state open
 
 # 3. Coordinate if you see conflicts
@@ -191,6 +199,7 @@ gh pr create --template
 ### PR Comments for Dependencies
 
 When your PR depends on another:
+
 ```
 ## Dependencies
 This PR depends on #123 (E2E infrastructure improvements) merging first.
@@ -205,8 +214,9 @@ This PR depends on #123 (E2E infrastructure improvements) merging first.
 ### Coordinating Overlapping Work
 
 When you discover file conflicts:
+
 ```
-@teammate I see we're both modifying `CanvasPage.js`. 
+@teammate I see we're both modifying `CanvasPage.js`.
 
 My changes: Adding connection verification methods
 Your changes: Browser closure protection

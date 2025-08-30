@@ -4,8 +4,10 @@
   --secondary-color: #d1d5db; /* Light text color */
   --accent-color: #ffd588; /* Accent color */
   --hover-color: rgba(30, 65, 107, 0.5); /* Hover background */
-  --font-family: 'Poppins', sans-serif;
+  --font-family: 'Inter', sans-serif;
   --font-family-alt: 'Over the Rainbow', cursive;
+  --font-family-headings: 'Poppins', sans-serif;
+  --font-family-body: 'Inter', sans-serif;
 
   /* Note Color Palette Variables */
   /* Yellow (Default) */
@@ -200,14 +202,84 @@ html {
 /* Help Text Styles */
 #help-text {
   position: fixed;
-  bottom: 10px;
-  left: 10px;
-  color: rgba(94, 94, 94, 0.5); /* 50% gray */
+  bottom: 70px; /* Position above help button */
+  left: 20px;
+  color: rgba(94, 94, 94, 0.8);
   font-family: var(--font-family);
   font-size: 10pt;
   line-height: 1.5;
   pointer-events: none;
   user-select: none;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-width: 300px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease,
+    transform 0.2s ease;
+  z-index: 1001;
+}
+
+#help-text.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Help Button Styles */
+.help-button {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  color: #374151;
+  font-family: var(--font-family);
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.1s ease;
+  z-index: 1002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+
+.help-button:hover {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.help-button:active {
+  transform: scale(0.95);
+}
+
+.help-button:focus {
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    0 0 0 2px #4198ff;
+}
+
+/* Touch-specific help button adjustments */
+@media (pointer: coarse) {
+  .help-button {
+    width: 48px;
+    height: 48px;
+    font-size: 18px;
+  }
 }
 
 /* Zoom Display Styles */
@@ -263,26 +335,116 @@ html {
   outline: none; /* Remove default outline */
 }
 
+/* ===============================================
+   NOTE CONTENT STYLING - SIMPLIFIED ARCHITECTURE
+   
+   Base: Inter 0.9em, normal weight (400)
+   - Consistent across view and edit modes
+   - All elements inherit unless specified
+   
+   View Mode Deviations:
+   - H1: Poppins, 1.3em, bold (700)
+   - H2: Inter, 1.1em, semibold (600)
+   - Strong: Inter, bold (700)
+   - Em: Inter, italic
+   
+   Edit Mode: Inherits all base styles via textarea
+   =============================================== */
+
 .note-content {
-  font-family: var(--font-family);
-  font-size: 0.8em;
-  font-weight: bold;
+  font-family: 'Inter', var(--font-family-body);
+  font-size: 0.9em; /* Standard size for all note content */
+  font-weight: 400; /* Normal weight - bold is a markdown feature */
+  line-height: 1.4;
   color: #333;
-  outline: none; /* Remove default outline when focused */
+  text-align: center;
+  outline: none;
   min-width: 50px;
-  min-height: 24px; /* Ensure note-content has clickable area even when empty */
+  min-height: 24px;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: center;
-  box-sizing: border-box; /* Include border/padding in dimensions */
-  cursor: text; /* Show text cursor to indicate editability */
+  box-sizing: border-box;
+  cursor: text;
+  width: 100%; /* Always use full note width */
 }
 
-/* Ensure all rendered markdown elements allow proper event handling */
-/* MM-173: Fix E2E test click detection on styled HTML elements */
 .note-content.view-mode * {
   cursor: text; /* Show text cursor on all child elements to indicate editability */
-  pointer-events: none; /* Ensure clicks bubble to parent for E2E tests */
+}
+
+/* Edit mode textarea styling */
+.note-content.edit-mode .edit-textarea {
+  /* pointer-events no longer needs override since parent CSS hack was removed */
+  position: relative; /* Ensure proper stacking context */
+  z-index: 10; /* Place above other elements */
+}
+
+/* MM-175: Note Content Typography Improvements */
+/* Reset margins and padding for all markdown elements to prevent extra spacing */
+.note-content p,
+.note-content h1,
+.note-content h2,
+.note-content ul,
+.note-content ol,
+.note-content li,
+.note-content strong,
+.note-content em {
+  margin: 0;
+  padding: 0;
+}
+
+/* All standard text inherits from .note-content base (Inter 0.9em) */
+/* No need to redefine - they inherit automatically */
+
+/* VIEW MODE ONLY: Markdown-specific styling deviations */
+
+/* H1: Poppins for visual hierarchy */
+.note-content.view-mode h1 {
+  font-family: 'Poppins', var(--font-family-headings);
+  font-size: 1.3em; /* Relative to base 0.9em */
+  font-weight: 700;
+}
+
+/* H2: Larger Inter with medium weight */
+.note-content.view-mode h2 {
+  font-size: 1.1em; /* Relative to base 0.9em */
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+/* Bold and italic in view mode only */
+.note-content.view-mode strong {
+  font-weight: 900;
+}
+
+.note-content.view-mode em {
+  font-style: italic;
+}
+
+/* List styling with custom bullets, minimal spacing, and left alignment */
+.note-content ul,
+.note-content ol {
+  list-style: none;
+  margin-top: 4px;
+  padding-left: 0;
+  text-align: left !important; /* Force left alignment regardless of parent */
+  display: block; /* Ensure block layout for proper text alignment */
+  width: 100%; /* Take full width of note content area */
+}
+
+.note-content ul li,
+.note-content ol li {
+  position: relative;
+  padding-left: 0.9ch;
+  text-align: left !important; /* Force left alignment for list items */
+  display: block; /* Ensure block layout */
+}
+
+.note-content ul li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  font-weight: 700;
 }
 
 .note-content-handdrawn {
@@ -290,7 +452,37 @@ html {
   font-size: 1.1em;
 }
 
-/* All mode-specific styles removed - back to original behavior */
+/* Edit mode container - minimal overrides needed */
+.note-content.edit-mode {
+  /* Container is just a wrapper for textarea */
+  padding: 0;
+}
+
+/* Edit mode textarea - inherit base styles for consistency */
+.note-content.edit-mode .edit-textarea {
+  /* Explicit font properties to match .note-content exactly */
+  font-family: 'Inter', var(--font-family-body);
+  font-size: 0.9em;
+  font-weight: 400;
+  line-height: 1.4;
+  color: inherit;
+  text-align: inherit;
+
+  /* Textarea-specific resets - aggressive to match view mode exactly */
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  vertical-align: top; /* Prevent baseline alignment issues */
+  min-height: 0; /* Override any browser defaults */
+}
+
+/* Edit mode contains only textarea - no need for child element rules */
 
 /* Prevent text selection in notes when not in edit mode */
 .note,
@@ -1175,7 +1367,7 @@ line.connection-line {
 /* Jiggle animation for selected notes on touch devices - indicates ready to drag */
 @media (pointer: coarse) {
   .note.selected.jiggle {
-    animation: noteJiggle 0.3s ease-out 2;
+    animation: noteJiggle 0.15s ease-out 2;
     animation-fill-mode: forwards;
   }
 }

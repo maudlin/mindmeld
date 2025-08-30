@@ -7,9 +7,10 @@ import { initializeConnectionDrawing } from '../features/connection/connection.j
  * Handles capability detection, dynamic adapter loading, and adapter lifecycle
  */
 export class InputController {
-  constructor(eventBus, capabilityDetector) {
+  constructor(eventBus, capabilityDetector, interactionController) {
     this.eventBus = eventBus;
     this.capabilityDetector = capabilityDetector;
+    this.interactionController = interactionController;
     this.currentAdapter = null;
     this.currentMode = null;
     this.adapterCache = new Map(); // Cache loaded adapters for performance
@@ -48,7 +49,7 @@ export class InputController {
 
       // Initialize new adapter
       try {
-        await newAdapter.init(this.eventBus);
+        await newAdapter.initialize(this.eventBus);
       } catch (initError) {
         throw new Error(
           `Failed to initialize ${mode} adapter: ${initError.message}`,
@@ -137,7 +138,7 @@ export class InputController {
       // Dynamic import based on mode
       const adapterModule = await this._importAdapter(mode);
       const AdapterClass = this._getAdapterClass(adapterModule, mode);
-      const adapter = new AdapterClass();
+      const adapter = new AdapterClass(this.interactionController);
 
       // Cache the adapter
       this.adapterCache.set(mode, adapter);

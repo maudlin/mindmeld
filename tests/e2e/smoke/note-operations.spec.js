@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { CanvasPage } from './helpers/CanvasPage.js';
+import { CanvasPage } from '../helpers/CanvasPage.js';
 
 test.describe('MindMeld Operations', () => {
   test('Create, edit, move, and delete a note @smoke @critical', async ({
@@ -18,10 +18,20 @@ test.describe('MindMeld Operations', () => {
 
     await canvasPage.editNoteContent('Test Note', note);
 
-    // Assert the note content
+    // Assert the note content - handle both textarea (edit mode) and div (view mode)
     const noteContent = note.locator('.note-content');
-    await expect(noteContent).toHaveText('Test Note');
+    const isTextarea = await noteContent.evaluate(
+      (el) => el.tagName === 'TEXTAREA',
+    );
 
+    if (isTextarea) {
+      await expect(noteContent).toHaveValue('Test Note');
+    } else {
+      await expect(noteContent).toHaveText('Test Note');
+    }
+
+    // Exit edit mode by clicking on empty canvas
+    await page.mouse.click(100, 100);
     await canvasPage.selectNote(note);
     await canvasPage.deleteNote();
 

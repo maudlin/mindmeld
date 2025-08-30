@@ -233,20 +233,13 @@ test.describe('Comprehensive State Persistence', () => {
     // Create a note to have some content
     await canvasPage.createNote(400, 300);
 
-    // Change canvas type using CanvasStateService
-    await page.evaluate(async () => {
-      // Use globally exposed CanvasStateService
-      const canvas = document.querySelector('.canvas');
-      await window.stateServicesDebug.CanvasStateService.setCanvasType(
-        "Hero's Journey",
-        canvas,
-      );
-    });
+    // For V1, only Standard Canvas is supported
+    // Templates were removed for simplification - see CANVAS_TEMPLATES_REMOVAL.md
 
     // Wait for state save
     await page.waitForTimeout(500);
 
-    // Verify canvas type is saved in localStorage
+    // Verify canvas type is saved in localStorage as Standard Canvas
     const preRefreshState = await page.evaluate(() => {
       const state = JSON.parse(localStorage.getItem('mindmeld_state'));
       return {
@@ -256,9 +249,9 @@ test.describe('Comprehensive State Persistence', () => {
     });
 
     expect(preRefreshState.hasCanvasTypeField).toBe(true);
-    expect(preRefreshState.canvasType).toBe("Hero's Journey");
+    expect(preRefreshState.canvasType).toBe('Standard Canvas');
 
-    // Refresh and verify canvas type is restored
+    // Refresh and verify canvas type is restored as Standard Canvas
     await page.reload();
     await expect(canvasPage.canvas).toBeVisible();
     await page.waitForTimeout(800); // Wait for bootstrap to complete
@@ -267,24 +260,20 @@ test.describe('Comprehensive State Persistence', () => {
       return window.appStateDebug.getState().canvasType;
     });
 
-    expect(postRefreshCanvasType).toBe("Hero's Journey");
+    expect(postRefreshCanvasType).toBe('Standard Canvas');
   });
 
   test('Should persist zoom and canvas type together', async ({ page }) => {
     // Create a note to have some content
     await canvasPage.createNote(400, 300);
 
-    // Change both zoom level and canvas type
+    // Change zoom level (canvas type restricted to Standard Canvas for V1)
     await page.evaluate(async () => {
       // Set zoom level
       window.stateServicesDebug.ZoomStateService.setZoomLevel(2);
 
-      // Set canvas type
-      const canvas = document.querySelector('.canvas');
-      await window.stateServicesDebug.CanvasStateService.setCanvasType(
-        'Wardley Map',
-        canvas,
-      );
+      // Canvas type is always Standard Canvas for V1 simplification
+      // Templates removed - see CANVAS_TEMPLATES_REMOVAL.md
     });
 
     // Wait for state save
@@ -300,7 +289,7 @@ test.describe('Comprehensive State Persistence', () => {
     });
 
     expect(preRefreshState.zoomLevel).toBe(2);
-    expect(preRefreshState.canvasType).toBe('Wardley Map');
+    expect(preRefreshState.canvasType).toBe('Standard Canvas');
 
     // Refresh and verify both are restored
     await page.reload();
@@ -315,7 +304,7 @@ test.describe('Comprehensive State Persistence', () => {
     });
 
     expect(postRefreshState.zoomLevel).toBe(2);
-    expect(postRefreshState.canvasType).toBe('Wardley Map');
+    expect(postRefreshState.canvasType).toBe('Standard Canvas');
   });
 
   test('Should handle state persistence with zoom and pan', async ({

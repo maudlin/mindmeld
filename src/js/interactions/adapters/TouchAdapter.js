@@ -1,56 +1,69 @@
 // src/js/interactions/adapters/TouchAdapter.js
 
 import { BaseAdapter } from './BaseAdapter.js';
-import { GestureRecognizer } from '../gestures/GestureRecognizer.js';
-import { throttle, calculateOffsetPosition } from '../../utils/utils.js';
 import { noteManager } from '../../services/noteManager.js';
-import { getZoomLevel } from '../../features/zoom/zoomManager.js';
-import { connectionManager } from '../../features/connection/connectionManager.js';
-import { appState } from '../../data/observableState.js';
 
 /**
  * Touch input adapter for mobile and tablet interactions
- * Integrates GestureRecognizer with MindMeld's event-driven architecture
+ * Thin input layer that detects touch gestures and delegates to behaviors
+ *
+ * MM-204: Rebuilt as thin input layer with behavior delegation
  */
 export class TouchAdapter extends BaseAdapter {
-  constructor() {
+  constructor(interactionController) {
     super();
     this.name = 'touch';
 
+    // Behavior references
+    this.interactionController = interactionController;
+    this.noteBehavior = null;
+    this.dragBehavior = null;
+    this.selectionBoxBehavior = null;
+    this.canvasBehavior = null;
+    this.connectionBehavior = null;
+
     // Core components
-    this.gestureRecognizer = null;
     this.canvas = null;
 
-    // Touch interaction state
-    this.isDragging = false;
-    this.dragState = null;
-    this.selectedNotesOffsets = [];
-    this.hasStateChanged = false;
-
-    // Connection creation state
-    this.selectedConnector = null;
-    this.isConnectionMode = false;
-
-    // Multi-select lasso state (MM-145)
-    this.isDrawingSelectionBox = false;
-    this.selectionBoxState = null;
-    this.selectionBox = null;
-
-    // Two-finger gesture state
-    this.lastPinchCenter = null;
-
     // Touch-specific settings
-    this.HIT_TARGET_EXPANSION = 20; // pixels to expand hit targets
+    this.HIT_TARGET_EXPANSION = 20; // pixels to expand hit targets for mobile
 
-    // Throttled functions for performance
-    this.throttledUpdateConnections = throttle(
-      (noteOrGroup) => connectionManager.updateConnections(noteOrGroup),
-      16,
-    );
-    this.throttledUpdateSelectionBox = throttle(
-      this.updateSelectionBox.bind(this),
-      16,
-    ); // ~60fps
+    // Native gesture detection state
+    this.currentGesture = null;
+    this.gestureStartTarget = null;
+    this.isDoubleTapInProgress = false; // Prevent duplicate processing (like desktop)
+    this.dragThreshold = 15; // pixels to move before drag starts
+    this.longPressThreshold = 500; // milliseconds for long press
+    this.lastTap = null; // For double-tap detection
+    this.longPressTimer = null; // For long press detection
+  }
+
+  /**
+   * Initialize adapter with behavior references and event listeners
+   */
+  async initialize(eventBus) {
+    await super.initialize(eventBus);
+
+    // Get behavior references from interaction controller
+    if (this.interactionController) {
+      this.noteBehavior = this.interactionController.getBehavior('note');
+      this.dragBehavior = this.interactionController.getBehavior('drag');
+      this.selectionBoxBehavior =
+        this.interactionController.getBehavior('selectionBox');
+      this.canvasBehavior = this.interactionController.getBehavior('canvas');
+      this.connectionBehavior =
+        this.interactionController.getBehavior('connection');
+
+      console.log('TouchAdapter: Behavior references initialized', {
+        hasNoteBehavior: !!this.noteBehavior,
+        hasDragBehavior: !!this.dragBehavior,
+        hasSelectionBoxBehavior: !!this.selectionBoxBehavior,
+        hasCanvasBehavior: !!this.canvasBehavior,
+        hasConnectionBehavior: !!this.connectionBehavior,
+      });
+    }
+
+    await this.initializeEventListeners();
   }
 
   /**
@@ -68,999 +81,619 @@ export class TouchAdapter extends BaseAdapter {
       throw new Error('Canvas element not found');
     }
 
-    // Initialize gesture recognizer
-    this.gestureRecognizer = new GestureRecognizer(this.eventBus);
-    this.gestureRecognizer.initialize(this.canvas);
-
-    // Set up gesture event handling
-    this.setupGestureHandling();
+    // Set up native touch handlers as single source of truth (like DesktopAdapter)
+    this.setupNativeTouchHandlers();
 
     // Set up touch-specific enhancements
     this.setupTouchEnhancements();
+
+    console.log('TouchAdapter: Touch event listeners initialized successfully');
   }
 
   /**
    * Clean up touch event listeners
    */
   async destroyEventListeners() {
-    // Clean up gesture recognizer
-    if (this.gestureRecognizer) {
-      this.gestureRecognizer.destroy();
-      this.gestureRecognizer = null;
+    // Clean up native touch handlers
+    if (this.canvas && this.boundHandlers) {
+      this.canvas.removeEventListener(
+        'touchstart',
+        this.boundHandlers.touchStart,
+      );
+      this.canvas.removeEventListener(
+        'touchmove',
+        this.boundHandlers.touchMove,
+      );
+      this.canvas.removeEventListener('touchend', this.boundHandlers.touchEnd);
+      this.canvas.removeEventListener(
+        'touchcancel',
+        this.boundHandlers.touchCancel,
+      );
     }
 
-    // Clean up event listeners
-    this.cleanupGestureHandling();
+    // Clear any active timers
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
+    }
 
     // Reset state
     this.canvas = null;
-    this.isDragging = false;
-    this.dragState = null;
-    this.selectedNotesOffsets = [];
-    this.hasStateChanged = false;
+    this.boundHandlers = null;
+    this.lastTap = null;
+    this.currentGesture = null;
 
-    // Clear connection state
-    this.clearConnectionMode();
+    console.log('TouchAdapter: Touch event listeners destroyed');
   }
 
   /**
-   * Set up gesture event handling by overriding GestureRecognizer events
+   * Set up native touch handlers as single source of truth (like DesktopAdapter)
    */
-  setupGestureHandling() {
-    if (!this.gestureRecognizer) return;
+  setupNativeTouchHandlers() {
+    // Touch state for gesture detection
+    let touchStartData = null;
+    const doubleTapMaxDelay = 300; // milliseconds
+    const doubleTapMaxDistance = 30; // pixels
 
-    // Override gesture recognizer methods to handle events through TouchAdapter
-    const originalEmitTap = this.gestureRecognizer.emitTap.bind(
-      this.gestureRecognizer,
-    );
-    const originalEmitDoubleTap = this.gestureRecognizer.emitDoubleTap.bind(
-      this.gestureRecognizer,
-    );
-    const originalEmitLongPress = this.gestureRecognizer.emitLongPress.bind(
-      this.gestureRecognizer,
-    );
-    const originalEmitDragStart = this.gestureRecognizer.emitDragStart.bind(
-      this.gestureRecognizer,
-    );
-    const originalEmitDragMove = this.gestureRecognizer.emitDragMove.bind(
-      this.gestureRecognizer,
-    );
-    const originalEmitDragEnd = this.gestureRecognizer.emitDragEnd.bind(
-      this.gestureRecognizer,
-    );
-    const originalEmitPinchStart = this.gestureRecognizer.emitPinchStart.bind(
-      this.gestureRecognizer,
-    );
-    const originalEmitPinchMove = this.gestureRecognizer.emitPinchMove.bind(
-      this.gestureRecognizer,
-    );
-    const originalEmitPinchEnd = this.gestureRecognizer.emitPinchEnd.bind(
-      this.gestureRecognizer,
-    );
+    // Bound event handlers for proper cleanup
+    this.boundHandlers = {
+      touchStart: (event) => {
+        // Clear any existing long press timer
+        if (this.longPressTimer) {
+          clearTimeout(this.longPressTimer);
+          this.longPressTimer = null;
+        }
 
-    // Override with TouchAdapter handling
-    this.gestureRecognizer.emitTap = (touch) => this.handleTap(touch);
-    this.gestureRecognizer.emitDoubleTap = (touch) =>
-      this.handleDoubleTap(touch);
-    this.gestureRecognizer.emitLongPress = (touch) =>
-      this.handleLongPress(touch);
-    this.gestureRecognizer.emitDragStart = (touch) =>
-      this.handleDragStart(touch);
-    this.gestureRecognizer.emitDragMove = (touch) => this.handleDragMove(touch);
-    this.gestureRecognizer.emitDragEnd = (touch) => this.handleDragEnd(touch);
-    this.gestureRecognizer.emitPinchStart = () => this.handlePinchStart();
-    this.gestureRecognizer.emitPinchMove = () => this.handlePinchMove();
-    this.gestureRecognizer.emitPinchEnd = () => this.handlePinchEnd();
+        // Skip if double-tap processing in progress (like desktop approach)
+        if (this.isDoubleTapInProgress) {
+          return;
+        }
 
-    // Store original methods for cleanup
-    this._originalGestureMethods = {
-      emitTap: originalEmitTap,
-      emitDoubleTap: originalEmitDoubleTap,
-      emitLongPress: originalEmitLongPress,
-      emitDragStart: originalEmitDragStart,
-      emitDragMove: originalEmitDragMove,
-      emitDragEnd: originalEmitDragEnd,
-      emitPinchStart: originalEmitPinchStart,
-      emitPinchMove: originalEmitPinchMove,
-      emitPinchEnd: originalEmitPinchEnd,
+        // Only handle single finger touches initially
+        if (event.touches.length === 1) {
+          const touch = event.touches[0];
+          const now = Date.now();
+
+          // Store touch start data for gesture detection
+          touchStartData = {
+            touch,
+            startTime: now,
+            startX: touch.clientX,
+            startY: touch.clientY,
+            moved: false,
+          };
+
+          // Check for double-tap
+          if (
+            this.lastTap &&
+            now - this.lastTap.time <= doubleTapMaxDelay &&
+            Math.abs(touch.clientX - this.lastTap.x) <= doubleTapMaxDistance &&
+            Math.abs(touch.clientY - this.lastTap.y) <= doubleTapMaxDistance
+          ) {
+            // Double-tap detected! Immediately prevent interference
+            event.preventDefault();
+            this.isDoubleTapInProgress = true;
+
+            this.handleDoubleTap(touch);
+            this.lastTap = null; // Reset to prevent triple-tap
+            touchStartData = null; // Clear touch data
+
+            // Clear flag after processing complete
+            setTimeout(() => {
+              this.isDoubleTapInProgress = false;
+            }, 100);
+            return;
+          }
+
+          // Start long press timer
+          this.longPressTimer = setTimeout(() => {
+            if (touchStartData && !touchStartData.moved) {
+              this.handleLongPress(touchStartData.touch);
+            }
+          }, this.longPressThreshold);
+        }
+      },
+
+      touchMove: (event) => {
+        if (!touchStartData || event.touches.length !== 1) return;
+
+        const touch = event.touches[0];
+        const deltaX = Math.abs(touch.clientX - touchStartData.startX);
+        const deltaY = Math.abs(touch.clientY - touchStartData.startY);
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        if (distance > this.dragThreshold) {
+          touchStartData.moved = true;
+
+          // Clear long press timer - we're now dragging
+          if (this.longPressTimer) {
+            clearTimeout(this.longPressTimer);
+            this.longPressTimer = null;
+          }
+
+          // Start drag if not already dragging
+          if (!this.currentGesture) {
+            this.handleDragStart(touchStartData.touch);
+          } else if (this.currentGesture === 'drag') {
+            this.handleDragMove(touch);
+          }
+        }
+      },
+
+      touchEnd: () => {
+        // Clear long press timer
+        if (this.longPressTimer) {
+          clearTimeout(this.longPressTimer);
+          this.longPressTimer = null;
+        }
+
+        // Handle end of current gesture if we have touch data
+        if (touchStartData) {
+          if (this.currentGesture === 'drag') {
+            this.handleDragEnd(touchStartData.touch);
+          } else if (!touchStartData.moved) {
+            // Single tap (not moved, not double-tap)
+            this.handleTap(touchStartData.touch);
+
+            // Store for potential double-tap
+            this.lastTap = {
+              time: Date.now(),
+              x: touchStartData.startX,
+              y: touchStartData.startY,
+              target: touchStartData.touch.target,
+            };
+          }
+
+          // Reset touch data
+          touchStartData = null;
+        }
+
+        // Always reset gesture state on touch end (even without touchStartData)
+        this.currentGesture = null;
+      },
+
+      touchCancel: () => {
+        // Clear timers and reset state on cancellation
+        if (this.longPressTimer) {
+          clearTimeout(this.longPressTimer);
+          this.longPressTimer = null;
+        }
+
+        touchStartData = null;
+        this.currentGesture = null;
+      },
     };
+
+    // Add native touch listeners to canvas
+    this.canvas.addEventListener('touchstart', this.boundHandlers.touchStart, {
+      passive: false,
+    });
+    this.canvas.addEventListener('touchmove', this.boundHandlers.touchMove, {
+      passive: false,
+    });
+    this.canvas.addEventListener('touchend', this.boundHandlers.touchEnd, {
+      passive: false,
+    });
+    this.canvas.addEventListener(
+      'touchcancel',
+      this.boundHandlers.touchCancel,
+      { passive: false },
+    );
+
+    console.log(
+      'TouchAdapter: Native touch handlers setup complete (single source of truth)',
+    );
   }
 
   /**
-   * Clean up gesture handling
+   * Handle double-tap detection (mirrors desktop double-click)
    */
-  cleanupGestureHandling() {
-    if (this.gestureRecognizer && this._originalGestureMethods) {
-      // Restore original methods
-      Object.assign(this.gestureRecognizer, this._originalGestureMethods);
-      this._originalGestureMethods = null;
+  handleDoubleTap(touch) {
+    console.log('TouchAdapter: Native double-tap detected', {
+      x: touch.clientX,
+      y: touch.clientY,
+      target: touch.target?.tagName,
+    });
+
+    // Direct delegation like desktop approach - no event bus complexity
+    const noteElement = touch.target.closest('.note');
+    if (noteElement) {
+      // Note double-tap → NoteBehavior for edit mode
+      if (this.noteBehavior) {
+        console.log(
+          'TouchAdapter: Note double-tap, delegating to NoteBehavior',
+        );
+        this.noteBehavior.handleNoteDoubleClick(noteElement, touch, 'touch');
+      }
+    } else if (
+      touch.target === this.canvas ||
+      touch.target.closest('#canvas')
+    ) {
+      // Canvas double-tap → CanvasBehavior for note creation
+      if (this.canvasBehavior) {
+        console.log(
+          'TouchAdapter: Canvas double-tap, delegating to CanvasBehavior',
+        );
+        this.canvasBehavior.handleCanvasDoubleClick(touch, 'touch');
+      }
     }
   }
 
   /**
-   * Set up touch-specific enhancements
+   * Set up touch-specific UI enhancements (KEEP - this is platform-specific)
    */
   setupTouchEnhancements() {
-    // Add visual feedback for touch interactions
+    // Add touch-friendly feedback styles
     this.addTouchFeedbackStyles();
 
     // Enhance hit targets for touch
     this.enhanceHitTargets();
 
-    // MM-169: TouchAdapter uses double-tap for edit mode, not focus/blur
-    // this.setupFocusBlurHandling();
+    // Disable text selection on touch devices
+    document.body.style.webkitTouchCallout = 'none';
+    document.body.style.webkitUserSelect = 'none';
+    document.body.style.userSelect = 'none';
   }
 
   /**
-   * Add CSS for touch-specific visual feedback
+   * Add CSS for touch feedback (KEEP - platform-specific)
    */
   addTouchFeedbackStyles() {
-    const styleId = 'touch-adapter-styles';
-    if (document.getElementById(styleId)) return;
-
     const style = document.createElement('style');
-    style.id = styleId;
     style.textContent = `
-      /* Touch-specific enhancements */
-      .note.touch-active {
-        transform: scale(1.05);
-        transition: transform 0.1s ease;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      .touch-active {
+        background-color: rgba(0, 0, 0, 0.1);
+        transition: background-color 0.1s;
       }
       
-      /* Ghost connectors use desktop styling for now - 10px for all devices */
-      
-      @media (pointer: coarse) {
-        .note {
-          min-width: 44px;
-          min-height: 44px;
-        }
+      .note:active {
+        transform: scale(0.98);
+        transition: transform 0.1s;
       }
     `;
     document.head.appendChild(style);
   }
 
   /**
-   * Enhance hit targets for touch interactions
+   * Enhance hit targets for touch interaction (KEEP - platform-specific)
    */
   enhanceHitTargets() {
-    // This will be used to expand touch hit areas
-    // Implementation depends on specific UI elements
+    const touchStyle = document.createElement('style');
+    touchStyle.textContent = `
+      @media (pointer: coarse) {
+        .note {
+          min-height: 44px; /* iOS minimum touch target */
+          min-width: 44px;
+        }
+        
+        /* Remove min-height from note-content to prevent double-height appearance */
+        /* The parent .note min-height is sufficient for touch targets */
+      }
+    `;
+    document.head.appendChild(touchStyle);
   }
 
-  // Gesture Event Handlers
-
   /**
-   * Handle tap gesture - maps to note selection and canvas interaction
+   * Handle tap gesture - detect interaction type and delegate to behaviors
    */
   handleTap(touch) {
-    const { target } = this.getTouchTarget(touch.currentX, touch.currentY);
+    if (!touch) return;
 
-    // DEBUG: Log all tap events
-    console.log('🔥 TouchAdapter handleTap:', {
-      target: target,
-      tagName: target?.tagName,
-      className: target?.className,
-      isPATH: target?.tagName === 'PATH',
-      hasConnectorHotspot: target?.classList?.contains('connector-hotspot'),
-    });
+    const target = this.expandTouchTarget(touch);
 
-    // Check if tapping on a ghost connector
+    // Check for ghost connector interaction
     if (target.classList.contains('ghost-connector')) {
-      this.handleGhostConnectorTap(target);
+      this.handleGhostConnectorTap(touch, target);
       return;
     }
 
-    // Check if tapping on a delete button - let it handle its own event
-    if (
-      target.classList.contains('shared-delete-button--note') ||
-      target.closest('.shared-delete-button--note')
-    ) {
-      // Don't interfere with delete button functionality
+    // Check for note interaction
+    const noteElement = target.closest('.note');
+    if (noteElement) {
+      this.handleNoteTap(noteElement);
       return;
     }
 
-    // Check if tapping on a note
-    const note = target.classList.contains('note')
-      ? target
-      : target.closest('.note');
-
-    if (note) {
-      // Check if we're in connection mode and should complete connection
-      if (this.isConnectionMode && this.selectedConnector) {
-        this.completeConnectionToNote(note);
-      } else {
-        this.handleNoteSelection(note);
-      }
-    } else if (this.isClickOnCanvas(target)) {
-      // Tap on canvas - clear selections and cancel operations (MM-169)
-      this.clearAllJiggleAnimations();
-      this.clearConnectionMode();
-      noteManager.clearSelections();
-      this.emit('note.selection.changed');
-
-      // Emit canvas click for EditModeController to handle edit mode exit
-      this.emit('canvas.clicked', { _gesture: 'tap' });
-
-      // Clear any other active states
-      this.emit('interaction.cancel', { _gesture: 'tap' });
-    }
-  }
-
-  /**
-   * Handle double-tap gesture - maps to note creation or note editing
-   */
-  handleDoubleTap(touch) {
-    const { target } = this.getTouchTarget(touch.currentX, touch.currentY);
-
-    // Check if double-tapping on a note - enter edit mode (MM-169)
-    const note = target.classList.contains('note')
-      ? target
-      : target.closest('.note');
-
-    if (note) {
-      // Ensure note is selected
-      if (!note.classList.contains('selected')) {
-        noteManager.clearSelections();
-        noteManager.selectNote(note);
-        this.emit('note.selection.changed');
-      }
-
-      // Emit edit request to EditModeController
-      this.emit('note.requestEdit', {
-        noteId: note.id,
-        noteElement: note,
-        _gesture: 'doubletap',
-      });
-
-      return;
-    }
-
-    // Double-tap on canvas creates new note
-    if (this.isClickOnCanvas(target)) {
-      // Create proper event object that matches desktop behavior
-      const syntheticEvent = {
-        clientX: touch.currentX,
-        clientY: touch.currentY,
-        type: 'doubletap',
-        preventDefault: () => {},
-        stopPropagation: () => {},
-        target: target,
-      };
-
-      this.emit('note.createAtPosition', {
-        canvas: this.canvas,
-        event: syntheticEvent,
-        _gesture: 'doubletap',
-      });
-
-      this.emit('state.save');
-    }
-  }
-
-  /**
-   * Handle long press gesture - maps to note movement or context menu
-   */
-  handleLongPress(touch) {
-    const { target } = this.getTouchTarget(touch.currentX, touch.currentY);
-
-    // Check if long-pressing on a note - indicate ready to move (MM-145 refined)
-    const note = target.classList.contains('note')
-      ? target
-      : target.closest('.note');
-
-    if (note && !target.classList.contains('ghost-connector')) {
-      // Don't start drag on note content (for editing)
-      if (target.classList.contains('note-content')) {
+    // Check for canvas interaction
+    if (target.id === 'canvas' || target.closest('#canvas')) {
+      // Check if we're in connection mode - cancel it
+      if (this.connectionBehavior && this.connectionBehavior.isConnecting) {
+        console.log(
+          'TouchAdapter: Canvas tap during connection mode - cancelling connection',
+        );
+        this.connectionBehavior.cancel();
         return;
       }
 
-      // Ensure note is selected before indicating ready to move
-      if (!note.classList.contains('selected')) {
-        noteManager.clearSelections();
-        noteManager.selectNote(note);
-        this.emit('note.selection.changed');
-      }
-
-      // Add jiggle animation to indicate note is ready to move (mobile only)
-      this.addJiggleAnimation(note);
-
-      // Note: The gesture recognizer will transition to dragging state on movement
+      // Single tap on canvas - clear note selections and exit edit mode
+      console.log(
+        'TouchAdapter: Canvas tap detected - clearing selections and exiting edit mode',
+      );
+      noteManager.clearSelections();
+      this.emit('canvas.clicked');
       return;
     }
 
-    // Original context menu behavior for other elements (ghost connectors, etc.)
-    if (!this.isClickOnCanvas(target)) {
-      this.emit('contextmenu.show', {
-        x: touch.currentX,
-        y: touch.currentY,
-        target: target,
-        type: 'longpress',
-        _gesture: 'longpress',
-      });
-    }
-
-    // Long press on empty canvas does nothing in refined model
+    console.log('TouchAdapter: No recognized tap target');
   }
 
   /**
-   * Handle drag start - begins note movement or selection box
+   * Handle drag start - detect what's being dragged
    */
   handleDragStart(touch) {
-    const { target } = this.getTouchTarget(touch.startX, touch.startY);
+    if (!touch) return;
 
-    // Check if dragging a note (from press-hold or direct drag)
-    const note = target.classList.contains('note')
-      ? target
-      : target.closest('.note');
+    // Set gesture state
+    this.currentGesture = 'drag';
 
-    if (note && !target.classList.contains('ghost-connector')) {
-      // Don't start drag on note content (for editing)
-      if (target.classList.contains('note-content')) {
-        return;
-      }
+    const target = this.expandTouchTarget(touch);
+    this.gestureStartTarget = target;
 
-      this.startNoteDrag(touch, note, target);
-    } else if (this.isClickOnCanvas(target)) {
-      // Single finger drag on canvas = multi-select lasso (MM-145 refined)
-      this.startSelectionBox(touch);
+    console.log('TouchAdapter: Drag start detected', {
+      target: target.tagName,
+      x: touch.clientX,
+      y: touch.clientY,
+    });
+
+    // Check for note drag
+    const noteElement = target.closest('.note');
+    if (noteElement) {
+      this.handleNoteDragStart(noteElement, touch);
+      return;
     }
+
+    // Check for canvas selection box (drag from canvas)
+    if (target.id === 'canvas' || target.closest('#canvas')) {
+      this.handleSelectionBoxStart(touch);
+      return;
+    }
+
+    console.log('TouchAdapter: Drag start on unrecognized target');
   }
 
   /**
-   * Handle drag move - continues dragging operation
+   * Handle drag move - delegate to active behavior
    */
   handleDragMove(touch) {
-    if (this.isDragging && this.dragState) {
-      if (this.dragState.type === 'note') {
-        this.handleNoteDrag(touch);
-      }
-      // Canvas panning removed - now handled by two-finger gestures
-    } else if (this.isDrawingSelectionBox && this.selectionBoxState) {
-      // Handle multi-select lasso dragging (MM-145)
-      this.handleSelectionBoxDrag(touch);
+    if (!touch) return;
+
+    // Check if we have active interactions and delegate
+    if (this.dragBehavior && this.dragBehavior.isDragging) {
+      this.dragBehavior.updateDrag(touch, 'touch');
+      return;
+    }
+
+    if (
+      this.selectionBoxBehavior &&
+      this.selectionBoxBehavior.isDrawingSelectionBox
+    ) {
+      this.selectionBoxBehavior.updateSelectionBox(touch, 'touch');
+      return;
     }
   }
 
   /**
-   * Handle drag end - finishes dragging operation
+   * Handle drag end - delegate to active behavior
    */
   handleDragEnd(touch) {
-    if (this.isDragging && this.dragState) {
-      if (this.dragState.type === 'note') {
-        this.endNoteDrag(touch);
-      }
-      // Canvas panning removed - now handled by two-finger gestures
-    } else if (this.isDrawingSelectionBox) {
-      // Complete multi-select lasso (MM-145)
-      this.endSelectionBox(touch);
-    }
-  }
+    if (!touch) return;
 
-  /**
-   * Handle pinch start - begins zoom or pan operation
-   */
-  handlePinchStart() {
-    const center = this.gestureRecognizer.touchState.getCenterPoint();
-    this.lastPinchCenter = center;
+    console.log('TouchAdapter: Drag end detected');
 
-    this.emit('zoom.start', {
-      centerX: center.x,
-      centerY: center.y,
-      _gesture: 'pinch',
-    });
-  }
-
-  /**
-   * Handle pinch move - continues zoom or pan operation
-   */
-  handlePinchMove() {
-    const currentDistance =
-      this.gestureRecognizer.touchState.getTouchDistance();
-    const center = this.gestureRecognizer.touchState.getCenterPoint();
-
-    // Calculate scale change for zoom detection
-    const scale = currentDistance / this.gestureRecognizer.initialPinchDistance;
-    const scaleChange = Math.abs(scale - 1.0);
-
-    // If there's significant scaling, handle as zoom
-    if (scaleChange > 0.05) {
-      // 5% threshold
-      this.emit('zoom.change', {
-        direction: scale > 1 ? 'in' : 'out',
-        scale: scale,
-        centerX: center.x,
-        centerY: center.y,
-        _gesture: 'pinch',
-      });
-    } else if (this.lastPinchCenter) {
-      // If no significant scaling, handle as two-finger pan
-      const deltaX = center.x - this.lastPinchCenter.x;
-      const deltaY = center.y - this.lastPinchCenter.y;
-
-      // Only pan if there's meaningful movement
-      if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
-        this.emit('canvas.pan', {
-          deltaX: deltaX,
-          deltaY: deltaY,
-          _gesture: 'two-finger-pan',
-        });
-      }
+    // Check if we have active interactions and delegate
+    if (this.dragBehavior && this.dragBehavior.isDragging) {
+      this.dragBehavior.endDrag(touch, 'touch');
     }
 
-    // Store center for next comparison
-    this.lastPinchCenter = center;
+    if (
+      this.selectionBoxBehavior &&
+      this.selectionBoxBehavior.isDrawingSelectionBox
+    ) {
+      this.selectionBoxBehavior.endSelectionBox(touch, 'touch');
+    }
+
+    // Reset gesture state (handled by touchEnd in native handlers)
+    this.gestureStartTarget = null;
   }
 
   /**
-   * Handle pinch end - finishes zoom or pan operation
+   * Handle ghost connector tap - delegate to ConnectionBehavior
    */
-  handlePinchEnd() {
-    const center = this.gestureRecognizer.touchState.getCenterPoint();
-    this.lastPinchCenter = null; // Reset for next pinch
+  handleGhostConnectorTap(touch, target) {
+    console.log(
+      'TouchAdapter: Ghost connector tap detected - delegating to ConnectionBehavior',
+    );
 
-    this.emit('zoom.end', {
-      centerX: center.x,
-      centerY: center.y,
-      _gesture: 'pinch',
-    });
-  }
+    if (!this.connectionBehavior) {
+      console.warn('TouchAdapter: ConnectionBehavior not available');
+      return;
+    }
 
-  // Touch-specific interaction methods
+    const sourceNote = target.closest('.note');
+    if (!sourceNote) {
+      console.warn('TouchAdapter: No source note found for ghost connector');
+      return;
+    }
 
-  /**
-   * Get touch target with hit area expansion
-   */
-  getTouchTarget(x, y) {
-    // First try exact hit
-    const exactTarget = document.elementFromPoint(x, y);
-
-    // For small UI elements, expand hit area
-    const expandedTarget = this.findExpandedTarget(x, y);
-
-    return {
-      target: exactTarget,
-      expandedTarget: expandedTarget || exactTarget,
+    // Convert touch to event-like object for ConnectionBehavior
+    const touchEvent = {
+      preventDefault: () => {},
+      stopPropagation: () => {},
+      touches: [touch],
+      target: target,
+      clientX: touch.clientX,
+      clientY: touch.clientY,
     };
+
+    // Delegate to ConnectionBehavior for unified touch connection handling
+    this.connectionBehavior.startTouchDrag(sourceNote, touchEvent, 'touch');
   }
 
   /**
-   * Find target with expanded hit area for small elements
+   * Handle note tap - check for connection mode first, then delegate to NoteBehavior
    */
-  findExpandedTarget(x, y) {
-    const expansion = this.HIT_TARGET_EXPANSION;
+  handleNoteTap(noteElement) {
+    // Check if we're in connection mode first
+    if (this.connectionBehavior && this.connectionBehavior.isConnecting) {
+      console.log(
+        'TouchAdapter: Note tap during connection mode - completing connection',
+      );
+      const connectionHandled =
+        this.connectionBehavior.handleTouchNoteTap(noteElement);
+      if (connectionHandled) {
+        return; // Connection was completed or cancelled
+      }
+    }
 
-    // Check for small interactive elements within expansion radius
-    const elements = document.querySelectorAll('.ghost-connector, .note');
+    if (!this.noteBehavior) {
+      console.warn('TouchAdapter: NoteBehavior not available');
+      return;
+    }
 
-    for (const element of elements) {
-      const rect = element.getBoundingClientRect();
+    console.log(
+      'TouchAdapter: Note tap detected, delegating to NoteBehavior for selection',
+    );
+    // Single tap should select the note, not enter edit mode
+    this.noteBehavior.handleNoteSelection(noteElement, false);
+  }
+
+  /**
+   * Handle note drag start - delegate to DragBehavior
+   */
+  handleNoteDragStart(noteElement, touch) {
+    if (!this.dragBehavior) {
+      console.warn('TouchAdapter: DragBehavior not available');
+      return;
+    }
+
+    console.log('TouchAdapter: Note drag detected, delegating to DragBehavior');
+    // Keep consistent with handleDragStart - use 'drag' not 'note-drag'
+    this.dragBehavior.startDrag(noteElement, touch, 'touch');
+  }
+
+  /**
+   * Handle long press gesture - add jiggle animation to notes
+   */
+  handleLongPress(touch) {
+    if (!touch) return;
+
+    console.log('TouchAdapter: Long press detected', {
+      target: touch.target?.tagName,
+      x: touch.clientX,
+      y: touch.clientY,
+    });
+
+    // Check if long press is on a note
+    const noteElement = touch.target?.closest('.note');
+    if (noteElement) {
+      console.log('TouchAdapter: Long press on note, adding jiggle animation');
+
+      // Ensure note is selected
+      if (!noteElement.classList.contains('selected')) {
+        noteManager.clearSelections();
+        noteManager.selectNote(noteElement);
+      }
+
+      // Add jiggle animation class
+      noteElement.classList.add('jiggle');
+
+      // Remove jiggle class after animation completes
+      setTimeout(() => {
+        noteElement.classList.remove('jiggle');
+      }, 300); // 0.15s * 2 iterations = 0.3s
+
+      return;
+    }
+
+    // Future: Handle long press for context menu on other elements
+    console.log('TouchAdapter: Long press on non-note element');
+  }
+
+  /**
+   * Handle selection box start - delegate to SelectionBoxBehavior
+   */
+  handleSelectionBoxStart(touch) {
+    if (!this.selectionBoxBehavior) {
+      console.warn('TouchAdapter: SelectionBoxBehavior not available');
+      return;
+    }
+
+    console.log(
+      'TouchAdapter: Selection box detected, delegating to SelectionBoxBehavior',
+    );
+    // Keep consistent with handleDragStart - use 'drag' not 'selection-box'
+    this.selectionBoxBehavior.startSelectionBox(touch, 'touch');
+  }
+
+  /**
+   * Expand touch target for better touch interaction (touch-specific enhancement)
+   */
+  expandTouchTarget(touch) {
+    const originalTarget = touch?.target;
+
+    // Handle null/undefined touch or target
+    if (!originalTarget || typeof originalTarget.closest !== 'function') {
+      return originalTarget || document.body;
+    }
+
+    // If we hit a note or its content, that's good enough
+    if (originalTarget.closest('.note')) {
+      return originalTarget;
+    }
+
+    // For other targets, check if there's a nearby note within hit expansion
+    const notes = document.querySelectorAll('.note');
+    for (const note of notes) {
+      const noteRect = note.getBoundingClientRect();
       const expandedRect = {
-        left: rect.left - expansion,
-        top: rect.top - expansion,
-        right: rect.right + expansion,
-        bottom: rect.bottom + expansion,
+        left: noteRect.left - this.HIT_TARGET_EXPANSION,
+        top: noteRect.top - this.HIT_TARGET_EXPANSION,
+        right: noteRect.right + this.HIT_TARGET_EXPANSION,
+        bottom: noteRect.bottom + this.HIT_TARGET_EXPANSION,
       };
 
       if (
-        x >= expandedRect.left &&
-        x <= expandedRect.right &&
-        y >= expandedRect.top &&
-        y <= expandedRect.bottom
+        touch.clientX >= expandedRect.left &&
+        touch.clientX <= expandedRect.right &&
+        touch.clientY >= expandedRect.top &&
+        touch.clientY <= expandedRect.bottom
       ) {
-        return element;
+        return note;
       }
     }
 
-    return null;
+    return originalTarget;
   }
 
   /**
-   * Handle note selection for touch
+   * Convert touch object to event-like object for NoteBehavior compatibility
    */
-  handleNoteSelection(note) {
-    const isSelected = note.classList.contains('selected');
-
-    // Add touch feedback
-    note.classList.add('touch-active');
-    setTimeout(() => note.classList.remove('touch-active'), 150);
-
-    // Handle selection (touch doesn't support shift-select)
-    if (!isSelected) {
-      noteManager.clearSelections();
-      noteManager.selectNote(note);
+  createEventFromTouch(touch) {
+    if (!touch) {
+      return null;
     }
 
-    this.emit('note.selection.changed');
+    // Create an event-like object with the target property that NoteBehavior expects
+    return {
+      target: touch.target,
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      type: 'touchend', // Indicate this was converted from touch
+      preventDefault: () => {}, // Stub method
+      stopPropagation: () => {}, // Stub method
+    };
   }
 
   /**
-   * Add jiggle animation to selected note to indicate ready-to-drag state
-   */
-  addJiggleAnimation(note) {
-    // Remove any existing jiggle class first
-    note.classList.remove('jiggle');
-
-    // Add jiggle with a small delay for better UX
-    setTimeout(() => {
-      if (note.classList.contains('selected')) {
-        note.classList.add('jiggle');
-
-        // Remove jiggle class after animation completes (2 cycles * 0.3s = 0.6s)
-        setTimeout(() => {
-          note.classList.remove('jiggle');
-        }, 600);
-      }
-    }, 100);
-  }
-
-  /**
-   * Remove jiggle animation from note
-   */
-  removeJiggleAnimation(note) {
-    note.classList.remove('jiggle');
-  }
-
-  /**
-   * Clear jiggle animations from all notes
-   */
-  clearAllJiggleAnimations() {
-    const jiggleNotes = document.querySelectorAll('.note.jiggle');
-    jiggleNotes.forEach((note) => {
-      note.classList.remove('jiggle');
-    });
-  }
-
-  /**
-   * Handle ghost connector tap for touch connection creation
-   */
-  handleGhostConnectorTap(connector) {
-    // If we're already in connection mode and tapping a different connector
-    if (this.isConnectionMode && this.selectedConnector !== connector) {
-      this.completeConnection(connector);
-      return;
-    }
-
-    // If tapping the same connector, deselect it
-    if (this.selectedConnector === connector) {
-      this.clearConnectionMode();
-      return;
-    }
-
-    // Start new connection mode
-    this.startConnectionMode(connector);
-  }
-
-  /**
-   * Start connection creation mode with selected connector
-   */
-  startConnectionMode(connector) {
-    // Clear any existing connection mode
-    this.clearConnectionMode();
-
-    // Set up new connection mode
-    this.selectedConnector = connector;
-    this.isConnectionMode = true;
-
-    // Add visual feedback
-    connector.classList.add('connector-selected');
-
-    // Show ghost connectors on all notes during connection mode
-    document.body.classList.add('connection-mode');
-
-    // Emit connection mode started event
-    this.emit('connection.modeStarted', {
-      connector: connector,
-      note: connector.closest('.note'),
-      _gesture: 'tap',
-    });
-  }
-
-  /**
-   * Complete connection between selected connector and target connector
-   */
-  completeConnection(targetConnector) {
-    if (!this.selectedConnector || !this.isConnectionMode) return;
-
-    const sourceNote = this.selectedConnector.closest('.note');
-    const targetNote = targetConnector.closest('.note');
-
-    // Don't allow self-connections
-    if (sourceNote === targetNote) {
-      this.clearConnectionMode();
-      return;
-    }
-
-    // Create the connection directly via connectionManager (like desktop system)
-    this.createTouchConnection(sourceNote, targetNote);
-
-    // Clear connection mode
-    this.clearConnectionMode();
-  }
-
-  /**
-   * Complete connection between selected connector and target note (tap anywhere on note)
-   */
-  completeConnectionToNote(targetNote) {
-    if (!this.selectedConnector || !this.isConnectionMode) return;
-
-    const sourceNote = this.selectedConnector.closest('.note');
-
-    // Don't allow self-connections
-    if (sourceNote === targetNote) {
-      this.clearConnectionMode();
-      return;
-    }
-
-    // Create the connection directly via connectionManager (like desktop system)
-    this.createTouchConnection(sourceNote, targetNote);
-
-    // Clear connection mode
-    this.clearConnectionMode();
-  }
-
-  /**
-   * Create connection via connectionManager (mimics desktop behavior)
-   */
-  createTouchConnection(sourceNote, targetNote) {
-    // Check if connection already exists (like desktop system does)
-    if (connectionManager.connectionExists(sourceNote.id, targetNote.id)) {
-      console.log('Connection already exists between these notes');
-      return;
-    }
-
-    // Get the canvas and SVG container
-    const canvas = document.getElementById('canvas');
-    const svgContainer = document.getElementById('svg-container');
-
-    if (!canvas || !svgContainer) {
-      console.error(
-        'Cannot create connection: canvas or svg container not found',
-      );
-      return;
-    }
-
-    // Create connection group (similar to desktop system)
-    // We need to simulate the connection group creation for touch
-    connectionManager.createConnection(
-      sourceNote.id,
-      targetNote.id,
-      connectionManager.CONNECTION_TYPES.UNI_FORWARD,
-    );
-
-    // Update data store (like desktop system does)
-    connectionManager.updateConnectionInDataStore(
-      sourceNote.id,
-      targetNote.id,
-      connectionManager.CONNECTION_TYPES.UNI_FORWARD,
-    );
-
-    console.log(
-      `Touch connection created: ${sourceNote.id} -> ${targetNote.id}`,
-    );
-  }
-
-  /**
-   * Clear connection creation mode
+   * Clear any active connection mode state (UTILITY - keep)
    */
   clearConnectionMode() {
-    if (this.selectedConnector) {
-      this.selectedConnector.classList.remove('connector-selected');
-      this.selectedConnector = null;
-    }
+    this.isConnectionMode = false;
+    this.selectedConnector = null;
 
-    if (this.isConnectionMode) {
-      this.isConnectionMode = false;
-
-      // Hide ghost connectors on all notes when exiting connection mode
-      document.body.classList.remove('connection-mode');
-
-      this.emit('connection.modeCancelled', { _gesture: 'tap' });
-    }
-  }
-
-  /**
-   * Start note dragging operation
-   */
-  startNoteDrag(touch, note, target) {
-    // Don't start drag on note content (for editing)
-    if (target.classList.contains('note-content')) {
-      return;
-    }
-
-    // Remove jiggle animation when drag starts
-    this.removeJiggleAnimation(note);
-
-    // Clear connection mode when starting to drag notes
-    this.clearConnectionMode();
-
-    this.isDragging = true;
-
-    // Enable drag-optimized connection updates
-    connectionManager.setDragState(true);
-
-    this.dragState = {
-      type: 'note',
-      note: note,
-      startX: touch.startX,
-      startY: touch.startY,
-    };
-
-    // Calculate movement offsets (similar to DesktopAdapter)
-    const selectedNotes = noteManager.getSelectedNotes();
-    const zoomLevel = getZoomLevel();
-    const scale = zoomLevel / 5;
-
-    const canvasRect = this.canvas.getBoundingClientRect();
-    const noteRect = note.getBoundingClientRect();
-
-    this.shiftX =
-      (touch.startX - canvasRect.left) / scale -
-      (noteRect.left - canvasRect.left) / scale;
-    this.shiftY =
-      (touch.startY - canvasRect.top) / scale -
-      (noteRect.top - canvasRect.top) / scale;
-
-    this.selectedNotesOffsets = selectedNotes.map((selectedNote) => {
-      const rect = selectedNote.getBoundingClientRect();
-      return {
-        note: selectedNote,
-        offsetX: (rect.left - noteRect.left) / scale,
-        offsetY: (rect.top - noteRect.top) / scale,
-      };
+    // Remove any visual connection indicators
+    document.querySelectorAll('.connection-mode').forEach((element) => {
+      element.classList.remove('connection-mode');
     });
-
-    this.hasStateChanged = false;
-  }
-
-  /**
-   * Handle note dragging
-   */
-  handleNoteDrag(touch) {
-    if (!this.dragState?.note) return;
-
-    const zoomLevel = getZoomLevel();
-    const scale = zoomLevel / 5;
-
-    const canvasRect = this.canvas.getBoundingClientRect();
-
-    const canvasX = (touch.currentX - canvasRect.left) / scale;
-    const canvasY = (touch.currentY - canvasRect.top) / scale;
-
-    const offsetX = canvasX - this.shiftX;
-    const offsetY = canvasY - this.shiftY;
-
-    this.selectedNotesOffsets.forEach(
-      ({ note, offsetX: relativeX, offsetY: relativeY }) => {
-        const noteShiftX = offsetX + relativeX;
-        const noteShiftY = offsetY + relativeY;
-        note.style.left = `${noteShiftX}px`;
-        note.style.top = `${noteShiftY}px`;
-
-        // Update data store via event bus
-        this.emit('note.updated', {
-          id: note.id,
-          left: note.style.left,
-          top: note.style.top,
-        });
-      },
-    );
-
-    // Update connections for smooth movement
-    this.selectedNotesOffsets.forEach(({ note }) => {
-      connectionManager.updateConnections(note);
-    });
-
-    this.hasStateChanged = true;
-
-    this.emit('note.dragUpdate', {
-      note: this.dragState.note,
-      clientX: touch.currentX,
-      clientY: touch.currentY,
-      _gesture: 'drag',
-    });
-  }
-
-  /**
-   * End note dragging operation
-   */
-  endNoteDrag(touch) {
-    // Disable drag-optimized connection updates
-    connectionManager.setDragState(false);
-
-    if (this.dragState?.note) {
-      // Final connection update for all moved notes
-      this.selectedNotesOffsets.forEach(({ note }) => {
-        connectionManager.updateConnections(note, this.canvas);
-      });
-
-      // Save state if changes were made
-      if (this.hasStateChanged) {
-        appState.saveToLocalStorage();
-      }
-    }
-
-    this.emit('note.dragEnd', {
-      note: this.dragState.note,
-      endX: touch.currentX,
-      endY: touch.currentY,
-      _gesture: 'drag',
-    });
-
-    // Reset state
-    this.isDragging = false;
-    this.dragState = null;
-    this.hasStateChanged = false;
-    this.selectedNotesOffsets = [];
-  }
-
-  /**
-   * Start multi-select lasso box drawing (MM-145)
-   */
-  startSelectionBox(touch) {
-    this.isDrawingSelectionBox = true;
-
-    // Prevent text selection during drag operations
-    document.body.classList.add('dragging');
-
-    const { left: startX, top: startY } = calculateOffsetPosition(this.canvas, {
-      clientX: touch.currentX,
-      clientY: touch.currentY,
-    });
-
-    this.selectionBoxState = {
-      startX: startX,
-      startY: startY,
-      touchId: touch.identifier,
-    };
-
-    // Clear existing selections and create visual selection box
-    noteManager.clearSelections();
-    this.createSelectionBoxElement(startX, startY);
-
-    this.emit('selection.boxStart', {
-      startX: startX,
-      startY: startY,
-      _gesture: 'longpress-drag',
-    });
-  }
-
-  /**
-   * Handle selection box drag update
-   */
-  handleSelectionBoxDrag(touch) {
-    const { left: currentX, top: currentY } = calculateOffsetPosition(
-      this.canvas,
-      { clientX: touch.currentX, clientY: touch.currentY },
-    );
-
-    this.throttledUpdateSelectionBox(
-      this.selectionBoxState.startX,
-      this.selectionBoxState.startY,
-      currentX,
-      currentY,
-    );
-
-    this.emit('selection.boxUpdate', {
-      startX: this.selectionBoxState.startX,
-      startY: this.selectionBoxState.startY,
-      endX: currentX,
-      endY: currentY,
-      _gesture: 'longpress-drag',
-    });
-
-    // Select notes within the selection box
-    this.selectNotesWithinBox();
-  }
-
-  /**
-   * End selection box operation
-   */
-  endSelectionBox() {
-    // Remove dragging class to re-enable text selection
-    document.body.classList.remove('dragging');
-
-    // Perform final selection before clearing the box
-    this.selectNotesWithinBox();
-
-    // Emit selection changed event
-    this.emit('note.selection.changed');
-
-    this.emit('selection.boxEnd', { _gesture: 'longpress-drag' });
-    this.clearSelectionBox();
-
-    this.isDrawingSelectionBox = false;
-    this.selectionBoxState = null;
-  }
-
-  /**
-   * Create visual selection box element
-   */
-  createSelectionBoxElement(startX, startY) {
-    this.clearSelectionBox();
-
-    this.selectionBox = document.createElement('div');
-    this.selectionBox.id = 'selection-box';
-    Object.assign(this.selectionBox.style, {
-      position: 'absolute',
-      border: '2px dashed rgba(102, 102, 240, 0.8)', // Touch-friendly thicker border
-      backgroundColor: 'rgba(102, 102, 240, 0.1)',
-      left: `${startX}px`,
-      top: `${startY}px`,
-      width: '0px',
-      height: '0px',
-      pointerEvents: 'none', // Don't interfere with touch events
-      borderRadius: '4px', // Slightly rounded for mobile aesthetic
-    });
-
-    this.canvas.appendChild(this.selectionBox);
-  }
-
-  /**
-   * Update selection box visual
-   */
-  updateSelectionBox(startX, startY, currentX, currentY) {
-    if (!this.selectionBox) return;
-
-    const width = currentX - startX;
-    const height = currentY - startY;
-
-    Object.assign(this.selectionBox.style, {
-      width: `${Math.abs(width)}px`,
-      height: `${Math.abs(height)}px`,
-      left: `${Math.min(currentX, startX)}px`,
-      top: `${Math.min(currentY, startY)}px`,
-    });
-  }
-
-  /**
-   * Clear selection box visual
-   */
-  clearSelectionBox() {
-    if (this.selectionBox) {
-      this.selectionBox.remove();
-      this.selectionBox = null;
-    }
-  }
-
-  /**
-   * Select notes that fall within the current selection box
-   */
-  selectNotesWithinBox() {
-    if (!this.selectionBox) return;
-
-    const notes = document.querySelectorAll('.note');
-    const boxRect = this.selectionBox.getBoundingClientRect();
-
-    notes.forEach((note) => {
-      const noteRect = note.getBoundingClientRect();
-
-      // Use intersection-based selection (touch-friendly)
-      // Both rectangles are in viewport coordinates
-      const intersects =
-        noteRect.left < boxRect.right &&
-        noteRect.right > boxRect.left &&
-        noteRect.top < boxRect.bottom &&
-        noteRect.bottom > boxRect.top;
-
-      if (intersects) {
-        noteManager.selectNote(note);
-      } else {
-        noteManager.deselectNote(note);
-      }
-    });
-  }
-
-  /**
-   * Check if target is the canvas (not a note or other element)
-   */
-  isClickOnCanvas(target) {
-    return (
-      target.id === 'canvas' ||
-      target.classList.contains('background-layout') ||
-      (target === this.canvas &&
-        !target.classList.contains('note') &&
-        !target.closest('.note'))
-    );
   }
 }

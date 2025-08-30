@@ -67,7 +67,7 @@ describe('BaseAdapter', () => {
 
   describe('Initialization', () => {
     it('should initialize with event bus', async () => {
-      await testAdapter.init(mockEventBus);
+      await testAdapter.initialize(mockEventBus);
 
       expect(testAdapter.eventBus).toBe(mockEventBus);
       expect(testAdapter.isInitialized).toBe(true);
@@ -75,15 +75,15 @@ describe('BaseAdapter', () => {
     });
 
     it('should prevent double initialization', async () => {
-      await testAdapter.init(mockEventBus);
+      await testAdapter.initialize(mockEventBus);
 
-      await expect(testAdapter.init(mockEventBus)).rejects.toThrow(
+      await expect(testAdapter.initialize(mockEventBus)).rejects.toThrow(
         'Adapter is already initialized',
       );
     });
 
     it('should require event bus parameter', async () => {
-      await expect(testAdapter.init(null)).rejects.toThrow(
+      await expect(testAdapter.initialize(null)).rejects.toThrow(
         'EventBus is required for adapter initialization',
       );
     });
@@ -99,7 +99,7 @@ describe('BaseAdapter', () => {
         lifecycleCalls.push('onInitialized');
       });
 
-      await testAdapter.init(mockEventBus);
+      await testAdapter.initialize(mockEventBus);
 
       expect(lifecycleCalls).toEqual([
         'initializeEventListeners',
@@ -110,7 +110,7 @@ describe('BaseAdapter', () => {
 
   describe('Event Emission', () => {
     beforeEach(async () => {
-      await testAdapter.init(mockEventBus);
+      await testAdapter.initialize(mockEventBus);
     });
 
     it('should emit events through event bus', () => {
@@ -147,7 +147,7 @@ describe('BaseAdapter', () => {
 
   describe('Cleanup', () => {
     beforeEach(async () => {
-      await testAdapter.init(mockEventBus);
+      await testAdapter.initialize(mockEventBus);
     });
 
     it('should cleanup properly on destroy', async () => {
@@ -195,7 +195,7 @@ describe('BaseAdapter', () => {
       }
 
       const adapter = new IncompleteAdapter();
-      await expect(adapter.init(mockEventBus)).rejects.toThrow(
+      await expect(adapter.initialize(mockEventBus)).rejects.toThrow(
         'initializeEventListeners must be implemented',
       );
     });
@@ -210,7 +210,7 @@ describe('BaseAdapter', () => {
       }
 
       const adapter = new IncompleteAdapter();
-      await adapter.init(mockEventBus);
+      await adapter.initialize(mockEventBus);
       await expect(adapter.destroy()).rejects.toThrow(
         'destroyEventListeners must be implemented',
       );
@@ -221,7 +221,7 @@ describe('BaseAdapter', () => {
     it('should track initialization state correctly', async () => {
       expect(testAdapter.isInitialized).toBe(false);
 
-      await testAdapter.init(mockEventBus);
+      await testAdapter.initialize(mockEventBus);
       expect(testAdapter.isInitialized).toBe(true);
 
       await testAdapter.destroy();
@@ -238,7 +238,7 @@ describe('BaseAdapter', () => {
     });
 
     it('should update state after initialization', async () => {
-      await testAdapter.init(mockEventBus);
+      await testAdapter.initialize(mockEventBus);
 
       expect(testAdapter.getState()).toEqual({
         name: 'test',
@@ -254,14 +254,14 @@ describe('BaseAdapter', () => {
         throw new Error('Listener setup failed');
       });
 
-      await expect(testAdapter.init(mockEventBus)).rejects.toThrow(
+      await expect(testAdapter.initialize(mockEventBus)).rejects.toThrow(
         'Failed to initialize test adapter: Listener setup failed',
       );
       expect(testAdapter.isInitialized).toBe(false);
     });
 
     it('should handle errors during destroy', async () => {
-      await testAdapter.init(mockEventBus);
+      await testAdapter.initialize(mockEventBus);
 
       testAdapter.destroyEventListeners = jest.fn(() => {
         throw new Error('Cleanup failed');

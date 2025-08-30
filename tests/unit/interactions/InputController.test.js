@@ -25,12 +25,12 @@ describe('Input Controller Behavior', () => {
       }),
     };
     mockDesktopAdapter = {
-      init: jest.fn(),
+      initialize: jest.fn(),
       destroy: jest.fn(),
       getName: jest.fn().mockReturnValue('desktop'),
     };
     mockTouchAdapter = {
-      init: jest.fn(),
+      initialize: jest.fn(),
       destroy: jest.fn(),
       getName: jest.fn().mockReturnValue('touch'),
     };
@@ -84,7 +84,7 @@ describe('Input Controller Behavior', () => {
 
       expect(mockCapabilityDetector.getOptimalInputMode).toHaveBeenCalled();
       expect(inputController._loadAdapter).toHaveBeenCalledWith(mode);
-      expect(adapter().init).toHaveBeenCalledWith(mockEventBus);
+      expect(adapter().initialize).toHaveBeenCalledWith(mockEventBus);
     });
   });
 
@@ -109,7 +109,7 @@ describe('Input Controller Behavior', () => {
 
       expect(mockDesktopAdapter.destroy).toHaveBeenCalled();
       expect(inputController.currentAdapter).toBe(mockTouchAdapter);
-      expect(mockTouchAdapter.init).toHaveBeenCalledWith(mockEventBus);
+      expect(mockTouchAdapter.initialize).toHaveBeenCalledWith(mockEventBus);
       expect(mockEventBus.emit).toHaveBeenCalledWith('input.modeChanged', {
         from: 'desktop',
         to: 'touch',
@@ -160,7 +160,7 @@ describe('Input Controller Behavior', () => {
       await inputController.switchToMode('desktop');
 
       expect(inputController._loadAdapter).toHaveBeenCalledTimes(3);
-      expect(mockDesktopAdapter.init).toHaveBeenCalledTimes(2);
+      expect(mockDesktopAdapter.initialize).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -202,7 +202,7 @@ describe('Input Controller Behavior', () => {
       // Test initialization failure
       const failingDesktopAdapter = {
         ...mockDesktopAdapter,
-        init: jest.fn().mockRejectedValue(new Error('Init failed')),
+        initialize: jest.fn().mockRejectedValue(new Error('Init failed')),
       };
       inputController = new InputController(
         mockEventBus,
@@ -228,7 +228,7 @@ describe('Input Controller Behavior', () => {
 
       const failingTouchAdapter = {
         ...mockTouchAdapter,
-        init: jest.fn().mockRejectedValue(new Error('Touch init failed')),
+        initialize: jest.fn().mockRejectedValue(new Error('Touch init failed')),
       };
       inputController._loadAdapter = jest
         .fn()
