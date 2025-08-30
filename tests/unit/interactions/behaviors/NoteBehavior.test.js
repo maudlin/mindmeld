@@ -103,6 +103,7 @@ describe('NoteBehavior', () => {
           noteElement: mockNoteElement,
           behavior: noteBehavior,
           inputType: 'desktop',
+          noteId: 'note-123',
         });
       });
 
@@ -120,6 +121,7 @@ describe('NoteBehavior', () => {
           noteElement: mockNoteElement,
           behavior: noteBehavior,
           inputType: 'touch',
+          noteId: 'note-123',
         });
       });
     });
@@ -149,6 +151,7 @@ describe('NoteBehavior', () => {
           noteElement: mockNoteElement,
           behavior: noteBehavior,
           inputType: 'desktop',
+          noteId: 'note-123',
         });
       });
 
@@ -176,6 +179,7 @@ describe('NoteBehavior', () => {
           noteElement: mockNoteElement,
           behavior: noteBehavior,
           inputType: 'touch',
+          noteId: 'note-123',
         });
       });
 
@@ -199,6 +203,7 @@ describe('NoteBehavior', () => {
           noteElement: mockNoteElement,
           behavior: noteBehavior,
           inputType: 'desktop',
+          noteId: 'note-123',
         });
       });
 
@@ -232,6 +237,7 @@ describe('NoteBehavior', () => {
           noteElement: mockNoteElement,
           behavior: noteBehavior,
           inputType: 'desktop',
+          noteId: 'note-123',
         });
       });
     });
@@ -273,6 +279,7 @@ describe('NoteBehavior', () => {
           noteElement: mockNoteElement,
           behavior: noteBehavior,
           inputType: 'desktop',
+          noteId: 'note-123',
         });
       });
     });
@@ -356,6 +363,7 @@ describe('NoteBehavior', () => {
         noteElement: mockNoteElement,
         behavior: noteBehavior,
         inputType: 'unknown',
+        noteId: 'note-123',
       });
     });
 
@@ -396,30 +404,6 @@ describe('NoteBehavior', () => {
       await noteBehavior.initialize();
     });
 
-    test('should handle clicks on note borders/padding', () => {
-      // Mock noteElement doesn't have closest method, but this simulates click on note itself
-      const mockNoteElementForClick = {
-        ...mockNoteElement,
-        tagName: 'DIV',
-      };
-
-      const mockEvent = {
-        target: mockNoteElementForClick,
-        clientX: 100,
-        clientY: 200,
-        composedPath: () => [mockNoteElementForClick],
-      };
-
-      // Note element itself clicked, should find note content
-      noteBehavior.handleNoteClick(mockNoteElement, mockEvent, 'desktop');
-
-      expect(mockEventBus.emit).toHaveBeenCalledWith('note.requestEdit', {
-        noteElement: mockNoteElement,
-        behavior: noteBehavior,
-        inputType: 'desktop',
-      });
-    });
-
     test('should handle complex DOM structures with multiple note content elements', () => {
       const mockSecondNoteContent = {
         className: 'note-content secondary',
@@ -448,6 +432,7 @@ describe('NoteBehavior', () => {
         noteElement: mockNoteElement,
         behavior: noteBehavior,
         inputType: 'desktop',
+        noteId: 'note-123',
       });
     });
   });

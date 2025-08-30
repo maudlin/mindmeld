@@ -27,7 +27,7 @@ const createTouchEvent = (type, touches) => ({
   targetTouches: touches,
 });
 
-describe.skip('Touch Gesture Recognition Behavior - MM-206: Update tests for new event emission architecture', () => {
+describe('Touch Gesture Recognition Behavior - MM-206: Update tests for new event emission architecture', () => {
   let gestureRecognizer, mockEventBus, mockElement;
 
   beforeEach(() => {
@@ -93,10 +93,13 @@ describe.skip('Touch Gesture Recognition Behavior - MM-206: Update tests for new
       // Wait for double-tap timeout
       await new Promise((resolve) => {
         setTimeout(() => {
-          expect(mockEventBus.emit).toHaveBeenCalledWith('note.select', {
-            x: 100,
-            y: 200,
-            type: 'tap',
+          expect(mockEventBus.emit).toHaveBeenCalledWith('gesture.tap', {
+            touch: {
+              clientX: 100,
+              clientY: 200,
+              target: null,
+              type: 'tap',
+            },
             _gesture: 'tap',
           });
           resolve();
@@ -117,7 +120,7 @@ describe.skip('Touch Gesture Recognition Behavior - MM-206: Update tests for new
 
       expect(gestureRecognizer.currentState).toBe('dragging');
       expect(mockEventBus.emit).toHaveBeenCalledWith(
-        'note.dragStart',
+        'gesture.dragstart',
         expect.any(Object),
       );
     });
@@ -146,11 +149,14 @@ describe.skip('Touch Gesture Recognition Behavior - MM-206: Update tests for new
       Date.now.mockReturnValue(1200);
       gestureRecognizer.handleTouchEnd(createTouchEvent('touchend', [touch2]));
 
-      expect(mockEventBus.emit).toHaveBeenCalledWith('note.createAtPosition', {
-        canvas: mockElement,
-        event: { clientX: 102, clientY: 201, type: 'doubletap' },
-        _gesture: 'doubletap',
-      });
+      // Double-tap now emits two gesture.tap events instead of one gesture.doubletap
+      expect(mockEventBus.emit).toHaveBeenCalledTimes(2);
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        'gesture.tap',
+        expect.objectContaining({
+          _gesture: 'tap',
+        }),
+      );
     });
 
     it('falls back to single tap when taps are too far apart', () => {
@@ -166,12 +172,16 @@ describe.skip('Touch Gesture Recognition Behavior - MM-206: Update tests for new
       );
       gestureRecognizer.handleTouchEnd(createTouchEvent('touchend', [touch2]));
 
+      // Should emit separate tap events for taps that are too far apart
+      expect(mockEventBus.emit).toHaveBeenCalledTimes(2);
       expect(mockEventBus.emit).toHaveBeenCalledWith(
-        'note.select',
-        expect.objectContaining({ type: 'tap' }),
+        'gesture.tap',
+        expect.objectContaining({
+          _gesture: 'tap',
+        }),
       );
       expect(mockEventBus.emit).not.toHaveBeenCalledWith(
-        'note.createAtPosition',
+        'gesture.doubletap',
         expect.any(Object),
       );
     });
@@ -189,10 +199,13 @@ describe.skip('Touch Gesture Recognition Behavior - MM-206: Update tests for new
       await new Promise((resolve) => {
         setTimeout(() => {
           expect(gestureRecognizer.currentState).toBe('longPressing');
-          expect(mockEventBus.emit).toHaveBeenCalledWith('contextmenu.show', {
-            x: 100,
-            y: 200,
-            type: 'longpress',
+          expect(mockEventBus.emit).toHaveBeenCalledWith('gesture.longpress', {
+            touch: {
+              clientX: 100,
+              clientY: 200,
+              target: null,
+              type: 'longpress',
+            },
             _gesture: 'longpress',
           });
           resolve();
@@ -214,7 +227,7 @@ describe.skip('Touch Gesture Recognition Behavior - MM-206: Update tests for new
         );
         expect(gestureRecognizer.currentState).toBe('dragging');
         expect(mockEventBus.emit).not.toHaveBeenCalledWith(
-          'contextmenu.show',
+          'gesture.longpress',
           expect.any(Object),
         );
       }, gestureRecognizer.LONG_PRESS_THRESHOLD - 100);
@@ -238,11 +251,15 @@ describe.skip('Touch Gesture Recognition Behavior - MM-206: Update tests for new
       );
 
       expect(gestureRecognizer.currentState).toBe('dragging');
-      expect(mockEventBus.emit).toHaveBeenCalledWith('note.dragStart', {
-        x: 120,
-        y: 220,
-        startX: 100,
-        startY: 200,
+      expect(mockEventBus.emit).toHaveBeenCalledWith('gesture.dragstart', {
+        touch: {
+          clientX: 120,
+          clientY: 220,
+          startX: 100,
+          startY: 200,
+          target: null,
+          type: 'dragstart',
+        },
         _gesture: 'drag',
       });
 
@@ -250,11 +267,15 @@ describe.skip('Touch Gesture Recognition Behavior - MM-206: Update tests for new
       gestureRecognizer.handleTouchMove(
         createTouchEvent('touchmove', [touches[2]]),
       );
-      expect(mockEventBus.emit).toHaveBeenCalledWith('note.dragUpdate', {
-        x: 140,
-        y: 240,
-        deltaX: 20,
-        deltaY: 20,
+      expect(mockEventBus.emit).toHaveBeenCalledWith('gesture.dragmove', {
+        touch: {
+          clientX: 140,
+          clientY: 240,
+          deltaX: 20,
+          deltaY: 20,
+          target: null,
+          type: 'dragmove',
+        },
         _gesture: 'drag',
       });
 
@@ -262,11 +283,15 @@ describe.skip('Touch Gesture Recognition Behavior - MM-206: Update tests for new
       gestureRecognizer.handleTouchEnd(
         createTouchEvent('touchend', [touches[2]]),
       );
-      expect(mockEventBus.emit).toHaveBeenCalledWith('note.dragEnd', {
-        x: 140,
-        y: 240,
-        endX: 140,
-        endY: 240,
+      expect(mockEventBus.emit).toHaveBeenCalledWith('gesture.dragend', {
+        touch: {
+          clientX: 140,
+          clientY: 240,
+          endX: 140,
+          endY: 240,
+          target: null,
+          type: 'dragend',
+        },
         _gesture: 'drag',
       });
     });

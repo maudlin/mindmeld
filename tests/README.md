@@ -10,21 +10,60 @@ This guide documents testing approaches, technical findings, and best practices 
 
 Scope: This guide focuses on hands-on details: test structure, the shared CanvasPage API, selectors/coordinates, and technical findings. For philosophy, naming conventions, and patterns, see docs/testing.md. For suites, commands, tags, and runtimes, see docs/testing-environments.md.
 
+## Test Design Strategy
+
+We follow established testing best practices including the **Test Pyramid** (Martin Fowler) and **Testing Trophy** (Kent C. Dodds) patterns for optimal test architecture:
+
+### **Atomic Tests (Base of Pyramid)**
+- **One behavior per test** - easier debugging, faster feedback
+- **Examples**: Note creation, note selection, note deletion
+- **Benefits**: Precise failure diagnosis, quick fixes
+
+### **Integration Tests (Middle)**  
+- **2-3 related behaviors** - catch interaction issues
+- **Examples**: Edit workflows, connection creation
+- **Benefits**: Detect interface problems between components
+
+### **Smoke Tests (Top)**
+- **End-to-end user journeys** - catch regressions quickly  
+- **Examples**: Complete user workflows, template switching
+- **Benefits**: High confidence in overall system health
+
+This approach follows the **70% atomic, 20% integration, 10% smoke** industry standard ratio.
+
+### **Practical Benefits**
+
+**When atomic test fails**: "Delete key doesn't work" - precise, quick fix  
+**When integration test fails**: "Edit mode and selection don't play well together" - focused scope  
+**When smoke test fails**: "Something broke in the core workflow" - broader investigation needed
+
+### **Test Organization Guidelines**
+
+- **Atomic folder**: Single-behavior tests for development/debugging
+- **Integration folder**: Multi-behavior workflows for component interaction testing  
+- **Smoke folder**: End-to-end journeys for CI confidence and regression detection
+- **Root e2e folder**: Legacy tests being migrated to new structure
+
 ## Test Structure
 
 ```
 tests/
 ├── README.md                          # This file - testing documentation
 ├── e2e/                              # End-to-end tests (Playwright)
+│   ├── atomic/                       # Single-behavior tests
+│   │   └── note-deletion-simple.spec.js # Create → select → delete
+│   ├── smoke/                       # End-to-end user journeys
+│   │   └── note-operations.spec.js   # Complete CRUD workflow
 │   ├── helpers/
 │   │   └── CanvasPage.js             # 🆕 Shared Page Object Model
 │   ├── basic.spec.js                 # Page loading and basic functionality
-│   ├── note-operations.spec.js       # Note CRUD operations
 │   ├── note-connections.spec.js      # Note connection functionality
 │   ├── multi-select-notes.spec.js    # Multi-select and group operations
-│   ├── canvas-template-switching.spec.js # Template switching functionality
+│   ├── canvas-template-switching.spec.js.disabled # TODO: Re-enable template switching tests
 │   ├── menu-functionality.spec.js    # 🆕 Menu operations and import/export (12 tests)
-│   └── desktop-zoom-test.spec.js     # ✨ Desktop zoom functionality tests
+│   ├── desktop-zoom-test.spec.js     # ✨ Desktop zoom functionality tests
+│   ├── touch-*.spec.js              # Touch interaction tests
+│   └── [TODO: integration/ folder]  # Multi-behavior workflow tests needed
 └── unit/                             # Unit tests (Jest)
     ├── core/
     │   ├── eventBus.test.js          # 🆕 Event Bus comprehensive tests (20 tests, 100% coverage)
@@ -39,10 +78,18 @@ tests/
     │       └── zoomManager.test.js
     ├── interactions/                   # ✨ Touch and input adapter tests
     │   ├── adapters/
+    │   │   ├── BaseAdapter.test.js      # Base adapter tests
     │   │   ├── DesktopAdapter.test.js   # Desktop interaction tests
-    │   │   └── TouchAdapter.test.js     # Touch interaction tests
+    │   │   └── [TODO: TouchAdapter.test.js] # Touch adapter tests needed
+    │   ├── behaviors/                   # Interaction behavior tests
+    │   │   ├── DragBehavior.test.js
+    │   │   ├── NoteBehavior.test.js
+    │   │   └── SelectionBoxBehavior.test.js
+    │   ├── capabilities/
+    │   │   └── detector.test.js         # Device capability detection
     │   └── gestures/
-    │       └── GestureRecognizer.test.js # Gesture recognition tests
+    │       ├── GestureRecognizer.test.js # Gesture recognition tests
+    │       └── TouchState.test.js       # Touch state management
     └── utils/
         └── utils.test.js
 ```
@@ -92,14 +139,14 @@ All E2E tests now use a unified `CanvasPage` class located in `tests/e2e/helpers
 
 - **Single source of truth** for all canvas interactions
 - **Consistent API** across all test files
-- **Built-in timing handling** for MindMeld's 500ms throttling
+- **Built-in timing handling** for reliable test timing
 - **Standard test coordinates** for reliable positioning
 - **Template switching methods** for canvas template tests
 
 ### **Key Benefits for Future Engineers**
 
 ✅ **Maintainability**: Canvas interaction changes only need one update  
-✅ **Reliability**: Automatic throttle handling prevents timing issues  
+✅ **Reliability**: Automatic timing handling prevents test flakiness
 ✅ **Consistency**: All tests use same patterns and coordinates  
 ✅ **Extensibility**: Easy to add new test methods to shared class
 
@@ -114,8 +161,8 @@ test('My new test', async ({ page }) => {
 
   await canvasPage.load(); // Standard app loading
 
-  // Create notes with automatic throttle handling
-  const note1 = await canvasPage.createNoteWithThrottleWait(
+  // Create notes with automatic timing handling
+  const note1 = await canvasPage.createNote(
     TestCoordinates.note1.x,
     TestCoordinates.note1.y,
   );
@@ -176,23 +223,20 @@ npm run security:fix
 
 ### Critical Application Behaviors
 
-#### 1. Note Creation Throttling ⚠️
+#### 1. Test Timing for Note Creation ⚠️
 
-**Issue**: MindMeld implements a 500ms throttle on double-click note creation
+**Background**: Rapid note creation in tests can be unreliable due to double-tap gesture detection timing (300ms window) and DOM update delays
 
-```javascript
-// From src/js/core/event.js
-const throttledHandleDoubleClick = throttle((event) => {
-  // Note creation logic
-}, 500); // 500ms throttle
-```
-
-**Solution**: Wait ~600ms between creations locally and 800–1000ms in CI to account for timing variability
+**Solution**: CanvasPage helper automatically handles timing between note creations with 600ms waits locally and longer waits in CI
 
 ```javascript
-await canvasPage.createNoteAt(400, 300);
-await page.waitForTimeout(600); // Local buffer (~600ms)
-await canvasPage.createNoteAt(700, 300);
+// ✅ Use CanvasPage helper - handles timing automatically
+const note1 = await canvasPage.createNote(400, 300);
+const note2 = await canvasPage.createNote(700, 300); // Automatic 600ms wait
+
+// ❌ Don't use raw double-clicks without timing
+await page.mouse.dblclick(400, 300);
+await page.mouse.dblclick(700, 300); // May fail
 ```
 
 #### 2. Ghost Connector Behavior
@@ -338,7 +382,7 @@ const emptyAreas = {
 
 #### Critical Wait Times
 
-- **Note Creation**: 600ms between rapid creations (500ms throttle + buffer)
+- **Note Creation**: 600ms between rapid creations (test stability, not app throttle)
 - **Ghost Connectors**: Brief hover before interaction
 - **DOM Updates**: Use `toBeAttached()` for element verification
 - **Animations**: Allow time for connection drawing
@@ -349,8 +393,8 @@ const emptyAreas = {
 // Element attachment verification
 await expect(element).toBeAttached();
 
-// Throttle handling
-await page.waitForTimeout(600);
+// Test timing for reliable note creation
+const note1 = await canvasPage.createNote(400, 300); // Handles timing automatically
 
 // Network stability on load
 await page.goto(url, { waitUntil: 'networkidle' });
@@ -414,6 +458,8 @@ console.log('Note count:', await page.locator('.note').count());
 **E2E Tests**: Core user workflows (basic, note operations, connections, multi-select, template switching, menu, touch, zoom)
 
 - Runtimes vary by environment; see Testing Environments for suite guidance
+
+**TODO**: Add comprehensive TouchAdapter unit test coverage for the interaction system
 
 ## 🔒 **Security Testing Framework**
 
@@ -546,6 +592,8 @@ Track security improvements over time:
 ### **Testing Touch Mode Features**
 
 MindMeld's TouchAdapter system requires specific testing patterns for advanced touch interactions. Tests should verify both the legacy touch system and the enhanced TouchAdapter mode.
+
+**TODO**: Comprehensive TouchAdapter unit tests needed (see missing TouchAdapter.test.js above).
 
 #### **Touch Mode Test Setup**
 
@@ -721,10 +769,12 @@ test('Mobile devices without touch mode use legacy system', async ({
 
 ### **TouchAdapter Unit Testing**
 
-**Test TouchAdapter Gesture State Machine:**
+**TODO: TouchAdapter Gesture State Machine Tests Needed:**
+
+The TouchAdapter system exists in the codebase but lacks comprehensive unit test coverage. The following test structure should be implemented:
 
 ```javascript
-// tests/unit/interactions/adapters/TouchAdapter.test.js
+// TODO: Create tests/unit/interactions/adapters/TouchAdapter.test.js
 describe('TouchAdapter Gesture Recognition', () => {
   it('detects long-press for note movement', () => {
     // Test gesture state transitions
@@ -739,6 +789,8 @@ describe('TouchAdapter Gesture Recognition', () => {
   });
 });
 ```
+
+**Current Coverage**: GestureRecognizer and TouchState have unit tests, but TouchAdapter integration testing is missing.
 
 ### **Common Touch Testing Issues**
 
@@ -814,7 +866,7 @@ export default {
 
 ### Common Issues
 
-1. **Note creation fails**: Check 500ms throttle timing
+1. **Note creation fails**: Use CanvasPage.createNote() which handles timing automatically
 2. **Connection tests fail**: Verify ghost connector hover
 3. **SVG elements not found**: Use `toBeAttached()` instead of `toBeVisible()`
 4. **Flaky tests**: Add appropriate waits for DOM updates
@@ -831,7 +883,7 @@ export default {
 ### **Intermittent Test Failures**
 
 **Issue**: `note-connections.spec.js` occasionally fails during parallel execution  
-**Cause**: Resource contention when 9 tests run simultaneously  
+**Cause**: Resource contention when multiple tests run simultaneously  
 **Status**: Intermittent in parallel execution
 
 **Solutions for Future Engineers**:
@@ -840,14 +892,7 @@ export default {
 2. **Medium Term**: Reduce Playwright worker count in `playwright.config.js`
 3. **Long Term**: Implement better test isolation or sequential execution for sensitive tests
 
-**Example Fix**:
-
-```javascript
-// In playwright.config.js
-export default defineConfig({
-  workers: process.env.CI ? 1 : 6, // Reduce from 9 to 6 workers
-});
-```
+**Current Status**: Playwright config already implements `fullyParallel: !process.env.CI` to reduce parallelism in CI environments.
 
 ## 🛠️ **Maintenance Guidelines**
 
@@ -857,7 +902,7 @@ When MindMeld adds new canvas functionality:
 
 1. **Add methods to CanvasPage.js** - Don't duplicate in test files
 2. **Use TestCoordinates** - Don't hardcode positions
-3. **Handle throttling** - Use `createNoteWithThrottleWait()` for rapid note creation
+3. **Handle timing** - Use `createNote()` method which handles timing automatically
 4. **Follow existing patterns** - Check similar tests for consistency
 5. **Test interaction modes** - Verify both Desktop and Touch modes where applicable
 6. **Check gesture conflicts** - Ensure new features don't interfere with existing gestures
@@ -870,6 +915,8 @@ For new canvas templates:
 2. **Add cleanup verification** - Extend `verifyTemplateCleanup()` method
 3. **Update template class map** - Add new template mapping
 4. **Test element detection** - Verify unique template elements
+
+**TODO**: Re-enable canvas-template-switching.spec.js (currently disabled)
 
 ### **Performance Considerations**
 
@@ -887,7 +934,7 @@ await canvasPage.load();
 
 // Note operations
 const note = await canvasPage.createNoteAt(x, y);
-const note = await canvasPage.createNoteWithThrottleWait(x, y); // Handles 600ms wait
+const note = await canvasPage.createNote(x, y); // Handles timing automatically
 await canvasPage.selectNote(note);
 await canvasPage.editNoteContent('text', note);
 
@@ -923,7 +970,7 @@ When adding new tests:
 
 1. **Use the shared CanvasPage** - Don't create duplicate page objects
 2. **Import TestCoordinates** - Use standard positioning
-3. **Handle throttling properly** - Use `createNoteWithThrottleWait()` for multiple notes
+3. **Handle timing properly** - Use `createNote()` method for reliable note creation
 4. **Update this README** - Document new patterns or findings
 5. **Test reliability** - Run your test multiple times to ensure stability
 6. **Consider parallel execution** - Ensure your test doesn't conflict with others

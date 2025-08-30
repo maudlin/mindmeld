@@ -166,9 +166,11 @@ export class CanvasPage {
 
   // Note selection
   async selectNote(note = this.note) {
-    // Use boundingBox and page.mouse.click to avoid "html intercepts pointer events" errors
+    // Click on the narrow border area that selects (not edit mode)
+    // Target: just below outer border, 1/4 way along to avoid ghost connector
     const box = await note.boundingBox();
-    await this.page.mouse.click(box.x + 3, box.y + 3);
+    await this.page.mouse.click(box.x + box.width * 0.25, box.y + 4);
+    await this.page.waitForTimeout(50); // Small delay for event processing
     await expect(note).toHaveClass(/selected/);
     return note;
   }

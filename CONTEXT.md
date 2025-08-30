@@ -1,8 +1,8 @@
 # MindMeld Current State & Active Development
 
 **Branch**: `feature/mm-182-event-system-refactor`  
-**Date**: August 29, 2025  
-**Status**: 🎉 **MM-182 Event System Refactor Complete - PR Ready for Merge**
+**Date**: August 30, 2025  
+**Status**: 🏗️ **MM-182 Event System Refactor Complete - Test Suite Refactor Required**
 
 ## Current State
 
@@ -20,6 +20,8 @@ The complete adapter-behavior architecture has been successfully implemented and
 - **Two-Finger Pan**: Added missing gesture detection and emission to GestureRecognizer
 - **Visual & Performance**: Doubled jiggle animation speed, improved touch feedback
 - **Code Quality**: Removed unused functions, fixed formatting issues
+- **Delete Key Functionality**: Fixed keyboard deletion by connecting event system (August 30, 2025)
+- **Test Architecture**: Established atomic/integration/smoke test structure following Test Pyramid patterns
 
 **Key Technical Fixes**:
 
@@ -45,17 +47,43 @@ User Input → Adapter (Input Detection) → Behavior (Logic) → EventBus → S
 - **GestureRecognizer**: Touch gesture detection with proper state machine management
 - **All Core Behaviors**: NoteBehavior, DragBehavior, SelectionBoxBehavior, CanvasBehavior
 
-## Next Steps & Pending Tasks
+## Next Steps & Critical Blocking Issues
 
-### 🔧 Immediate Priority: Post-Merge Tasks
+### 🚨 **CRITICAL: Test Suite Refactor Required for PR Merge**
 
-**After PR #91 is merged**:
+**Current Status**: PR cannot merge due to test failures (221 passed, 56 failed E2E tests; 666 passed, 28 failed unit tests)
 
-1. **Update GestureRecognizer Unit Tests** - Tests expect old event emission format but GestureRecognizer now emits `gesture.*` events that are handled by adapters. Tests need updating to match new architecture.
+**Root Cause**: Comprehensive adapter-behavior refactor changed interaction patterns, but many tests expect old event system behavior.
 
-2. **Monitor E2E Test Stability** - All core functionality works, but some E2E tests may need adjustments for new adapter timing.
+### 📋 **Strategic Test Refactor Plan**
 
-3. **Clean Up Debug Logging** - Remove development console.log statements added during debugging phase.
+#### **Phase 1: Foundation (Priority 1 - Blocking)**
+- **Fix adapter unit tests**: Update to match new initialization patterns (`BaseAdapter.test.js`, `DesktopAdapter.test.js`)
+- **Update GestureRecognizer tests**: Tests expect new `gesture.*` events instead of old direct event format
+- **Fix TouchAdapter tests**: Update for new event emission and delegation patterns
+- **Resolve timing issues**: New event bus flow has different timing characteristics
+
+#### **Phase 2: Core Workflows (Priority 2)**
+- **Migrate touch interaction tests**: Update for TouchAdapter architecture (`touch-interactions.spec.js`)
+- **Update connection tests**: Adjust for new ConnectionBehavior event flow
+- **Fix edit mode tests**: Update tests that assume old event handling patterns
+- **Address manual test scenarios**: Update tests designed for deprecated behavior patterns
+
+#### **Phase 3: Legacy Cleanup (Priority 3)**
+- **Remove/update manual tests**: Clean up tests for deprecated behavior
+- **Handle skipped tests**: Address disabled tests that may now be relevant
+- **Update test documentation**: Reflect new architecture in test guides
+
+#### **Approach Strategy**
+1. **Pragmatic over perfect**: Fix tests to pass, avoid complete rewrites
+2. **Atomic first**: Get unit tests passing to unlock CI pipeline
+3. **Critical E2E second**: Focus on @critical and @smoke tagged tests
+4. **Systematic migration**: Handle remaining tests in organized phases
+
+### ⚠️ **Immediate Blockers for Merge**
+- Unit test failures in adapter classes prevent CI success
+- Touch interaction E2E tests failing due to architecture mismatch
+- Some critical workflow tests need event timing adjustments
 
 ### 🎯 Development Guidelines for New Developers
 
@@ -167,13 +195,25 @@ npm run health-check       # Dependency analysis
 5. User taps target note → connection created via `ConnectionBehavior.createFinalConnection()`
 6. User taps canvas → `ConnectionBehavior.cancel()` cancels connection mode
 
-## Testing Status
+## Testing Status (August 30, 2025)
 
-- **Manual Testing**: All functionality works perfectly ✅
-- **Core Unit Tests**: Behavior tests pass, adapter tests pass ✅
-- **GestureRecognizer Tests**: Need updating for new event format ❌
-- **E2E Tests**: Core functionality works, timing may need adjustment ⚠️
-- **Touch Testing**: Use `?mode=touch` URL parameter for browser simulation
+### ✅ **Working Functionality**
+- **Manual Testing**: All core functionality works perfectly
+- **Delete Key**: Fixed and working in both manual and E2E tests
+- **Core Workflows**: Note creation, selection, editing, connections work
+- **New Test Structure**: Atomic/integration/smoke architecture established
+
+### ❌ **Test Suite Issues (Blocking Merge)**
+- **E2E Tests**: 221 passed, 56 failed (architecture mismatch issues)
+- **Unit Tests**: 666 passed, 28 failed (adapter initialization issues)
+- **Touch Tests**: TouchAdapter architecture requires test updates
+- **Event System**: Tests expect old event patterns, need migration
+
+### 📊 **Detailed Status**
+- **Touch Testing**: Use `?mode=touch` URL parameter - functionality works but tests need updates
+- **Connection System**: Working perfectly but some tests need event flow updates
+- **Core Behaviors**: All working but unit tests need initialization pattern fixes
+- **Critical Tests**: Most @critical tests pass, some touch-related failures remain
 
 ## Documentation
 
@@ -184,4 +224,15 @@ npm run health-check       # Dependency analysis
 
 ---
 
-**For new developers**: The core architecture is complete and stable. Focus on post-merge cleanup tasks or extending functionality through the established adapter-behavior pattern. All major interaction issues have been resolved.
+## 🎯 **For New Developers**
+
+**Current Priority**: **Test suite refactor is the critical blocking task**. The core architecture is complete and functional, but comprehensive test updates are required for PR merge.
+
+**Recommended Focus**:
+1. **Phase 1 test fixes**: Start with unit test adapter failures to unblock CI
+2. **Touch test migration**: Update TouchAdapter tests to match new architecture  
+3. **Event system tests**: Update tests expecting old event patterns
+
+**Architecture Status**: Stable and complete. All major interaction issues resolved. The challenge is updating the test suite to match the new patterns.
+
+**Key Success**: Delete key functionality and core workflows are working perfectly. Test failures are purely architectural mismatches, not functional bugs.

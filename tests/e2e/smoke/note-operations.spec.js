@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { CanvasPage } from './helpers/CanvasPage.js';
+import { CanvasPage } from '../helpers/CanvasPage.js';
 
 test.describe('MindMeld Operations', () => {
   test('Create, edit, move, and delete a note @smoke @critical', async ({
@@ -30,6 +30,8 @@ test.describe('MindMeld Operations', () => {
       await expect(noteContent).toHaveText('Test Note');
     }
 
+    // Exit edit mode by clicking on empty canvas
+    await page.mouse.click(100, 100);
     await canvasPage.selectNote(note);
     await canvasPage.deleteNote();
 

@@ -183,21 +183,21 @@ describe('DesktopAdapter - Unit Tests', () => {
         clientX: 100,
         clientY: 200,
         preventDefault: jest.fn(),
+        closest: jest.fn(() => null),
       };
+
+      // Mock CanvasBehavior
+      const mockCanvasBehavior = {
+        handleCanvasDoubleClick: jest.fn(),
+      };
+      desktopAdapter.canvasBehavior = mockCanvasBehavior;
 
       desktopAdapter.handleDoubleClick(mockEvent);
 
       expect(mockEvent.preventDefault).toHaveBeenCalled();
-      expect(mockEventBus.emit).toHaveBeenCalledWith(
-        'note.createAtPosition',
-        expect.objectContaining({
-          canvas: mockCanvas,
-          event: expect.objectContaining({
-            clientX: 100,
-            clientY: 200,
-            type: 'dblclick',
-          }),
-        }),
+      expect(mockCanvasBehavior.handleCanvasDoubleClick).toHaveBeenCalledWith(
+        mockEvent,
+        'desktop',
       );
     });
 
