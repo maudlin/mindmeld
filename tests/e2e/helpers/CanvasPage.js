@@ -169,7 +169,16 @@ export class CanvasPage {
     // Click on the narrow border area that selects (not edit mode)
     // Target: just below outer border, 1/4 way along to avoid ghost connector
     const box = await note.boundingBox();
-    await this.page.mouse.click(box.x + box.width * 0.25, box.y + 4);
+    const targetX = box.x + box.width * 0.25;
+    const targetY = box.y + 4;
+
+    // Use mode-appropriate interaction method for note selection
+    if (this.currentMode === 'touch') {
+      await this.page.touchscreen.tap(targetX, targetY);
+    } else {
+      await this.page.mouse.click(targetX, targetY);
+    }
+
     await this.page.waitForTimeout(50); // Small delay for event processing
     await expect(note).toHaveClass(/selected/);
     return note;
@@ -191,7 +200,21 @@ export class CanvasPage {
   // Note editing
   async editNoteContent(text, note = this.note) {
     const noteContent = note.locator('.note-content');
-    await noteContent.click();
+
+    // Use mode-appropriate interaction method for entering edit mode
+    if (this.currentMode === 'touch') {
+      // Touch mode: double-tap to enter edit mode
+      const box = await noteContent.boundingBox();
+      const centerX = box.x + box.width / 2;
+      const centerY = box.y + box.height / 2;
+
+      await this.page.touchscreen.tap(centerX, centerY);
+      await this.page.waitForTimeout(50);
+      await this.page.touchscreen.tap(centerX, centerY);
+    } else {
+      // Desktop mode: single click to enter edit mode
+      await noteContent.click();
+    }
 
     // Wait for potential edit mode transition (div -> textarea)
     await this.page.waitForTimeout(100);
@@ -1088,12 +1111,26 @@ export class CanvasPage {
    */
   async enterEditMode(note) {
     let noteContent = await this.getNoteContentElement(note);
-    await noteContent.click();
+
+    // Use mode-appropriate interaction method for entering edit mode
+    if (this.currentMode === 'touch') {
+      // Touch mode: double-tap to enter edit mode
+      const box = await noteContent.boundingBox();
+      const centerX = box.x + box.width / 2;
+      const centerY = box.y + box.height / 2;
+
+      await this.page.touchscreen.tap(centerX, centerY);
+      await this.page.waitForTimeout(50);
+      await this.page.touchscreen.tap(centerX, centerY);
+    } else {
+      // Desktop mode: single click to enter edit mode
+      await noteContent.click();
+    }
 
     // Wait for potential element replacement
     await this.page.waitForTimeout(100);
 
-    // Re-query after click as element may have been replaced
+    // Re-query after interaction as element may have been replaced
     noteContent = await this.getNoteContentElement(note);
     await this.assertNoteInEditMode(noteContent);
 

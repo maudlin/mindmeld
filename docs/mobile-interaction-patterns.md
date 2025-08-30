@@ -15,9 +15,9 @@ MindMeld provides adaptive mobile interactions that automatically detect your de
 The system uses the **CapabilityDetector** (`src/js/interactions/capabilities/detector.js`) to automatically determine device capabilities and route to the appropriate adapter:
 
 - **TouchAdapter** (`src/js/interactions/adapters/TouchAdapter.js`) for touch-first devices:
-  - **Gesture Recognition**: Advanced multi-touch gesture detection with GestureRecognizer
-  - **Event Consolidation**: Unified event handling for complex touch interactions
-  - **Canvas Integration**: Direct integration with zoom, pan, and selection systems
+  - **Native Gesture Detection**: Single source of truth for all touch gesture recognition (like DesktopAdapter)
+  - **Direct Behavior Delegation**: Clean routing to behaviors without intermediate event bus complexity
+  - **Canvas Integration**: Direct integration with zoom, pan, and selection systems  
   - **Visual Feedback**: Touch-optimized visual responses including jiggle animations
   - **Enhanced Ghost Connectors**: Tap-to-tap connection creation with visual connection mode
 
@@ -25,9 +25,9 @@ The system uses the **CapabilityDetector** (`src/js/interactions/capabilities/de
 
 ## Touch Device Interactions (Automatic)
 
-### Refined Touch Interaction Model
+### Native Touch Interaction Model
 
-TouchAdapter implements a sophisticated interaction model automatically activated for touch-first devices:
+TouchAdapter implements a **native gesture detection system** as single source of truth, automatically activated for touch-first devices:
 
 #### Core Interaction Patterns
 
@@ -49,42 +49,48 @@ TouchAdapter implements a sophisticated interaction model automatically activate
 - **Two-finger drag**: Canvas panning
 - **Combined gestures**: Simultaneous zoom and pan
 
-#### ⚠️ **Critical Implementation Note: GestureRecognizer Timing Requirements**
+#### ⚠️ **Architecture Note: Native Gesture Detection**
 
-**IMPORTANT**: Touch gesture recognition requires **proper timing validation** to prevent state machine corruption:
+**NEW APPROACH**: TouchAdapter now uses **native gesture detection** as single source of truth, eliminating competing gesture systems and state machine conflicts:
 
 ```javascript
-// ❌ BROKEN - Missing timing check (causes all touch interactions to fail)
-if (
-  this.lastTapPosition &&
-  this.calculateDistance(tapPosition, this.lastTapPosition) <=
-    this.TAP_MAX_MOVEMENT
-) {
-  this.emitDoubleTap(touchData);
+// ✅ NATIVE APPROACH - Direct touch event handling (like DesktopAdapter)
+setupNativeTouchHandlers() {
+  this.canvas.addEventListener('touchstart', this.boundHandlers.touchStart);
+  this.canvas.addEventListener('touchmove', this.boundHandlers.touchMove);
+  this.canvas.addEventListener('touchend', this.boundHandlers.touchEnd);
 }
 
-// ✅ CORRECT - Proper timing validation prevents state machine corruption
-const now = Date.now();
-if (
-  this.lastTapTime &&
-  now - this.lastTapTime <= this.DOUBLE_TAP_MAX_DELAY &&
-  this.lastTapPosition &&
-  this.calculateDistance(tapPosition, this.lastTapPosition) <=
-    this.TAP_MAX_MOVEMENT
-) {
-  this.emitDoubleTap(touchData);
+// Direct gesture recognition with clean state management
+touchStart: (event) => {
+  const touch = event.touches[0];
+  const now = Date.now();
+  
+  // Double-tap detection with proper timing
+  if (this.lastTap && 
+      (now - this.lastTap.time) <= 300 &&
+      distance <= 30) {
+    this.handleDoubleTap(touch);
+    return;
+  }
+  
+  // Store tap for potential double-tap
+  this.lastTap = { time: now, x: touch.clientX, y: touch.clientY };
+  
+  // Start long press timer
+  this.longPressTimer = setTimeout(() => {
+    this.handleLongPress(touch);
+  }, 500);
 }
 ```
 
-**Why This Matters**: Without proper timing checks, GestureRecognizer gets stuck in `POTENTIAL_DOUBLE_TAP` state, blocking ALL subsequent touch gestures including zoom, pan, and note interactions.
+**Benefits of Native Approach**:
 
-**Symptoms of Broken Timing**:
-
-- ❌ Double-tap note creation fails
-- ❌ Zoom/pinch gestures don't work
-- ❌ Canvas panning broken
-- ❌ Note editing via touch fails
-- ❌ Connection creation fails
+- ✅ **Single source of truth** (like DesktopAdapter pattern)
+- ✅ **No competing gesture systems** or event bus complexity  
+- ✅ **Clean console logs** - one gesture = one log message
+- ✅ **Direct behavior delegation** without intermediate layers
+- ✅ **Easier debugging** - single input detection point
 
 #### Technical Implementation
 
@@ -95,22 +101,24 @@ if (
 // The system automatically:
 // 1. Detects device capabilities using media queries
 // 2. Routes to TouchAdapter for touch-first devices
-// 3. Enables advanced gesture recognition with GestureRecognizer
+// 3. Enables native gesture recognition as single source of truth
 // 4. Provides visual feedback including jiggle animations
 // 5. Enhances ghost connectors for touch interaction
 // 6. Integrates seamlessly with zoom/pan systems
 ```
 
-#### Gesture State Machine
+#### Native Gesture State Machine
 
-The TouchAdapter uses a sophisticated state machine for gesture recognition:
+The TouchAdapter uses a **direct gesture detection system** (no intermediate layers):
 
-1. **Touch Start**: Detect touch points and initialize gesture tracking
-2. **Movement Detection**: Analyze movement patterns for gesture classification
-3. **Long-Press Detection**: Timer-based detection for note movement prep
-4. **Multi-Touch Handling**: Coordinate multiple simultaneous touch points
-5. **Gesture Completion**: Execute appropriate actions based on gesture type
+1. **Touch Start**: Direct native touch event handling with timing detection
+2. **Movement Detection**: Real-time distance calculation for drag threshold detection  
+3. **Long-Press Detection**: Native setTimeout-based detection for note movement prep
+4. **Gesture Classification**: Direct routing based on touch patterns and timing
+5. **Behavior Delegation**: Clean delegation to appropriate behaviors (NoteBehavior, DragBehavior, etc.)
 6. **Visual Feedback**: Jiggle animations and enhanced ghost connector displays
+
+**Key Difference**: Unlike complex event bus systems, native detection routes **directly** to behaviors, matching the DesktopAdapter pattern.
 
 ### Enhanced Touch Features (Recent Updates)
 

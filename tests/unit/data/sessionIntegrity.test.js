@@ -101,15 +101,23 @@ const createSessionAwareStorage = () => ({
 
   simulateNetworkDisruption() {
     // Simulate network issues affecting storage sync
-    const originalSetItem = this.setItem;
+    this._originalSetItem = this.setItem;
     this.setItem = jest.fn(() => {
       throw new Error('Network unavailable');
     });
 
-    // Restore after timeout
+    // Restore after timeout (async cleanup)
     setTimeout(() => {
-      this.setItem = originalSetItem;
+      this.setItem = this._originalSetItem;
     }, 100);
+  },
+
+  restoreNetworkConnection() {
+    // Synchronous restore for immediate cleanup in tests
+    if (this._originalSetItem) {
+      this.setItem = this._originalSetItem;
+      this._originalSetItem = null;
+    }
   },
 
   simulateSlowStorage() {
@@ -367,6 +375,11 @@ describe('Session Integrity Tests', () => {
   });
 
   describe('Multi-Tab Session Consistency', () => {
+    afterEach(() => {
+      // Ensure clean state after each multi-tab test
+      mockStorage.restoreNetworkConnection();
+    });
+
     it('should handle data conflicts between multiple tabs', () => {
       // Simulate Tab 1 saves data
       const tab1Notes = [

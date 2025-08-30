@@ -1,7 +1,6 @@
 // src/js/interactions/adapters/TouchAdapter.js
 
 import { BaseAdapter } from './BaseAdapter.js';
-import { GestureRecognizer } from '../gestures/GestureRecognizer.js';
 import { noteManager } from '../../services/noteManager.js';
 
 /**
@@ -24,15 +23,19 @@ export class TouchAdapter extends BaseAdapter {
     this.connectionBehavior = null;
 
     // Core components
-    this.gestureRecognizer = null;
     this.canvas = null;
 
     // Touch-specific settings
     this.HIT_TARGET_EXPANSION = 20; // pixels to expand hit targets for mobile
 
-    // Touch-specific interaction state
+    // Native gesture detection state
     this.currentGesture = null;
     this.gestureStartTarget = null;
+    this.isDoubleTapInProgress = false; // Prevent duplicate processing (like desktop)
+    this.dragThreshold = 15; // pixels to move before drag starts
+    this.longPressThreshold = 500; // milliseconds for long press
+    this.lastTap = null; // For double-tap detection
+    this.longPressTimer = null; // For long press detection
   }
 
   /**
@@ -78,12 +81,8 @@ export class TouchAdapter extends BaseAdapter {
       throw new Error('Canvas element not found');
     }
 
-    // Initialize gesture recognizer
-    this.gestureRecognizer = new GestureRecognizer(this.eventBus);
-    this.gestureRecognizer.initialize(this.canvas);
-
-    // Set up gesture detection with behavior delegation
-    this.setupGestureDetection();
+    // Set up native touch handlers as single source of truth (like DesktopAdapter)
+    this.setupNativeTouchHandlers();
 
     // Set up touch-specific enhancements
     this.setupTouchEnhancements();
@@ -95,74 +94,229 @@ export class TouchAdapter extends BaseAdapter {
    * Clean up touch event listeners
    */
   async destroyEventListeners() {
-    // Clean up gesture recognizer
-    if (this.gestureRecognizer) {
-      this.gestureRecognizer.destroy();
-      this.gestureRecognizer = null;
+    // Clean up native touch handlers
+    if (this.canvas && this.boundHandlers) {
+      this.canvas.removeEventListener(
+        'touchstart',
+        this.boundHandlers.touchStart,
+      );
+      this.canvas.removeEventListener(
+        'touchmove',
+        this.boundHandlers.touchMove,
+      );
+      this.canvas.removeEventListener('touchend', this.boundHandlers.touchEnd);
+      this.canvas.removeEventListener(
+        'touchcancel',
+        this.boundHandlers.touchCancel,
+      );
+    }
+
+    // Clear any active timers
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
     }
 
     // Reset state
     this.canvas = null;
+    this.boundHandlers = null;
+    this.lastTap = null;
+    this.currentGesture = null;
 
     console.log('TouchAdapter: Touch event listeners destroyed');
   }
 
   /**
-   * Set up gesture detection with behavior delegation
+   * Set up native touch handlers as single source of truth (like DesktopAdapter)
    */
-  setupGestureDetection() {
-    if (!this.gestureRecognizer) return;
+  setupNativeTouchHandlers() {
+    // Touch state for gesture detection
+    let touchStartData = null;
+    const doubleTapMaxDelay = 300; // milliseconds
+    const doubleTapMaxDistance = 30; // pixels
 
-    // Listen to pure gesture detection events
-    this.eventBus.on('gesture.tap', (event) => {
-      console.log('TouchAdapter: Gesture tap detected', event.touch);
-      this.handleTap(event.touch);
+    // Bound event handlers for proper cleanup
+    this.boundHandlers = {
+      touchStart: (event) => {
+        // Clear any existing long press timer
+        if (this.longPressTimer) {
+          clearTimeout(this.longPressTimer);
+          this.longPressTimer = null;
+        }
+
+        // Skip if double-tap processing in progress (like desktop approach)
+        if (this.isDoubleTapInProgress) {
+          return;
+        }
+
+        // Only handle single finger touches initially
+        if (event.touches.length === 1) {
+          const touch = event.touches[0];
+          const now = Date.now();
+
+          // Store touch start data for gesture detection
+          touchStartData = {
+            touch,
+            startTime: now,
+            startX: touch.clientX,
+            startY: touch.clientY,
+            moved: false,
+          };
+
+          // Check for double-tap
+          if (
+            this.lastTap &&
+            now - this.lastTap.time <= doubleTapMaxDelay &&
+            Math.abs(touch.clientX - this.lastTap.x) <= doubleTapMaxDistance &&
+            Math.abs(touch.clientY - this.lastTap.y) <= doubleTapMaxDistance
+          ) {
+            // Double-tap detected! Immediately prevent interference
+            event.preventDefault();
+            this.isDoubleTapInProgress = true;
+
+            this.handleDoubleTap(touch);
+            this.lastTap = null; // Reset to prevent triple-tap
+            touchStartData = null; // Clear touch data
+
+            // Clear flag after processing complete
+            setTimeout(() => {
+              this.isDoubleTapInProgress = false;
+            }, 100);
+            return;
+          }
+
+          // Start long press timer
+          this.longPressTimer = setTimeout(() => {
+            if (touchStartData && !touchStartData.moved) {
+              this.handleLongPress(touchStartData.touch);
+            }
+          }, this.longPressThreshold);
+        }
+      },
+
+      touchMove: (event) => {
+        if (!touchStartData || event.touches.length !== 1) return;
+
+        const touch = event.touches[0];
+        const deltaX = Math.abs(touch.clientX - touchStartData.startX);
+        const deltaY = Math.abs(touch.clientY - touchStartData.startY);
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        if (distance > this.dragThreshold) {
+          touchStartData.moved = true;
+
+          // Clear long press timer - we're now dragging
+          if (this.longPressTimer) {
+            clearTimeout(this.longPressTimer);
+            this.longPressTimer = null;
+          }
+
+          // Start drag if not already dragging
+          if (!this.currentGesture) {
+            this.handleDragStart(touchStartData.touch);
+          } else if (this.currentGesture === 'drag') {
+            this.handleDragMove(touch);
+          }
+        }
+      },
+
+      touchEnd: () => {
+        // Clear long press timer
+        if (this.longPressTimer) {
+          clearTimeout(this.longPressTimer);
+          this.longPressTimer = null;
+        }
+
+        // Handle end of current gesture if we have touch data
+        if (touchStartData) {
+          if (this.currentGesture === 'drag') {
+            this.handleDragEnd(touchStartData.touch);
+          } else if (!touchStartData.moved) {
+            // Single tap (not moved, not double-tap)
+            this.handleTap(touchStartData.touch);
+
+            // Store for potential double-tap
+            this.lastTap = {
+              time: Date.now(),
+              x: touchStartData.startX,
+              y: touchStartData.startY,
+              target: touchStartData.touch.target,
+            };
+          }
+
+          // Reset touch data
+          touchStartData = null;
+        }
+
+        // Always reset gesture state on touch end (even without touchStartData)
+        this.currentGesture = null;
+      },
+
+      touchCancel: () => {
+        // Clear timers and reset state on cancellation
+        if (this.longPressTimer) {
+          clearTimeout(this.longPressTimer);
+          this.longPressTimer = null;
+        }
+
+        touchStartData = null;
+        this.currentGesture = null;
+      },
+    };
+
+    // Add native touch listeners to canvas
+    this.canvas.addEventListener('touchstart', this.boundHandlers.touchStart, {
+      passive: false,
+    });
+    this.canvas.addEventListener('touchmove', this.boundHandlers.touchMove, {
+      passive: false,
+    });
+    this.canvas.addEventListener('touchend', this.boundHandlers.touchEnd, {
+      passive: false,
+    });
+    this.canvas.addEventListener(
+      'touchcancel',
+      this.boundHandlers.touchCancel,
+      { passive: false },
+    );
+
+    console.log(
+      'TouchAdapter: Native touch handlers setup complete (single source of truth)',
+    );
+  }
+
+  /**
+   * Handle double-tap detection (mirrors desktop double-click)
+   */
+  handleDoubleTap(touch) {
+    console.log('TouchAdapter: Native double-tap detected', {
+      x: touch.clientX,
+      y: touch.clientY,
+      target: touch.target?.tagName,
     });
 
-    this.eventBus.on('gesture.doubletap', (event) => {
-      console.log('🎯 TOUCHADAPTER RECEIVED DOUBLETAP:', Date.now());
-      const touch = event.touch;
-      const eventId = `${touch.clientX},${touch.clientY},${Date.now()}`;
-      console.log(`TouchAdapter: Gesture doubletap detected [${eventId}]`, {
-        x: touch.clientX,
-        y: touch.clientY,
-        target: touch.target?.tagName,
-      });
-
-      // Use original target from gesture recognition, not expanded target
-      // This prevents double-processing when note is created at same coordinates
-      const originalTarget = touch.target;
-      const noteElement = originalTarget?.closest('.note');
-
-      if (noteElement) {
-        // Note double-tap → NoteBehavior for edit mode
-        this.handleNoteDoubleTap(noteElement);
-      } else {
-        // Canvas double-tap → CanvasBehavior for note creation
-        this.handleCanvasDoubleTap(touch);
+    // Direct delegation like desktop approach - no event bus complexity
+    const noteElement = touch.target.closest('.note');
+    if (noteElement) {
+      // Note double-tap → NoteBehavior for edit mode
+      if (this.noteBehavior) {
+        console.log(
+          'TouchAdapter: Note double-tap, delegating to NoteBehavior',
+        );
+        this.noteBehavior.handleNoteDoubleClick(noteElement, touch, 'touch');
       }
-    });
-
-    this.eventBus.on('gesture.dragstart', (event) => {
-      console.log('TouchAdapter: Gesture drag start detected', event.touch);
-      this.handleDragStart(event.touch);
-    });
-
-    this.eventBus.on('gesture.dragmove', (event) => {
-      this.handleDragMove(event.touch);
-    });
-
-    this.eventBus.on('gesture.dragend', (event) => {
-      console.log('TouchAdapter: Gesture drag end detected');
-      this.handleDragEnd(event.touch);
-    });
-
-    this.eventBus.on('gesture.longpress', (event) => {
-      console.log('TouchAdapter: Gesture long press detected', event.touch);
-      this.handleLongPress(event.touch);
-    });
-
-    console.log('TouchAdapter: Pure gesture event listeners configured');
+    } else if (
+      touch.target === this.canvas ||
+      touch.target.closest('#canvas')
+    ) {
+      // Canvas double-tap → CanvasBehavior for note creation
+      if (this.canvasBehavior) {
+        console.log(
+          'TouchAdapter: Canvas double-tap, delegating to CanvasBehavior',
+        );
+        this.canvasBehavior.handleCanvasDoubleClick(touch, 'touch');
+      }
+    }
   }
 
   /**
@@ -264,31 +418,22 @@ export class TouchAdapter extends BaseAdapter {
   }
 
   /**
-   * Handle double-tap gesture - primarily for edit mode
-   */
-  handleDoubleTap(touch) {
-    if (!touch) return;
-
-    const target = this.expandTouchTarget(touch);
-
-    // Check for note interaction - double tap always tries to edit
-    const noteElement = target.closest('.note');
-    if (noteElement) {
-      this.handleNoteDoubleTap(noteElement);
-      return;
-    }
-
-    console.log('TouchAdapter: Double-tap on non-note target');
-  }
-
-  /**
    * Handle drag start - detect what's being dragged
    */
   handleDragStart(touch) {
     if (!touch) return;
 
+    // Set gesture state
+    this.currentGesture = 'drag';
+
     const target = this.expandTouchTarget(touch);
     this.gestureStartTarget = target;
+
+    console.log('TouchAdapter: Drag start detected', {
+      target: target.tagName,
+      x: touch.clientX,
+      y: touch.clientY,
+    });
 
     // Check for note drag
     const noteElement = target.closest('.note');
@@ -297,7 +442,7 @@ export class TouchAdapter extends BaseAdapter {
       return;
     }
 
-    // Check for canvas selection box (long press + drag)
+    // Check for canvas selection box (drag from canvas)
     if (target.id === 'canvas' || target.closest('#canvas')) {
       this.handleSelectionBoxStart(touch);
       return;
@@ -333,6 +478,8 @@ export class TouchAdapter extends BaseAdapter {
   handleDragEnd(touch) {
     if (!touch) return;
 
+    console.log('TouchAdapter: Drag end detected');
+
     // Check if we have active interactions and delegate
     if (this.dragBehavior && this.dragBehavior.isDragging) {
       this.dragBehavior.endDrag(touch, 'touch');
@@ -345,9 +492,8 @@ export class TouchAdapter extends BaseAdapter {
       this.selectionBoxBehavior.endSelectionBox(touch, 'touch');
     }
 
-    // Reset gesture state
+    // Reset gesture state (handled by touchEnd in native handlers)
     this.gestureStartTarget = null;
-    this.currentGesture = null;
   }
 
   /**
@@ -412,45 +558,6 @@ export class TouchAdapter extends BaseAdapter {
   }
 
   /**
-   * Handle note double-tap - enter edit mode if note is selected, otherwise select first
-   */
-  handleNoteDoubleTap(noteElement) {
-    if (!this.noteBehavior) {
-      console.warn('TouchAdapter: NoteBehavior not available');
-      return;
-    }
-
-    console.log('TouchAdapter: Note double-tap detected', {
-      noteElementId: noteElement?.id,
-      noteElementClasses: noteElement?.className,
-      isSelected: noteElement?.classList.contains('selected'),
-    });
-
-    // Double-tap on note should ALWAYS enter edit mode
-    // Use direct approach like old TouchAdapter for reliability
-    console.log(
-      'TouchAdapter: Double-tap on note, ensuring selection and entering edit mode',
-    );
-
-    // Select the note first if not already selected (using NoteManager directly)
-    if (!noteElement.classList.contains('selected')) {
-      if (this.noteBehavior) {
-        this.noteBehavior.handleNoteSelection(noteElement, false);
-      }
-    }
-
-    // Directly emit edit request (like old TouchAdapter) to bypass target validation issues
-    this.eventBus.emit('note.requestEdit', {
-      noteId: noteElement.id,
-      noteElement: noteElement,
-      _gesture: 'doubletap',
-      inputType: 'touch',
-    });
-
-    console.log('TouchAdapter: Edit request emitted for note:', noteElement.id);
-  }
-
-  /**
    * Handle note drag start - delegate to DragBehavior
    */
   handleNoteDragStart(noteElement, touch) {
@@ -460,7 +567,7 @@ export class TouchAdapter extends BaseAdapter {
     }
 
     console.log('TouchAdapter: Note drag detected, delegating to DragBehavior');
-    this.currentGesture = 'note-drag';
+    // Keep consistent with handleDragStart - use 'drag' not 'note-drag'
     this.dragBehavior.startDrag(noteElement, touch, 'touch');
   }
 
@@ -469,6 +576,12 @@ export class TouchAdapter extends BaseAdapter {
    */
   handleLongPress(touch) {
     if (!touch) return;
+
+    console.log('TouchAdapter: Long press detected', {
+      target: touch.target?.tagName,
+      x: touch.clientX,
+      y: touch.clientY,
+    });
 
     // Check if long press is on a note
     const noteElement = touch.target?.closest('.note');
@@ -508,26 +621,8 @@ export class TouchAdapter extends BaseAdapter {
     console.log(
       'TouchAdapter: Selection box detected, delegating to SelectionBoxBehavior',
     );
-    this.currentGesture = 'selection-box';
+    // Keep consistent with handleDragStart - use 'drag' not 'selection-box'
     this.selectionBoxBehavior.startSelectionBox(touch, 'touch');
-  }
-
-  /**
-   * Handle canvas double-tap - delegate to CanvasBehavior for note creation
-   */
-  handleCanvasDoubleTap(touch) {
-    if (!this.canvasBehavior) {
-      console.warn('TouchAdapter: CanvasBehavior not available');
-      return;
-    }
-
-    console.log(
-      'TouchAdapter: Canvas double-tap detected, delegating to CanvasBehavior for note creation',
-    );
-
-    // Create event-like object for CanvasBehavior
-    const event = this.createEventFromTouch(touch);
-    this.canvasBehavior.handleCanvasDoubleClick(event, 'touch');
   }
 
   /**
