@@ -71,9 +71,9 @@ test.describe('Touch Interactions - Core Functionality', () => {
     const dataId = await note.getAttribute('data-id');
     console.log('Note ID:', noteId, 'Data-ID:', dataId);
 
-    // Touch mode: Double-tap should create note in edit-mode for immediate typing (better touch UX)
+    // Touch mode: Double-tap should create note in view-mode (matching desktop behavior)
     const noteContent = note.locator('.note-content');
-    await expect(noteContent).toHaveClass(/edit-mode/);
+    await expect(noteContent).toHaveClass(/view-mode/);
 
     // First single tap to select the note
     const bbox = await noteContent.boundingBox();
@@ -89,12 +89,13 @@ test.describe('Touch Interactions - Core Functionality', () => {
     await page.touchscreen.tap(bbox.x + 50, bbox.y + 20); // Double tap selected note
     await page.waitForTimeout(100); // Wait for element replacement
 
-    // Now should be in edit mode
-    await expect(noteContent).toHaveClass(/edit-mode/);
-    await expect(noteContent).not.toHaveClass(/view-mode/);
+    // Now should be in edit mode - noteContent is replaced by textarea
+    const editModeContent = note.locator('.note-content');
+    await expect(editModeContent).toHaveClass(/edit-mode/);
+    await expect(editModeContent).not.toHaveClass(/view-mode/);
 
-    // Verify we're using textarea architecture
-    const textarea = noteContent.locator('textarea.edit-textarea');
+    // Verify we're using textarea architecture - textarea replaces noteContent
+    const textarea = note.locator('textarea.edit-textarea');
     await expect(textarea).toBeVisible();
   });
 
