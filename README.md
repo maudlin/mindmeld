@@ -33,16 +33,7 @@ Visit `http://localhost:8080` to begin mind mapping.
 
 ### Mobile & Touch Support
 
-MindMeld automatically detects your device capabilities and provides optimized interactions:
-
-**Touch Device Features:**
-
-- **Long-press and drag**: Move notes with visual "jiggle" feedback
-- **Single-finger drag on canvas**: Multi-select lasso selection
-- **Double-tap**: Create or edit notes
-- **Two-finger gestures**: Pan and zoom canvas
-- **Ghost connector enhancements**: Larger touch targets with visual feedback
-- **Automatic adaptation**: No configuration needed - works seamlessly
+MindMeld automatically adapts to touch devices with optimized interactions. See [User Guide](docs/user-guide.md) for complete touch interaction details.
 
 ## Key Features
 
@@ -51,7 +42,6 @@ MindMeld automatically detects your device capabilities and provides optimized i
 - **Intelligent Connections**: Visual connections with directional arrows and real-time updates
 - **Multi-Canvas Templates**: Standard Canvas, Hero's Journey, and custom templates
 - **Advanced Selection**: Multi-select with group operations and touch-optimized lasso selection
-- **Adaptive Touch Interface**: Automatic device detection with optimized mobile interactions
 - **Data Management**: Export/import mind maps as JSON with full state preservation
 - **Modern Architecture**: Event-driven design with zero circular dependencies
 - **Enterprise-Grade Data Integrity**: Comprehensive corruption resistance with browser compatibility
@@ -70,7 +60,7 @@ See the full documentation index in docs/README.md.
 - **[Developer Guide](docs/developer-guide.md)** - Architecture, setup, and development workflow
 - **[Canvas Templates](docs/canvas-templates.md)** - How to implement new canvas template modules
 - **[Contributing Guide](CONTRIBUTING.md)** - Code standards, testing, and contribution process
-- **[Testing Guide](docs/testing.md)** - Philosophy, structure, and patterns
+- **[Testing Guide](docs/testing-guide.md)** - Comprehensive testing documentation, patterns, and best practices
 - **[Testing Environments](docs/testing-environments.md)** - Suites, commands, tags, and when to run which
 - **[Scripts Reference](docs/scripts.md)** - Complete npm scripts documentation
 
@@ -94,18 +84,18 @@ Details: [Developer Guide](docs/developer-guide.md)
 ## Development
 
 ```bash
-npm install 6
- npm start  # Setup and run (port 8080)
+npm install && npm start  # Setup and run (port 8080)
 ```
 
-Commands: [Scripts Reference](docs/scripts.md) | Setup: [Developer Guide](docs/developer-guide.md)
+Complete setup and commands: [Developer Guide](docs/developer-guide.md)
 
 ### Running Tests
 
-- Unit tests: `npm run test:unit`
-- E2E tests: `npm run test:e2e`
-- CI/dev/smoke/critical suites and tag usage: see [Testing Environments](docs/testing-environments.md)
-- Testing philosophy and patterns: see [Testing Guide](docs/testing.md)
+```bash
+npm test && npm run test:e2e  # Run all tests
+```
+
+See [Testing Guide](docs/testing-guide.md) for comprehensive testing documentation.
 
 ## Data Format
 

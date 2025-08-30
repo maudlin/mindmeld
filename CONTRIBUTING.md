@@ -40,7 +40,7 @@ Tip: Semgrep is also part of the `pre-push` script, so it will run before you pu
 **Requirements**: New features need tests. Bug fixes need regression tests.  
 **E2E Testing**: Use `CanvasPage` helper for consistent E2E tests
 
-See [Testing Guide](docs/testing.md) for patterns and [Developer Guide](docs/developer-guide.md) for architecture.
+See [Testing Guide](docs/testing-guide.md) for patterns and [Developer Guide](docs/developer-guide.md) for architecture.
 
 ## Documentation
 

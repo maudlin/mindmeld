@@ -45,7 +45,7 @@ This project uses different test suites optimized for different environments and
 - `@smoke` - Core workflows for quick validation
 - Untagged - Full regression tests
 
-For test philosophy, structure, patterns, helpers, and debugging guidance, see the [Testing Guide](./testing.md).
+For test philosophy, structure, patterns, helpers, and debugging guidance, see the [Testing Guide](./testing-guide.md).
 
 ## Usage
 
