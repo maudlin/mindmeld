@@ -120,6 +120,7 @@ export class TouchAdapter extends BaseAdapter {
     });
 
     this.eventBus.on('gesture.doubletap', (event) => {
+      console.log('🎯 TOUCHADAPTER RECEIVED DOUBLETAP:', Date.now());
       const touch = event.touch;
       const eventId = `${touch.clientX},${touch.clientY},${Date.now()}`;
       console.log(`TouchAdapter: Gesture doubletap detected [${eventId}]`, {
@@ -128,9 +129,10 @@ export class TouchAdapter extends BaseAdapter {
         target: touch.target?.tagName,
       });
 
-      // Determine interaction type and delegate to behaviors
-      const target = this.expandTouchTarget(touch);
-      const noteElement = target.closest('.note');
+      // Use original target from gesture recognition, not expanded target
+      // This prevents double-processing when note is created at same coordinates
+      const originalTarget = touch.target;
+      const noteElement = originalTarget?.closest('.note');
 
       if (noteElement) {
         // Note double-tap → NoteBehavior for edit mode

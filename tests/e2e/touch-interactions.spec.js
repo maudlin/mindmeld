@@ -71,9 +71,9 @@ test.describe('Touch Interactions - Core Functionality', () => {
     const dataId = await note.getAttribute('data-id');
     console.log('Note ID:', noteId, 'Data-ID:', dataId);
 
-    // Should start in view mode (consistent with desktop UX)
+    // Touch mode: Double-tap should create note in edit-mode for immediate typing (better touch UX)
     const noteContent = note.locator('.note-content');
-    await expect(noteContent).toHaveClass(/view-mode/);
+    await expect(noteContent).toHaveClass(/edit-mode/);
 
     // First single tap to select the note
     const bbox = await noteContent.boundingBox();

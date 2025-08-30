@@ -9,11 +9,17 @@
 import { GestureRecognizer } from '../../../../src/js/interactions/gestures/GestureRecognizer.js';
 
 // Helper functions for creating mock touch events
-const createMockTouch = (id, x, y) => ({
+const createMockCanvasTarget = () => ({
+  id: 'canvas',
+  tagName: 'CANVAS',
+  closest: jest.fn(() => null),
+});
+
+const createMockTouch = (id, x, y, target = null) => ({
   identifier: id,
   clientX: x,
   clientY: y,
-  target: null,
+  target: target,
   screenX: x,
   screenY: y,
   pageX: x,
@@ -128,8 +134,9 @@ describe('Touch Gesture Recognition Behavior - MM-206: Update tests for new even
 
   describe('Double Tap Detection', () => {
     it('recognizes double tap when taps are close in time and space', () => {
-      const touch1 = createMockTouch(1, 100, 200);
-      const touch2 = createMockTouch(2, 102, 201); // Close to first tap
+      const canvasTarget = createMockCanvasTarget();
+      const touch1 = createMockTouch(1, 100, 200, canvasTarget);
+      const touch2 = createMockTouch(2, 102, 201, canvasTarget); // Close to first tap
 
       // First tap
       gestureRecognizer.handleTouchStart(
@@ -149,14 +156,15 @@ describe('Touch Gesture Recognition Behavior - MM-206: Update tests for new even
       Date.now.mockReturnValue(1200);
       gestureRecognizer.handleTouchEnd(createTouchEvent('touchend', [touch2]));
 
-      // Double-tap now emits two gesture.tap events instead of one gesture.doubletap
-      expect(mockEventBus.emit).toHaveBeenCalledTimes(2);
-      expect(mockEventBus.emit).toHaveBeenCalledWith(
-        'gesture.tap',
-        expect.objectContaining({
-          _gesture: 'tap',
-        }),
-      );
+      expect(mockEventBus.emit).toHaveBeenCalledWith('gesture.doubletap', {
+        touch: {
+          target: canvasTarget,
+          clientX: 102,
+          clientY: 201,
+          type: 'doubletap',
+        },
+        _gesture: 'doubletap',
+      });
     });
 
     it('falls back to single tap when taps are too far apart', () => {

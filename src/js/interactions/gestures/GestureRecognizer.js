@@ -132,11 +132,7 @@ export class GestureRecognizer {
    */
   handleTouchEnd(event) {
     event.preventDefault();
-    console.log(
-      'GestureRecognizer: handleTouchEnd called with',
-      event.changedTouches?.length,
-      'changed touches',
-    );
+    // Debug logging removed
 
     // Store touch data before removing from state
     const endedTouches = [];
@@ -177,9 +173,7 @@ export class GestureRecognizer {
   updateStateMachine() {
     const touchCount = this.touchState.getTouchCount();
     const primary = this.touchState.getPrimaryTouch();
-    console.log(
-      `GestureRecognizer: updateStateMachine called - state: ${this.currentState}, touchCount: ${touchCount}`,
-    );
+    // Debug logging removed
 
     switch (this.currentState) {
       case this.STATES.IDLE:
@@ -288,10 +282,7 @@ export class GestureRecognizer {
    * Handle potential double tap state
    */
   handlePotentialDoubleTapState(touchCount) {
-    console.log(
-      'GestureRecognizer: handlePotentialDoubleTapState called with touchCount:',
-      touchCount,
-    );
+    // Debug logging removed
     if (touchCount === 0) {
       this.clearLongPressTimer();
 
@@ -333,14 +324,8 @@ export class GestureRecognizer {
           lastTapPosition = null;
         }
 
-        const timeDiff = lastTapTime ? now - lastTapTime : 0;
-        const distance = lastTapPosition
-          ? this.calculateDistance(tapPosition, lastTapPosition)
-          : 0;
 
-        console.log(
-          `GestureRecognizer: Tap analysis - target: ${isNoteTarget ? 'note' : isCanvasTarget ? 'canvas' : 'other'}, timeDiff: ${timeDiff}ms, distance: ${distance}px, hasLastTap: ${!!lastTapTime}`,
-        );
+    // Debug logging removed
 
         if (
           lastTapTime &&
@@ -349,7 +334,6 @@ export class GestureRecognizer {
           this.calculateDistance(tapPosition, lastTapPosition) <=
             this.TAP_MAX_MOVEMENT
         ) {
-          console.log('GestureRecognizer: Double-tap detected!');
           this.emitDoubleTap(touchData);
 
           // Clear the appropriate timing data
@@ -368,21 +352,15 @@ export class GestureRecognizer {
           this.emitTap(touchData);
 
           if (isNoteTarget) {
-            console.log(
-              'GestureRecognizer: Single tap on note - storing for potential double-tap',
-            );
+    // Debug logging removed
             this.lastNoteTapTime = Date.now();
             this.lastNoteTapPosition = tapPosition;
           } else if (isCanvasTarget) {
-            console.log(
-              'GestureRecognizer: Single tap on canvas - storing for potential double-tap',
-            );
+    // Debug logging removed
             this.lastCanvasTapTime = Date.now();
             this.lastCanvasTapPosition = tapPosition;
           } else {
-            console.log(
-              'GestureRecognizer: Single tap on other target - not storing timing data',
-            );
+    // Debug logging removed
           }
         }
       }
@@ -619,10 +597,7 @@ export class GestureRecognizer {
    * Emit double tap gesture detection → gesture.doubletap
    */
   emitDoubleTap(touch) {
-    console.log(
-      'GestureRecognizer: emitDoubleTap called for target:',
-      touch.target?.tagName || touch.target?.className,
-    );
+    console.log('🔥 EMITTING DOUBLETAP:', Date.now(), 'at', touch.currentX, touch.currentY);
     this.eventBus.emit('gesture.doubletap', {
       touch: {
         target: touch.target,
