@@ -96,10 +96,22 @@ export class CapabilityDetector {
       const urlParams = new URLSearchParams(window.location.search);
       const manualMode = urlParams.get('mode');
 
+      console.log('🔍 CapabilityDetector: URL mode detection', {
+        url: window.location.href,
+        search: window.location.search,
+        manualMode,
+        isValidMode: manualMode ? this._isValidMode(manualMode) : 'N/A',
+      });
+
       if (manualMode && this._isValidMode(manualMode)) {
+        console.log(
+          '🎯 CapabilityDetector: Using manual mode override:',
+          manualMode,
+        );
         return manualMode;
       }
-    } catch {
+    } catch (error) {
+      console.warn('CapabilityDetector: URLSearchParams failed:', error);
       // URLSearchParams not supported, continue with detection
     }
 

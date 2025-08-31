@@ -26,7 +26,7 @@ describe('ConnectionUtils', () => {
     jest.spyOn(document, 'getElementById').mockReturnValue(mockCanvas);
     jest.doMock('../../../../src/js/utils/utils.js', () => mockUtils);
     jest.doMock(
-      '../../../../src/js/features/zoom/zoomManager.js',
+      '../../../../src/js/features/zoom/viewportAdapter.js',
       () => mockZoomManager,
     );
     jest.doMock('../../../../src/js/core/constants.js', () => ({

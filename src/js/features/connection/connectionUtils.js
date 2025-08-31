@@ -1,6 +1,6 @@
 // src/js/features/connection/connectionUtils.js
 import { log } from '../../utils/utils.js';
-import { getZoomLevel } from '../zoom/zoomManager.js';
+import { getZoomLevel } from '../zoom/viewportAdapter.js';
 import { CONNECTION_TYPES } from '../../core/constants.js';
 
 export const STROKE_COLOR = '#888';

@@ -20,8 +20,17 @@ export class InputController {
    * Initialize the input controller with optimal adapter
    */
   async initialize() {
+    console.log('🚀 InputController: initialize() called - DIAGNOSTIC');
+    console.log(
+      '🔍 InputController: capabilityDetector available:',
+      !!this.capabilityDetector,
+    );
+
     const optimalMode = this.capabilityDetector.getOptimalInputMode();
+    console.log('🎯 InputController: optimalMode detected:', optimalMode);
+
     await this.switchToMode(optimalMode);
+    console.log('✅ InputController: switched to mode:', optimalMode);
   }
 
   /**

@@ -1,7 +1,7 @@
 // movement.js
 import { noteManager } from '../services/noteManager.js';
 import { throttle } from '../utils/utils.js';
-import { getZoomLevel } from '../features/zoom/zoomManager.js';
+import { getZoomLevel } from '../features/zoom/viewportAdapter.js';
 import { connectionManager } from '../features/connection/connectionManager.js';
 import { appState } from '../data/observableState.js';
 import { eventBus } from './eventBus.js';

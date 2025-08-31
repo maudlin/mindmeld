@@ -1,7 +1,7 @@
 // canvasInitialization.js - Handles canvas initialization
 import { log } from '../utils/utils.js';
 import { canvasManager } from './canvasManager.js';
-import { setupZoomAndPan } from '../features/zoom/zoomManager.js';
+import { setupZoomAndPan } from '../features/zoom/viewportAdapter.js';
 import config from './config.js';
 
 export async function initializeCanvas(elements) {

@@ -55,6 +55,20 @@ export class InteractionBootstrap extends BaseBootstrap {
       this.interactionController = new InteractionController();
       await this.interactionController.initialize(eventBus);
 
+      // Initialize ViewportBehavior with canvas references
+      try {
+        await this.initializeViewportBehavior();
+        console.log(
+          'InteractionBootstrap: ViewportBehavior initialization completed successfully',
+        );
+      } catch (error) {
+        console.error(
+          'InteractionBootstrap: CRITICAL - ViewportBehavior initialization failed:',
+          error,
+        );
+        // Don't throw - continue with initialization
+      }
+
       const capabilityDetector = new CapabilityDetector();
       this.inputController = new InputController(
         eventBus,
@@ -86,6 +100,31 @@ export class InteractionBootstrap extends BaseBootstrap {
         error,
       );
       return false;
+    }
+  }
+
+  async initializeViewportBehavior() {
+    try {
+      const canvas = document.getElementById('canvas');
+      const zoomDisplay = document.getElementById('zoom-display');
+
+      if (!canvas || !zoomDisplay) {
+        console.warn(
+          'InteractionBootstrap: Canvas or zoomDisplay not found for ViewportBehavior',
+        );
+        return;
+      }
+
+      await this.interactionController.initializeViewportBehavior(
+        canvas,
+        zoomDisplay,
+      );
+      log('InteractionBootstrap: ViewportBehavior initialized with canvas');
+    } catch (error) {
+      console.error(
+        'InteractionBootstrap: Failed to initialize ViewportBehavior:',
+        error,
+      );
     }
   }
 

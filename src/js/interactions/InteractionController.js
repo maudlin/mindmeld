@@ -11,6 +11,7 @@ import { DragBehavior } from './behaviors/DragBehavior.js';
 import { SelectionBoxBehavior } from './behaviors/SelectionBoxBehavior.js';
 import { CanvasBehavior } from './behaviors/CanvasBehavior.js';
 import { ConnectionBehavior } from './behaviors/ConnectionBehavior.js';
+import { ViewportBehavior } from './behaviors/ViewportBehavior.js';
 
 export class InteractionController {
   constructor() {
@@ -62,6 +63,7 @@ export class InteractionController {
       const selectionBoxBehavior = new SelectionBoxBehavior(this.eventBus);
       const canvasBehavior = new CanvasBehavior(this.eventBus);
       const connectionBehavior = new ConnectionBehavior(this.eventBus);
+      const viewportBehavior = new ViewportBehavior(this.eventBus);
 
       // Register behaviors
       this.registerBehavior('note', noteBehavior);
@@ -69,6 +71,7 @@ export class InteractionController {
       this.registerBehavior('selectionBox', selectionBoxBehavior);
       this.registerBehavior('canvas', canvasBehavior);
       this.registerBehavior('connection', connectionBehavior);
+      this.registerBehavior('viewport', viewportBehavior);
 
       // Initialize all behaviors
       await noteBehavior.initialize();
@@ -85,6 +88,11 @@ export class InteractionController {
 
       await connectionBehavior.initialize();
       console.log('InteractionController: ConnectionBehavior initialized');
+
+      // ViewportBehavior needs canvas and zoomDisplay - will be initialized later during bootstrap
+      console.log(
+        'InteractionController: ViewportBehavior registered (will initialize with canvas)',
+      );
 
       console.log('InteractionController: All behaviors initialized');
     } catch (error) {
@@ -115,6 +123,31 @@ export class InteractionController {
    */
   getBehavior(name) {
     return this.behaviors.get(name);
+  }
+
+  /**
+   * Initialize ViewportBehavior with canvas references
+   * Called after canvas is available during bootstrap
+   */
+  async initializeViewportBehavior(canvas, zoomDisplay) {
+    const viewportBehavior = this.getBehavior('viewport');
+    if (viewportBehavior) {
+      await viewportBehavior.initialize(canvas, zoomDisplay);
+
+      // Set global reference for legacy services
+      const { setViewportBehavior } = await import(
+        '../features/zoom/viewportAdapter.js'
+      );
+      setViewportBehavior(viewportBehavior);
+
+      console.log(
+        'InteractionController: ViewportBehavior initialized with canvas',
+      );
+    } else {
+      console.warn(
+        'InteractionController: ViewportBehavior not found for initialization',
+      );
+    }
   }
 
   /**

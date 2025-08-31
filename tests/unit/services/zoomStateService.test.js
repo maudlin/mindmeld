@@ -36,7 +36,7 @@ describe('ZoomStateService', () => {
     }));
 
     jest.doMock(
-      '../../../src/js/features/zoom/zoomManager.js',
+      '../../../src/js/features/zoom/viewportAdapter.js',
       () => mockZoomManager,
     );
 

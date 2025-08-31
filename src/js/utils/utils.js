@@ -1,5 +1,5 @@
 //src/js/utils/utils.js
-import { getZoomLevel } from '../features/zoom/zoomManager.js';
+import { getZoomLevel } from '../features/zoom/viewportAdapter.js';
 import {
   NOTE_CONTENT_LIMIT,
   LOGGING as defaultLogging,

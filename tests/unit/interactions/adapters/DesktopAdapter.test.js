@@ -5,10 +5,24 @@ describe('DesktopAdapter - Unit Tests', () => {
   let desktopAdapter;
   let mockEventBus;
   let mockCanvas;
+  let mockCanvasContainer;
 
   beforeEach(async () => {
     // Reset modules
     jest.resetModules();
+
+    // Mock canvas container first
+    mockCanvasContainer = {
+      id: 'canvas-container',
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      getBoundingClientRect: jest.fn(() => ({
+        left: 0,
+        top: 0,
+        width: 800,
+        height: 600,
+      })),
+    };
 
     // Create mock canvas
     mockCanvas = {
@@ -17,6 +31,10 @@ describe('DesktopAdapter - Unit Tests', () => {
         contains: jest.fn(() => false),
       },
       closest: jest.fn(() => null),
+      contains: jest.fn((target) => target === mockCanvas),
+      parentElement: mockCanvasContainer,
+      clientWidth: 1000,
+      clientHeight: 800,
       getBoundingClientRect: jest.fn(() => ({
         left: 0,
         top: 0,
@@ -30,11 +48,12 @@ describe('DesktopAdapter - Unit Tests', () => {
       releasePointerCapture: jest.fn(),
     };
 
-    // Mock document.getElementById to return our canvas
+    // Mock document.getElementById to return our canvas and container
     const originalGetElementById = global.document?.getElementById;
     global.document = global.document || {};
     global.document.getElementById = jest.fn((id) => {
       if (id === 'canvas') return mockCanvas;
+      if (id === 'canvas-container') return mockCanvasContainer;
       return null;
     });
     global.document.addEventListener = jest.fn();
@@ -52,13 +71,35 @@ describe('DesktopAdapter - Unit Tests', () => {
       off: jest.fn(),
     };
 
+    // Mock ViewportBehavior
+    const mockViewportBehavior = {
+      handleWheelZoom: jest.fn(),
+      handlePinchZoom: jest.fn(),
+      handlePan: jest.fn(),
+      zoomIn: jest.fn(),
+      zoomOut: jest.fn(),
+      resetZoom: jest.fn(),
+    };
+
+    // Mock InteractionController
+    const mockInteractionController = {
+      getBehavior: jest.fn((name) => {
+        if (name === 'viewport') return mockViewportBehavior;
+        return null;
+      }),
+    };
+
     // Import the module to test
     const module = await import(
       '../../../../src/js/interactions/adapters/DesktopAdapter.js'
     );
     DesktopAdapter = module.DesktopAdapter;
 
-    desktopAdapter = new DesktopAdapter();
+    // Create fresh adapter instance for each test
+    desktopAdapter = new DesktopAdapter(mockInteractionController);
+
+    // Store mock for test access
+    desktopAdapter._mockViewportBehavior = mockViewportBehavior;
 
     // Store original for cleanup
     global.originalGetElementById = originalGetElementById;
@@ -94,8 +135,8 @@ describe('DesktopAdapter - Unit Tests', () => {
       expect(desktopAdapter.isInitialized).toBe(true);
       expect(desktopAdapter.canvas).toBe(mockCanvas);
 
-      // Check canvas event listeners
-      expect(mockCanvas.addEventListener).toHaveBeenCalledWith(
+      // Check container event listeners (pointerdown moved to container after refactor)
+      expect(mockCanvasContainer.addEventListener).toHaveBeenCalledWith(
         'pointerdown',
         desktopAdapter.boundHandlers.pointerDown,
       );
@@ -128,7 +169,7 @@ describe('DesktopAdapter - Unit Tests', () => {
       global.document.getElementById.mockReturnValue(null);
 
       await expect(desktopAdapter.initialize(mockEventBus)).rejects.toThrow(
-        'Canvas element not found',
+        'Canvas or canvas-container element not found',
       );
     });
   });
@@ -141,7 +182,7 @@ describe('DesktopAdapter - Unit Tests', () => {
     it('should remove event listeners on destroy', async () => {
       await desktopAdapter.destroy();
 
-      expect(mockCanvas.removeEventListener).toHaveBeenCalledWith(
+      expect(mockCanvasContainer.removeEventListener).toHaveBeenCalledWith(
         'pointerdown',
         desktopAdapter.boundHandlers.pointerDown,
       );
@@ -201,43 +242,91 @@ describe('DesktopAdapter - Unit Tests', () => {
       );
     });
 
-    it('should handle wheel events for zoom', () => {
+    it('should delegate wheel events to ViewportBehavior', async () => {
+      // Create a fresh adapter for this test to avoid initialization conflicts
+      const mockViewportBehavior = {
+        handleWheelZoom: jest.fn(),
+        handlePinchZoom: jest.fn(),
+        handlePan: jest.fn(),
+        zoomIn: jest.fn(),
+        zoomOut: jest.fn(),
+        resetZoom: jest.fn(),
+      };
+
+      const mockInteractionController = {
+        getBehavior: jest.fn((name) => {
+          if (name === 'viewport') return mockViewportBehavior;
+          return null;
+        }),
+      };
+
+      const testAdapter = new DesktopAdapter(mockInteractionController);
+      testAdapter._mockViewportBehavior = mockViewportBehavior;
+
+      await testAdapter.initialize(mockEventBus);
+
       const mockEvent = {
-        deltaY: -100,
-        ctrlKey: true,
+        deltaY: -100, // Negative = zoom in
         clientX: 300,
         clientY: 200,
         preventDefault: jest.fn(),
       };
 
-      desktopAdapter.handleWheel(mockEvent);
+      testAdapter.handleWheel(mockEvent);
 
       expect(mockEvent.preventDefault).toHaveBeenCalled();
-      expect(mockEventBus.emit).toHaveBeenCalledWith(
-        'canvas.zoom',
-        expect.objectContaining({
-          direction: 'in',
-          x: 300,
-          y: 200,
-        }),
+      // Should delegate to ViewportBehavior instead of emitting EventBus events
+      expect(
+        testAdapter._mockViewportBehavior.handleWheelZoom,
+      ).toHaveBeenCalledWith(
+        'in', // direction
+        300, // x
+        200, // y
+        'desktop', // inputType
       );
     });
 
-    it('should NOT emit canvas.pan events for wheel without modifier keys', () => {
+    it('should handle wheel zoom out correctly', async () => {
+      // Create a fresh adapter for this test to avoid initialization conflicts
+      const mockViewportBehavior = {
+        handleWheelZoom: jest.fn(),
+        handlePinchZoom: jest.fn(),
+        handlePan: jest.fn(),
+        zoomIn: jest.fn(),
+        zoomOut: jest.fn(),
+        resetZoom: jest.fn(),
+      };
+
+      const mockInteractionController = {
+        getBehavior: jest.fn((name) => {
+          if (name === 'viewport') return mockViewportBehavior;
+          return null;
+        }),
+      };
+
+      const testAdapter = new DesktopAdapter(mockInteractionController);
+      testAdapter._mockViewportBehavior = mockViewportBehavior;
+
+      await testAdapter.initialize(mockEventBus);
+
       const mockEvent = {
-        deltaX: 50,
-        deltaY: 30,
-        ctrlKey: false,
-        metaKey: false,
+        deltaY: 100, // Positive = zoom out
+        clientX: 400,
+        clientY: 300,
         preventDefault: jest.fn(),
       };
 
-      desktopAdapter.handleWheel(mockEvent);
+      testAdapter.handleWheel(mockEvent);
 
-      // Should not emit canvas.pan events - wheel should only zoom, not pan on desktop
-      expect(mockEventBus.emit).not.toHaveBeenCalledWith(
-        'canvas.pan',
-        expect.any(Object),
+      expect(mockEvent.preventDefault).toHaveBeenCalled();
+      // Should delegate zoom out to ViewportBehavior
+      expect(
+        testAdapter._mockViewportBehavior.handleWheelZoom,
+      ).toHaveBeenCalledWith(
+        'out', // direction
+        400, // x
+        300, // y
+        'desktop', // inputType
       );
     });
 
@@ -266,7 +355,9 @@ describe('DesktopAdapter - Unit Tests', () => {
       await desktopAdapter.initialize(mockEventBus);
 
       expect(desktopAdapter.isClickOnCanvas(mockCanvas)).toBe(true);
-      expect(desktopAdapter.isClickOnCanvas({ id: 'other' })).toBe(false);
+
+      const nonCanvasElement = { id: 'other' };
+      expect(desktopAdapter.isClickOnCanvas(nonCanvasElement)).toBe(false);
     });
 
     // Note: isEditingNoteContent method removed in behavior-driven refactor
