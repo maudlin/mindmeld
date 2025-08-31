@@ -5,10 +5,24 @@ describe('DesktopAdapter - Unit Tests', () => {
   let desktopAdapter;
   let mockEventBus;
   let mockCanvas;
+  let mockCanvasContainer;
 
   beforeEach(async () => {
     // Reset modules
     jest.resetModules();
+
+    // Mock canvas container first
+    mockCanvasContainer = {
+      id: 'canvas-container',
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      getBoundingClientRect: jest.fn(() => ({
+        left: 0,
+        top: 0,
+        width: 800,
+        height: 600,
+      })),
+    };
 
     // Create mock canvas
     mockCanvas = {
@@ -17,6 +31,10 @@ describe('DesktopAdapter - Unit Tests', () => {
         contains: jest.fn(() => false),
       },
       closest: jest.fn(() => null),
+      contains: jest.fn((target) => target === mockCanvas),
+      parentElement: mockCanvasContainer,
+      clientWidth: 1000,
+      clientHeight: 800,
       getBoundingClientRect: jest.fn(() => ({
         left: 0,
         top: 0,
@@ -30,11 +48,12 @@ describe('DesktopAdapter - Unit Tests', () => {
       releasePointerCapture: jest.fn(),
     };
 
-    // Mock document.getElementById to return our canvas
+    // Mock document.getElementById to return our canvas and container
     const originalGetElementById = global.document?.getElementById;
     global.document = global.document || {};
     global.document.getElementById = jest.fn((id) => {
       if (id === 'canvas') return mockCanvas;
+      if (id === 'canvas-container') return mockCanvasContainer;
       return null;
     });
     global.document.addEventListener = jest.fn();
@@ -116,8 +135,8 @@ describe('DesktopAdapter - Unit Tests', () => {
       expect(desktopAdapter.isInitialized).toBe(true);
       expect(desktopAdapter.canvas).toBe(mockCanvas);
 
-      // Check canvas event listeners
-      expect(mockCanvas.addEventListener).toHaveBeenCalledWith(
+      // Check container event listeners (pointerdown moved to container after refactor)
+      expect(mockCanvasContainer.addEventListener).toHaveBeenCalledWith(
         'pointerdown',
         desktopAdapter.boundHandlers.pointerDown,
       );
@@ -150,7 +169,7 @@ describe('DesktopAdapter - Unit Tests', () => {
       global.document.getElementById.mockReturnValue(null);
 
       await expect(desktopAdapter.initialize(mockEventBus)).rejects.toThrow(
-        'Canvas element not found',
+        'Canvas or canvas-container element not found',
       );
     });
   });
@@ -163,7 +182,7 @@ describe('DesktopAdapter - Unit Tests', () => {
     it('should remove event listeners on destroy', async () => {
       await desktopAdapter.destroy();
 
-      expect(mockCanvas.removeEventListener).toHaveBeenCalledWith(
+      expect(mockCanvasContainer.removeEventListener).toHaveBeenCalledWith(
         'pointerdown',
         desktopAdapter.boundHandlers.pointerDown,
       );
@@ -336,7 +355,9 @@ describe('DesktopAdapter - Unit Tests', () => {
       await desktopAdapter.initialize(mockEventBus);
 
       expect(desktopAdapter.isClickOnCanvas(mockCanvas)).toBe(true);
-      expect(desktopAdapter.isClickOnCanvas({ id: 'other' })).toBe(false);
+
+      const nonCanvasElement = { id: 'other' };
+      expect(desktopAdapter.isClickOnCanvas(nonCanvasElement)).toBe(false);
     });
 
     // Note: isEditingNoteContent method removed in behavior-driven refactor

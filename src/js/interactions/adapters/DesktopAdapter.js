@@ -32,8 +32,9 @@ export class DesktopAdapter extends BaseAdapter {
     this.connectionBehavior = null;
     this.viewportBehavior = null;
 
-    // Canvas reference
+    // Canvas and container references
     this.canvas = null;
+    this.canvasContainer = null;
 
     // Desktop-specific interaction state
     this.isPointerDown = false;
@@ -111,10 +112,12 @@ export class DesktopAdapter extends BaseAdapter {
    * Initialize desktop-specific event listeners
    */
   async initializeEventListeners() {
-    // Get canvas element
+    // Get canvas and container elements
     this.canvas = document.getElementById('canvas');
-    if (!this.canvas) {
-      throw new Error('Canvas element not found');
+    this.canvasContainer = document.getElementById('canvas-container');
+
+    if (!this.canvas || !this.canvasContainer) {
+      throw new Error('Canvas or canvas-container element not found');
     }
 
     console.log(
@@ -122,8 +125,13 @@ export class DesktopAdapter extends BaseAdapter {
       this.canvas.id,
     );
 
+    // Container-specific events (like old zoomManager)
+    this.canvasContainer.addEventListener(
+      'pointerdown',
+      this.boundHandlers.pointerDown,
+    );
+
     // Canvas-specific events
-    this.canvas.addEventListener('pointerdown', this.boundHandlers.pointerDown);
     this.canvas.addEventListener('dblclick', this.boundHandlers.dblclick);
     this.canvas.addEventListener('wheel', this.boundHandlers.wheel);
 
@@ -131,7 +139,7 @@ export class DesktopAdapter extends BaseAdapter {
     document.addEventListener('pointermove', this.boundHandlers.pointerMove);
     document.addEventListener('pointerup', this.boundHandlers.pointerUp);
     document.addEventListener('keydown', this.boundHandlers.keyDown, true); // Use capture phase for priority
-    document.addEventListener('contextmenu', this.boundHandlers.contextMenu);
+    // Note: contextmenu prevention is handled by ViewportBehavior.setupZoomAndPan on canvasContainer
 
     console.log('DesktopAdapter: Event listeners initialized successfully');
   }
@@ -140,11 +148,14 @@ export class DesktopAdapter extends BaseAdapter {
    * Clean up desktop event listeners
    */
   async destroyEventListeners() {
-    if (this.canvas) {
-      this.canvas.removeEventListener(
+    if (this.canvasContainer) {
+      this.canvasContainer.removeEventListener(
         'pointerdown',
         this.boundHandlers.pointerDown,
       );
+    }
+
+    if (this.canvas) {
       this.canvas.removeEventListener('dblclick', this.boundHandlers.dblclick);
       this.canvas.removeEventListener('wheel', this.boundHandlers.wheel);
     }
@@ -153,10 +164,10 @@ export class DesktopAdapter extends BaseAdapter {
     document.removeEventListener('pointermove', this.boundHandlers.pointerMove);
     document.removeEventListener('pointerup', this.boundHandlers.pointerUp);
     document.removeEventListener('keydown', this.boundHandlers.keyDown, true);
-    document.removeEventListener('contextmenu', this.boundHandlers.contextMenu);
 
     // Reset state
     this.canvas = null;
+    this.canvasContainer = null;
 
     console.log('DesktopAdapter: Event listeners destroyed');
   }
@@ -691,6 +702,6 @@ export class DesktopAdapter extends BaseAdapter {
    * Check if click target is canvas (UTILITY - keep)
    */
   isClickOnCanvas(target) {
-    return target === this.canvas;
+    return target === this.canvas || this.canvas.contains(target);
   }
 }
