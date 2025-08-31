@@ -226,6 +226,41 @@ export function setupZoomAndPan(canvasContainer, canvas, zoomDisplay) {
     }px) scale(${transform.a})`;
   });
 
+  // MM-212: Set up EventBus listener for adapter-generated zoom events
+  // Handles TouchAdapter pinch-to-zoom gestures
+  eventBus.on('canvas.zoom', ({ scale, centerX, centerY }) => {
+    // Validate zoom parameters
+    if (!scale || scale <= 0 || isNaN(scale)) {
+      console.warn('zoomManager: Invalid zoom scale received', {
+        scale,
+        centerX,
+        centerY,
+      });
+      return;
+    }
+
+    // Use scale directly for CSS transform (TouchAdapter sends CSS scale factor)
+    const validCenterX = isNaN(centerX) ? canvas.width / 2 : centerX;
+    const validCenterY = isNaN(centerY) ? canvas.height / 2 : centerY;
+
+    // Calculate position to keep center point fixed
+    const containerRect = canvas.parentElement.getBoundingClientRect();
+    const offsetX = containerRect.width / 2 - validCenterX * scale;
+    const offsetY = containerRect.height / 2 - validCenterY * scale;
+
+    // Apply CSS transform with TouchAdapter scale
+    canvas.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+
+    // Update zoom display (convert scale to zoom level for display)
+    const displayZoomLevel = Math.round(scale * 5);
+    const clampedDisplayLevel = Math.max(
+      config.zoomLevels.min,
+      Math.min(config.zoomLevels.max, displayZoomLevel),
+    );
+    setZoomLevel(clampedDisplayLevel);
+    updateZoomDisplay(zoomDisplay);
+  });
+
   // Legacy touch panning removed - TouchAdapter now handles all mobile touch interactions
   // Desktop users get mouse/trackpad panning, mobile users get TouchAdapter gesture system
 

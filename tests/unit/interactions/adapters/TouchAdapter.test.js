@@ -496,4 +496,306 @@ describe('TouchAdapter - Native Gesture Detection', () => {
       expect(touchAdapter.lastTap).toBeNull();
     });
   });
+
+  // MM-212: Multi-touch Gesture Detection Tests (RED Phase)
+  describe('Multi-touch Pinch Gesture Detection', () => {
+    beforeEach(async () => {
+      await touchAdapter.initialize(mockEventBus);
+    });
+
+    test('should detect pinch-out (zoom in) when fingers move apart by >10%', () => {
+      const touch1Start = createMockTouch(1, 400, 300, mockCanvas);
+      const touch2Start = createMockTouch(2, 500, 300, mockCanvas);
+      const touch1End = createMockTouch(1, 380, 300, mockCanvas);
+      const touch2End = createMockTouch(2, 520, 300, mockCanvas);
+
+      // Start two-finger touch
+      touchAdapter.boundHandlers.touchStart(
+        createTouchEvent('touchstart', [touch1Start, touch2Start]),
+      );
+
+      // Move fingers apart (100px → 140px = 40% increase > 10%)
+      touchAdapter.boundHandlers.touchMove(
+        createTouchEvent('touchmove', [touch1End, touch2End]),
+      );
+
+      // Should emit zoom event with scale factor > 1
+      expect(mockEventBus.emit).toHaveBeenCalledWith('canvas.zoom', {
+        scale: expect.any(Number),
+        centerX: expect.any(Number),
+        centerY: expect.any(Number),
+      });
+
+      const zoomCall = mockEventBus.emit.mock.calls.find(
+        (call) => call[0] === 'canvas.zoom',
+      );
+      expect(zoomCall[1].scale).toBeGreaterThan(1);
+    });
+
+    test('should detect pinch-in (zoom out) when fingers move together by >10%', () => {
+      const touch1Start = createMockTouch(1, 350, 300, mockCanvas);
+      const touch2Start = createMockTouch(2, 550, 300, mockCanvas);
+      const touch1End = createMockTouch(1, 420, 300, mockCanvas);
+      const touch2End = createMockTouch(2, 480, 300, mockCanvas);
+
+      touchAdapter.boundHandlers.touchStart(
+        createTouchEvent('touchstart', [touch1Start, touch2Start]),
+      );
+
+      // Move fingers together (200px → 60px = 70% decrease > 10%)
+      touchAdapter.boundHandlers.touchMove(
+        createTouchEvent('touchmove', [touch1End, touch2End]),
+      );
+
+      expect(mockEventBus.emit).toHaveBeenCalledWith('canvas.zoom', {
+        scale: expect.any(Number),
+        centerX: expect.any(Number),
+        centerY: expect.any(Number),
+      });
+
+      const zoomCall = mockEventBus.emit.mock.calls.find(
+        (call) => call[0] === 'canvas.zoom',
+      );
+      expect(zoomCall[1].scale).toBeLessThan(1);
+    });
+
+    test('should calculate accurate center point between two fingers', () => {
+      const touch1 = createMockTouch(1, 300, 200, mockCanvas);
+      const touch2 = createMockTouch(2, 500, 400, mockCanvas);
+
+      touchAdapter.boundHandlers.touchStart(
+        createTouchEvent('touchstart', [touch1, touch2]),
+      );
+
+      // Move fingers to trigger pinch detection
+      const touch1Moved = createMockTouch(1, 280, 200, mockCanvas);
+      const touch2Moved = createMockTouch(2, 520, 400, mockCanvas);
+
+      touchAdapter.boundHandlers.touchMove(
+        createTouchEvent('touchmove', [touch1Moved, touch2Moved]),
+      );
+
+      // Should emit zoom event with correct center point
+      expect(mockEventBus.emit).toHaveBeenCalledWith('canvas.zoom', {
+        scale: expect.any(Number),
+        centerX: 400, // (300+500)/2 = 400
+        centerY: 300, // (200+400)/2 = 300
+      });
+    });
+
+    test('should ignore pinch gestures with <10% distance change', () => {
+      const touch1Start = createMockTouch(1, 400, 300, mockCanvas);
+      const touch2Start = createMockTouch(2, 500, 300, mockCanvas);
+      const touch1End = createMockTouch(1, 395, 300, mockCanvas);
+      const touch2End = createMockTouch(2, 505, 300, mockCanvas);
+
+      touchAdapter.boundHandlers.touchStart(
+        createTouchEvent('touchstart', [touch1Start, touch2Start]),
+      );
+
+      // Small movement (100px → 110px = 10% change, should be ignored)
+      touchAdapter.boundHandlers.touchMove(
+        createTouchEvent('touchmove', [touch1End, touch2End]),
+      );
+
+      expect(mockEventBus.emit).not.toHaveBeenCalledWith(
+        'canvas.zoom',
+        expect.anything(),
+      );
+    });
+  });
+
+  describe('Two-finger Pan Detection', () => {
+    beforeEach(async () => {
+      await touchAdapter.initialize(mockEventBus);
+    });
+
+    test('should detect two-finger pan when fingers move in parallel', () => {
+      const touch1Start = createMockTouch(1, 300, 200, mockCanvas);
+      const touch2Start = createMockTouch(2, 500, 400, mockCanvas);
+      const touch1End = createMockTouch(1, 350, 250, mockCanvas);
+      const touch2End = createMockTouch(2, 550, 450, mockCanvas);
+
+      touchAdapter.boundHandlers.touchStart(
+        createTouchEvent('touchstart', [touch1Start, touch2Start]),
+      );
+
+      // Move both fingers by same delta (50, 50)
+      touchAdapter.boundHandlers.touchMove(
+        createTouchEvent('touchmove', [touch1End, touch2End]),
+      );
+
+      expect(mockEventBus.emit).toHaveBeenCalledWith('canvas.pan', {
+        deltaX: 50,
+        deltaY: 50,
+      });
+    });
+
+    test('should calculate pan delta from average finger movement', () => {
+      const touch1Start = createMockTouch(1, 300, 200, mockCanvas);
+      const touch2Start = createMockTouch(2, 500, 400, mockCanvas);
+      const touch1End = createMockTouch(1, 330, 240, mockCanvas); // +30, +40
+      const touch2End = createMockTouch(2, 570, 460, mockCanvas); // +70, +60
+
+      touchAdapter.boundHandlers.touchStart(
+        createTouchEvent('touchstart', [touch1Start, touch2Start]),
+      );
+
+      touchAdapter.boundHandlers.touchMove(
+        createTouchEvent('touchmove', [touch1End, touch2End]),
+      );
+
+      // Average delta: (30+70)/2 = 50, (40+60)/2 = 50
+      expect(mockEventBus.emit).toHaveBeenCalledWith('canvas.pan', {
+        deltaX: 50,
+        deltaY: 50,
+      });
+    });
+
+    test('should distinguish pan from pinch (parallel vs convergent movement)', () => {
+      // Test parallel movement (should be pan)
+      const touch1Start = createMockTouch(1, 300, 300, mockCanvas);
+      const touch2Start = createMockTouch(2, 500, 300, mockCanvas);
+      const touch1Parallel = createMockTouch(1, 350, 350, mockCanvas);
+      const touch2Parallel = createMockTouch(2, 550, 350, mockCanvas);
+
+      touchAdapter.boundHandlers.touchStart(
+        createTouchEvent('touchstart', [touch1Start, touch2Start]),
+      );
+
+      touchAdapter.boundHandlers.touchMove(
+        createTouchEvent('touchmove', [touch1Parallel, touch2Parallel]),
+      );
+
+      // Should detect pan, not pinch (distance unchanged: 200px → 200px)
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        'canvas.pan',
+        expect.anything(),
+      );
+      expect(mockEventBus.emit).not.toHaveBeenCalledWith(
+        'canvas.zoom',
+        expect.anything(),
+      );
+    });
+  });
+
+  describe('Multi-touch State Management', () => {
+    beforeEach(async () => {
+      await touchAdapter.initialize(mockEventBus);
+    });
+
+    test('should track two-finger gesture state separately from single-finger', () => {
+      const touch1 = createMockTouch(1, 300, 300, mockCanvas);
+      const touch2 = createMockTouch(2, 500, 300, mockCanvas);
+
+      touchAdapter.boundHandlers.touchStart(
+        createTouchEvent('touchstart', [touch1, touch2]),
+      );
+
+      // Should not interfere with single-finger gesture state
+      expect(touchAdapter.currentGesture).toBeNull(); // Single-finger state unchanged
+      expect(touchAdapter.multiTouchState).toBeDefined();
+      expect(touchAdapter.multiTouchState.fingers.size).toBe(2);
+    });
+
+    test('should clean up multi-touch state on finger lift', () => {
+      const touch1 = createMockTouch(1, 300, 300, mockCanvas);
+      const touch2 = createMockTouch(2, 500, 300, mockCanvas);
+
+      touchAdapter.boundHandlers.touchStart(
+        createTouchEvent('touchstart', [touch1, touch2]),
+      );
+
+      // Lift one finger
+      touchAdapter.boundHandlers.touchEnd(
+        createTouchEvent('touchend', [touch1]),
+      );
+
+      expect(touchAdapter.multiTouchState.fingers.size).toBe(1);
+
+      // Lift remaining finger
+      touchAdapter.boundHandlers.touchEnd(
+        createTouchEvent('touchend', [touch2]),
+      );
+
+      expect(touchAdapter.multiTouchState.fingers.size).toBe(0);
+    });
+
+    test('should prevent single-finger gestures during multi-touch', () => {
+      const touch1 = createMockTouch(1, 300, 300, mockCanvas);
+      const touch2 = createMockTouch(2, 500, 300, mockCanvas);
+
+      // Start multi-touch
+      touchAdapter.boundHandlers.touchStart(
+        createTouchEvent('touchstart', [touch1, touch2]),
+      );
+
+      // Try to trigger single-finger drag
+      const touch1Moved = createMockTouch(1, 350, 350, mockCanvas);
+      touchAdapter.boundHandlers.touchMove(
+        createTouchEvent('touchmove', [touch1Moved, touch2]),
+      );
+
+      // Should not start single-finger drag behavior
+      expect(mockBehaviors.dragBehavior.startDrag).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Multi-touch Integration Tests', () => {
+    beforeEach(async () => {
+      await touchAdapter.initialize(mockEventBus);
+    });
+
+    test('should handle mixed single and multi-touch scenarios', () => {
+      const touch1 = createMockTouch(1, 300, 300, mockCanvas);
+
+      // Start with single touch
+      touchAdapter.boundHandlers.touchStart(
+        createTouchEvent('touchstart', [touch1]),
+      );
+
+      // Add second finger
+      const touch2 = createMockTouch(2, 500, 300, mockCanvas);
+      touchAdapter.boundHandlers.touchStart(
+        createTouchEvent('touchstart', [touch1, touch2]),
+      );
+
+      // Should transition to multi-touch mode
+      expect(touchAdapter.multiTouchState.fingers.size).toBe(2);
+
+      // Remove one finger, back to single touch
+      touchAdapter.boundHandlers.touchEnd(
+        createTouchEvent('touchend', [touch2]),
+      );
+
+      expect(touchAdapter.multiTouchState.fingers.size).toBe(1);
+    });
+
+    test('should handle rapid touch addition/removal', () => {
+      const touch1 = createMockTouch(1, 300, 300, mockCanvas);
+      const touch2 = createMockTouch(2, 500, 300, mockCanvas);
+      const touch3 = createMockTouch(3, 400, 400, mockCanvas);
+
+      // Add touches rapidly
+      touchAdapter.boundHandlers.touchStart(
+        createTouchEvent('touchstart', [touch1]),
+      );
+      touchAdapter.boundHandlers.touchStart(
+        createTouchEvent('touchstart', [touch1, touch2]),
+      );
+      touchAdapter.boundHandlers.touchStart(
+        createTouchEvent('touchstart', [touch1, touch2, touch3]),
+      );
+
+      // Should handle >2 fingers gracefully (ignore third finger)
+      expect(touchAdapter.multiTouchState.fingers.size).toBe(2);
+
+      // Remove all touches
+      touchAdapter.boundHandlers.touchEnd(
+        createTouchEvent('touchend', [touch1, touch2, touch3]),
+      );
+
+      expect(touchAdapter.multiTouchState.fingers.size).toBe(0);
+    });
+  });
 });

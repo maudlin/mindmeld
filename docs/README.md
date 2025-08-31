@@ -15,7 +15,7 @@ This comprehensive index helps both end users and developers find the right docu
 
 ### For Contributors
 1. **[Contributing Guide](../CONTRIBUTING.md)** - Code standards and contribution process
-2. **[Git Workflow Troubleshooting](git-workflow-troubleshooting.md)** - Advanced Git scenarios
+2. **[Developer Guide - Git Workflow](developer-guide.md#troubleshooting--advanced-scenarios)** - Advanced Git scenarios
 
 ## 📚 Complete Documentation Catalog
 
@@ -52,7 +52,7 @@ This comprehensive index helps both end users and developers find the right docu
 
 #### DevOps & Workflows
 - **[CI/CD Guide](ci-cd.md)** - GitHub Actions workflows and deployment
-- **[Git Workflow Troubleshooting](git-workflow-troubleshooting.md)** - Rebases, branch protection, dependency handling
+- **[Developer Guide - Git Workflow](developer-guide.md#troubleshooting--advanced-scenarios)** - Rebases, branch protection, dependency handling
 
 ### 📋 Legacy Documentation
 
@@ -87,7 +87,7 @@ This comprehensive index helps both end users and developers find the right docu
 | **Debugging test failures** | Testing Guide | CI Troubleshooting |
 | **Adding canvas templates** | Canvas Templates | Developer Guide |
 | **Touch/mobile features** | User Guide (users)<br>Mobile Patterns (devs) | Accessibility |
-| **Git workflow issues** | Git Workflow Troubleshooting | Developer Guide |
+| **Git workflow issues** | Developer Guide - Git Workflow | - |
 | **CI/CD configuration** | CI/CD Guide | Scripts Reference |
 | **Architecture questions** | Developer Guide | Architecture Health |
 
