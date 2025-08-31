@@ -112,8 +112,117 @@ git push --force-with-lease origin your-branch
 
 ### Troubleshooting & Advanced Scenarios
 
-For complex rebase situations, dependency detection, and branch protection issues, see:  
-📖 **[Git Workflow Troubleshooting Guide](git-workflow-troubleshooting.md)**
+#### Dependency Detection & Prevention
+
+**Quick PR Dependency Check** - Before creating a new PR:
+
+```bash
+# 1. Check what files you're modifying
+git diff --name-only main..HEAD
+
+# 2. Check open PRs for file conflicts
+gh pr list --state open --json number,title,files
+
+# 3. Look for overlapping file changes
+# If you see the same files in multiple PRs, coordinate with the team
+```
+
+**High-Risk Conflict Areas:**
+- Core testing infrastructure files (helpers, page objects)
+- `package.json` - Scripts and dependencies
+- Any files in `src/js/core/` - Core architecture
+- Test spec files (`*.spec.js`, `*.test.js`)
+- Documentation files (`docs/*.md`)
+
+**Dependency Resolution Strategies:**
+
+1. **Sequential Development (Recommended)**: Wait for infrastructure PRs to merge first
+2. **Stacked PRs (Advanced)**: Base work on another open PR branch, rebase after merge
+3. **Team Coordination**: Comment on related PRs, use draft PRs for early coordination
+
+#### Branch Protection Error Resolution
+
+**"Branch is not up to date" Error:**
+```bash
+git checkout your-branch
+git fetch origin
+git rebase origin/main
+# Resolve any conflicts
+git push --force-with-lease origin your-branch
+```
+
+**"Linear history required" Error:**
+```bash
+# Use rebase instead of merge
+git checkout your-branch
+git rebase origin/main  # Instead of git merge main
+git push --force-with-lease origin your-branch
+```
+
+**"Required status checks failed" Error:**
+```bash
+# Run checks locally first
+npm test && npm run test:e2e
+npm run lint && npm run format:check
+
+# Fix any failures, then push
+git add .
+git commit -m "fix: resolve test failures"
+git push origin your-branch
+```
+
+#### Complex Rebase Scenarios
+
+**Multiple Conflicted Commits:**
+```bash
+# Start interactive rebase
+git rebase -i origin/main
+
+# For each conflict:
+# 1. Resolve conflicts in files
+# 2. git add resolved-files
+# 3. git rebase --continue
+# 4. Repeat until done
+
+# Force push when complete
+git push --force-with-lease origin your-branch
+```
+
+**Preserving Important Work:**
+```bash
+# Create backup branch first
+git checkout your-branch
+git checkout -b your-branch-backup
+
+# Then proceed with rebase on original branch
+git checkout your-branch
+git rebase origin/main
+# If rebase goes wrong, restore from backup
+```
+
+#### Team Communication Patterns
+
+**PR Dependency Comments:**
+```
+## Dependencies
+This PR depends on #123 (E2E infrastructure improvements) merging first.
+
+**Files in common:**
+- `tests/e2e/helpers/CanvasPage.js` - extends the infrastructure from #123
+- `package.json` - adds test scripts building on #123
+
+**Merge order:** #123 → this PR
+```
+
+**Coordinating Overlapping Work:**
+```
+@teammate I see we're both modifying `CanvasPage.js`.
+
+My changes: Adding connection verification methods
+Your changes: Browser closure protection
+
+Suggest: Your infrastructure PR merges first, then I'll rebase and extend it.
+```
 
 ## Testing & CI
 
@@ -146,6 +255,372 @@ npm run deps:check          # Dependency health check
 ```
 
 **Health monitoring runs automatically** on PRs and weekly. All circular dependencies must be resolved before merging.
+
+## Adapter-Behavior Architecture
+
+MindMeld uses a **clean separation** between input detection and business logic through the **Adapter-Behavior pattern**. This architecture eliminates code duplication while preserving platform-specific optimizations.
+
+### Core Principles
+
+#### 1. Single Responsibility Separation
+
+- **Adapters**: Pure input detection and translation
+- **Behaviors**: Pure business logic and coordination
+- **No mixed responsibilities** - adapters never emit business events, behaviors never handle platform input
+
+#### 2. Platform Abstraction
+
+- **Desktop interactions** (mouse, keyboard) and **Touch interactions** (gestures) are completely different input mechanisms
+- **Business logic** (note creation, editing, dragging) is identical regardless of input method
+- Adapters translate platform-specific input into universal behavior calls
+
+#### 3. Behavior Reuse
+
+- One behavior class handles the same interaction across all platforms
+- Example: `NoteBehavior.requestEditMode()` works identically for desktop clicks and touch taps
+- Zero code duplication between platforms
+
+### Input Flow Architecture
+
+```
+User Interaction → Adapter (Input Detection) → Behavior (Business Logic) → EventBus → Services
+```
+
+### Component Responsibilities
+
+#### Adapters (Input Translation Layer)
+
+**Purpose**: Detect platform-specific input patterns and delegate to appropriate behaviors
+
+**DO**:
+- ✅ Detect input events (clicks, taps, drags, gestures)
+- ✅ Identify interaction targets (note, canvas, connector)
+- ✅ Call appropriate behavior methods with normalized parameters
+
+**DON'T**:
+- ❌ **Never** emit business events directly
+- ❌ **Never** contain business logic (selection, editing, creation)
+- ❌ **Never** manipulate DOM or application state
+
+**Example Implementation**:
+
+```javascript
+// DesktopAdapter - Input detection only
+handleDoubleClick(event) {
+  const noteElement = event.target.closest('.note');
+
+  if (noteElement) {
+    // Delegate to behavior - no business logic here
+    this.noteBehavior.handleNoteDoubleClick(noteElement, event, 'desktop');
+  } else if (this.isCanvasClick(event.target)) {
+    // Delegate to behavior - no business logic here
+    this.canvasBehavior.handleCanvasDoubleClick(event, 'desktop');
+  }
+}
+
+// TouchAdapter - Input detection only (same pattern)
+handleDoubleTap(touch) {
+  const target = this.expandTouchTarget(touch);
+  const noteElement = target.closest('.note');
+
+  if (noteElement) {
+    // Same behavior call, different input type
+    this.noteBehavior.handleNoteDoubleClick(noteElement, touch, 'touch');
+  } else {
+    // Same behavior call, different input type
+    this.canvasBehavior.handleCanvasDoubleClick(touch, 'touch');
+  }
+}
+```
+
+#### Behaviors (Business Logic Layer)
+
+**Purpose**: Handle interaction logic and coordinate with services
+
+**DO**:
+- ✅ Implement all business logic for interaction types
+- ✅ Emit events to EventBus for service coordination
+- ✅ Manage interaction state and validation
+- ✅ Coordinate with services (noteManager, connectionManager, etc.)
+
+**DON'T**:
+- ❌ **Never** handle platform-specific input events directly
+- ❌ **Never** contain input detection logic
+
+**Example Implementation**:
+
+```javascript
+// NoteBehavior - Business logic only
+handleNoteDoubleClick(noteElement, inputEvent, inputType) {
+  // Business logic: ensure note is selected
+  if (!noteElement.classList.contains('selected')) {
+    noteManager.selectNote(noteElement);
+  }
+
+  // Business logic: request edit mode
+  this.eventBus.emit('note.requestEdit', {
+    noteId: noteElement.id,
+    noteElement,
+    inputType
+  });
+}
+```
+
+### Interaction Types and Ownership
+
+- **Note Interactions** → `NoteBehavior` (selection, editing, movement)
+- **Canvas Interactions** → `CanvasBehavior` (note creation, selection clearing)
+- **Drag Operations** → `DragBehavior` (note movement, connection updates)
+- **Multi-Selection** → `SelectionBoxBehavior` (selection box creation, multi-select)
+
+### Platform-Specific Optimizations
+
+#### DesktopAdapter Specializations
+- Precise pointer coordinates
+- Right-click context menus
+- Hover states and feedback
+- Keyboard shortcuts
+
+#### TouchAdapter Specializations
+- Hit target expansion (20px) for mobile
+- Multi-touch gesture recognition (pinch, two-finger pan)
+- Visual touch feedback and jiggle animations
+- Long-press detection with timing
+
+### TouchAdapter Native Implementation
+
+TouchAdapter implements **native gesture recognition** as the single source of truth, matching the DesktopAdapter pattern:
+
+```javascript
+class TouchAdapter {
+  // Single gesture detection point (like DesktopAdapter)
+  setupNativeTouchHandlers() {
+    this.canvas.addEventListener('touchstart', this.boundHandlers.touchStart);
+    this.canvas.addEventListener('touchmove', this.boundHandlers.touchMove);
+    this.canvas.addEventListener('touchend', this.boundHandlers.touchEnd);
+  }
+
+  // Direct gesture recognition with clean routing
+  touchStart: (event) => {
+    const touch = event.touches[0];
+    const now = Date.now();
+    
+    // Double-tap detection
+    if (this.lastTap && 
+        (now - this.lastTap.time) <= 300 &&
+        distance <= 30) {
+      this.handleDoubleTap(touch);
+      return;
+    }
+    
+    // Long press timer
+    this.longPressTimer = setTimeout(() => {
+      this.handleLongPress(touch);
+    }, 500);
+  }
+}
+```
+
+**Benefits**:
+- ✅ **Single source of truth** for touch input (matches DesktopAdapter pattern)
+- ✅ **No competing gesture systems** or event bus complexity
+- ✅ **Clean console logs** - one user gesture = one detection message
+- ✅ **Direct behavior delegation** without intermediate layers
+- ✅ **Easier debugging** - single input detection point
+
+### Architecture Testing Strategy
+
+#### Adapter Tests
+Focus on input detection - test that correct behavior methods are called with correct parameters
+
+#### Behavior Tests
+Focus on business logic - test state management, event emission, and service coordination
+
+### Common Anti-Patterns to Avoid
+
+1. **Bypassing Behaviors**: Adapters emitting business events directly
+2. **Mixed Responsibilities**: Behaviors handling platform-specific input
+3. **Code Duplication**: Same logic in multiple adapters instead of shared behavior
+4. **Competing Systems**: Multiple gesture detection systems interfering with each other
+
+## Markdown Parsing Architecture
+
+MindMeld implements a **security-first markdown rendering system** with comprehensive data corruption resistance. This architecture was built in response to **MM-174: CRITICAL Page Refresh Corrupts Markdown Content**, preventing data loss through multiple layers of protection.
+
+### Core Architecture
+
+```
+User Input → Defang Pipeline → Storage → Retrieval → Markdown Renderer → Safe HTML
+     ↑                                                        ↓
+     └─────────── Edit Mode Content Extraction ←──────────────┘
+```
+
+### Core Principles
+
+1. **Defang-First**: ALL input passes through security defang before storage
+2. **Markdown-Only Storage**: Only markdown is persisted, never HTML
+3. **Safe Rendering**: HTML generation happens only at render time with whitelisted tags
+4. **Round-Trip Integrity**: Content maintains fidelity through edit/view cycles
+
+### Key Components
+
+#### 1. Defang Pipeline (`src/js/features/markdown/defangPipeline.js`)
+
+**Primary security boundary** for ALL content with:
+
+- **Size enforcement**: 10KB maximum input prevents DoS attacks
+- **Dangerous URI removal**: `javascript:`, `data:`, `vbscript:` schemes stripped
+- **Safe HTML parsing**: Uses DOMParser for security when `isHtml=true`
+- **Whitespace preservation**: Maintains markdown structure through normalization
+
+```javascript
+// Critical security check
+if (text.length > MAX_INPUT_SIZE) {
+  return ''; // Reject oversized input
+}
+
+// Dangerous URI removal
+result = result.replace(DANGEROUS_URI_SCHEMES, '');
+```
+
+#### 2. Markdown Renderer (`src/js/features/markdown/markdownRenderer.js`)
+
+**Safe HTML generation** with:
+
+- **Supported elements**: Headers (`# H1`, `## H2`), emphasis (`*italic*`, `**bold**`), lists (`- item`)
+- **Security-first**: HTML escape ALL text content before processing
+- **Whitelisted tags only**: `['h1', 'h2', 'p', 'ul', 'li', 'em', 'strong']`
+- **No attributes**: Zero attributes or inline styles ever output
+
+```javascript
+// 1. HTML escape ALL text content first
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// 2. Generate only whitelisted HTML tags
+const ALLOWED_TAGS = ['h1', 'h2', 'p', 'ul', 'li', 'em', 'strong'];
+```
+
+#### 3. Content Extraction (`src/js/features/note/editViewMode.js`)
+
+**Critical for data integrity** - `getCurrentMarkdownContent()` function:
+
+```javascript
+export function getCurrentMarkdownContent(noteContent) {
+  // NEW: Check if noteContent itself is a textarea (revolutionary architecture)
+  if (noteContent.tagName === 'TEXTAREA' && 
+      noteContent.classList.contains('edit-textarea')) {
+    return noteContent.value; // Direct access to textarea value
+  }
+
+  // View mode: Use stored markdown from dataset
+  return noteContent.dataset.markdown || '';
+}
+```
+
+**Why this matters:**
+- **Edit mode**: Returns raw text user is typing (markdown)
+- **View mode**: Returns stored markdown from dataset, NOT rendered HTML
+- **Never returns HTML**: Prevents the MM-174 corruption cycle
+
+### Revolutionary Textarea-Replaces-Div Architecture
+
+MindMeld implements a breakthrough **"element replacement"** architecture for seamless edit/view mode transitions:
+
+**View Mode**:
+```html
+<div class="note-content view-mode">Rendered HTML content</div>
+```
+
+**Edit Mode**:
+```html
+<textarea class="note-content edit-mode edit-textarea">Raw markdown</textarea>
+```
+
+**Key Benefits**:
+- ✅ **Event delegation works**: Textarea IS .note-content, so all existing click handlers work
+- ✅ **Focus management**: No interference from parent divs or other UI elements
+- ✅ **Clean transitions**: Element replacement creates seamless view/edit switching
+- ✅ **CSS inheritance**: Textarea inherits exact same styling as div
+
+### Data Corruption Prevention (MM-174)
+
+Multiple layers prevent the corruption cycle where markdown becomes HTML:
+
+**Original Problem**:
+- `# H1` (markdown) → `<h1>H1</h1>` (HTML in storage) → `H1` (plain text after defanging)
+
+**Prevention Layers**:
+1. **Content Extraction**: `getCurrentMarkdownContent()` never returns HTML
+2. **Storage Validation**: Only markdown persisted to localStorage
+3. **Render Separation**: HTML generation happens only at display time
+4. **Dataset Backup**: `data-markdown` attribute preserves source
+
+### Security Hardening
+
+#### Input Validation
+- **Size limits**: 10KB maximum prevents DoS attacks
+- **Type coercion**: All input safely converted to string
+- **Null handling**: Graceful handling of null/undefined input
+
+#### XSS Protection
+- **HTML sanitization**: DOMParser with script/style removal
+- **Attribute stripping**: No attributes ever output in final HTML
+- **URI scheme filtering**: Dangerous URIs removed from ANY context
+
+```javascript
+const DANGEROUS_URI_SCHEMES = /\b(?:javascript|data|vbscript):[^\s]*/gi;
+result = result.replace(DANGEROUS_URI_SCHEMES, '');
+```
+
+### Performance & Robustness
+
+- **O(n) processing**: Linear time complexity for all operations
+- **No regex backtracking**: Manual parsing prevents catastrophic backtracking
+- **Memory efficient**: Line-by-line processing, limited recursion
+- **Graceful degradation**: Unsupported markdown becomes plain text
+
+### Integration Points
+
+**Data Store** (`src/js/data/dataStore.js`):
+```javascript
+export function getCurrentState() {
+  const notes = Array.from(document.querySelectorAll('.note')).map((noteElement) => {
+    const noteContent = noteElement.querySelector('.note-content');
+    
+    // CRITICAL: Use getCurrentMarkdownContent, never innerHTML
+    const content = getCurrentMarkdownContent(noteContent) || '';
+    
+    return {
+      id: noteElement.id,
+      content: content, // Always markdown, never HTML
+      // ... position data
+    };
+  });
+}
+```
+
+### Critical Maintenance Guidelines
+
+- **Never bypass defang**: All user content MUST pass through security pipeline
+- **Preserve line structure**: Newlines are critical for markdown parsing
+- **Maintain dataset**: Always keep `data-markdown` in sync with display
+- **Test refresh cycles**: Any storage changes must be tested across page refreshes
+
+### Testing Requirements
+
+**Regression Tests** (`tests/unit/data/refreshPersistenceRegression.test.js`):
+- **Purpose**: Prevent return of MM-174 data corruption bug
+- **Critical**: These tests MUST PASS always
+
+**Security Tests** (`tests/unit/features/markdown/defangPipeline.test.js`):
+- XSS vector prevention (15+ attack patterns tested)
+- Size limit enforcement
+- Dangerous URI scheme removal
 
 ## Contributing
 

@@ -856,6 +856,206 @@ For CI-specific stability tips and environment differences, see [CI vs Local E2E
 **Performance**: Run specific test files for faster feedback  
 **CI failures**: Check if local tests pass - CI failures often need stability delays
 
+### E2E Platform Testing Troubleshooting
+
+#### Mode Detection Issues 🎯
+
+**Problem**: Tests failing because Playwright's browser environment auto-detects as "touch mode" due to `navigator.maxTouchPoints > 0`, but tests use mouse events that TouchAdapter doesn't handle.
+
+**Solution**: Always use explicit mode control in your tests:
+
+```javascript
+// ✅ Correct: Explicit mode control
+const canvasPage = new CanvasPage(page);
+await canvasPage.load('desktop'); // Force desktop mode
+// OR
+await canvasPage.load('touch');   // Force touch mode
+
+// ❌ Wrong: Let environment auto-detect
+await page.goto('http://localhost:8080'); // Mode undefined!
+```
+
+#### Mode-Aware Interaction Patterns
+
+**Enhanced CanvasPage with Mode Detection**:
+
+```javascript
+class CanvasPage {
+  async load(mode = 'desktop') {
+    this.currentMode = mode; // Track mode for later use
+    const url = mode === 'touch' 
+      ? 'http://localhost:8080/?mode=touch'
+      : 'http://localhost:8080/?mode=desktop';
+    await this.page.goto(url);
+  }
+
+  async createNote(x, y) {
+    if (this.currentMode === 'touch') {
+      // Use Playwright touchscreen API for touch mode
+      await this.page.touchscreen.tap(x, y);
+      await this.page.waitForTimeout(50);
+      await this.page.touchscreen.tap(x, y); // Double-tap
+    } else {
+      // Use mouse events for desktop mode
+      await this.page.mouse.dblclick(x, y);
+    }
+  }
+}
+```
+
+#### Playwright Interaction Gotchas
+
+**Canvas and SVG Element Issues** 🚫
+
+**Problem**: Large canvas elements and SVG paths often fail with `element.click()`:
+
+```
+<html lang="en">…</html> intercepts pointer events
+element is not visible (for SVG paths)
+```
+
+**Solutions**:
+
+```javascript
+// Canvas clicks
+// ❌ Unreliable
+await page.click('#canvas', { position: { x: 100, y: 100 } });
+
+// ✅ Reliable
+await page.mouse.click(100, 100);
+
+// SVG element clicks
+// ❌ Fails with "not visible"
+await connectionPath.click();
+
+// ✅ Works reliably
+const box = await connection.boundingBox();
+const centerX = box.x + box.width / 2;
+const centerY = box.y + box.height / 2;
+await page.mouse.click(centerX, centerY);
+```
+
+**Touch Event Simulation** 📱
+
+**Manual TouchEvent Injection Doesn't Work**:
+
+```javascript
+// ❌ Doesn't work - adapters don't process synthetic events
+const touch = new Touch({
+  identifier: 1,
+  target: canvas,
+  clientX: x,
+  clientY: y,
+});
+canvas.dispatchEvent(new TouchEvent('touchstart', { touches: [touch] }));
+```
+
+**Use Playwright's Touchscreen API**:
+
+```javascript
+// ✅ Works in both desktop and touch modes
+await page.touchscreen.tap(x, y);
+await page.waitForTimeout(50);
+await page.touchscreen.tap(x, y); // Double-tap
+```
+
+**Multi-Selection Testing** 🎨
+
+**Issue**: Multi-selection only works when clicking **outside the text editable area**.
+
+```javascript
+// ❌ Fails - clicks on content area
+await note.click({ modifiers: ['Shift'] });
+
+// ✅ Works - clicks on note border
+await note.click({
+  modifiers: ['Shift'],
+  position: { x: 3, y: 3 }, // Border area
+});
+```
+
+**Clipboard API Permission Issues** 📋
+
+**Problem**: `navigator.clipboard` requires user permission in Chromium.
+
+**Solution**: Mock the clipboard API in tests:
+
+```javascript
+await page.evaluate(() => {
+  let clipboardData = '';
+  Object.defineProperty(navigator, 'clipboard', {
+    value: {
+      writeText: (text) => {
+        clipboardData = text;
+        return Promise.resolve();
+      },
+      readText: () => Promise.resolve(clipboardData),
+    },
+    writable: true,
+  });
+});
+```
+
+**Mouse Wheel Events Limitation** 🖱️
+
+**Problem**: `page.mouse.wheel()` doesn't work reliably on large canvas elements in Playwright.
+
+**Solution**: Skip these tests with clear documentation:
+
+```javascript
+// Skip zoom tests due to known Playwright limitation
+test.skip('Mouse wheel zoom', async ({ page }) => {
+  // Zoom functionality works manually but wheel events
+  // don't trigger properly in test environment
+});
+```
+
+#### Critical Testing Insights
+
+**🚨 Manual Testing is Essential**
+
+Automated tests can give **false positives** for touch interactions. Example: The MM-56 GestureRecognizer state machine bug was completely missed by automated tests because Playwright's `page.touchscreen.tap()` bypassed the broken gesture logic.
+
+**Debugging Pattern That Works**:
+
+1. **Automated tests show TouchAdapter initialized** ✅
+2. **Manual testing reveals complete touch failure** ❌
+3. **Root cause**: Playwright's touch simulation bypasses GestureRecognizer
+4. **Real testing**: Chrome DevTools mobile simulation uses actual gesture detection
+5. **Fix**: Target the real gesture recognition logic, not test simulation
+
+**Key Insight**: When automated tests pass but manual testing fails, investigate whether test simulation bypasses the actual production code paths.
+
+#### Test Organization for Platform Modes
+
+**Recommended File Structure**:
+
+```
+tests/e2e/
+├── desktop-*.spec.js     # Desktop-only features (hover, keyboard shortcuts)
+├── touch-*.spec.js       # Touch-only features (gestures, mobile context menus)
+└── *.spec.js             # Platform-agnostic (default to desktop mode)
+```
+
+**Test Naming Convention**:
+
+```javascript
+// Platform-specific tests
+test.describe('Desktop Zoom Functionality', () => {
+  test('Desktop wheel zoom should work', async ({ page }) => {
+    const canvasPage = new CanvasPage(page);
+    await canvasPage.load('desktop'); // Explicit mode
+  });
+});
+
+test.describe('Touch Connection Context Menu', () => {
+  test('should show context menu when tapping in touch mode', async ({ page }) => {
+    const canvasPage = new CanvasPage(page);
+    await canvasPage.load('touch'); // Explicit mode
+  });
+});
+```
+
 ## 🚨 Known Issues & Solutions
 
 ### Intermittent Test Failures

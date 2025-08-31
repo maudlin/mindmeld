@@ -36,6 +36,16 @@ export class TouchAdapter extends BaseAdapter {
     this.longPressThreshold = 500; // milliseconds for long press
     this.lastTap = null; // For double-tap detection
     this.longPressTimer = null; // For long press detection
+
+    // MM-212: Multi-touch gesture state
+    this.multiTouchState = {
+      fingers: new Map(), // Track individual finger positions by identifier
+      initialDistance: null, // Distance between fingers at start
+      initialCenter: null, // Center point between fingers at start
+      lastDistance: null, // Previous distance for pinch detection
+      lastCenter: null, // Previous center for pan detection
+      pinchThreshold: 0.1, // 10% distance change to trigger pinch
+    };
   }
 
   /**
@@ -149,7 +159,14 @@ export class TouchAdapter extends BaseAdapter {
           return;
         }
 
-        // Only handle single finger touches initially
+        // MM-212: Handle multi-touch gestures
+        if (event.touches.length === 2) {
+          // Two-finger touch - initialize multi-touch state
+          this.updateMultiTouchState(event.touches);
+          return;
+        }
+
+        // Handle single finger touches
         if (event.touches.length === 1) {
           const touch = event.touches[0];
           const now = Date.now();
@@ -195,6 +212,60 @@ export class TouchAdapter extends BaseAdapter {
       },
 
       touchMove: (event) => {
+        // MM-212: Handle multi-touch gestures
+        if (event.touches.length === 2) {
+          this.updateMultiTouchState(event.touches);
+
+          // Check both gestures but prioritize based on primary movement
+          const pinchGesture = this.detectPinchGesture(event.touches);
+          const panGesture = this.detectTwoFingerPan(event.touches);
+
+          // If both are detected, determine which is primary
+          if (pinchGesture && panGesture) {
+            // Calculate movement magnitudes
+            const scaleChange = Math.abs(pinchGesture.scale - 1);
+            const panMagnitude = Math.sqrt(
+              panGesture.deltaX ** 2 + panGesture.deltaY ** 2,
+            );
+
+            // If pan movement is significant and scale change is small, prefer pan
+            if (panMagnitude > 30 && scaleChange < 0.2) {
+              this.eventBus.emit('canvas.pan', {
+                deltaX: panGesture.deltaX,
+                deltaY: panGesture.deltaY,
+              });
+              return;
+            } else {
+              this.eventBus.emit('canvas.zoom', {
+                scale: pinchGesture.scale,
+                centerX: pinchGesture.centerX,
+                centerY: pinchGesture.centerY,
+              });
+              return;
+            }
+          }
+
+          // Only one gesture detected
+          if (pinchGesture) {
+            this.eventBus.emit('canvas.zoom', {
+              scale: pinchGesture.scale,
+              centerX: pinchGesture.centerX,
+              centerY: pinchGesture.centerY,
+            });
+            return;
+          }
+
+          if (panGesture) {
+            this.eventBus.emit('canvas.pan', {
+              deltaX: panGesture.deltaX,
+              deltaY: panGesture.deltaY,
+            });
+            return;
+          }
+          return;
+        }
+
+        // Handle single-finger gestures
         if (!touchStartData || event.touches.length !== 1) return;
 
         const touch = event.touches[0];
@@ -220,7 +291,7 @@ export class TouchAdapter extends BaseAdapter {
         }
       },
 
-      touchEnd: () => {
+      touchEnd: (event) => {
         // Clear long press timer
         if (this.longPressTimer) {
           clearTimeout(this.longPressTimer);
@@ -250,6 +321,21 @@ export class TouchAdapter extends BaseAdapter {
 
         // Always reset gesture state on touch end (even without touchStartData)
         this.currentGesture = null;
+
+        // MM-212: Clean up multi-touch state when touches end
+        if (!event || !event.touches || event.touches.length === 0) {
+          // No touches remaining - clean up everything
+          this.cleanupMultiTouchState();
+        } else {
+          // Remove ended touches from multi-touch state
+          if (event.changedTouches) {
+            // Remove each ended touch from the fingers Map
+            for (let i = 0; i < event.changedTouches.length; i++) {
+              const endedTouch = event.changedTouches[i];
+              this.multiTouchState.fingers.delete(endedTouch.identifier);
+            }
+          }
+        }
       },
 
       touchCancel: () => {
@@ -261,6 +347,9 @@ export class TouchAdapter extends BaseAdapter {
 
         touchStartData = null;
         this.currentGesture = null;
+
+        // MM-212: Clean up multi-touch state on cancel
+        this.cleanupMultiTouchState();
       },
     };
 
@@ -695,5 +784,132 @@ export class TouchAdapter extends BaseAdapter {
     document.querySelectorAll('.connection-mode').forEach((element) => {
       element.classList.remove('connection-mode');
     });
+  }
+
+  // MM-212: Multi-touch gesture detection methods
+
+  /**
+   * Calculate distance between two touch points
+   */
+  calculateDistance(touch1, touch2) {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  /**
+   * Calculate center point between two touch points
+   */
+  calculateCenter(touch1, touch2) {
+    return {
+      x: (touch1.clientX + touch2.clientX) / 2,
+      y: (touch1.clientY + touch2.clientY) / 2,
+    };
+  }
+
+  /**
+   * Update multi-touch state with current finger positions
+   */
+  updateMultiTouchState(touches) {
+    // Update finger positions
+    this.multiTouchState.fingers.clear();
+    for (let i = 0; i < touches.length; i++) {
+      const touch = touches[i];
+      this.multiTouchState.fingers.set(touch.identifier, {
+        x: touch.clientX,
+        y: touch.clientY,
+        touch: touch,
+      });
+    }
+
+    // Handle two-finger gestures
+    if (touches.length === 2) {
+      const touch1 = touches[0];
+      const touch2 = touches[1];
+      const currentDistance = this.calculateDistance(touch1, touch2);
+      const currentCenter = this.calculateCenter(touch1, touch2);
+
+      // Initialize on first two-finger touch
+      if (this.multiTouchState.initialDistance === null) {
+        this.multiTouchState.initialDistance = currentDistance;
+        this.multiTouchState.initialCenter = currentCenter;
+        this.multiTouchState.lastDistance = currentDistance;
+        this.multiTouchState.lastCenter = currentCenter;
+        return;
+      }
+
+      // Update current state
+      this.multiTouchState.lastDistance = currentDistance;
+      this.multiTouchState.lastCenter = currentCenter;
+    }
+  }
+
+  /**
+   * Detect pinch gesture (zoom)
+   */
+  detectPinchGesture(touches) {
+    if (touches.length !== 2 || !this.multiTouchState.initialDistance) {
+      return null;
+    }
+
+    const currentDistance = this.multiTouchState.lastDistance;
+    const initialDistance = this.multiTouchState.initialDistance;
+    const distanceChange =
+      Math.abs(currentDistance - initialDistance) / initialDistance;
+
+    // Only trigger if change > 10%
+    if (distanceChange > this.multiTouchState.pinchThreshold) {
+      const scale = currentDistance / initialDistance;
+      const center = this.multiTouchState.lastCenter;
+
+      return {
+        type: 'pinch',
+        scale: scale,
+        centerX: center.x,
+        centerY: center.y,
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Detect two-finger pan gesture
+   */
+  detectTwoFingerPan(touches) {
+    if (
+      touches.length !== 2 ||
+      !this.multiTouchState.lastCenter ||
+      !this.multiTouchState.initialCenter
+    ) {
+      return null;
+    }
+
+    const currentCenter = this.multiTouchState.lastCenter;
+    const initialCenter = this.multiTouchState.initialCenter;
+    const deltaX = currentCenter.x - initialCenter.x;
+    const deltaY = currentCenter.y - initialCenter.y;
+
+    // Return pan data if there's any movement
+    if (Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1) {
+      return {
+        type: 'pan',
+        deltaX: deltaX,
+        deltaY: deltaY,
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Clean up multi-touch state
+   */
+  cleanupMultiTouchState() {
+    this.multiTouchState.fingers.clear();
+    this.multiTouchState.initialDistance = null;
+    this.multiTouchState.initialCenter = null;
+    this.multiTouchState.lastDistance = null;
+    this.multiTouchState.lastCenter = null;
   }
 }

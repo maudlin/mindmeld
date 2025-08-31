@@ -237,4 +237,114 @@ describe('zoomManager', () => {
       );
     });
   });
+
+  // MM-212: Integration tests for TouchAdapter zoom events (RED Phase)
+  describe('EventBus canvas.zoom listener', () => {
+    beforeEach(() => {
+      // Reset mocks
+      eventBus.on.mockClear();
+
+      // Mock getComputedStyle for current transform
+      Object.defineProperty(window, 'getComputedStyle', {
+        writable: true,
+        value: jest.fn(() => ({
+          transform: 'matrix(1, 0, 0, 1, 100, 50)', // translate(100px, 50px) scale(1)
+        })),
+      });
+
+      // Mock DOMMatrix
+      global.DOMMatrix = jest.fn().mockImplementation(() => ({
+        e: 100, // translateX
+        f: 50, // translateY
+        a: 1, // scaleX
+      }));
+    });
+
+    test('should set up EventBus listener for canvas.zoom events', () => {
+      setupZoomAndPan(mockCanvasContainer, mockCanvas, mockZoomDisplay);
+
+      // Should register a listener for canvas.zoom events from TouchAdapter
+      expect(eventBus.on).toHaveBeenCalledWith(
+        'canvas.zoom',
+        expect.any(Function),
+      );
+    });
+
+    test('should apply zoom transform when canvas.zoom event is received', () => {
+      setupZoomAndPan(mockCanvasContainer, mockCanvas, mockZoomDisplay);
+
+      // Get the registered canvas.zoom handler
+      const zoomHandler = eventBus.on.mock.calls.find(
+        (call) => call[0] === 'canvas.zoom',
+      )[1];
+
+      expect(zoomHandler).toBeDefined();
+
+      // Trigger zoom event from TouchAdapter (pinch gesture)
+      zoomHandler({
+        scale: 1.5, // 50% zoom increase
+        centerX: 400,
+        centerY: 300,
+      });
+
+      // Should apply zoom transform centered at pinch point
+      expect(mockCanvas.style.transform).toMatch(/scale\(1\.5\)/);
+      expect(mockZoomDisplay.textContent).toMatch(/x$/); // Updated zoom display
+    });
+
+    test('should handle zoom-out events (scale < 1)', () => {
+      setupZoomAndPan(mockCanvasContainer, mockCanvas, mockZoomDisplay);
+
+      const zoomHandler = eventBus.on.mock.calls.find(
+        (call) => call[0] === 'canvas.zoom',
+      )[1];
+
+      // Trigger zoom-out event (pinch in)
+      zoomHandler({
+        scale: 0.8, // 20% zoom decrease
+        centerX: 500,
+        centerY: 400,
+      });
+
+      expect(mockCanvas.style.transform).toMatch(/scale\(0\.8\)/);
+    });
+
+    test('should handle zoom events with center point calculations', () => {
+      setupZoomAndPan(mockCanvasContainer, mockCanvas, mockZoomDisplay);
+
+      const zoomHandler = eventBus.on.mock.calls.find(
+        (call) => call[0] === 'canvas.zoom',
+      )[1];
+
+      // Zoom at specific point (should keep that point fixed)
+      zoomHandler({
+        scale: 2.0,
+        centerX: 300,
+        centerY: 200,
+      });
+
+      // Transform should include translation to keep center point fixed
+      expect(mockCanvas.style.transform).toMatch(/translate\(.*\) scale\(2\)/);
+    });
+
+    test('should ignore invalid zoom events', () => {
+      setupZoomAndPan(mockCanvasContainer, mockCanvas, mockZoomDisplay);
+
+      const zoomHandler = eventBus.on.mock.calls.find(
+        (call) => call[0] === 'canvas.zoom',
+      )[1];
+
+      const originalTransform = mockCanvas.style.transform;
+
+      // Invalid scale values should be ignored
+      zoomHandler({ scale: 0 }); // Zero scale
+      expect(mockCanvas.style.transform).toBe(originalTransform);
+
+      zoomHandler({ scale: -1 }); // Negative scale
+      expect(mockCanvas.style.transform).toBe(originalTransform);
+
+      zoomHandler({}); // Missing scale
+      expect(mockCanvas.style.transform).toBe(originalTransform);
+    });
+  });
 });

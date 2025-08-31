@@ -68,7 +68,7 @@ See the full documentation index in docs/README.md.
 
 - **[CI/CD Guide](docs/ci-cd.md)** - GitHub Actions workflows and deployment
 - **[CI vs Local E2E Troubleshooting](docs/ci-e2e-troubleshooting.md)** - Stabilizing tests across environments
-- **[Git Workflow Troubleshooting](docs/git-workflow-troubleshooting.md)** - Rebases, branch protection, dependency handling
+- **[Developer Guide - Git Workflow](docs/developer-guide.md#troubleshooting--advanced-scenarios)** - Rebases, branch protection, dependency handling
 - **[Architecture Health](docs/architecture-health.md)** - Code quality monitoring and metrics
 
 ## Architecture
