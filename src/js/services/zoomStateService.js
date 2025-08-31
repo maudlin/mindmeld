@@ -5,7 +5,7 @@ import { appState } from '../data/observableState.js';
 import {
   setZoomLevel as setZoomManagerLevel,
   getZoomLevel as getZoomManagerLevel,
-} from '../features/zoom/zoomManager.js';
+} from '../features/zoom/viewportAdapter.js';
 import config from '../core/config.js';
 import { log } from '../utils/utils.js';
 

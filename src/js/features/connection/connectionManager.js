@@ -11,7 +11,7 @@ import {
   STROKE_WIDTH,
   STROKE_DASHARRAY,
 } from './connectionUtils.js';
-import { getZoomLevel } from '../zoom/zoomManager.js';
+import { getZoomLevel } from '../zoom/viewportAdapter.js';
 
 export class ConnectionManager {
   constructor() {

@@ -3,7 +3,10 @@ import { log } from '../utils/utils.js';
 import { canvasManager } from './canvasManager.js';
 import { exportToJSON, importFromJSON } from '../data/dataStore.js';
 import { clearAllState } from '../data/storageManager.js';
-import { setupZoomAndPan, setFixedZoom } from '../features/zoom/zoomManager.js';
+import {
+  setupZoomAndPan,
+  setFixedZoom,
+} from '../features/zoom/viewportAdapter.js';
 import { notificationManager } from '../services/notificationManager.js';
 import { setupMobileDropdown } from '../utils/mobileInteractions.js';
 

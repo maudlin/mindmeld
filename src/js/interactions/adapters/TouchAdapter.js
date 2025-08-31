@@ -21,6 +21,7 @@ export class TouchAdapter extends BaseAdapter {
     this.selectionBoxBehavior = null;
     this.canvasBehavior = null;
     this.connectionBehavior = null;
+    this.viewportBehavior = null;
 
     // Core components
     this.canvas = null;
@@ -65,6 +66,8 @@ export class TouchAdapter extends BaseAdapter {
       this.canvasBehavior = this.interactionController.getBehavior('canvas');
       this.connectionBehavior =
         this.interactionController.getBehavior('connection');
+      this.viewportBehavior =
+        this.interactionController.getBehavior('viewport');
 
       console.log('TouchAdapter: Behavior references initialized', {
         hasNoteBehavior: !!this.noteBehavior,
@@ -72,6 +75,7 @@ export class TouchAdapter extends BaseAdapter {
         hasSelectionBoxBehavior: !!this.selectionBoxBehavior,
         hasCanvasBehavior: !!this.canvasBehavior,
         hasConnectionBehavior: !!this.connectionBehavior,
+        hasViewportBehavior: !!this.viewportBehavior,
       });
     }
 
@@ -218,50 +222,47 @@ export class TouchAdapter extends BaseAdapter {
         if (event.touches.length === 2) {
           this.updateMultiTouchState(event.touches);
 
-          // Check both gestures but prioritize based on primary movement
+          // Google Maps approach: Detect both gestures and handle simultaneously
           const pinchGesture = this.detectPinchGesture(event.touches);
           const panGesture = this.detectTwoFingerPan(event.touches);
 
-          // If both are detected, determine which is primary
-          if (pinchGesture && panGesture) {
-            // Calculate movement magnitudes
-            const scaleChange = Math.abs(pinchGesture.scale - 1);
-            const panMagnitude = Math.sqrt(
-              panGesture.deltaX ** 2 + panGesture.deltaY ** 2,
+          if (!this.viewportBehavior) {
+            console.warn(
+              'TouchAdapter: ViewportBehavior not available for gestures',
             );
-
-            // If pan movement is significant and scale change is small, prefer pan
-            if (panMagnitude > 30 && scaleChange < 0.2) {
-              this.eventBus.emit('canvas.pan', {
-                deltaX: panGesture.deltaX,
-                deltaY: panGesture.deltaY,
-              });
-              return;
-            } else {
-              this.eventBus.emit('canvas.zoom', {
-                scale: pinchGesture.scale,
-                centerX: pinchGesture.centerX,
-                centerY: pinchGesture.centerY,
-              });
-              return;
-            }
+            return;
           }
 
-          // Only one gesture detected
+          // Handle simultaneous pan and zoom (Google Maps style)
+          if (pinchGesture && panGesture) {
+            this.viewportBehavior.handleSimultaneousPanZoom(
+              panGesture.deltaX,
+              panGesture.deltaY,
+              pinchGesture.scale,
+              pinchGesture.centerX,
+              pinchGesture.centerY,
+              'touch',
+            );
+            return;
+          }
+
+          // Handle individual gestures
           if (pinchGesture) {
-            this.eventBus.emit('canvas.zoom', {
-              scale: pinchGesture.scale,
-              centerX: pinchGesture.centerX,
-              centerY: pinchGesture.centerY,
-            });
+            this.viewportBehavior.handlePinchZoom(
+              pinchGesture.scale,
+              pinchGesture.centerX,
+              pinchGesture.centerY,
+              'touch',
+            );
             return;
           }
 
           if (panGesture) {
-            this.eventBus.emit('canvas.pan', {
-              deltaX: panGesture.deltaX,
-              deltaY: panGesture.deltaY,
-            });
+            this.viewportBehavior.handlePan(
+              panGesture.deltaX,
+              panGesture.deltaY,
+              'touch',
+            );
             return;
           }
           return;
@@ -882,7 +883,7 @@ export class TouchAdapter extends BaseAdapter {
 
   /**
    * Detect two-finger pan gesture
-   * MM-213: Enhanced with frame-to-frame delta calculation and smoothing
+   * Google Maps style: Immediate 1:1 response, no thresholds or damping
    */
   detectTwoFingerPan(touches) {
     if (
@@ -896,19 +897,16 @@ export class TouchAdapter extends BaseAdapter {
     const currentCenter = this.multiTouchState.lastCenter;
     const previousCenter = this.multiTouchState.previousCenter;
 
-    // MM-213: Use frame-to-frame delta instead of absolute positioning
+    // Frame-to-frame delta for smooth movement
     const deltaX = currentCenter.x - previousCenter.x;
     const deltaY = currentCenter.y - previousCenter.y;
 
-    // MM-213: Higher threshold for less sensitivity (4px instead of 1px)
-    const minMovement = 4;
-    if (Math.abs(deltaX) > minMovement || Math.abs(deltaY) > minMovement) {
-      // MM-213: Apply damping for smoother movement (40% of actual delta)
-      const dampingFactor = 0.4;
+    // Google Maps approach: No threshold, immediate response, 1:1 movement
+    if (Math.abs(deltaX) > 0 || Math.abs(deltaY) > 0) {
       return {
         type: 'pan',
-        deltaX: deltaX * dampingFactor,
-        deltaY: deltaY * dampingFactor,
+        deltaX: deltaX, // No damping - direct 1:1 finger tracking
+        deltaY: deltaY, // No damping - direct 1:1 finger tracking
       };
     }
 

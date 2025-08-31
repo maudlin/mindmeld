@@ -5,7 +5,7 @@
  * Receives input from both DesktopAdapter and TouchAdapter.
  */
 
-import { getZoomLevel } from '../../features/zoom/zoomManager.js';
+import { getZoomLevel } from '../../features/zoom/viewportAdapter.js';
 import { noteManager } from '../../services/noteManager.js';
 import { connectionManager } from '../../features/connection/connectionManager.js';
 

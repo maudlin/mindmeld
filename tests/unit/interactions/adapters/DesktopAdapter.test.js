@@ -52,13 +52,35 @@ describe('DesktopAdapter - Unit Tests', () => {
       off: jest.fn(),
     };
 
+    // Mock ViewportBehavior
+    const mockViewportBehavior = {
+      handleWheelZoom: jest.fn(),
+      handlePinchZoom: jest.fn(),
+      handlePan: jest.fn(),
+      zoomIn: jest.fn(),
+      zoomOut: jest.fn(),
+      resetZoom: jest.fn(),
+    };
+
+    // Mock InteractionController
+    const mockInteractionController = {
+      getBehavior: jest.fn((name) => {
+        if (name === 'viewport') return mockViewportBehavior;
+        return null;
+      }),
+    };
+
     // Import the module to test
     const module = await import(
       '../../../../src/js/interactions/adapters/DesktopAdapter.js'
     );
     DesktopAdapter = module.DesktopAdapter;
 
-    desktopAdapter = new DesktopAdapter();
+    // Create fresh adapter instance for each test
+    desktopAdapter = new DesktopAdapter(mockInteractionController);
+
+    // Store mock for test access
+    desktopAdapter._mockViewportBehavior = mockViewportBehavior;
 
     // Store original for cleanup
     global.originalGetElementById = originalGetElementById;
@@ -201,43 +223,91 @@ describe('DesktopAdapter - Unit Tests', () => {
       );
     });
 
-    it('should handle wheel events for zoom', () => {
+    it('should delegate wheel events to ViewportBehavior', async () => {
+      // Create a fresh adapter for this test to avoid initialization conflicts
+      const mockViewportBehavior = {
+        handleWheelZoom: jest.fn(),
+        handlePinchZoom: jest.fn(),
+        handlePan: jest.fn(),
+        zoomIn: jest.fn(),
+        zoomOut: jest.fn(),
+        resetZoom: jest.fn(),
+      };
+
+      const mockInteractionController = {
+        getBehavior: jest.fn((name) => {
+          if (name === 'viewport') return mockViewportBehavior;
+          return null;
+        }),
+      };
+
+      const testAdapter = new DesktopAdapter(mockInteractionController);
+      testAdapter._mockViewportBehavior = mockViewportBehavior;
+
+      await testAdapter.initialize(mockEventBus);
+
       const mockEvent = {
-        deltaY: -100,
-        ctrlKey: true,
+        deltaY: -100, // Negative = zoom in
         clientX: 300,
         clientY: 200,
         preventDefault: jest.fn(),
       };
 
-      desktopAdapter.handleWheel(mockEvent);
+      testAdapter.handleWheel(mockEvent);
 
       expect(mockEvent.preventDefault).toHaveBeenCalled();
-      expect(mockEventBus.emit).toHaveBeenCalledWith(
-        'canvas.zoom',
-        expect.objectContaining({
-          direction: 'in',
-          x: 300,
-          y: 200,
-        }),
+      // Should delegate to ViewportBehavior instead of emitting EventBus events
+      expect(
+        testAdapter._mockViewportBehavior.handleWheelZoom,
+      ).toHaveBeenCalledWith(
+        'in', // direction
+        300, // x
+        200, // y
+        'desktop', // inputType
       );
     });
 
-    it('should NOT emit canvas.pan events for wheel without modifier keys', () => {
+    it('should handle wheel zoom out correctly', async () => {
+      // Create a fresh adapter for this test to avoid initialization conflicts
+      const mockViewportBehavior = {
+        handleWheelZoom: jest.fn(),
+        handlePinchZoom: jest.fn(),
+        handlePan: jest.fn(),
+        zoomIn: jest.fn(),
+        zoomOut: jest.fn(),
+        resetZoom: jest.fn(),
+      };
+
+      const mockInteractionController = {
+        getBehavior: jest.fn((name) => {
+          if (name === 'viewport') return mockViewportBehavior;
+          return null;
+        }),
+      };
+
+      const testAdapter = new DesktopAdapter(mockInteractionController);
+      testAdapter._mockViewportBehavior = mockViewportBehavior;
+
+      await testAdapter.initialize(mockEventBus);
+
       const mockEvent = {
-        deltaX: 50,
-        deltaY: 30,
-        ctrlKey: false,
-        metaKey: false,
+        deltaY: 100, // Positive = zoom out
+        clientX: 400,
+        clientY: 300,
         preventDefault: jest.fn(),
       };
 
-      desktopAdapter.handleWheel(mockEvent);
+      testAdapter.handleWheel(mockEvent);
 
-      // Should not emit canvas.pan events - wheel should only zoom, not pan on desktop
-      expect(mockEventBus.emit).not.toHaveBeenCalledWith(
-        'canvas.pan',
-        expect.any(Object),
+      expect(mockEvent.preventDefault).toHaveBeenCalled();
+      // Should delegate zoom out to ViewportBehavior
+      expect(
+        testAdapter._mockViewportBehavior.handleWheelZoom,
+      ).toHaveBeenCalledWith(
+        'out', // direction
+        400, // x
+        300, // y
+        'desktop', // inputType
       );
     });
 

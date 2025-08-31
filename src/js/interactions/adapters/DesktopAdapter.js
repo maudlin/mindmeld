@@ -30,6 +30,7 @@ export class DesktopAdapter extends BaseAdapter {
     this.selectionBoxBehavior = null;
     this.canvasBehavior = null;
     this.connectionBehavior = null;
+    this.viewportBehavior = null;
 
     // Canvas reference
     this.canvas = null;
@@ -44,6 +45,10 @@ export class DesktopAdapter extends BaseAdapter {
     // Desktop connection drag state
     this.isConnectionDragging = false;
     this.connectionStartNote = null;
+
+    // Desktop pan state
+    this.isPanning = false;
+    this.panStartPosition = null;
 
     // Bound event handlers for proper cleanup
     this.boundHandlers = {
@@ -84,6 +89,8 @@ export class DesktopAdapter extends BaseAdapter {
       this.canvasBehavior = this.interactionController.getBehavior('canvas');
       this.connectionBehavior =
         this.interactionController.getBehavior('connection');
+      this.viewportBehavior =
+        this.interactionController.getBehavior('viewport');
 
       console.log('DesktopAdapter: Behavior references initialized', {
         hasNoteBehavior: !!this.noteBehavior,
@@ -91,6 +98,7 @@ export class DesktopAdapter extends BaseAdapter {
         hasSelectionBoxBehavior: !!this.selectionBoxBehavior,
         hasCanvasBehavior: !!this.canvasBehavior,
         hasConnectionBehavior: !!this.connectionBehavior,
+        hasViewportBehavior: !!this.viewportBehavior,
       });
     } else {
       console.warn('DesktopAdapter: No InteractionController provided!');
@@ -157,7 +165,27 @@ export class DesktopAdapter extends BaseAdapter {
    * Handle pointer down events - detect interaction type and delegate to behaviors
    */
   handlePointerDown(event) {
-    // Only handle left button (primary pointer)
+    // Handle right button for canvas panning
+    if (event.button === 2 && this.isClickOnCanvas(event.target)) {
+      event.preventDefault();
+      this.isPanning = true;
+
+      // Use container-relative coordinates like old zoomManager
+      const container = this.canvas.parentElement;
+      const containerRect = container.getBoundingClientRect();
+      this.panStartPosition = {
+        x: event.clientX - containerRect.left,
+        y: event.clientY - containerRect.top,
+      };
+
+      console.log('DesktopAdapter: Right-click pan started', {
+        containerRelX: this.panStartPosition.x,
+        containerRelY: this.panStartPosition.y,
+      });
+      return;
+    }
+
+    // Only handle left button for normal interactions
     if (event.button !== 0) return;
 
     // Store pointer state for drag detection
@@ -316,6 +344,28 @@ export class DesktopAdapter extends BaseAdapter {
    * Handle pointer move events - detect drags and delegate to behaviors
    */
   handlePointerMove(event) {
+    // Handle right-click pan drag
+    if (this.isPanning && this.panStartPosition && this.viewportBehavior) {
+      event.preventDefault();
+
+      // Calculate container-relative coordinates
+      const container = this.canvas.parentElement;
+      const containerRect = container.getBoundingClientRect();
+      const currentX = event.clientX - containerRect.left;
+      const currentY = event.clientY - containerRect.top;
+
+      // Calculate delta from start position
+      const deltaX = currentX - this.panStartPosition.x;
+      const deltaY = currentY - this.panStartPosition.y;
+
+      // Delegate pan to ViewportBehavior with normalized parameters
+      this.viewportBehavior.handleDesktopPan(deltaX, deltaY);
+
+      // Update pan position for next delta calculation
+      this.panStartPosition = { x: currentX, y: currentY };
+      return;
+    }
+
     if (!this.isPointerDown || !this.pointerDownPosition) return;
 
     // Check if we're dragging a connection (desktop behavior)
@@ -436,6 +486,14 @@ export class DesktopAdapter extends BaseAdapter {
    * Handle pointer up events - end interactions and delegate to behaviors
    */
   handlePointerUp(event) {
+    // Handle right-click pan end
+    if (this.isPanning) {
+      console.log('DesktopAdapter: Right-click pan ended');
+      this.isPanning = false;
+      this.panStartPosition = null;
+      return;
+    }
+
     if (!this.isPointerDown) return;
 
     console.log('DesktopAdapter: Pointer up detected');
@@ -534,17 +592,34 @@ export class DesktopAdapter extends BaseAdapter {
   }
 
   /**
-   * Handle wheel events for zoom (KEEP - this is input-specific)
+   * Handle wheel events for zoom - delegate to ViewportBehavior
    */
   handleWheel(event) {
     event.preventDefault();
+
+    if (!this.viewportBehavior) {
+      console.warn(
+        'DesktopAdapter: ViewportBehavior not available for wheel zoom',
+      );
+      return;
+    }
 
     const rect = this.canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
 
     const direction = event.deltaY > 0 ? 'out' : 'in';
-    this.emit('canvas.zoom', { direction, x, y });
+
+    console.log(
+      'DesktopAdapter: Wheel zoom detected, delegating to ViewportBehavior',
+      {
+        direction,
+        x,
+        y,
+      },
+    );
+
+    this.viewportBehavior.handleWheelZoom(direction, x, y, 'desktop');
   }
 
   /**
@@ -569,15 +644,21 @@ export class DesktopAdapter extends BaseAdapter {
         case '=':
         case '+':
           event.preventDefault();
-          this.emit('canvas.zoomIn');
+          if (this.viewportBehavior) {
+            this.viewportBehavior.zoomIn();
+          }
           break;
         case '-':
           event.preventDefault();
-          this.emit('canvas.zoomOut');
+          if (this.viewportBehavior) {
+            this.viewportBehavior.zoomOut();
+          }
           break;
         case '0':
           event.preventDefault();
-          this.emit('canvas.resetZoom');
+          if (this.viewportBehavior) {
+            this.viewportBehavior.resetZoom();
+          }
           break;
       }
     }

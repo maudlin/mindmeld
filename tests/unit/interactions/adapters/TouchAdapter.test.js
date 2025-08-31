@@ -102,6 +102,12 @@ describe('TouchAdapter - Native Gesture Detection', () => {
         endSelectionBox: jest.fn(),
         isDrawingSelectionBox: false,
       },
+      viewportBehavior: {
+        handlePinchZoom: jest.fn(),
+        handlePan: jest.fn(),
+        handleSimultaneousPanZoom: jest.fn(),
+        handleWheelZoom: jest.fn(),
+      },
     };
 
     // Mock interaction controller
@@ -519,17 +525,19 @@ describe('TouchAdapter - Native Gesture Detection', () => {
         createTouchEvent('touchmove', [touch1End, touch2End]),
       );
 
-      // Should emit zoom event with scale factor > 1
-      expect(mockEventBus.emit).toHaveBeenCalledWith('canvas.zoom', {
-        scale: expect.any(Number),
-        centerX: expect.any(Number),
-        centerY: expect.any(Number),
-      });
-
-      const zoomCall = mockEventBus.emit.mock.calls.find(
-        (call) => call[0] === 'canvas.zoom',
+      // Should delegate to ViewportBehavior with scale factor > 1
+      expect(
+        mockBehaviors.viewportBehavior.handlePinchZoom,
+      ).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Number),
+        'touch',
       );
-      expect(zoomCall[1].scale).toBeGreaterThan(1);
+
+      const zoomCall =
+        mockBehaviors.viewportBehavior.handlePinchZoom.mock.calls[0];
+      expect(zoomCall[0]).toBeGreaterThan(1); // scale parameter should be > 1
     });
 
     test('should detect pinch-in (zoom out) when fingers move together by >10%', () => {
@@ -547,16 +555,19 @@ describe('TouchAdapter - Native Gesture Detection', () => {
         createTouchEvent('touchmove', [touch1End, touch2End]),
       );
 
-      expect(mockEventBus.emit).toHaveBeenCalledWith('canvas.zoom', {
-        scale: expect.any(Number),
-        centerX: expect.any(Number),
-        centerY: expect.any(Number),
-      });
-
-      const zoomCall = mockEventBus.emit.mock.calls.find(
-        (call) => call[0] === 'canvas.zoom',
+      // Should delegate to ViewportBehavior with scale factor < 1
+      expect(
+        mockBehaviors.viewportBehavior.handlePinchZoom,
+      ).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Number),
+        'touch',
       );
-      expect(zoomCall[1].scale).toBeLessThan(1);
+
+      const zoomCall =
+        mockBehaviors.viewportBehavior.handlePinchZoom.mock.calls[0];
+      expect(zoomCall[0]).toBeLessThan(1); // scale parameter should be < 1
     });
 
     test('should calculate accurate center point between two fingers', () => {
@@ -576,12 +587,15 @@ describe('TouchAdapter - Native Gesture Detection', () => {
         createTouchEvent('touchmove', [touch1Moved, touch2Moved]),
       );
 
-      // Should emit zoom event with correct center point
-      expect(mockEventBus.emit).toHaveBeenCalledWith('canvas.zoom', {
-        scale: expect.any(Number),
-        centerX: 400, // (300+500)/2 = 400
-        centerY: 300, // (200+400)/2 = 300
-      });
+      // Should delegate to ViewportBehavior with correct center point
+      expect(
+        mockBehaviors.viewportBehavior.handlePinchZoom,
+      ).toHaveBeenCalledWith(
+        expect.any(Number),
+        400, // (300+500)/2 = 400
+        300, // (200+400)/2 = 300
+        'touch',
+      );
     });
 
     test('should ignore pinch gestures with <10% distance change', () => {
@@ -626,11 +640,12 @@ describe('TouchAdapter - Native Gesture Detection', () => {
         createTouchEvent('touchmove', [touch1End, touch2End]),
       );
 
-      // MM-213: Updated expectations for damping factor (50 * 0.4 = 20)
-      expect(mockEventBus.emit).toHaveBeenCalledWith('canvas.pan', {
-        deltaX: 20,
-        deltaY: 20,
-      });
+      // Google Maps approach: Direct 1:1 movement (no damping)
+      expect(mockBehaviors.viewportBehavior.handlePan).toHaveBeenCalledWith(
+        50, // Direct delta, no damping
+        50, // Direct delta, no damping
+        'touch',
+      );
     });
 
     test('should calculate pan delta from average finger movement', () => {
@@ -648,38 +663,71 @@ describe('TouchAdapter - Native Gesture Detection', () => {
         createTouchEvent('touchmove', [touch1End, touch2End]),
       );
 
-      // MM-213: Both fingers move by same delta (50, 50) - pure pan
-      // Expected with damping factor (50 * 0.4 = 20)
-      expect(mockEventBus.emit).toHaveBeenCalledWith('canvas.pan', {
-        deltaX: 20,
-        deltaY: 20,
-      });
+      // Google Maps approach: Both fingers move by same delta (50, 50) - pure pan
+      // Direct 1:1 movement, no damping
+      expect(mockBehaviors.viewportBehavior.handlePan).toHaveBeenCalledWith(
+        50, // Direct delta, no damping
+        50, // Direct delta, no damping
+        'touch',
+      );
     });
 
-    test('should distinguish pan from pinch (parallel vs convergent movement)', () => {
-      // Test parallel movement (should be pan)
-      const touch1Start = createMockTouch(1, 300, 300, mockCanvas);
-      const touch2Start = createMockTouch(2, 500, 300, mockCanvas);
-      const touch1Parallel = createMockTouch(1, 350, 350, mockCanvas);
-      const touch2Parallel = createMockTouch(2, 550, 350, mockCanvas);
+    test('should handle simultaneous pan and zoom (Google Maps style)', () => {
+      // Test movement that has both pan and pinch components
+      const touch1Start = createMockTouch(1, 300, 200, mockCanvas);
+      const touch2Start = createMockTouch(2, 500, 400, mockCanvas); // Initial distance ~283px
 
       touchAdapter.boundHandlers.touchStart(
         createTouchEvent('touchstart', [touch1Start, touch2Start]),
       );
 
+      // Move fingers: both pan (center moves) AND pinch (distance changes)
+      const touch1End = createMockTouch(1, 280, 240, mockCanvas); // Pan: -20x, +40y; Zoom: spread out
+      const touch2End = createMockTouch(2, 540, 460, mockCanvas); // Pan: +40x, +60y; Zoom: spread out
+
       touchAdapter.boundHandlers.touchMove(
-        createTouchEvent('touchmove', [touch1Parallel, touch2Parallel]),
+        createTouchEvent('touchmove', [touch1End, touch2End]),
       );
 
-      // Should detect pan, not pinch (distance unchanged: 200px → 200px)
-      expect(mockEventBus.emit).toHaveBeenCalledWith(
-        'canvas.pan',
-        expect.anything(),
+      // Should call handleSimultaneousPanZoom with both pan and zoom data
+      expect(
+        mockBehaviors.viewportBehavior.handleSimultaneousPanZoom,
+      ).toHaveBeenCalledWith(
+        expect.any(Number), // panDeltaX
+        expect.any(Number), // panDeltaY
+        expect.any(Number), // scale
+        expect.any(Number), // centerX
+        expect.any(Number), // centerY
+        'touch',
       );
-      expect(mockEventBus.emit).not.toHaveBeenCalledWith(
-        'canvas.zoom',
-        expect.anything(),
+    });
+
+    test('should handle pure pan when no distance change occurs', () => {
+      // Atomic test: Pure pan behavior (no zoom)
+      const touch1Start = createMockTouch(1, 300, 300, mockCanvas);
+      const touch2Start = createMockTouch(2, 500, 300, mockCanvas); // 200px apart
+
+      touchAdapter.boundHandlers.touchStart(
+        createTouchEvent('touchstart', [touch1Start, touch2Start]),
       );
+
+      // Move fingers in parallel (distance unchanged: 200px → 200px)
+      const touch1End = createMockTouch(1, 350, 350, mockCanvas); // +50x, +50y
+      const touch2End = createMockTouch(2, 550, 350, mockCanvas); // +50x, +50y (parallel)
+
+      touchAdapter.boundHandlers.touchMove(
+        createTouchEvent('touchmove', [touch1End, touch2End]),
+      );
+
+      // Should handle as pure pan (Google Maps: 1:1 movement, no damping)
+      expect(mockBehaviors.viewportBehavior.handlePan).toHaveBeenCalledWith(
+        50, // Direct 1:1 movement
+        50, // Direct 1:1 movement
+        'touch',
+      );
+      expect(
+        mockBehaviors.viewportBehavior.handlePinchZoom,
+      ).not.toHaveBeenCalled();
     });
   });
 

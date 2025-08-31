@@ -9,10 +9,10 @@ import {
   toBase62,
   fromBase62,
 } from '../../../src/js/utils/utils.js';
-import { getZoomLevel } from '../../../src/js/features/zoom/zoomManager.js';
+import { getZoomLevel } from '../../../src/js/features/zoom/viewportAdapter.js';
 import { NOTE_CONTENT_LIMIT } from '../../../src/js/core/constants.js';
 
-jest.mock('../../../src/js/features/zoom/zoomManager.js', () => ({
+jest.mock('../../../src/js/features/zoom/viewportAdapter.js', () => ({
   getZoomLevel: jest.fn(),
 }));
 
