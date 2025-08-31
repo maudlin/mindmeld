@@ -100,8 +100,19 @@ test.describe('Touch Interactions - Core Functionality', () => {
   });
 
   test('Touch: Enter and exit edit mode @critical', async () => {
-    // Create a note first
-    const note = await canvasPage.createNote(300, 200);
+    // Create note with double-tap (proper touch method)
+    await page.touchscreen.tap(300, 200);
+    await page.waitForTimeout(100);
+    await page.touchscreen.tap(300, 200);
+    await page.waitForTimeout(500);
+
+    // Type some content and exit edit mode with canvas tap
+    await page.keyboard.type('Edit Mode Test');
+    await page.touchscreen.tap(100, 100);
+    await page.waitForTimeout(300);
+
+    const note = page.locator('.note').first();
+    await expect(note).toBeVisible();
     const noteContent = note.locator('.note-content');
 
     // Exit edit mode by tapping outside
@@ -130,10 +141,28 @@ test.describe('Touch Interactions - Core Functionality', () => {
   });
 
   test('Touch: Select single note with tap @critical', async () => {
-    // Create two notes
-    const note1 = await canvasPage.createNote(300, 200);
-    await page.waitForTimeout(800);
-    const note2 = await canvasPage.createNote(500, 200);
+    // Create first note with double-tap (proper touch method)
+    await page.touchscreen.tap(300, 200);
+    await page.waitForTimeout(100);
+    await page.touchscreen.tap(300, 200);
+    await page.waitForTimeout(500);
+    await page.keyboard.type('Note 1');
+    await page.touchscreen.tap(100, 100);
+    await page.waitForTimeout(800); // Throttle wait
+
+    // Create second note with double-tap
+    await page.touchscreen.tap(500, 200);
+    await page.waitForTimeout(100);
+    await page.touchscreen.tap(500, 200);
+    await page.waitForTimeout(500);
+    await page.keyboard.type('Note 2');
+    await page.touchscreen.tap(100, 100);
+    await page.waitForTimeout(300);
+
+    const notes = page.locator('.note');
+    await expect(notes).toHaveCount(2);
+    const note1 = notes.first();
+    const note2 = notes.last();
 
     // Exit any edit mode
     await page.touchscreen.tap(100, 100);
@@ -169,7 +198,17 @@ test.describe('Touch Interactions - Core Functionality', () => {
   });
 
   test('Touch: Move single note with drag @critical', async () => {
-    const note = await canvasPage.createNote(300, 200);
+    // Create note with double-tap (proper touch method)
+    await page.touchscreen.tap(300, 200);
+    await page.waitForTimeout(100);
+    await page.touchscreen.tap(300, 200);
+    await page.waitForTimeout(500);
+    await page.keyboard.type('Drag Test');
+    await page.touchscreen.tap(100, 100);
+    await page.waitForTimeout(300);
+
+    const note = page.locator('.note').first();
+    await expect(note).toBeVisible();
 
     // Exit edit mode
     await page.touchscreen.tap(100, 100);
@@ -255,12 +294,38 @@ test.describe('Touch Interactions - Core Functionality', () => {
   });
 
   test('Touch: Multi-select notes with selection box @critical', async () => {
-    // Create three notes
-    const note1 = await canvasPage.createNote(300, 200);
-    await page.waitForTimeout(800);
-    const note2 = await canvasPage.createNote(400, 200);
-    await page.waitForTimeout(800);
-    const note3 = await canvasPage.createNote(350, 300);
+    // Create first note with double-tap
+    await page.touchscreen.tap(300, 200);
+    await page.waitForTimeout(100);
+    await page.touchscreen.tap(300, 200);
+    await page.waitForTimeout(500);
+    await page.keyboard.type('Note 1');
+    await page.touchscreen.tap(100, 100);
+    await page.waitForTimeout(800); // Throttle wait
+
+    // Create second note with double-tap
+    await page.touchscreen.tap(400, 200);
+    await page.waitForTimeout(100);
+    await page.touchscreen.tap(400, 200);
+    await page.waitForTimeout(500);
+    await page.keyboard.type('Note 2');
+    await page.touchscreen.tap(100, 100);
+    await page.waitForTimeout(800); // Throttle wait
+
+    // Create third note with double-tap
+    await page.touchscreen.tap(350, 300);
+    await page.waitForTimeout(100);
+    await page.touchscreen.tap(350, 300);
+    await page.waitForTimeout(500);
+    await page.keyboard.type('Note 3');
+    await page.touchscreen.tap(100, 100);
+    await page.waitForTimeout(300);
+
+    const notes = page.locator('.note');
+    await expect(notes).toHaveCount(3);
+    const note1 = notes.first();
+    const note2 = notes.nth(1);
+    const note3 = notes.last();
 
     // Exit edit mode
     await page.touchscreen.tap(100, 100);
@@ -335,10 +400,28 @@ test.describe('Touch Interactions - Core Functionality', () => {
   });
 
   test('Touch: Move multiple selected notes @critical', async () => {
-    // Create two notes
-    const note1 = await canvasPage.createNote(300, 200);
-    await page.waitForTimeout(800);
-    const note2 = await canvasPage.createNote(400, 200);
+    // Create first note with double-tap
+    await page.touchscreen.tap(300, 200);
+    await page.waitForTimeout(100);
+    await page.touchscreen.tap(300, 200);
+    await page.waitForTimeout(500);
+    await page.keyboard.type('Note 1');
+    await page.touchscreen.tap(100, 100);
+    await page.waitForTimeout(800); // Throttle wait
+
+    // Create second note with double-tap
+    await page.touchscreen.tap(400, 200);
+    await page.waitForTimeout(100);
+    await page.touchscreen.tap(400, 200);
+    await page.waitForTimeout(500);
+    await page.keyboard.type('Note 2');
+    await page.touchscreen.tap(100, 100);
+    await page.waitForTimeout(300);
+
+    const notes = page.locator('.note');
+    await expect(notes).toHaveCount(2);
+    const note1 = notes.first();
+    const note2 = notes.last();
 
     // Exit edit mode
     await page.touchscreen.tap(100, 100);

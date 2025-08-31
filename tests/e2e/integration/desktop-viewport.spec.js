@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { CanvasPage } from '../helpers/CanvasPage.js';
 
 test.describe('Desktop Viewport - Integration Tests', () => {
   test.beforeEach(async ({ page }) => {
@@ -10,33 +11,25 @@ test.describe('Desktop Viewport - Integration Tests', () => {
   test('Desktop zoom and pan should work together seamlessly @integration', async ({
     page,
   }) => {
+    // Use working CanvasPage pattern instead of broken locator.dblclick
+    const canvasPage = new CanvasPage(page);
+    await canvasPage.load();
+
     // Create two notes for comprehensive reference
-    const canvas = page.locator('#canvas');
-
-    // First note
-    await canvas.dblclick({ position: { x: 200, y: 150 } });
-    await page.waitForTimeout(500);
-    await page.keyboard.type('Integration Note 1');
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
-
-    // Second note
-    await canvas.dblclick({ position: { x: 500, y: 300 } });
-    await page.waitForTimeout(500);
-    await page.keyboard.type('Integration Note 2');
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
+    await canvasPage.createNote(200, 150, 'Integration Note 1');
+    await canvasPage.createNote(500, 300, 'Integration Note 2');
 
     const zoomDisplay = page.locator('#zoom-display');
     const initialZoom = await zoomDisplay.textContent();
 
-    // Step 1: Zoom in at specific cursor position
+    // Step 1: Zoom out at specific cursor position (since we start at 5x max)
     await page.mouse.move(350, 225);
-    await page.mouse.wheel(0, -120);
+    await page.mouse.wheel(0, 120);
     await page.waitForTimeout(500);
 
     const zoomedLevel = zoomDisplay;
     await expect(zoomedLevel).not.toHaveText(initialZoom);
+    await expect(zoomedLevel).toHaveText('4x');
 
     // Step 2: Pan the zoomed canvas with right-click drag
     await page.mouse.move(300, 200);
@@ -47,9 +40,9 @@ test.describe('Desktop Viewport - Integration Tests', () => {
     await page.mouse.up({ button: 'right' });
     await page.waitForTimeout(300);
 
-    // Step 3: Zoom out to verify pan maintained
+    // Step 3: Zoom back in to verify pan maintained
     await page.mouse.move(375, 275);
-    await page.mouse.wheel(0, 120);
+    await page.mouse.wheel(0, -120);
     await page.waitForTimeout(500);
 
     const finalZoom = await zoomDisplay.textContent();
@@ -73,18 +66,15 @@ test.describe('Desktop Viewport - Integration Tests', () => {
     page,
   }) => {
     // This test ensures viewport transforms don't break note interactions
-    const canvas = page.locator('#canvas');
+    const canvasPage = new CanvasPage(page);
+    await canvasPage.load();
 
-    // Create note
-    await canvas.dblclick({ position: { x: 300, y: 200 } });
-    await page.waitForTimeout(500);
-    await page.keyboard.type('Interaction Test');
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
+    // Create note using working pattern
+    await canvasPage.createNote(300, 200, 'Interaction Test');
 
-    // Zoom in
+    // Zoom out (since we start at 5x max)
     await page.mouse.move(350, 250);
-    await page.mouse.wheel(0, -120);
+    await page.mouse.wheel(0, 120);
     await page.waitForTimeout(500);
 
     // Pan
@@ -95,15 +85,15 @@ test.describe('Desktop Viewport - Integration Tests', () => {
     await page.waitForTimeout(300);
 
     // Verify note can still be selected and edited after viewport changes
-    const note = page.locator('.note').first();
-    await note.click();
-    await expect(note).toHaveClass(/selected/);
+    const testNote = page.locator('.note').first();
+    await testNote.click();
+    await expect(testNote).toHaveClass(/selected/);
 
     // Enter edit mode
-    await note.dblclick();
+    await testNote.dblclick();
     await page.waitForTimeout(300);
 
-    const textarea = note.locator('textarea');
+    const textarea = testNote.locator('textarea');
     await expect(textarea).toBeVisible();
     await expect(textarea).toBeFocused();
 

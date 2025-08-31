@@ -12,6 +12,7 @@ import { noteManager } from '../../services/noteManager.js';
 export class TouchAdapter extends BaseAdapter {
   constructor(interactionController) {
     super();
+    console.log('🏗️ TouchAdapter: constructor called - DIAGNOSTIC');
     this.name = 'touch';
 
     // Behavior references
@@ -55,31 +56,50 @@ export class TouchAdapter extends BaseAdapter {
    * Initialize adapter with behavior references and event listeners
    */
   async initialize(eventBus) {
-    await super.initialize(eventBus);
+    try {
+      console.log('🔍 TouchAdapter: initialize() called - DIAGNOSTIC');
+      await super.initialize(eventBus);
 
-    // Get behavior references from interaction controller
-    if (this.interactionController) {
-      this.noteBehavior = this.interactionController.getBehavior('note');
-      this.dragBehavior = this.interactionController.getBehavior('drag');
-      this.selectionBoxBehavior =
-        this.interactionController.getBehavior('selectionBox');
-      this.canvasBehavior = this.interactionController.getBehavior('canvas');
-      this.connectionBehavior =
-        this.interactionController.getBehavior('connection');
-      this.viewportBehavior =
-        this.interactionController.getBehavior('viewport');
+      // Get behavior references from interaction controller
+      if (this.interactionController) {
+        console.log('TouchAdapter: InteractionController state:', {
+          isInitialized: this.interactionController.isInitialized,
+          behaviorCount: this.interactionController.behaviors?.size,
+          availableBehaviors: Array.from(
+            this.interactionController.behaviors?.keys() || [],
+          ),
+        });
 
-      console.log('TouchAdapter: Behavior references initialized', {
-        hasNoteBehavior: !!this.noteBehavior,
-        hasDragBehavior: !!this.dragBehavior,
-        hasSelectionBoxBehavior: !!this.selectionBoxBehavior,
-        hasCanvasBehavior: !!this.canvasBehavior,
-        hasConnectionBehavior: !!this.connectionBehavior,
-        hasViewportBehavior: !!this.viewportBehavior,
-      });
+        this.noteBehavior = this.interactionController.getBehavior('note');
+        this.dragBehavior = this.interactionController.getBehavior('drag');
+        this.selectionBoxBehavior =
+          this.interactionController.getBehavior('selectionBox');
+        this.canvasBehavior = this.interactionController.getBehavior('canvas');
+        this.connectionBehavior =
+          this.interactionController.getBehavior('connection');
+        this.viewportBehavior =
+          this.interactionController.getBehavior('viewport');
+
+        console.log('TouchAdapter: Behavior references initialized', {
+          hasNoteBehavior: !!this.noteBehavior,
+          hasDragBehavior: !!this.dragBehavior,
+          hasSelectionBoxBehavior: !!this.selectionBoxBehavior,
+          hasCanvasBehavior: !!this.canvasBehavior,
+          hasConnectionBehavior: !!this.connectionBehavior,
+          hasViewportBehavior: !!this.viewportBehavior,
+        });
+      } else {
+        console.warn('TouchAdapter: InteractionController not available');
+      }
+
+      await this.initializeEventListeners();
+    } catch (error) {
+      console.error(
+        '🔍 TouchAdapter: initialize() failed - DIAGNOSTIC:',
+        error,
+      );
+      throw error;
     }
-
-    await this.initializeEventListeners();
   }
 
   /**

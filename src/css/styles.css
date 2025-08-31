@@ -694,11 +694,11 @@ body.dragging .confirmation-dialog * {
   outline: none;
 }
 
-/* Kebab Menu Button - Matches color swatch styling exactly */
+/* Kebab Menu Button */
 .kebab-menu-button {
   position: absolute;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   cursor: pointer;
   transition: box-shadow 0.2s ease;

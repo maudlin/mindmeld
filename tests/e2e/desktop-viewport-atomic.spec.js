@@ -19,32 +19,32 @@ test.describe('Desktop Viewport - Atomic Tests', () => {
     // Create a note using the working CanvasPage method
     const note = await canvasPage.createNote(200, 150);
 
-    // Get initial zoom level
+    // Get initial zoom level (should be 5x - maximum zoom in)
     const zoomDisplay = page.locator('#zoom-display');
-    const initialZoom = await zoomDisplay.textContent();
+    const initialZoom = zoomDisplay;
+    await expect(initialZoom).toHaveText('5x'); // Verify we start at max zoom
 
     // Get initial note position
     const initialNoteBox = await note.boundingBox();
 
-    // Position cursor at specific location and zoom in
+    // Position cursor at specific location and zoom out
     const zoomCenterX = 400;
     const zoomCenterY = 300;
     await page.mouse.move(zoomCenterX, zoomCenterY);
 
-    // Wheel zoom in (negative deltaY = zoom in)
-    await page.mouse.wheel(0, -120);
+    // Wheel zoom out (positive deltaY = zoom out)
+    await page.mouse.wheel(0, 120);
     await page.waitForTimeout(500);
 
-    // Verify zoom level changed
-    const newZoom = zoomDisplay;
-    await expect(newZoom).not.toHaveText(initialZoom);
+    // Verify zoom level changed to 4x
+    await expect(zoomDisplay).toHaveText('4x');
 
     // The area around cursor position should remain relatively centered
     const finalNoteBox = await note.boundingBox();
     expect(finalNoteBox).toBeTruthy();
-    expect(finalNoteBox.width).toBeGreaterThan(initialNoteBox.width); // Note should be bigger after zoom in
+    expect(finalNoteBox.width).toBeLessThan(initialNoteBox.width); // Note should be smaller after zoom out
 
-    console.log(`✅ Zoom in: ${initialZoom} → ${newZoom}`);
+    console.log(`✅ Zoom out: ${initialZoom} → 4x`);
   });
 
   test('Desktop right-click pan should move canvas @atomic', async ({

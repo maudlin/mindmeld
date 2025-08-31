@@ -86,13 +86,29 @@ test.describe('Atomic Touch Interactions', () => {
   test('Step 2: Single tap selects note @atomic', async ({ page }) => {
     console.log('Testing: Single tap note → select note');
 
-    // First create a note
-    const note = await canvasPage.createNote(300, 200);
+    // Enable console logging for debugging
+    page.on('console', (msg) => console.log('PAGE LOG:', msg.text()));
 
-    // Single tap the note
+    // Create note with double-tap (touchscreen method that works)
+    await page.touchscreen.tap(300, 200);
+    await page.waitForTimeout(100);
+    await page.touchscreen.tap(300, 200);
+    await page.waitForTimeout(500);
+
+    // Type some text
+    await page.keyboard.type('Touch Test');
+    // Exit edit mode by tapping on canvas (proper touch behavior)
+    await page.touchscreen.tap(100, 100);
+    await page.waitForTimeout(300);
+
+    // Verify note exists
+    const note = page.locator('.note').first();
+    await expect(note).toBeVisible();
+
+    // Single tap to select (using bounding box for accuracy)
     const bbox = await note.boundingBox();
     await page.touchscreen.tap(bbox.x + 50, bbox.y + 20);
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(200);
 
     // Verify note is selected
     await expect(note).toHaveClass(/selected/);
@@ -104,14 +120,27 @@ test.describe('Atomic Touch Interactions', () => {
   }) => {
     console.log('Testing: Double-tap selected note → enter edit mode');
 
-    // Create and select a note
-    const note = await canvasPage.createNote(300, 200);
+    // Create note with double-tap (touchscreen method that works)
+    await page.touchscreen.tap(300, 200);
+    await page.waitForTimeout(100);
+    await page.touchscreen.tap(300, 200);
+    await page.waitForTimeout(500);
+
+    // Type some text
+    await page.keyboard.type('Edit Mode Test');
+    // Exit edit mode by tapping on canvas (proper touch behavior)
+    await page.touchscreen.tap(100, 100);
+    await page.waitForTimeout(300);
+
+    // Verify note exists
+    const note = page.locator('.note').first();
+    await expect(note).toBeVisible();
     const noteContent = note.locator('.note-content');
 
-    // Single tap to select
-    const bbox = await noteContent.boundingBox();
+    // Single tap to select the note
+    const bbox = await note.boundingBox();
     await page.touchscreen.tap(bbox.x + 50, bbox.y + 20);
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(200);
     await expect(note).toHaveClass(/selected/);
     console.log('Note selected: ✓');
 
@@ -119,7 +148,7 @@ test.describe('Atomic Touch Interactions', () => {
     await page.touchscreen.tap(bbox.x + 50, bbox.y + 20);
     await page.waitForTimeout(50);
     await page.touchscreen.tap(bbox.x + 50, bbox.y + 20);
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(300);
 
     // Verify edit mode
     await expect(noteContent).toHaveClass(/edit-mode/, { timeout: 2000 });
@@ -157,9 +186,31 @@ test.describe('Atomic Touch Interactions', () => {
   }) => {
     console.log('Testing: Long press + drag canvas → selection box');
 
-    // Create two notes for multi-select testing
-    const note1 = await canvasPage.createNote(200, 200);
-    const note2 = await canvasPage.createNote(400, 300);
+    // Create first note with double-tap
+    await page.touchscreen.tap(200, 200);
+    await page.waitForTimeout(100);
+    await page.touchscreen.tap(200, 200);
+    await page.waitForTimeout(500);
+    await page.keyboard.type('Note 1');
+    // Exit edit mode by tapping on canvas (proper touch behavior)
+    await page.touchscreen.tap(100, 100);
+    await page.waitForTimeout(600); // Throttle wait
+
+    // Create second note with double-tap
+    await page.touchscreen.tap(400, 300);
+    await page.waitForTimeout(100);
+    await page.touchscreen.tap(400, 300);
+    await page.waitForTimeout(500);
+    await page.keyboard.type('Note 2');
+    // Exit edit mode by tapping on canvas (proper touch behavior)
+    await page.touchscreen.tap(100, 100);
+    await page.waitForTimeout(300);
+
+    // Verify both notes exist
+    const notes = page.locator('.note');
+    await expect(notes).toHaveCount(2);
+    const note1 = notes.first();
+    const note2 = notes.last();
 
     // Try long press + drag on canvas (implementation pending)
     await page.touchscreen.tap(150, 150); // Start drag
