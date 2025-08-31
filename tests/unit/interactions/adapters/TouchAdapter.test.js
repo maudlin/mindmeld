@@ -567,9 +567,10 @@ describe('TouchAdapter - Native Gesture Detection', () => {
         createTouchEvent('touchstart', [touch1, touch2]),
       );
 
-      // Move fingers to trigger pinch detection
-      const touch1Moved = createMockTouch(1, 280, 200, mockCanvas);
-      const touch2Moved = createMockTouch(2, 520, 400, mockCanvas);
+      // MM-213: Move fingers with larger movement to exceed 15% threshold
+      // Initial distance ~283, new distance needs to be >325 for 15% change
+      const touch1Moved = createMockTouch(1, 270, 200, mockCanvas); // Further apart
+      const touch2Moved = createMockTouch(2, 530, 400, mockCanvas); // Further apart
 
       touchAdapter.boundHandlers.touchMove(
         createTouchEvent('touchmove', [touch1Moved, touch2Moved]),
@@ -625,17 +626,19 @@ describe('TouchAdapter - Native Gesture Detection', () => {
         createTouchEvent('touchmove', [touch1End, touch2End]),
       );
 
+      // MM-213: Updated expectations for damping factor (50 * 0.4 = 20)
       expect(mockEventBus.emit).toHaveBeenCalledWith('canvas.pan', {
-        deltaX: 50,
-        deltaY: 50,
+        deltaX: 20,
+        deltaY: 20,
       });
     });
 
     test('should calculate pan delta from average finger movement', () => {
       const touch1Start = createMockTouch(1, 300, 200, mockCanvas);
       const touch2Start = createMockTouch(2, 500, 400, mockCanvas);
-      const touch1End = createMockTouch(1, 330, 240, mockCanvas); // +30, +40
-      const touch2End = createMockTouch(2, 570, 460, mockCanvas); // +70, +60
+      // MM-213: Move fingers in parallel to avoid distance change (pure pan)
+      const touch1End = createMockTouch(1, 350, 250, mockCanvas); // +50, +50
+      const touch2End = createMockTouch(2, 550, 450, mockCanvas); // +50, +50
 
       touchAdapter.boundHandlers.touchStart(
         createTouchEvent('touchstart', [touch1Start, touch2Start]),
@@ -645,10 +648,11 @@ describe('TouchAdapter - Native Gesture Detection', () => {
         createTouchEvent('touchmove', [touch1End, touch2End]),
       );
 
-      // Average delta: (30+70)/2 = 50, (40+60)/2 = 50
+      // MM-213: Both fingers move by same delta (50, 50) - pure pan
+      // Expected with damping factor (50 * 0.4 = 20)
       expect(mockEventBus.emit).toHaveBeenCalledWith('canvas.pan', {
-        deltaX: 50,
-        deltaY: 50,
+        deltaX: 20,
+        deltaY: 20,
       });
     });
 

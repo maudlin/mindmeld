@@ -38,13 +38,15 @@ export class TouchAdapter extends BaseAdapter {
     this.longPressTimer = null; // For long press detection
 
     // MM-212: Multi-touch gesture state
+    // MM-213: Enhanced with previousCenter for frame-to-frame delta calculation
     this.multiTouchState = {
       fingers: new Map(), // Track individual finger positions by identifier
       initialDistance: null, // Distance between fingers at start
       initialCenter: null, // Center point between fingers at start
       lastDistance: null, // Previous distance for pinch detection
       lastCenter: null, // Previous center for pan detection
-      pinchThreshold: 0.1, // 10% distance change to trigger pinch
+      previousCenter: null, // MM-213: Previous frame center for delta-based pan
+      pinchThreshold: 0.15, // MM-213: Increased from 10% to 15% for less sensitivity
     };
   }
 
@@ -809,6 +811,7 @@ export class TouchAdapter extends BaseAdapter {
 
   /**
    * Update multi-touch state with current finger positions
+   * MM-213: Enhanced with previousCenter tracking for smooth delta calculation
    */
   updateMultiTouchState(touches) {
     // Update finger positions
@@ -835,8 +838,12 @@ export class TouchAdapter extends BaseAdapter {
         this.multiTouchState.initialCenter = currentCenter;
         this.multiTouchState.lastDistance = currentDistance;
         this.multiTouchState.lastCenter = currentCenter;
+        this.multiTouchState.previousCenter = currentCenter; // MM-213: Initialize previous
         return;
       }
+
+      // MM-213: Store previous center before updating current
+      this.multiTouchState.previousCenter = this.multiTouchState.lastCenter;
 
       // Update current state
       this.multiTouchState.lastDistance = currentDistance;
@@ -875,27 +882,33 @@ export class TouchAdapter extends BaseAdapter {
 
   /**
    * Detect two-finger pan gesture
+   * MM-213: Enhanced with frame-to-frame delta calculation and smoothing
    */
   detectTwoFingerPan(touches) {
     if (
       touches.length !== 2 ||
       !this.multiTouchState.lastCenter ||
-      !this.multiTouchState.initialCenter
+      !this.multiTouchState.previousCenter
     ) {
       return null;
     }
 
     const currentCenter = this.multiTouchState.lastCenter;
-    const initialCenter = this.multiTouchState.initialCenter;
-    const deltaX = currentCenter.x - initialCenter.x;
-    const deltaY = currentCenter.y - initialCenter.y;
+    const previousCenter = this.multiTouchState.previousCenter;
 
-    // Return pan data if there's any movement
-    if (Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1) {
+    // MM-213: Use frame-to-frame delta instead of absolute positioning
+    const deltaX = currentCenter.x - previousCenter.x;
+    const deltaY = currentCenter.y - previousCenter.y;
+
+    // MM-213: Higher threshold for less sensitivity (4px instead of 1px)
+    const minMovement = 4;
+    if (Math.abs(deltaX) > minMovement || Math.abs(deltaY) > minMovement) {
+      // MM-213: Apply damping for smoother movement (40% of actual delta)
+      const dampingFactor = 0.4;
       return {
         type: 'pan',
-        deltaX: deltaX,
-        deltaY: deltaY,
+        deltaX: deltaX * dampingFactor,
+        deltaY: deltaY * dampingFactor,
       };
     }
 
@@ -904,6 +917,7 @@ export class TouchAdapter extends BaseAdapter {
 
   /**
    * Clean up multi-touch state
+   * MM-213: Enhanced to clean up previousCenter tracking
    */
   cleanupMultiTouchState() {
     this.multiTouchState.fingers.clear();
@@ -911,5 +925,6 @@ export class TouchAdapter extends BaseAdapter {
     this.multiTouchState.initialCenter = null;
     this.multiTouchState.lastDistance = null;
     this.multiTouchState.lastCenter = null;
+    this.multiTouchState.previousCenter = null; // MM-213: Clean up previous center
   }
 }
