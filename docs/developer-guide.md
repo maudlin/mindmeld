@@ -117,8 +117,8 @@ For complex rebase situations, dependency detection, and branch protection issue
 
 ## Testing & CI
 
-**Testing**: See [Testing Guide](testing.md) | Run `npm test` for current status  
-**Advanced Patterns**: Mobile testing, device detection, and complex interaction patterns in [Testing Guide](testing.md)  
+**Testing**: See [Testing Guide](testing-guide.md) | Run `npm test` for current status  
+**Advanced Patterns**: Mobile testing, device detection, and complex interaction patterns in [Testing Guide](testing-guide.md)  
 **CI/CD**: See [CI/CD Guide](ci-cd.md) | All tests must pass in CI  
 **CI stability and environment differences**: See [CI vs Local E2E Troubleshooting](ci-e2e-troubleshooting.md)  
 **Commands**: See [Scripts Reference](scripts.md)

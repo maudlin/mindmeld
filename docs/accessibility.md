@@ -34,4 +34,4 @@ Related docs
 
 - Mobile Interaction Patterns (mobile-interaction-patterns.md)
 - Developer Guide (developer-guide.md)
-- Testing Guide (testing.md)
+- Testing Guide (testing-guide.md)

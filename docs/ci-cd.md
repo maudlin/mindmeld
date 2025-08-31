@@ -66,7 +66,7 @@ npm run format:check
 
 Unit and E2E tests run automatically.
 
-- Philosophy and patterns: see [Testing Guide](testing.md)
+- Philosophy and patterns: see [Testing Guide](testing-guide.md)
 - Suites, commands, tags, and expected runtimes: see [Testing Environments](testing-environments.md)
 - CI stability tips and Playwright configuration guidance: see [CI vs Local E2E Troubleshooting](ci-e2e-troubleshooting.md)
 
@@ -235,7 +235,7 @@ npm run security
 
 Run locally with verbose output. Download Playwright reports from GitHub Actions.
 
-- General debugging patterns: see [Testing Guide](testing.md)
+- General debugging patterns: see [Testing Guide](testing-guide.md)
 - CI-specific stability and Playwright configuration tips: see [CI vs Local E2E Troubleshooting](ci-e2e-troubleshooting.md)
 
 #### 3. Security Issues
@@ -298,4 +298,4 @@ npm run security
 - **Security Alerts**: Respond to new vulnerabilities
 - **Architecture Drift**: Prevent degradation over time
 
-See [Developer Guide](developer-guide.md) and [Testing Guide](testing.md).
+See [Developer Guide](developer-guide.md) and [Testing Guide](testing-guide.md).
