@@ -187,6 +187,9 @@ export class TouchAdapter extends BaseAdapter {
 
         // MM-212: Handle multi-touch gestures
         if (event.touches.length === 2) {
+          // Prevent browser default zoom behavior immediately
+          event.preventDefault();
+
           // Two-finger touch - initialize multi-touch state
           this.updateMultiTouchState(event.touches);
           return;
