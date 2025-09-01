@@ -8,6 +8,7 @@ npm-debug.log
 .idea/
 .DS_Store
 *.local
+.claude/
 
 # Claude Code settings (contains sensitive permissions data)
 .claude/settings.local.json
@@ -51,5 +52,5 @@ coverage/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
-.jscpd-report/
-test-results.json
+/.jscpd-report/
+/test-results.json
