@@ -828,17 +828,16 @@ export class TouchAdapter extends BaseAdapter {
 
   /**
    * Calculate center point between two touch points
-   * Returns canvas-relative coordinates (like desktop)
+   * Returns viewport-relative coordinates for proper touch handling
    */
   calculateCenter(touch1, touch2) {
-    // Convert viewport coordinates to canvas-relative coordinates (desktop pattern)
-    const rect = this.canvas.getBoundingClientRect();
+    // Calculate center in viewport coordinates
     const viewportCenterX = (touch1.clientX + touch2.clientX) / 2;
     const viewportCenterY = (touch1.clientY + touch2.clientY) / 2;
 
     return {
-      x: viewportCenterX - rect.left,
-      y: viewportCenterY - rect.top,
+      x: viewportCenterX,
+      y: viewportCenterY,
     };
   }
 

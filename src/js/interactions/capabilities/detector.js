@@ -101,6 +101,8 @@ export class CapabilityDetector {
         search: window.location.search,
         manualMode,
         isValidMode: manualMode ? this._isValidMode(manualMode) : 'N/A',
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        userAgent: navigator.userAgent.substring(0, 100), // First 100 chars
       });
 
       if (manualMode && this._isValidMode(manualMode)) {
