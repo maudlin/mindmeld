@@ -179,19 +179,38 @@ export class ViewportBehavior {
     let newTranslateX = transform.e + panDeltaX;
     let newTranslateY = transform.f + panDeltaY;
 
-    // Then apply zoom with center point adjustment
+    // Then apply zoom with center point adjustment and limit enforcement
     if (scale && scale !== transform.a) {
+      // Apply zoom limits to the scale factor
+      const zoomLevel = scale * 5; // CSS scale 1.0 = zoom level 5
+      const clampedZoomLevel = Math.max(
+        config.zoomLevels.min,
+        Math.min(config.zoomLevels.max, zoomLevel),
+      );
+      const clampedScale = clampedZoomLevel / 5;
+
+      // Update internal zoom level state
+      this.zoomLevel = clampedZoomLevel;
+
       const containerRect = this.canvas.parentElement.getBoundingClientRect();
       const validCenterX = isNaN(centerX) ? this.canvas.width / 2 : centerX;
       const validCenterY = isNaN(centerY) ? this.canvas.height / 2 : centerY;
 
       // Adjust translation to keep center point fixed during zoom
-      newTranslateX = containerRect.width / 2 - validCenterX * scale;
-      newTranslateY = containerRect.height / 2 - validCenterY * scale;
+      newTranslateX = containerRect.width / 2 - validCenterX * clampedScale;
+      newTranslateY = containerRect.height / 2 - validCenterY * clampedScale;
+
+      // Use clamped scale for the final transform
+      scale = clampedScale;
     }
 
     // Apply combined transform
     this.canvas.style.transform = `translate(${newTranslateX}px, ${newTranslateY}px) scale(${scale || transform.a})`;
+
+    // Update zoom display if scale was applied
+    if (scale) {
+      this.updateZoomDisplay();
+    }
   }
 
   /**
@@ -238,21 +257,37 @@ export class ViewportBehavior {
   }
 
   /**
-   * Apply CSS scale directly (for touch pinch)
+   * Apply CSS scale directly (for touch pinch) with zoom limit enforcement
    */
   applyCssScale(scale, centerX, centerY) {
     const containerRect = this.canvas.parentElement.getBoundingClientRect();
     const validCenterX = isNaN(centerX) ? this.canvas.width / 2 : centerX;
     const validCenterY = isNaN(centerY) ? this.canvas.height / 2 : centerY;
 
+    // Convert CSS scale to zoom level for limit enforcement
+    const zoomLevel = scale * 5; // CSS scale 1.0 = zoom level 5
+    const clampedZoomLevel = Math.max(
+      config.zoomLevels.min,
+      Math.min(config.zoomLevels.max, zoomLevel),
+    );
+    const clampedScale = clampedZoomLevel / 5;
+
+    // Update internal zoom level state
+    this.zoomLevel = clampedZoomLevel;
+
     // Calculate position to keep center point fixed
-    const offsetX = containerRect.width / 2 - validCenterX * scale;
-    const offsetY = containerRect.height / 2 - validCenterY * scale;
+    const offsetX = containerRect.width / 2 - validCenterX * clampedScale;
+    const offsetY = containerRect.height / 2 - validCenterY * clampedScale;
 
-    this.canvas.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+    this.canvas.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${clampedScale})`;
 
-    console.log('ViewportBehavior: CSS scale applied', {
-      scale,
+    // Update zoom display
+    this.updateZoomDisplay();
+
+    console.log('ViewportBehavior: CSS scale applied with limits', {
+      requestedScale: scale,
+      clampedScale: clampedScale,
+      zoomLevel: clampedZoomLevel,
       centerX: validCenterX,
       centerY: validCenterY,
     });
