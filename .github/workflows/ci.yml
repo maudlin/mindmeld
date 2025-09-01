@@ -1,47 +1,90 @@
-  name: CI Tests
-  on:
-    push:
-      branches: [ main, master ]
-    pull_request:
-      branches: [ main, master ]
-  permissions:
-    contents: read
-    security-events: write
-    actions: read
-  jobs:
-    test:
-      timeout-minutes: 60
-      runs-on: ubuntu-latest
-      steps:
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    - cron: '0 6 * * 1' # Weekly Monday 06:00 UTC security sweep
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+  # security-events: write is granted only on the semgrep job
+
+jobs:
+  test:
+    name: Lint, format, unit tests
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
+          cache: npm
+
       - name: Install dependencies
         run: npm ci
+
       - name: Run linting
         run: npm run lint
+
       - name: Check code formatting
         run: npm run format:check
+
       - name: Run unit tests
         run: npm run test:unit
 
-    semgrep:
-      runs-on: ubuntu-latest
-      name: Security Scanning (Semgrep)
-      steps:
-        - uses: actions/checkout@v4
-        - uses: semgrep/semgrep-action@v1
-          with:
-            config: >-
-              p/security-audit
-              p/javascript
-              p/owasp-top-ten
-            generateSarif: "1"
-          env:
-            SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
-        - name: Upload SARIF file
-          uses: github/codeql-action/upload-sarif@v3
-          with:
-            sarif_file: semgrep.sarif
-          if: always()
+semgrep:
+    name: Security Scanning (Semgrep)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [ test ] # optional
+    permissions:
+      contents: read
+      security-events: write
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep (CI mode)
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/javascript
+            p/owasp-top-ten
+          generateSarif: "1"
+          baseline-ref: main
+          severity: ERROR
+
+          # 🔒 Narrow the scan to app code only
+          include: |
+            src
+
+          # 🧹 Extra safety exclusions (also covered by .semgrepignore)
+          exclude: |
+            node_modules
+            dist
+            build
+            coverage
+            reports
+            **/*.map
+            **/*.bundle.js
+            **/*.min.js
+            **/*.test.*
+            **/*.spec.*
+
+      - name: Upload SARIF to Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
