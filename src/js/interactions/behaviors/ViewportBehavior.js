@@ -198,7 +198,7 @@ export class ViewportBehavior {
     const newScale = actualZoomLevel / 5;
     const oldScale = oldZoom / 5;
 
-    // Use provided center point or default to center
+    // Use provided center point or default to canvas center
     const validCenterX = isNaN(centerX) ? this.canvas.clientWidth / 2 : centerX;
     const validCenterY = isNaN(centerY)
       ? this.canvas.clientHeight / 2
@@ -295,9 +295,9 @@ export class ViewportBehavior {
 
     const newScale = newZoom / 5;
 
-    // Use default center if centerX or centerY are NaN
-    centerX = isNaN(centerX) ? this.canvas.width / 2 : centerX;
-    centerY = isNaN(centerY) ? this.canvas.height / 2 : centerY;
+    // Use default canvas center if centerX or centerY are NaN
+    centerX = isNaN(centerX) ? this.canvas.clientWidth / 2 : centerX;
+    centerY = isNaN(centerY) ? this.canvas.clientHeight / 2 : centerY;
 
     // Calculate position to keep center point fixed
     const containerRect = this.canvas.parentElement.getBoundingClientRect();
@@ -340,10 +340,10 @@ export class ViewportBehavior {
 
     console.log('ViewportBehavior: Setting up zoom and pan');
 
-    // Position canvas initially (like old zoomManager)
-    this.positionCanvas();
+    // Canvas positioning is handled by CSS centering via #canvas-wrapper
+    // No need to override with JavaScript positioning
 
-    // Initialize zoom display (this was the missing piece!)
+    // Initialize zoom display
     this.updateZoomDisplay();
 
     // Prevent default context menu (from old zoomManager)
@@ -355,7 +355,7 @@ export class ViewportBehavior {
   }
 
   /**
-   * Position canvas at center (from old zoomManager)
+   * Position canvas at center
    */
   positionCanvas() {
     const centerX = this.canvas.clientWidth / 2;
@@ -388,8 +388,8 @@ export class ViewportBehavior {
     console.log('ViewportBehavior: Zoom in requested');
     this.applyZoomAtPoint(
       this.zoomLevel + 1,
-      this.canvas.width / 2,
-      this.canvas.height / 2,
+      this.canvas.clientWidth / 2,
+      this.canvas.clientHeight / 2,
     );
   }
 
@@ -397,8 +397,8 @@ export class ViewportBehavior {
     console.log('ViewportBehavior: Zoom out requested');
     this.applyZoomAtPoint(
       this.zoomLevel - 1,
-      this.canvas.width / 2,
-      this.canvas.height / 2,
+      this.canvas.clientWidth / 2,
+      this.canvas.clientHeight / 2,
     );
   }
 
