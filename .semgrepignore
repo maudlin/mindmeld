@@ -1,0 +1,31 @@
+# Core noise
+node_modules/
+dist/
+build/
+coverage/
+reports/
+.tmp/
+.temp/
+.cache/
+.git/
+.husky/
+.vscode/
+
+# Docs/storybook exports
+docs/
+storybook-static/
+
+# Maps & bundles
+**/*.map
+**/*.bundle.js
+**/*.min.js
+
+# Tests (keep CI fast + cut false positives)
+**/*.test.js
+**/*.test.ts
+**/*.test.jsx
+**/*.test.tsx
+**/*.spec.js
+**/*.spec.ts
+**/*.spec.jsx
+**/*.spec.tsx
