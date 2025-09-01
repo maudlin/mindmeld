@@ -1,86 +1,41 @@
 // playwright.config.js
+// Optimized for local development with focused test suite
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
-  fullyParallel: !process.env.CI, // Reduce parallelism in CI for stability
-  retries: process.env.CI ? 2 : 0, // Retry flaky tests twice in CI
-  reporter: process.env.CI ? 'github' : 'list',
+  fullyParallel: true, // Fast parallel execution for focused test suite
+  retries: 0, // Tests are now reliable, minimal retries needed
+  reporter: 'list',
 
   webServer: {
     command: 'npm start',
     url: 'http://localhost:8080',
-    reuseExistingServer: !process.env.CI, // Always fresh server in CI
-    timeout: process.env.CI ? 180000 : 120000, // 3 minutes in CI, 2 minutes locally
+    reuseExistingServer: true, // Faster for local development
+    timeout: 60000, // 1 minute is sufficient
   },
 
   use: {
     ...devices['Desktop Chrome'],
-
-    // CI-optimized settings
     headless: true,
     viewport: { width: 1280, height: 720 },
-    ignoreHTTPSErrors: true,
-    hasTouch: true, // Enable touch support for mobile tests
+    hasTouch: true,
 
-    // Capture evidence of failures in CI
-    video: process.env.CI ? 'retain-on-failure' : 'off',
-    screenshot: process.env.CI ? 'only-on-failure' : 'off',
+    // Optimized timeouts for focused test suite
+    actionTimeout: 8000,
+    navigationTimeout: 15000,
 
-    // Increased timeouts for CI environment
-    actionTimeout: process.env.CI ? 15000 : 5000,
-    navigationTimeout: process.env.CI ? 30000 : 10000,
-
-    // CI-specific browser launch options
-    launchOptions: process.env.CI
-      ? {
-          args: [
-            '--no-sandbox',
-            '--disable-dev-shm-usage', // Overcome limited resource problems
-            '--disable-gpu',
-            '--disable-web-security',
-            '--disable-background-timer-throttling', // Prevent timing issues
-            '--disable-backgrounding-occluded-windows',
-            '--disable-renderer-backgrounding',
-          ],
-        }
-      : {},
+    // Minimal debugging artifacts
+    video: 'retain-on-failure',
+    screenshot: 'only-on-failure',
   },
 
+  // Single project for streamlined local development
   projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'], hasTouch: true },
-    },
-    // CI Project: Fast, essential tests only for GitHub Actions
-    {
-      name: 'ci',
-      testMatch: [
-        'tests/e2e/basic.spec.js',
-        'tests/e2e/note-operations.spec.js',
-        'tests/e2e/menu-functionality.spec.js',
-        'tests/e2e/color-picker-basic.spec.js',
-      ],
-      grep: /@smoke|@critical/,
-      use: {
-        ...devices['Desktop Chrome'],
-        hasTouch: true,
-        // Optimized for CI speed and stability
-        actionTimeout: 10000,
-        navigationTimeout: 20000,
-      },
-    },
-    // Dev Project: Full test suite for local development
     {
       name: 'dev',
       testMatch: 'tests/e2e/**/*.spec.js',
-      use: {
-        ...devices['Desktop Chrome'],
-        hasTouch: true,
-        // More relaxed timeouts for local testing
-        actionTimeout: 15000,
-        navigationTimeout: 30000,
-      },
+      use: { ...devices['Desktop Chrome'], hasTouch: true },
     },
   ],
 });

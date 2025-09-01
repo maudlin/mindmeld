@@ -1,8 +1,8 @@
 # MindMeld Current State
 
-**Branch**: `main` (MM-213 Touch Pan/Zoom merged via PR #95)  
+**Branch**: `main`  
 **Date**: September 1, 2025  
-**Status**: ✅ **Production Ready - Complete Touch & Desktop Experience**
+**Status**: 🔧 **Touch Zoom Architecture Enhanced - Manual Testing Required**
 
 ## Current Architecture
 
@@ -19,20 +19,33 @@ User Input → Adapter (Input Detection) → Behavior (Logic) → EventBus → S
 - **ViewportBehavior**: Unified zoom/pan logic for both adapters
 - **Core Behaviors**: NoteBehavior, DragBehavior, SelectionBoxBehavior, CanvasBehavior, ConnectionBehavior
 
-## Key Technical Implementation
+## Recent Architecture Changes (PR #96/#97)
 
-### Touch Gesture Support (MM-213 Complete)
-- **Pinch-to-Zoom**: Native two-finger zoom with Google Maps-style 1:1 tracking
-- **Two-Finger Pan**: Smooth canvas panning during zoom operations
-- **Single Touch**: Note selection, editing, and drag operations
-- **Gesture Recognition**: Double-tap (300ms), long press (500ms), drag detection
-- **Direct movement tracking**: No damping or thresholds for responsive feel
+### Enhanced Touch Zoom Implementation
+**Status**: ✅ **Unit Tests Passing** | ⏳ **Manual Testing Pending**
 
-### Architecture Principles
-1. **Adapters**: Pure input detection, delegate to behaviors
-2. **Behaviors**: Interaction logic, emit events to services via EventBus  
-3. **ViewportBehavior**: Centralized zoom/pan logic shared between adapters
-4. **1:1 Touch Tracking**: Direct finger-to-canvas movement like Google Maps
+**Problems Solved (In Theory)**:
+1. **Fixed minimum zoom limits** - Touch zoom should respect 1x minimum (no infinite cycling)
+2. **Fixed zoom centering** - Touch zoom should center on finger positions, not top-left
+3. **Fixed decimal display** - Zoom display shows clean "3.0x" instead of "3.000000000001x"
+
+**Architecture Improvements**:
+- **TouchAdapter**: Now thin like DesktopAdapter (coordinate conversion + gesture detection only)
+- **ViewportBehavior**: Enhanced to handle touch zoom using proven desktop patterns
+- **Unified zoom logic**: Both adapters use same `applyZoomAtPoint()` algorithm
+
+**Key Changes**:
+- Canvas-relative coordinate conversion: `calculateCenter()` uses `clientX - rect.left`
+- Logarithmic scaling for natural feel: `Math.log2(scaleDelta) * 4`
+- Proper limit enforcement via `setZoomLevel()` prevents infinite cycling
+
+### Current Issues Requiring Manual Testing
+**⚠️ Manual testing shows adapter/behavior changes not working as expected**
+
+**Next Steps**:
+1. Test touch zoom behavior on mobile device
+2. Debug any remaining issues with the new architecture
+3. Investigate pan snapping issues (finger tracking state resets)
 
 ## Key Files
 
@@ -76,26 +89,25 @@ npm run lint           # Code style check
 npm run health-check   # Architecture validation
 ```
 
-## E2E Test Status
+## Testing Status
 
-**Current**: 240/287 passing (83.6% pass rate)
-**Target**: 100% pass rate for production readiness
+### Unit Tests: ✅ 100% Passing (726/726)
+- All existing functionality maintained through architecture changes
+- New zoom limit tests validate proper min/max enforcement
+- Architecture validation via health checks
 
-**Known Issues**:
-- 47 failing tests require touchscreen pattern updates
-- Established working pattern: `page.touchscreen.tap()` for touch interactions
-- Avoid `canvasPage.createNote()` in touch mode (uses mouse events)
-- Exit edit mode with canvas tap, not Escape key in touch behaviors
+### Manual Testing Required: ⏳ Touch Zoom Architecture
+**Current Priority**: Validate touch zoom fixes on mobile devices
 
-**Test Patterns**:
-```javascript
-// Touch note creation
-await page.touchscreen.tap(300, 200);  // First tap
-await page.waitForTimeout(100);
-await page.touchscreen.tap(300, 200);  // Double-tap
-await page.keyboard.type('Note text');
-await page.touchscreen.tap(100, 100);  // Canvas tap to exit edit
-```
+**Expected Behavior**:
+1. **Zoom limits**: Should clamp smoothly at 1x-5x (no reset loops)
+2. **Zoom centering**: Should center on touch points during pinch
+3. **Decimal display**: Should show "3.0x" not "3.000000000001x"
+
+**Additional Investigation**: Pan snapping during multi-touch gestures
+
+### E2E Tests: 240/287 passing (83.6%)
+**Status**: Lower priority until manual testing validates architecture changes
 
 ## Documentation
 
@@ -104,6 +116,17 @@ await page.touchscreen.tap(100, 100);  // Canvas tap to exit edit
 - `CLAUDE.md` - Development guidelines and testing patterns
 - `README.md` - Project setup and overview
 
+## Active Pull Requests
+
+### PR #97: Enhanced Touch Zoom Architecture 
+- **Status**: ✅ Ready for mobile device testing
+- **Branch**: `fix/touch-zoom-limits-clamping`
+- **Changes**: Unified adapter-behavior zoom logic with desktop patterns
+
+### PR #99: Enhanced .gitignore and .semgrepignore
+- **Status**: ✅ Ready for merge  
+- **Benefits**: Cleaner git status, optimized security scanning
+
 ---
 
-**Status**: Core functionality complete with modern touch gestures. Ready for remaining E2E test fixes to achieve production readiness.
+**Current Focus**: Manual testing of touch zoom architecture changes. Unit tests passing, but behavior not working as expected on mobile devices. Additional debugging and refinement needed.

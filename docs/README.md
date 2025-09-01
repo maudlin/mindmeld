@@ -42,8 +42,6 @@ This comprehensive index helps both end users and developers find the right docu
   - Touch interaction testing
   - Security testing framework
   - Troubleshooting and maintenance
-- **[Testing Environments](testing-environments.md)** - Suites, commands, tags, and when to run which
-- **[CI vs Local E2E Troubleshooting](ci-e2e-troubleshooting.md)** - Stabilizing tests across environments
 
 #### Technical Architecture
 - **[Architecture Health](architecture-health.md)** - Code quality monitoring and metrics
@@ -63,9 +61,7 @@ This comprehensive index helps both end users and developers find the right docu
 ### Clear Separation of Concerns
 
 **Testing Documentation:**
-- **[Testing Guide](testing-guide.md)** - Single comprehensive source for ALL testing information
-- **[Testing Environments](testing-environments.md)** - Suite-specific commands and runtime guidance
-- **[CI Troubleshooting](ci-e2e-troubleshooting.md)** - Environment-specific debugging
+- **[Testing Guide](testing-guide.md)** - Comprehensive testing patterns and best practices
 
 **Mobile/Touch Documentation:**
 - **[User Guide](user-guide.md)** - User-facing touch interaction instructions
@@ -83,8 +79,8 @@ This comprehensive index helps both end users and developers find the right docu
 |------|------------------|---------------------|
 | **Learning to use MindMeld** | User Guide | - |
 | **Setting up for development** | Developer Guide | Scripts Reference |
-| **Writing tests** | Testing Guide | Testing Environments |
-| **Debugging test failures** | Testing Guide | CI Troubleshooting |
+| **Writing tests** | Testing Guide | - |
+| **Debugging test failures** | Testing Guide | - |
 | **Adding canvas templates** | Canvas Templates | Developer Guide |
 | **Touch/mobile features** | User Guide (users)<br>Mobile Patterns (devs) | Accessibility |
 | **Git workflow issues** | Developer Guide - Git Workflow | - |
