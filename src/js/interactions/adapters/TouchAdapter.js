@@ -258,7 +258,7 @@ export class TouchAdapter extends BaseAdapter {
             this.viewportBehavior.handleSimultaneousPanZoom(
               panGesture.deltaX,
               panGesture.deltaY,
-              pinchGesture.scale,
+              pinchGesture.scaleDelta,
               pinchGesture.centerX,
               pinchGesture.centerY,
               'touch',
@@ -269,7 +269,7 @@ export class TouchAdapter extends BaseAdapter {
           // Handle individual gestures
           if (pinchGesture) {
             this.viewportBehavior.handlePinchZoom(
-              pinchGesture.scale,
+              pinchGesture.scaleDelta,
               pinchGesture.centerX,
               pinchGesture.centerY,
               'touch',
@@ -822,11 +822,17 @@ export class TouchAdapter extends BaseAdapter {
 
   /**
    * Calculate center point between two touch points
+   * Returns canvas-relative coordinates (like desktop)
    */
   calculateCenter(touch1, touch2) {
+    // Convert viewport coordinates to canvas-relative coordinates (desktop pattern)
+    const rect = this.canvas.getBoundingClientRect();
+    const viewportCenterX = (touch1.clientX + touch2.clientX) / 2;
+    const viewportCenterY = (touch1.clientY + touch2.clientY) / 2;
+
     return {
-      x: (touch1.clientX + touch2.clientX) / 2,
-      y: (touch1.clientY + touch2.clientY) / 2,
+      x: viewportCenterX - rect.left,
+      y: viewportCenterY - rect.top,
     };
   }
 
@@ -874,6 +880,7 @@ export class TouchAdapter extends BaseAdapter {
 
   /**
    * Detect pinch gesture (zoom)
+   * Thin adapter: Extract scale ratio and let ViewportBehavior handle the logic
    */
   detectPinchGesture(touches) {
     if (touches.length !== 2 || !this.multiTouchState.initialDistance) {
@@ -887,13 +894,13 @@ export class TouchAdapter extends BaseAdapter {
 
     // Only trigger if change > 10%
     if (distanceChange > this.multiTouchState.pinchThreshold) {
-      const scale = currentDistance / initialDistance;
+      const scaleRatio = currentDistance / initialDistance;
       const center = this.multiTouchState.lastCenter;
 
       return {
         type: 'pinch',
-        scale: scale,
-        centerX: center.x,
+        scaleDelta: scaleRatio, // Send scale ratio - let ViewportBehavior convert to zoom delta
+        centerX: center.x, // Canvas-relative coordinates
         centerY: center.y,
       };
     }
