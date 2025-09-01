@@ -240,6 +240,9 @@ export class TouchAdapter extends BaseAdapter {
       touchMove: (event) => {
         // MM-212: Handle multi-touch gestures
         if (event.touches.length === 2) {
+          // Prevent browser default zoom behavior immediately
+          event.preventDefault();
+
           this.updateMultiTouchState(event.touches);
 
           // Google Maps approach: Detect both gestures and handle simultaneously
@@ -865,7 +868,7 @@ export class TouchAdapter extends BaseAdapter {
         this.multiTouchState.initialCenter = currentCenter;
         this.multiTouchState.lastDistance = currentDistance;
         this.multiTouchState.lastCenter = currentCenter;
-        this.multiTouchState.previousCenter = currentCenter; // MM-213: Initialize previous
+        this.multiTouchState.previousCenter = null; // Will be set on next frame for delta calculation
         return;
       }
 
@@ -913,11 +916,13 @@ export class TouchAdapter extends BaseAdapter {
    * Google Maps style: Immediate 1:1 response, no thresholds or damping
    */
   detectTwoFingerPan(touches) {
-    if (
-      touches.length !== 2 ||
-      !this.multiTouchState.lastCenter ||
-      !this.multiTouchState.previousCenter
-    ) {
+    if (touches.length !== 2 || !this.multiTouchState.lastCenter) {
+      return null;
+    }
+
+    // Handle first touchmove after initialization (previousCenter is null)
+    if (!this.multiTouchState.previousCenter) {
+      // No delta possible yet, but set up for next frame
       return null;
     }
 
