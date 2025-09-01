@@ -229,7 +229,6 @@ Suggest: Your infrastructure PR merges first, then I'll rebase and extend it.
 **Testing**: See [Testing Guide](testing-guide.md) | Run `npm test` for current status  
 **Advanced Patterns**: Mobile testing, device detection, and complex interaction patterns in [Testing Guide](testing-guide.md)  
 **CI/CD**: See [CI/CD Guide](ci-cd.md) | All tests must pass in CI  
-**CI stability and environment differences**: See [CI vs Local E2E Troubleshooting](ci-e2e-troubleshooting.md)  
 **Commands**: See [Scripts Reference](scripts.md)
 
 ### CI Quick Checklist
@@ -237,9 +236,8 @@ Suggest: Your infrastructure PR merges first, then I'll rebase and extend it.
 - Pull latest main; branch from up-to-date main
 - Lint and format check: `npm run lint && npm run format:check`
 - Unit tests: `npm run test:unit`
-- E2E tests (choose appropriate suite): see [Testing Environments](testing-environments.md)
+- E2E tests: `npm run test:e2e` (local development only)
 - Security checks: `npm run security`
-- If Playwright E2E is flaky locally, review [CI vs Local E2E Troubleshooting](ci-e2e-troubleshooting.md)
 - Push and open PR; ensure CI is green before requesting review
 
 ## Architecture Health

@@ -64,16 +64,19 @@ npm run format:check
 
 ### Stage 3: Testing
 
-Unit and E2E tests run automatically.
+```bash
+# Unit tests only (optimized for CI speed)
+npm run test:unit
+```
 
-- Philosophy and patterns: see [Testing Guide](testing-guide.md)
-- Suites, commands, tags, and expected runtimes: see [Testing Environments](testing-environments.md)
-- CI stability tips and Playwright configuration guidance: see [CI vs Local E2E Troubleshooting](ci-e2e-troubleshooting.md)
+**CI Strategy**: Only unit tests run in CI for fast feedback. E2E tests run locally during development.
+- **Unit tests**: Fast, comprehensive logic coverage
+- **E2E tests**: Local development only (browser installation overhead avoided)
 
 ### Stage 4: Artifacts
 
-- **Playwright Reports**: Uploaded for test failures analysis
-- **Coverage Reports**: Generated for unit tests
+- **Unit Test Coverage**: Generated for test analysis
+- **Lint Reports**: Code quality and security analysis
 
 ## Security Scanning
 
@@ -131,9 +134,9 @@ npm run pre-push
 ### Development Workflow
 
 1. **Feature Branch**: Create from main
-2. **Development**: Local testing with `npm test`
+2. **Development**: Local testing with `npm test` (unit + E2E)
 3. **Local hooks**: Husky runs linting/format checks and security scans
-4. **Pull Request**: Triggers full CI pipeline
+4. **Pull Request**: Triggers CI pipeline (unit tests + security)
 5. **Review**: Code review and CI validation
 6. **Merge**: Automated changelog generation
 
@@ -154,10 +157,12 @@ Automated checks using Husky + lint-staged:
 ### Local CI Validation
 
 ```bash
-npm run lint && npm run format:check && npm run test:unit && npm run test:e2e && npm run security
-```
+# Full local validation (matches CI + E2E)
+npm test
 
-For Docker-based or CI=true simulation techniques and environment replication, see [CI vs Local E2E Troubleshooting](ci-e2e-troubleshooting.md).
+# CI validation only (matches CI exactly)
+npm run lint && npm run format:check && npm run test:unit && npm run security
+```
 
 ## Environment Configuration
 
@@ -169,9 +174,9 @@ For Docker-based or CI=true simulation techniques and environment replication, s
 
 ### Browser Testing
 
-- **Playwright**: Multi-browser E2E testing
-- **Headless Mode**: Optimized for CI performance
-- **Artifacts**: Screenshots and traces for debugging
+- **Local Development**: Playwright E2E tests for comprehensive validation
+- **CI**: Unit tests only (no browser dependencies)
+- **Performance**: Fast CI feedback without browser installation overhead
 
 ## Deployment Process
 
@@ -200,9 +205,9 @@ Planned enhancements:
 
 ### CI Performance Metrics
 
-- Keep the CI E2E suite lean for fast feedback; unit tests should run quickly.
-- Tune parallel execution and resource usage for GitHub Actions limits.
-- For current suite composition and approximate runtimes, see [Testing Environments](testing-environments.md).
+- **Unit tests only** in CI for maximum speed
+- **No browser dependencies** - eliminates Chromium installation time
+- **Fast feedback** - complete CI runs in under 2 minutes
 
 ### Architecture Health
 
@@ -233,10 +238,13 @@ npm run security
 
 #### 2. Test Failures
 
-Run locally with verbose output. Download Playwright reports from GitHub Actions.
+Run locally with verbose output:
 
-- General debugging patterns: see [Testing Guide](testing-guide.md)
-- CI-specific stability and Playwright configuration tips: see [CI vs Local E2E Troubleshooting](ci-e2e-troubleshooting.md)
+```bash
+npm run test:unit -- --verbose
+```
+
+- Testing patterns: see [Testing Guide](testing-guide.md)
 
 #### 3. Security Issues
 
