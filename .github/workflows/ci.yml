@@ -42,7 +42,7 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit
 
-semgrep:
+  semgrep:
     name: Security Scanning (Semgrep)
     runs-on: ubuntu-latest
     timeout-minutes: 20
