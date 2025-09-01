@@ -74,23 +74,29 @@ export class ViewportBehavior {
 
   /**
    * Handle pinch zoom from TouchAdapter
-   * Receives: { scale, centerX, centerY } (CSS scale factor)
+   * Receives: { scaleDelta, centerX, centerY } (scale ratio from gesture)
+   * Enhanced: Use proven applyZoomAtPoint algorithm like desktop
    */
-  handlePinchZoom(scale, centerX, centerY, inputType) {
+  handlePinchZoom(scaleDelta, centerX, centerY, inputType) {
     if (!this.canvas) {
       console.warn('ViewportBehavior: Canvas not available for pinch zoom');
       return;
     }
 
     console.log('ViewportBehavior: Pinch zoom detected', {
-      scale,
+      scaleDelta,
       centerX,
       centerY,
       inputType,
     });
 
-    // TouchAdapter sends CSS scale factor directly - apply it
-    this.applyCssScale(scale, centerX, centerY);
+    // Convert scale ratio to zoom level delta (smooth continuous zoom for mobile)
+    // Use logarithmic scaling for natural feel: log2(1.2) ≈ 0.26 per zoom level
+    const zoomDelta = Math.log2(scaleDelta) * 4; // 4x multiplier for good responsiveness
+    const newZoomLevel = this.zoomLevel + zoomDelta;
+
+    // Apply zoom with center point using proven algorithm (like desktop)
+    this.applyZoomAtPoint(newZoomLevel, centerX, centerY);
   }
 
   /**
@@ -144,12 +150,12 @@ export class ViewportBehavior {
 
   /**
    * Handle simultaneous pan and zoom (Google Maps style)
-   * This is where the magic happens - no conflict resolution needed
+   * Enhanced: Use separate operations for cleaner logic
    */
   handleSimultaneousPanZoom(
     panDeltaX,
     panDeltaY,
-    scale,
+    scaleDelta,
     centerX,
     centerY,
     inputType,
@@ -164,53 +170,17 @@ export class ViewportBehavior {
     console.log('ViewportBehavior: Simultaneous pan/zoom detected', {
       panDeltaX,
       panDeltaY,
-      scale,
+      scaleDelta,
       centerX,
       centerY,
       inputType,
     });
 
-    // Get current transform
-    const transform = new DOMMatrix(
-      window.getComputedStyle(this.canvas).transform,
-    );
+    // Apply pan first
+    this.handlePan(panDeltaX, panDeltaY, inputType);
 
-    // Apply pan first (translate)
-    let newTranslateX = transform.e + panDeltaX;
-    let newTranslateY = transform.f + panDeltaY;
-
-    // Then apply zoom with center point adjustment and limit enforcement
-    if (scale && scale !== transform.a) {
-      // Apply zoom limits to the scale factor
-      const zoomLevel = scale * 5; // CSS scale 1.0 = zoom level 5
-      const clampedZoomLevel = Math.max(
-        config.zoomLevels.min,
-        Math.min(config.zoomLevels.max, zoomLevel),
-      );
-      const clampedScale = clampedZoomLevel / 5;
-
-      // Update internal zoom level state
-      this.zoomLevel = clampedZoomLevel;
-
-      const containerRect = this.canvas.parentElement.getBoundingClientRect();
-      const validCenterX = isNaN(centerX) ? this.canvas.width / 2 : centerX;
-      const validCenterY = isNaN(centerY) ? this.canvas.height / 2 : centerY;
-
-      // Adjust translation to keep center point fixed during zoom
-      newTranslateX = containerRect.width / 2 - validCenterX * clampedScale;
-      newTranslateY = containerRect.height / 2 - validCenterY * clampedScale;
-
-      // Use clamped scale for the final transform
-      scale = clampedScale;
-    }
-
-    // Apply combined transform
-    this.canvas.style.transform = `translate(${newTranslateX}px, ${newTranslateY}px) scale(${scale || transform.a})`;
-
-    // Update zoom display if scale was applied
-    if (scale) {
-      this.updateZoomDisplay();
-    }
+    // Then apply zoom using the same logic as individual pinch
+    this.handlePinchZoom(scaleDelta, centerX, centerY, inputType);
   }
 
   /**
@@ -350,7 +320,9 @@ export class ViewportBehavior {
    */
   updateZoomDisplay() {
     if (this.zoomDisplay) {
-      this.zoomDisplay.textContent = `${this.zoomLevel}x`;
+      // Round to 1 decimal place for cleaner display
+      const roundedZoom = Math.round(this.zoomLevel * 10) / 10;
+      this.zoomDisplay.textContent = `${roundedZoom}x`;
     }
   }
 
