@@ -172,19 +172,12 @@ html {
   height: 4320px;
   background: #fffcf8 radial-gradient(#eee 2px, transparent 2px);
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 0;
+  left: 0;
   transform-origin: top left;
   background-size: 20px 20px; /* Adjust the grid size */
   touch-action: none; /* Prevent browser default touch gestures for custom pointer handling */
-}
-
-#canvas-wrapper {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  /* Initial transform will be set by JavaScript to center canvas */
 }
 
 #watermark {
