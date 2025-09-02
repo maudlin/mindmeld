@@ -8,12 +8,16 @@
 import { getZoomLevel } from '../../features/zoom/viewportAdapter.js';
 import { noteManager } from '../../services/noteManager.js';
 import { connectionManager } from '../../features/connection/connectionManager.js';
+import { CoordinateTransform } from '../../core/coordinates/CoordinateTransform.js';
 
 export class DragBehavior {
-  constructor(eventBus) {
+  constructor(eventBus, coordinateTransform = null) {
     this.eventBus = eventBus;
     this.isInitialized = false;
     this.name = 'DragBehavior';
+
+    // Coordinate transformation service
+    this.coordinateTransform = coordinateTransform;
 
     // Drag state
     this.isDragging = false;
@@ -33,6 +37,22 @@ export class DragBehavior {
   async initialize() {
     if (this.isInitialized) {
       return;
+    }
+
+    // Initialize coordinate transform service if not injected
+    if (!this.coordinateTransform) {
+      const canvas = document.getElementById('canvas');
+      if (!canvas) {
+        throw new Error(
+          'DragBehavior: Canvas element required for coordinate transformations',
+        );
+      }
+
+      const zoomProvider = {
+        getZoomLevel: () => getZoomLevel(),
+      };
+
+      this.coordinateTransform = new CoordinateTransform(canvas, zoomProvider);
     }
 
     // Set up drag coordination
@@ -238,85 +258,89 @@ export class DragBehavior {
   }
 
   /**
-   * Calculate movement offsets for drag operation (adapted from working implementation)
+   * Calculate movement offsets for drag operation (using CoordinateTransform service)
    */
   calculateDragOffsets(noteElement, event) {
-    const selectedNotes = noteManager.getSelectedNotes();
-    const zoomLevel = getZoomLevel();
-    const scale = zoomLevel / 5;
+    try {
+      const selectedNotes = noteManager.getSelectedNotes();
 
-    const canvas = document.getElementById('canvas');
-    const canvasRect = canvas
-      ? canvas.getBoundingClientRect()
-      : { left: 0, top: 0 };
-    const noteRect = noteElement.getBoundingClientRect();
+      // Use coordinate service for clean transformations
+      const pointerCanvas = this.coordinateTransform.viewportToCanvas(
+        event.clientX,
+        event.clientY,
+      );
+      const noteCanvas = this.coordinateTransform.elementToCanvas(noteElement);
 
-    // Calculate shift offsets (mouse position relative to note position)
-    this.shiftX =
-      (event.clientX - canvasRect.left) / scale -
-      (noteRect.left - canvasRect.left) / scale;
-    this.shiftY =
-      (event.clientY - canvasRect.top) / scale -
-      (noteRect.top - canvasRect.top) / scale;
+      // Calculate shift offsets using clean service API
+      this.shiftX = pointerCanvas.x - noteCanvas.x;
+      this.shiftY = pointerCanvas.y - noteCanvas.y;
 
-    // Calculate relative offsets for all selected notes
-    this.selectedNotesOffsets = selectedNotes.map((selectedNote) => {
-      const rect = selectedNote.getBoundingClientRect();
-      return {
-        note: selectedNote,
-        offsetX: (rect.left - noteRect.left) / scale,
-        offsetY: (rect.top - noteRect.top) / scale,
-      };
-    });
+      // Calculate relative offsets for all selected notes using service
+      this.selectedNotesOffsets = selectedNotes.map((selectedNote) => {
+        const selectedNoteCanvas =
+          this.coordinateTransform.elementToCanvas(selectedNote);
+        return {
+          note: selectedNote,
+          offsetX: selectedNoteCanvas.x - noteCanvas.x,
+          offsetY: selectedNoteCanvas.y - noteCanvas.y,
+        };
+      });
 
-    console.log('DragBehavior: Calculated drag offsets', {
-      shiftX: this.shiftX,
-      shiftY: this.shiftY,
-      selectedNotesCount: this.selectedNotesOffsets.length,
-    });
+      console.log('DragBehavior: Calculated drag offsets', {
+        shiftX: this.shiftX,
+        shiftY: this.shiftY,
+        selectedNotesCount: this.selectedNotesOffsets.length,
+      });
+    } catch (error) {
+      console.error('DragBehavior: Failed to calculate drag offsets:', error);
+      // Graceful fallback
+      this.shiftX = 0;
+      this.shiftY = 0;
+      this.selectedNotesOffsets = [];
+    }
   }
 
   /**
-   * Update note positions during drag (adapted from working implementation)
+   * Update note positions during drag (using CoordinateTransform service)
    */
   updateNotePositions(event) {
-    const zoomLevel = getZoomLevel();
-    const scale = zoomLevel / 5;
+    try {
+      // Use coordinate service for clean transformation
+      const canvasPos = this.coordinateTransform.viewportToCanvas(
+        event.clientX,
+        event.clientY,
+      );
 
-    const canvas = document.getElementById('canvas');
-    const canvasRect = canvas
-      ? canvas.getBoundingClientRect()
-      : { left: 0, top: 0 };
+      const offsetX = canvasPos.x - this.shiftX;
+      const offsetY = canvasPos.y - this.shiftY;
 
-    const canvasX = (event.clientX - canvasRect.left) / scale;
-    const canvasY = (event.clientY - canvasRect.top) / scale;
+      // Update positions for all selected notes
+      this.selectedNotesOffsets.forEach(
+        ({ note, offsetX: relativeX, offsetY: relativeY }) => {
+          const noteX = offsetX + relativeX;
+          const noteY = offsetY + relativeY;
 
-    const offsetX = canvasX - this.shiftX;
-    const offsetY = canvasY - this.shiftY;
+          // Update DOM position
+          note.style.left = `${noteX}px`;
+          note.style.top = `${noteY}px`;
 
-    // Update positions for all selected notes
-    this.selectedNotesOffsets.forEach(
-      ({ note, offsetX: relativeX, offsetY: relativeY }) => {
-        const noteShiftX = offsetX + relativeX;
-        const noteShiftY = offsetY + relativeY;
+          // Update data store via event bus
+          this.eventBus.emit('note.updated', {
+            id: note.id,
+            left: note.style.left,
+            top: note.style.top,
+          });
+        },
+      );
 
-        // Update DOM position
-        note.style.left = `${noteShiftX}px`;
-        note.style.top = `${noteShiftY}px`;
-
-        // Update data store via event bus
-        this.eventBus.emit('note.updated', {
-          id: note.id,
-          left: note.style.left,
-          top: note.style.top,
-        });
-      },
-    );
-
-    // Update connections for each individual note during drag (like working implementation)
-    this.selectedNotesOffsets.forEach(({ note }) => {
-      connectionManager.updateConnections(note);
-    });
+      // Update connections for each individual note during drag (like working implementation)
+      this.selectedNotesOffsets.forEach(({ note }) => {
+        connectionManager.updateConnections(note);
+      });
+    } catch (error) {
+      console.error('DragBehavior: Failed to update note positions:', error);
+      // Continue with existing positions on coordinate errors
+    }
   }
 
   /**
