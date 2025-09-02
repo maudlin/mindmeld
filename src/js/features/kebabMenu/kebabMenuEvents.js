@@ -16,16 +16,6 @@ export class KebabMenuEvents {
     document.addEventListener('kebab-menu-action', (e) => {
       this.handleAction(e.detail.action);
     });
-
-    // Handle navbar instructions button
-    const instructionsButton = document.getElementById(
-      'show-instructions-button',
-    );
-    if (instructionsButton) {
-      instructionsButton.addEventListener('click', () => {
-        this.showInstructions();
-      });
-    }
   }
 
   /**
@@ -104,12 +94,5 @@ export class KebabMenuEvents {
     if (importButton) {
       importButton.click();
     }
-  }
-
-  /**
-   * Show instructions - navigate to the about page
-   */
-  showInstructions() {
-    window.location.href = 'about.html';
   }
 }
