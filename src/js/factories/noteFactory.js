@@ -1,16 +1,23 @@
 // noteFactory.js - Pure factory for creating note DOM elements
-import { toBase62, calculateOffsetPosition } from '../utils/utils.js';
+import { toBase62 } from '../utils/utils.js';
 import config from '../core/config.js';
 import { NOTE_CONTENT_LIMIT } from '../core/constants.js';
 import { eventBus } from '../core/eventBus.js';
 import { createDeleteButton } from '../features/note/deleteButton.js';
 import { displayAsViewMode } from '../features/note/editViewMode.js';
+import { getCoordinateTransform } from '../core/coordinates/coordinateService.js';
 
 let nextNoteId = 1;
 let handDrawn = false;
 
 export function createNoteAtPosition(canvas, event, addEventListeners = null) {
-  const { left: x, top: y } = calculateOffsetPosition(canvas, event);
+  // Use shared coordinate transform service for position calculation
+  const coordinateTransform = getCoordinateTransform();
+  const { x, y } = coordinateTransform.viewportToCanvas(
+    event.clientX,
+    event.clientY,
+  );
+
   // Offset the note creation position to centre the note
   return createNote(
     x - config.noteSize.width / 2,

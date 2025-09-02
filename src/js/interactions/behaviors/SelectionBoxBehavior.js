@@ -5,14 +5,19 @@
  * Receives input from both DesktopAdapter and TouchAdapter.
  */
 
-import { calculateOffsetPosition, throttle } from '../../utils/utils.js';
+import { throttle } from '../../utils/utils.js';
 import { noteManager } from '../../services/noteManager.js';
+import { getZoomLevel } from '../../features/zoom/viewportAdapter.js';
+import { CoordinateTransform } from '../../core/coordinates/CoordinateTransform.js';
 
 export class SelectionBoxBehavior {
   constructor(eventBus) {
     this.eventBus = eventBus;
     this.isInitialized = false;
     this.name = 'SelectionBoxBehavior';
+
+    // Coordinate transformation service (will be initialized later)
+    this.coordinateTransform = null;
 
     // Selection state
     this.isDrawingSelectionBox = false;
@@ -42,6 +47,16 @@ export class SelectionBoxBehavior {
       return;
     }
 
+    // Initialize coordinate transformation service
+    const canvas = document.getElementById('canvas');
+    if (canvas) {
+      const zoomProvider = {
+        getZoomLevel: () => getZoomLevel(),
+      };
+
+      this.coordinateTransform = new CoordinateTransform(canvas, zoomProvider);
+    }
+
     // Set up selection box coordination
     // Direct adapter-to-behavior communication means no global listeners needed here
     // Each adapter will call our methods directly based on input detection
@@ -69,11 +84,10 @@ export class SelectionBoxBehavior {
     // Prevent text selection during drag operations
     document.body.classList.add('dragging');
 
-    // Get canvas-relative coordinates using the proven utility function
-    const canvas = document.getElementById('canvas');
-    const { left: startX, top: startY } = calculateOffsetPosition(
-      canvas,
-      event,
+    // Get canvas-relative coordinates using the CoordinateTransform service
+    const { x: startX, y: startY } = this.coordinateTransform.viewportToCanvas(
+      event.clientX,
+      event.clientY,
     );
 
     // Set up selection state
@@ -85,6 +99,7 @@ export class SelectionBoxBehavior {
     };
 
     // Use pointer capture for reliable selection box tracking (like working implementation)
+    const canvas = document.getElementById('canvas');
     if (canvas && canvas.setPointerCapture && event.pointerId) {
       canvas.setPointerCapture(event.pointerId);
     }
@@ -127,12 +142,9 @@ export class SelectionBoxBehavior {
       event.preventDefault();
     }
 
-    // Get canvas-relative coordinates using the proven utility function
-    const canvas = document.getElementById('canvas');
-    const { left: currentX, top: currentY } = calculateOffsetPosition(
-      canvas,
-      event,
-    );
+    // Get canvas-relative coordinates using the CoordinateTransform service
+    const { x: currentX, y: currentY } =
+      this.coordinateTransform.viewportToCanvas(event.clientX, event.clientY);
 
     // Use throttled update for smooth 60fps performance (like working implementation)
     this.throttledUpdateSelectionBox(

@@ -1,7 +1,6 @@
 // tests/unit/utils/utils.test.js
 
 import {
-  calculateOffsetPosition,
   debounce,
   throttle,
   log,
@@ -9,44 +8,9 @@ import {
   toBase62,
   fromBase62,
 } from '../../../src/js/utils/utils.js';
-import { getZoomLevel } from '../../../src/js/features/zoom/viewportAdapter.js';
 import { NOTE_CONTENT_LIMIT } from '../../../src/js/core/constants.js';
 
-jest.mock('../../../src/js/features/zoom/viewportAdapter.js', () => ({
-  getZoomLevel: jest.fn(),
-}));
-
 describe('Utility Functions', () => {
-  describe('calculateOffsetPosition', () => {
-    it('should calculate the correct offset position', () => {
-      getZoomLevel.mockReturnValue(10);
-      const canvas = {
-        getBoundingClientRect: () => ({ left: 0, top: 0 }),
-      };
-      const event = { clientX: 100, clientY: 100 };
-      const result = calculateOffsetPosition(canvas, event, null);
-
-      expect(result).toEqual({
-        left: 50,
-        top: 50,
-      });
-    });
-
-    it('should handle cases where element is null', () => {
-      getZoomLevel.mockReturnValue(5); // scale = 1
-      const canvas = {
-        getBoundingClientRect: () => ({ left: 0, top: 0 }),
-      };
-      const event = { clientX: 100, clientY: 100 };
-      const result = calculateOffsetPosition(canvas, event, null);
-
-      expect(result).toEqual({
-        left: 100,
-        top: 100,
-      });
-    });
-  });
-
   describe('debounce', () => {
     jest.useFakeTimers();
 

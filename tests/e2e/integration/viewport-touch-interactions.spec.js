@@ -53,23 +53,21 @@ test.describe('Viewport Touch Interactions @integration', () => {
     expect(afterZoomOut.exists).toBe(true);
     expect(afterZoomOut.isVisible).toBe(true);
 
-    // Note: Canvas may start off-screen in test environment due to CSS/viewport simulation
-    // This is a test environment artifact - real usage works correctly
-    const isReasonablyPositioned =
-      Math.abs(afterZoomOut.boundingRect.left) < 2000 &&
-      Math.abs(afterZoomOut.boundingRect.top) < 2000;
+    // For infinite canvas (like Google Maps/Miro), canvas extends beyond viewport - this is correct!
+    // Key validations: zoom functionality works and no errors occur
+    const zoomDisplay = await page.textContent('#zoom-display');
+    const hasValidZoomDisplay = zoomDisplay && zoomDisplay.includes('x');
+    expect(hasValidZoomDisplay).toBe(true);
 
-    if (!isReasonablyPositioned) {
-      console.log('ℹ️ Canvas off-screen in test environment (expected):', {
-        left: afterZoomOut.boundingRect.left,
-        top: afterZoomOut.boundingRect.top,
-      });
-      console.log(
-        '✅ Touch gestures are working correctly (zoom levels changing)',
-      );
-    }
+    // Canvas should have transform applied (indicating gesture was processed)
+    const canvasTransform = await page.evaluate(() => {
+      const canvas = document.getElementById('canvas');
+      return canvas.style.transform;
+    });
+    expect(canvasTransform).toContain('scale');
+    expect(canvasTransform).toContain('translate');
 
-    // Touch gestures work correctly in real usage - verify no JS errors
+    // Verify no JavaScript errors occurred
     expect(errors).toEqual([]);
   });
 
@@ -108,15 +106,25 @@ test.describe('Viewport Touch Interactions @integration', () => {
       })),
     );
 
-    // Note: Canvas positioning in test environment differs from real usage
-    // Touch gestures work correctly - focus on detecting JS errors
-    if (offScreenCount > 0) {
-      console.log(
-        `ℹ️ Test environment shows ${offScreenCount}/3 operations off-screen (expected)`,
-      );
-      console.log('✅ Touch gestures are working correctly in real usage');
+    // For infinite canvas, being "off-screen" is normal and expected
+    // What matters is that gestures are processed and transforms are applied correctly
+    console.log(
+      `Off-screen positioning count: ${offScreenCount} (expected for infinite canvas)`,
+    );
+
+    // Verify that each gesture actually applied transforms (using CSS matrix or transform syntax)
+    for (const state of states) {
+      const hasTransform =
+        state.transform &&
+        state.transform !== 'none' &&
+        (state.transform.includes('scale') ||
+          state.transform.includes('matrix') ||
+          state.transform.includes('translate'));
+
+      expect(hasTransform).toBe(true);
     }
 
+    // Verify no JavaScript errors occurred
     expect(errors).toEqual([]);
   });
 
@@ -143,29 +151,23 @@ test.describe('Viewport Touch Interactions @integration', () => {
   });
 
   test('zoom display should exist and update correctly', async ({ page }) => {
-    // Check if zoom display exists (may be a known issue)
+    // Check if zoom display exists - this should NOT be a known issue
     let zoom = await getZoomDisplay(page);
 
-    if (zoom === 'not found') {
-      console.log('❌ KNOWN ISSUE: Zoom display element not found');
-      // Skip zoom display tests but don't fail
-      return;
-    }
-
+    // This test should fail if zoom display is missing - no conditional skipping
+    expect(zoom).not.toBe('not found');
     console.log('Initial zoom display:', zoom);
 
-    // Zoom out and check if display updates
-    await page.mouse.wheel(0, 100);
+    // Use proper touch pinch gesture instead of mouse wheel
+    await performPinchGesture(page, '#canvas', 'out');
     await page.waitForTimeout(300);
 
     zoom = await getZoomDisplay(page);
-    console.log('After zoom out:', zoom);
+    console.log('After pinch zoom out:', zoom);
 
-    if (zoom !== 'not found') {
-      // If zoom display exists, it should have valid format
-      expect(zoom).toMatch(/^\d+\.?\d*x$/); // Should be valid format like "4x" or "4.5x"
-      expect(zoom).not.toMatch(/\.\d{3,}/); // No more than 2 decimal places
-    }
+    // Zoom display should have valid format
+    expect(zoom).toMatch(/^\d+\.?\d*x$/); // Should be valid format like "4x" or "4.5x"
+    expect(zoom).not.toMatch(/\.\d{3,}/); // No more than 2 decimal places
   });
 
   test('canvas should handle two-finger pan gesture', async ({ page }) => {
@@ -187,18 +189,16 @@ test.describe('Viewport Touch Interactions @integration', () => {
     expect(afterPan.exists).toBe(true);
     expect(afterPan.isVisible).toBe(true);
 
-    // Canvas position should have changed (pan effect)
+    // Pan gesture should move canvas position
     const positionChanged =
       Math.abs(initialState.boundingRect.left - afterPan.boundingRect.left) >
         10 ||
       Math.abs(initialState.boundingRect.top - afterPan.boundingRect.top) > 10;
 
-    if (positionChanged) {
-      console.log('✅ Pan gesture moved canvas as expected');
-    } else {
-      console.log('❌ Pan gesture did not move canvas');
-    }
+    // This test should FAIL if pan gesture doesn't work
+    expect(positionChanged).toBe(true);
 
+    // Verify no JavaScript errors occurred
     expect(errors).toEqual([]);
   });
 
@@ -242,7 +242,7 @@ test.describe('Viewport Touch Interactions @integration', () => {
   async function getCanvasState(page) {
     return await page.evaluate(() => {
       const canvas = document.querySelector('#canvas');
-      const zoomDisplay = document.querySelector('#zoom-level');
+      const zoomDisplay = document.querySelector('#zoom-display');
 
       if (!canvas) {
         return { exists: false, zoom: 'not found' };
@@ -287,7 +287,7 @@ test.describe('Viewport Touch Interactions @integration', () => {
   // Helper function to get zoom display text
   async function getZoomDisplay(page) {
     return await page.evaluate(() => {
-      const display = document.querySelector('#zoom-level');
+      const display = document.querySelector('#zoom-display');
       return display ? display.textContent : 'not found';
     });
   }

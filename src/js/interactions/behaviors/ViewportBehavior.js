@@ -7,6 +7,8 @@
  */
 
 import config from '../../core/config.js';
+import { getScaleFromZoomLevel } from '../../core/coordinates/CoordinateConfig.js';
+import { getCoordinateTransform } from '../../core/coordinates/coordinateService.js';
 
 export class ViewportBehavior {
   constructor(eventBus) {
@@ -17,6 +19,7 @@ export class ViewportBehavior {
     // Canvas references
     this.canvas = null;
     this.zoomDisplay = null;
+    this.coordinateTransform = null;
 
     // Current zoom state
     this.zoomLevel = config.zoomLevels.default;
@@ -35,6 +38,19 @@ export class ViewportBehavior {
     this.canvas = canvas;
     this.zoomDisplay = zoomDisplay;
 
+    // Get coordinate transform service for viewport->canvas coordinate conversion
+    try {
+      this.coordinateTransform = getCoordinateTransform();
+    } catch (error) {
+      console.warn(
+        'ViewportBehavior: CoordinateTransform service not available:',
+        error.message,
+      );
+    }
+
+    // Initialize canvas center position (replaces CSS centering)
+    this.initializeCenterCanvas();
+
     // Set initial zoom level and display
     this.setZoomLevel(config.zoomLevels.default);
     this.updateZoomDisplay(); // Initialize zoom display visibility
@@ -43,6 +59,7 @@ export class ViewportBehavior {
     console.log('ViewportBehavior: Initialized', {
       hasCanvas: !!this.canvas,
       hasZoomDisplay: !!this.zoomDisplay,
+      hasCoordinateTransform: !!this.coordinateTransform,
       initialZoomLevel: this.zoomLevel,
     });
   }
@@ -74,8 +91,8 @@ export class ViewportBehavior {
 
   /**
    * Handle pinch zoom from TouchAdapter
-   * Receives: { scaleDelta, centerX, centerY } (scale ratio from gesture)
-   * Enhanced: Use proven applyZoomAtPoint algorithm like desktop
+   * Receives: { scaleDelta, centerX, centerY } (viewport coordinates from gesture)
+   * FIXED: Now properly treats centerX, centerY as viewport coordinates
    */
   handlePinchZoom(scaleDelta, centerX, centerY, inputType) {
     if (!this.canvas) {
@@ -85,8 +102,7 @@ export class ViewportBehavior {
 
     console.log('ViewportBehavior: Pinch zoom detected', {
       scaleDelta,
-      centerX,
-      centerY,
+      viewportCenter: { x: centerX, y: centerY },
       inputType,
     });
 
@@ -95,7 +111,7 @@ export class ViewportBehavior {
     const zoomDelta = Math.log2(scaleDelta) * 4; // 4x multiplier for good responsiveness
     const newZoomLevel = this.zoomLevel + zoomDelta;
 
-    // Apply zoom with center point using proven algorithm (like desktop)
+    // Apply zoom with viewport center point - applyZoomAtPoint will handle coordinate conversion
     this.applyZoomAtPoint(newZoomLevel, centerX, centerY);
   }
 
@@ -184,45 +200,69 @@ export class ViewportBehavior {
   }
 
   /**
-   * Apply zoom at specific point (for wheel zoom) - using old zoomManager algorithm
+   * Apply zoom at a specific point using simplified single-transform approach (MM-221)
+   * Industry standard viewport-to-content coordinate conversion
    */
-  applyZoomAtPoint(newZoomLevel, centerX, centerY) {
+  applyZoomAtPoint(newZoomLevel, viewportX, viewportY) {
     const oldZoom = this.zoomLevel;
     this.setZoomLevel(newZoomLevel);
     const actualZoomLevel = this.zoomLevel; // May be clamped
 
-    if (oldZoom === actualZoomLevel) {
-      return; // No change after clamping
+    // Get current transform state using DOMMatrix for accuracy
+    let currentTranslate = { x: 0, y: 0 };
+    let currentScale = 1;
+
+    if (typeof DOMMatrix !== 'undefined') {
+      const matrix = new DOMMatrix(getComputedStyle(this.canvas).transform);
+      currentTranslate.x = matrix.e;
+      currentTranslate.y = matrix.f;
+      currentScale = matrix.a;
+    } else {
+      // Fallback for test environments
+      const transform = this.canvas.style.transform || '';
+      const scaleMatch = transform.match(/scale\(([\d.]+)\)/);
+      const translateMatch = transform.match(
+        /translate\(([\d.-]+)px,\s*([\d.-]+)px\)/,
+      );
+
+      if (scaleMatch) currentScale = parseFloat(scaleMatch[1]);
+      if (translateMatch) {
+        currentTranslate.x = parseFloat(translateMatch[1]);
+        currentTranslate.y = parseFloat(translateMatch[2]);
+      }
     }
 
-    const newScale = actualZoomLevel / 5;
-    const oldScale = oldZoom / 5;
+    // Calculate new scale from zoom level
+    const newScale = getScaleFromZoomLevel(actualZoomLevel);
 
-    // Use provided center point or default to canvas center
-    const validCenterX = isNaN(centerX) ? this.canvas.clientWidth / 2 : centerX;
-    const validCenterY = isNaN(centerY)
-      ? this.canvas.clientHeight / 2
-      : centerY;
+    // Use provided coordinates or default to viewport center
+    const mouseX = isNaN(viewportX) ? window.innerWidth / 2 : viewportX;
+    const mouseY = isNaN(viewportY) ? window.innerHeight / 2 : viewportY;
 
-    // Use old zoomManager incremental algorithm for wheel zoom
-    const dx = (validCenterX / oldScale) * (newScale - oldScale);
-    const dy = (validCenterY / oldScale) * (newScale - oldScale);
+    // Standard zoom-to-point algorithm: contentPoint = (viewportPoint - translate) / scale
+    const contentPointX = (mouseX - currentTranslate.x) / currentScale;
+    const contentPointY = (mouseY - currentTranslate.y) / currentScale;
 
-    // Get current transform and apply delta
-    const transform = new DOMMatrix(
-      window.getComputedStyle(this.canvas).transform,
-    );
-    const newTransform = `translate(${transform.e - dx}px, ${transform.f - dy}px) scale(${newScale})`;
+    // Calculate new translate to keep content point under cursor
+    const newTranslateX = mouseX - contentPointX * newScale;
+    const newTranslateY = mouseY - contentPointY * newScale;
 
+    // Apply the single transform
+    const newTransform = `translate(${newTranslateX}px, ${newTranslateY}px) scale(${newScale})`;
     this.canvas.style.transform = newTransform;
 
     this.updateZoomDisplay();
 
-    console.log('ViewportBehavior: Zoom applied at point', {
+    console.log('ViewportBehavior: Single-transform zoom applied', {
       oldZoom,
       newZoom: actualZoomLevel,
-      centerX: validCenterX,
-      centerY: validCenterY,
+      mouse: { x: mouseX, y: mouseY },
+      currentTransform: { translate: currentTranslate, scale: currentScale },
+      newTransform: {
+        translate: { x: newTranslateX, y: newTranslateY },
+        scale: newScale,
+      },
+      contentPoint: { x: contentPointX, y: contentPointY },
     });
   }
 
@@ -240,7 +280,7 @@ export class ViewportBehavior {
       config.zoomLevels.min,
       Math.min(config.zoomLevels.max, zoomLevel),
     );
-    const clampedScale = clampedZoomLevel / 5;
+    const clampedScale = getScaleFromZoomLevel(clampedZoomLevel);
 
     // Update internal zoom level state
     this.zoomLevel = clampedZoomLevel;
@@ -279,8 +319,9 @@ export class ViewportBehavior {
 
   /**
    * Set fixed zoom level at specific center point (replaces zoomManager.setFixedZoom)
+   * FIXED: Now properly handles coordinate conversion if needed
    */
-  setFixedZoom(level, centerX, centerY) {
+  setFixedZoom(level, centerX, centerY, coordinateType = 'canvas') {
     const oldZoom = this.getZoomLevel();
     this.setZoomLevel(level);
     const newZoom = this.getZoomLevel();
@@ -289,20 +330,47 @@ export class ViewportBehavior {
       level,
       centerX,
       centerY,
+      coordinateType,
       oldZoom,
       newZoom,
     });
 
-    const newScale = newZoom / 5;
+    const newScale = getScaleFromZoomLevel(newZoom);
 
-    // Use default canvas center if centerX or centerY are NaN
-    centerX = isNaN(centerX) ? this.canvas.clientWidth / 2 : centerX;
-    centerY = isNaN(centerY) ? this.canvas.clientHeight / 2 : centerY;
+    // Convert coordinates if needed
+    let canvasX, canvasY;
+
+    if (
+      coordinateType === 'viewport' &&
+      this.coordinateTransform &&
+      !isNaN(centerX) &&
+      !isNaN(centerY)
+    ) {
+      try {
+        const canvasCoords = this.coordinateTransform.viewportToCanvas(
+          centerX,
+          centerY,
+        );
+        canvasX = canvasCoords.x;
+        canvasY = canvasCoords.y;
+      } catch (error) {
+        console.warn(
+          'ViewportBehavior: Coordinate conversion failed in setFixedZoom:',
+          error.message,
+        );
+        canvasX = this.canvas.clientWidth / 2;
+        canvasY = this.canvas.clientHeight / 2;
+      }
+    } else {
+      // Use provided coordinates as canvas coordinates, or default to center
+      canvasX = isNaN(centerX) ? this.canvas.clientWidth / 2 : centerX;
+      canvasY = isNaN(centerY) ? this.canvas.clientHeight / 2 : centerY;
+    }
 
     // Calculate position to keep center point fixed
     const containerRect = this.canvas.parentElement.getBoundingClientRect();
-    const offsetX = containerRect.width / 2 - centerX * newScale;
-    const offsetY = containerRect.height / 2 - centerY * newScale;
+    const offsetX = containerRect.width / 2 - canvasX * newScale;
+    const offsetY = containerRect.height / 2 - canvasY * newScale;
 
     this.canvas.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${newScale})`;
 
@@ -311,7 +379,7 @@ export class ViewportBehavior {
     }
 
     console.log(
-      `ViewportBehavior: Zoom level set from ${oldZoom} to ${newZoom}, centered at (${centerX}, ${centerY})`,
+      `ViewportBehavior: Zoom level set from ${oldZoom} to ${newZoom}, centered at canvas(${canvasX}, ${canvasY})`,
     );
   }
 
@@ -400,6 +468,44 @@ export class ViewportBehavior {
       this.canvas.clientWidth / 2,
       this.canvas.clientHeight / 2,
     );
+  }
+
+  /**
+   * Initialize canvas to center position (replaces CSS centering)
+   * Implements single-transform approach per MM-221 architecture
+   */
+  initializeCenterCanvas() {
+    if (!this.canvas || !this.canvas.parentElement) {
+      console.warn(
+        'ViewportBehavior: Cannot initialize center - canvas or container not available',
+      );
+      return;
+    }
+
+    const container = this.canvas.parentElement;
+    const viewportCenterX = container.offsetWidth / 2;
+    const viewportCenterY = container.offsetHeight / 2;
+    const canvasCenterX = this.canvas.offsetWidth / 2;
+    const canvasCenterY = this.canvas.offsetHeight / 2;
+
+    const initialTranslateX = viewportCenterX - canvasCenterX;
+    const initialTranslateY = viewportCenterY - canvasCenterY;
+    const initialScale = getScaleFromZoomLevel(this.zoomLevel);
+
+    this.canvas.style.transform = `translate(${initialTranslateX}px, ${initialTranslateY}px) scale(${initialScale})`;
+
+    console.log('ViewportBehavior: Canvas initialized at center', {
+      viewport: {
+        width: container.offsetWidth,
+        height: container.offsetHeight,
+      },
+      canvas: {
+        width: this.canvas.offsetWidth,
+        height: this.canvas.offsetHeight,
+      },
+      translate: { x: initialTranslateX, y: initialTranslateY },
+      scale: initialScale,
+    });
   }
 
   /**
