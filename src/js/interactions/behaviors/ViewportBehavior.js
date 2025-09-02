@@ -107,8 +107,11 @@ export class ViewportBehavior {
     });
 
     // Convert scale ratio to zoom level delta (smooth continuous zoom for mobile)
-    // Use logarithmic scaling for natural feel: log2(1.2) ≈ 0.26 per zoom level
-    const zoomDelta = Math.log2(scaleDelta) * 4; // 4x multiplier for good responsiveness
+    // Use more conservative logarithmic scaling for natural feel
+    const rawZoomDelta = Math.log2(scaleDelta) * 1.5; // Reduced from 4x to 1.5x for smoother control
+
+    // Clamp zoom delta to prevent extreme jumps (max ±0.5 levels per gesture)
+    const zoomDelta = Math.max(-0.5, Math.min(0.5, rawZoomDelta));
     const newZoomLevel = this.zoomLevel + zoomDelta;
 
     // Apply zoom with viewport center point - applyZoomAtPoint will handle coordinate conversion

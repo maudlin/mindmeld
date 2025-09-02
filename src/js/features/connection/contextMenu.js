@@ -24,41 +24,73 @@ export class ContextMenu {
   }
 
   createMenuItems() {
-    return [
-      { type: 'delete', symbol: 'x', y: -20 },
-      { type: 'cycle', symbol: '<>', y: 0 },
-    ];
+    // Detect if we're on a touch device for appropriate spacing
+    const isTouchDevice =
+      'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+    if (isTouchDevice) {
+      // Touch-friendly spacing: 22px gap between buttons
+      return [
+        { type: 'delete', symbol: 'x', y: -20 }, // Top button: 22px gap + 18px button = 40px apart, so ±20px
+        { type: 'cycle', symbol: '<>', y: 20 }, // Bottom button: positioned 20px below center
+      ];
+    } else {
+      // Desktop spacing: 5px above/below center line (10px gap total)
+      return [
+        { type: 'delete', symbol: 'x', y: -14 }, // Top button: 10px gap + 18px button = 28px apart, so ±14px
+        { type: 'cycle', symbol: '<>', y: 14 }, // Bottom button: positioned 14px below center
+      ];
+    }
   }
 
   createMenu() {
     const menu = this.createSVGElement('g', { class: 'context-menu' });
 
-    // Add background rectangle
-    menu.appendChild(this.createBackgroundRect());
+    // Detect if we're on a touch device for appropriate capsule sizing
+    const isTouchDevice =
+      'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-    // Add menu items
+    // Calculate capsule dimensions based on device type
+    const capsuleHeight = isTouchDevice ? 68 : 56; // Touch: 68px (22px gap), Desktop: 56px (10px gap)
+    const halfHeight = capsuleHeight / 2;
+
+    // Add capsule background with device-appropriate size
+    const capsuleBackground = this.createSVGElement('rect', {
+      x: -14, // 28px width / 2
+      y: -halfHeight,
+      width: 28,
+      height: capsuleHeight,
+      rx: 12,
+      ry: 12,
+      fill: 'rgba(255, 255, 255, 0.7)',
+      stroke: 'none',
+      filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.18))',
+      class: 'capsule-background',
+    });
+    menu.appendChild(capsuleBackground);
+
+    // Add horizontal separator line (centered, 80% width)
+    const separator = this.createSVGElement('line', {
+      x1: -11.2, // 80% of 28px = 22.4, so ±11.2 from center
+      x2: 11.2,
+      y1: 0,
+      y2: 0,
+      stroke: '#e5e7eb',
+      'stroke-width': 1,
+      class: 'capsule-separator',
+    });
+    menu.appendChild(separator);
+
+    // Add menu items (existing red delete and blue switch buttons)
     this.menuItems.forEach((item) => {
       menu.appendChild(this.createMenuItem(item));
     });
 
-    // Add menu background
-    menu.insertBefore(this.createMenuBackground(), menu.firstChild);
-
+    // Single event listener on the main menu group only - simpler and more reliable
     menu.addEventListener('mouseenter', this.handleMouseEnter);
     menu.addEventListener('mouseleave', this.handleMouseLeave);
 
     return menu;
-  }
-
-  createBackgroundRect() {
-    return this.createSVGElement('rect', {
-      x: -1,
-      y: -40,
-      width: 1,
-      height: 60,
-      fill: '#ccc',
-      class: 'menu-background-line',
-    });
   }
 
   createMenuItem(item) {
@@ -162,17 +194,6 @@ export class ContextMenu {
     button.appendChild(innerCircle);
 
     return button;
-  }
-
-  createMenuBackground() {
-    return this.createSVGElement('rect', {
-      x: -15,
-      y: -35,
-      width: 30,
-      height: 70,
-      fill: 'transparent',
-      class: 'menu-background',
-    });
   }
 
   createSVGElement(type, attributes = {}) {
