@@ -121,7 +121,10 @@ export class TouchAdapter extends BaseAdapter {
 
     // Initialize coordinate transform service
     const zoomProvider = { getZoomLevel: () => getZoomLevel() };
-    this.coordinateTransform = new CoordinateTransform(this.canvas, zoomProvider);
+    this.coordinateTransform = new CoordinateTransform(
+      this.canvas,
+      zoomProvider,
+    );
 
     // Set up native touch handlers as single source of truth (like DesktopAdapter)
     this.setupNativeTouchHandlers();

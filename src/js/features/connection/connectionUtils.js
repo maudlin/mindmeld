@@ -2,6 +2,8 @@
 import { log } from '../../utils/utils.js';
 import { getZoomLevel } from '../zoom/viewportAdapter.js';
 import { CONNECTION_TYPES } from '../../core/constants.js';
+import { getScaleFromZoomLevel } from '../../core/coordinates/CoordinateConfig.js';
+import { getCoordinateTransform } from '../../core/coordinates/coordinateService.js';
 
 export const STROKE_COLOR = '#888';
 export const STROKE_WIDTH = '2';
@@ -37,10 +39,11 @@ export class ConnectionUtils {
       return { x1: 0, y1: 0, x2: 0, y2: 0 };
     }
 
-    const scale = this.getCurrentZoomLevel() / 5;
-    const canvasRect = document
-      .getElementById('canvas')
-      .getBoundingClientRect();
+    const scale = getScaleFromZoomLevel(this.getCurrentZoomLevel());
+
+    // Use cached canvas rect from coordinate service
+    const coordinateTransform = getCoordinateTransform();
+    const canvasRect = coordinateTransform.cache.getCanvasRect();
 
     const [rect1, rect2] = [note1, note2].map((note) => {
       const rect = note.getBoundingClientRect();

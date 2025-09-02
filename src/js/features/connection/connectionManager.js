@@ -2,7 +2,8 @@
 import { ConnectionCreation } from './connectionCreation.js';
 import { ConnectionUpdate } from './connectionUpdate.js';
 // Removed direct dataStore dependency - will use service injection
-import { throttle, calculateOffsetPosition, log } from '../../utils/utils.js';
+import { throttle, log } from '../../utils/utils.js';
+import { getCoordinateTransform } from '../../core/coordinates/coordinateService.js';
 import { ContextMenu } from './contextMenu.js';
 import {
   ConnectionUtils,
@@ -99,7 +100,22 @@ export class ConnectionManager {
   }
 
   calculateOffsetPosition(canvas, event, element = null) {
-    return calculateOffsetPosition(canvas, event, element);
+    // Use shared coordinate transform service
+    const coordinateTransform = getCoordinateTransform();
+    const { x, y } = coordinateTransform.viewportToCanvas(
+      event.clientX,
+      event.clientY,
+    );
+
+    // Handle element centering if provided (maintains original API)
+    if (element) {
+      return {
+        left: x - element.offsetWidth / 2,
+        top: y - element.offsetHeight / 2,
+      };
+    }
+
+    return { left: x, top: y };
   }
 
   createArrowMarkers() {

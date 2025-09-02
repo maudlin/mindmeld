@@ -7,6 +7,7 @@
  */
 
 import config from '../../core/config.js';
+import { getScaleFromZoomLevel } from '../../core/coordinates/CoordinateConfig.js';
 
 export class ViewportBehavior {
   constructor(eventBus) {
@@ -195,8 +196,8 @@ export class ViewportBehavior {
       return; // No change after clamping
     }
 
-    const newScale = actualZoomLevel / 5;
-    const oldScale = oldZoom / 5;
+    const newScale = getScaleFromZoomLevel(actualZoomLevel);
+    const oldScale = getScaleFromZoomLevel(oldZoom);
 
     // Use provided center point or default to canvas center
     const validCenterX = isNaN(centerX) ? this.canvas.clientWidth / 2 : centerX;
@@ -240,7 +241,7 @@ export class ViewportBehavior {
       config.zoomLevels.min,
       Math.min(config.zoomLevels.max, zoomLevel),
     );
-    const clampedScale = clampedZoomLevel / 5;
+    const clampedScale = getScaleFromZoomLevel(clampedZoomLevel);
 
     // Update internal zoom level state
     this.zoomLevel = clampedZoomLevel;
@@ -293,7 +294,7 @@ export class ViewportBehavior {
       newZoom,
     });
 
-    const newScale = newZoom / 5;
+    const newScale = getScaleFromZoomLevel(newZoom);
 
     // Use default canvas center if centerX or centerY are NaN
     centerX = isNaN(centerX) ? this.canvas.clientWidth / 2 : centerX;

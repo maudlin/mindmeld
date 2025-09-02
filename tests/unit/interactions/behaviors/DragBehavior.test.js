@@ -14,6 +14,11 @@ describe('DragBehavior', () => {
   let mockNoteElement2;
 
   beforeEach(() => {
+    // Create canvas element for coordinate transformations
+    const canvas = document.createElement('div');
+    canvas.id = 'canvas';
+    document.body.appendChild(canvas);
+
     // Create mock event bus
     mockEventBus = {
       emit: jest.fn(),
@@ -55,6 +60,14 @@ describe('DragBehavior', () => {
     };
 
     dragBehavior = new DragBehavior(mockEventBus);
+  });
+
+  afterEach(() => {
+    // Clean up canvas element
+    const canvas = document.getElementById('canvas');
+    if (canvas) {
+      document.body.removeChild(canvas);
+    }
   });
 
   describe('Initialization', () => {

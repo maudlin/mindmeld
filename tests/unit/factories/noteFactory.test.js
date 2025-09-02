@@ -13,9 +13,6 @@ describe('noteFactory', () => {
     mockEventBus = { emit: jest.fn() };
     mockUtils = {
       toBase62: jest.fn().mockImplementation((num) => `base62_${num}`),
-      calculateOffsetPosition: jest
-        .fn()
-        .mockReturnValue({ left: 150, top: 100 }),
     };
     mockConfig = { noteSize: { width: 200, height: 100, padding: 10 } };
     mockConstants = { NOTE_CONTENT_LIMIT: 500 };
@@ -32,6 +29,16 @@ describe('noteFactory', () => {
     jest.doMock('../../../src/js/utils/utils.js', () => mockUtils);
     jest.doMock('../../../src/js/core/config.js', () => mockConfig);
     jest.doMock('../../../src/js/core/constants.js', () => mockConstants);
+
+    // Mock coordinate service
+    jest.doMock(
+      '../../../src/js/core/coordinates/coordinateService.js',
+      () => ({
+        getCoordinateTransform: jest.fn(() => ({
+          viewportToCanvas: jest.fn().mockReturnValue({ x: 150, y: 100 }),
+        })),
+      }),
+    );
 
     // Mock window methods
     Object.defineProperty(window, 'getSelection', {
@@ -191,29 +198,17 @@ describe('noteFactory', () => {
     afterEach(() => mockCanvas?.parentNode?.removeChild(mockCanvas));
 
     it('calculates position correctly and creates centered note', () => {
-      mockUtils.calculateOffsetPosition.mockReturnValue({
-        left: 300,
-        top: 200,
-      });
-
       const note = createNoteAtPosition(mockCanvas, mockEvent);
 
-      expect(mockUtils.calculateOffsetPosition).toHaveBeenCalledWith(
-        mockCanvas,
-        mockEvent,
-      );
       // Should be offset by half width (200/2 = 100) and 20px for top
-      expect(note.style.left).toBe('200px'); // 300 - 100
-      expect(note.style.top).toBe('180px'); // 200 - 20
+      // Using mocked coordinate service return values: x: 150, y: 100
+      expect(note.style.left).toBe('50px'); // 150 - 100 (half width)
+      expect(note.style.top).toBe('80px'); // 100 - 20
       expect(mockCanvas.contains(note)).toBe(true);
     });
 
     it('handles event listeners callback correctly', () => {
       const mockAddEventListeners = jest.fn();
-      mockUtils.calculateOffsetPosition.mockReturnValue({
-        left: 150,
-        top: 100,
-      });
 
       // With callback
       createNoteAtPosition(mockCanvas, mockEvent, mockAddEventListeners);
