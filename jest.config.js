@@ -2,7 +2,7 @@
 const config = {
   clearMocks: true,
   testEnvironment: 'jsdom',
-  roots: ['<rootDir>/tests/unit'],
+  roots: ['./tests/unit'],
   testPathIgnorePatterns: ['/tests/e2e/'],
 
   // Use babel-jest to transform ES modules
