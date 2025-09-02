@@ -146,8 +146,8 @@ describe('Context Menu Interactivity', () => {
       // Show menu first
       menu.style.display = 'block';
 
-      // Click on menu background (not a menu item)
-      const background = menu.querySelector('.menu-background');
+      // Click on capsule background (not a menu item)
+      const background = menu.querySelector('.capsule-background');
       const clickEvent = new MouseEvent('click', { bubbles: true });
       background.dispatchEvent(clickEvent);
 

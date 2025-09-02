@@ -859,6 +859,30 @@ line.connection-line {
   pointer-events: all;
 }
 
+/* Context Menu Capsule Styles - SVG Implementation */
+.context-menu .capsule-background {
+  /* Ensure proper z-ordering - background should be behind buttons */
+  z-index: 1;
+}
+
+/* Blue Switch Button Animation (MM-148) */
+.mm-arrow-toggle circle {
+  transition: fill 120ms ease-out; /* Match delete button animation timing */
+}
+
+@media (hover: hover) {
+  .mm-arrow-toggle:hover circle {
+    fill: var(
+      --mm-arrow-fill-hover,
+      #6d6dffff
+    ); /* Slightly brighter blue on hover */
+  }
+}
+
+.mm-arrow-toggle:active circle {
+  fill: var(--mm-arrow-fill-active, #5555ddff); /* Darker blue when pressed */
+}
+
 /* Hidden utility class (still used by other components) */
 .hidden {
   display: none !important;
