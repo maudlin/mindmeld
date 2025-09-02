@@ -181,18 +181,13 @@ export class DesktopAdapter extends BaseAdapter {
       event.preventDefault();
       this.isPanning = true;
 
-      // Use container-relative coordinates like old zoomManager
-      const container = this.canvas.parentElement;
-      const containerRect = container.getBoundingClientRect();
+      // Store viewport coordinates for panning - ViewportBehavior handles coordinate transformation
       this.panStartPosition = {
-        x: event.clientX - containerRect.left,
-        y: event.clientY - containerRect.top,
+        x: event.clientX,
+        y: event.clientY,
       };
 
-      console.log('DesktopAdapter: Right-click pan started', {
-        containerRelX: this.panStartPosition.x,
-        containerRelY: this.panStartPosition.y,
-      });
+      console.log('DesktopAdapter: Right-click pan started');
       return;
     }
 
@@ -359,21 +354,15 @@ export class DesktopAdapter extends BaseAdapter {
     if (this.isPanning && this.panStartPosition && this.viewportBehavior) {
       event.preventDefault();
 
-      // Calculate container-relative coordinates
-      const container = this.canvas.parentElement;
-      const containerRect = container.getBoundingClientRect();
-      const currentX = event.clientX - containerRect.left;
-      const currentY = event.clientY - containerRect.top;
+      // Calculate viewport coordinate delta from start position
+      const deltaX = event.clientX - this.panStartPosition.x;
+      const deltaY = event.clientY - this.panStartPosition.y;
 
-      // Calculate delta from start position
-      const deltaX = currentX - this.panStartPosition.x;
-      const deltaY = currentY - this.panStartPosition.y;
-
-      // Delegate pan to ViewportBehavior with normalized parameters
+      // Delegate pan to ViewportBehavior with viewport coordinate deltas
       this.viewportBehavior.handleDesktopPan(deltaX, deltaY);
 
       // Update pan position for next delta calculation
-      this.panStartPosition = { x: currentX, y: currentY };
+      this.panStartPosition = { x: event.clientX, y: event.clientY };
       return;
     }
 
@@ -615,22 +604,20 @@ export class DesktopAdapter extends BaseAdapter {
       return;
     }
 
-    const rect = this.canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-
     const direction = event.deltaY > 0 ? 'out' : 'in';
 
     console.log(
       'DesktopAdapter: Wheel zoom detected, delegating to ViewportBehavior',
-      {
-        direction,
-        x,
-        y,
-      },
+      { direction },
     );
 
-    this.viewportBehavior.handleWheelZoom(direction, x, y, 'desktop');
+    // Pass viewport coordinates - ViewportBehavior handles coordinate transformation
+    this.viewportBehavior.handleWheelZoom(
+      direction,
+      event.clientX,
+      event.clientY,
+      'desktop',
+    );
   }
 
   /**

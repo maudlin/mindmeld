@@ -2,6 +2,8 @@
 
 import { BaseAdapter } from './BaseAdapter.js';
 import { noteManager } from '../../services/noteManager.js';
+import { CoordinateTransform } from '../../core/coordinates/CoordinateTransform.js';
+import { getZoomLevel } from '../../features/zoom/viewportAdapter.js';
 
 /**
  * Touch input adapter for mobile and tablet interactions
@@ -26,9 +28,9 @@ export class TouchAdapter extends BaseAdapter {
 
     // Core components
     this.canvas = null;
+    this.coordinateTransform = null;
 
-    // Touch-specific settings
-    this.HIT_TARGET_EXPANSION = 20; // pixels to expand hit targets for mobile
+    // Touch-specific settings (hit target expansion now handled by CoordinateTransform)
 
     // Native gesture detection state
     this.currentGesture = null;
@@ -116,6 +118,10 @@ export class TouchAdapter extends BaseAdapter {
     if (!this.canvas) {
       throw new Error('Canvas element not found');
     }
+
+    // Initialize coordinate transform service
+    const zoomProvider = { getZoomLevel: () => getZoomLevel() };
+    this.coordinateTransform = new CoordinateTransform(this.canvas, zoomProvider);
 
     // Set up native touch handlers as single source of truth (like DesktopAdapter)
     this.setupNativeTouchHandlers();
@@ -744,43 +750,15 @@ export class TouchAdapter extends BaseAdapter {
   }
 
   /**
-   * Expand touch target for better touch interaction (touch-specific enhancement)
+   * Expand touch target for better touch interaction (using CoordinateTransform service)
    */
   expandTouchTarget(touch) {
-    const originalTarget = touch?.target;
-
-    // Handle null/undefined touch or target
-    if (!originalTarget || typeof originalTarget.closest !== 'function') {
-      return originalTarget || document.body;
+    if (!touch || !this.coordinateTransform) {
+      return touch?.target || document.body;
     }
 
-    // If we hit a note or its content, that's good enough
-    if (originalTarget.closest('.note')) {
-      return originalTarget;
-    }
-
-    // For other targets, check if there's a nearby note within hit expansion
-    const notes = document.querySelectorAll('.note');
-    for (const note of notes) {
-      const noteRect = note.getBoundingClientRect();
-      const expandedRect = {
-        left: noteRect.left - this.HIT_TARGET_EXPANSION,
-        top: noteRect.top - this.HIT_TARGET_EXPANSION,
-        right: noteRect.right + this.HIT_TARGET_EXPANSION,
-        bottom: noteRect.bottom + this.HIT_TARGET_EXPANSION,
-      };
-
-      if (
-        touch.clientX >= expandedRect.left &&
-        touch.clientX <= expandedRect.right &&
-        touch.clientY >= expandedRect.top &&
-        touch.clientY <= expandedRect.bottom
-      ) {
-        return note;
-      }
-    }
-
-    return originalTarget;
+    // Use CoordinateTransform service for clean hit target expansion (uses config default)
+    return this.coordinateTransform.expandHitTarget(touch);
   }
 
   /**
