@@ -10,9 +10,14 @@ export class ContextMenu {
     this.activeMenu = null;
     this.isMouseOver = false;
     this.hideTimeout = null;
+    this.touchAutoCloseTimeout = null;
     this.onDelete = null;
     this.onTypeChange = null;
     this.connectionGroup = null;
+
+    // Cache device detection for performance
+    this.isTouchDevice =
+      'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
     // Pre-create menu items
     this.menuItems = this.createMenuItems();
@@ -21,14 +26,14 @@ export class ContextMenu {
     this.handleClick = this.handleClick.bind(this);
     this.handleMouseEnter = this.handleMouseEnter.bind(this);
     this.handleMouseLeave = this.handleMouseLeave.bind(this);
+    this.handleCanvasClick = this.handleCanvasClick.bind(this);
+
+    // Set up canvas click listener for touch devices
+    this.setupCanvasClickListener();
   }
 
   createMenuItems() {
-    // Detect if we're on a touch device for appropriate spacing
-    const isTouchDevice =
-      'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
-    if (isTouchDevice) {
+    if (this.isTouchDevice) {
       // Touch-friendly spacing: 22px gap between buttons
       return [
         { type: 'delete', symbol: 'x', y: -20 }, // Top button: 22px gap + 18px button = 40px apart, so ±20px
@@ -46,12 +51,8 @@ export class ContextMenu {
   createMenu() {
     const menu = this.createSVGElement('g', { class: 'context-menu' });
 
-    // Detect if we're on a touch device for appropriate capsule sizing
-    const isTouchDevice =
-      'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
     // Calculate capsule dimensions based on device type
-    const capsuleHeight = isTouchDevice ? 68 : 56; // Touch: 68px (22px gap), Desktop: 56px (10px gap)
+    const capsuleHeight = this.isTouchDevice ? 68 : 56; // Touch: 68px (22px gap), Desktop: 56px (10px gap)
     const halfHeight = capsuleHeight / 2;
 
     // Add capsule background with device-appropriate size
@@ -215,10 +216,14 @@ export class ContextMenu {
     const contextMenu = connectionGroup.querySelector('.context-menu');
     contextMenu.style.display = 'block';
     this.activeMenu = contextMenu;
+
+    // Set up auto-close behavior for touch devices
+    this.setupTouchAutoClose();
   }
 
   hide() {
     clearTimeout(this.hideTimeout);
+    clearTimeout(this.touchAutoCloseTimeout);
     this.hideTimeout = setTimeout(() => {
       if (this.activeMenu && !this.isMouseOver) {
         this.activeMenu.style.display = 'none';
@@ -230,6 +235,7 @@ export class ContextMenu {
   handleMouseEnter() {
     this.isMouseOver = true;
     clearTimeout(this.hideTimeout);
+    clearTimeout(this.touchAutoCloseTimeout);
   }
 
   handleMouseLeave() {
@@ -308,5 +314,62 @@ export class ContextMenu {
 
   setTypeChangeCallback(callback) {
     this.onTypeChange = callback;
+  }
+
+  /**
+   * Set up canvas click listener to close menu when tapping outside
+   */
+  setupCanvasClickListener() {
+    // Wait for document to be ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        this.attachCanvasListener();
+      });
+    } else {
+      this.attachCanvasListener();
+    }
+  }
+
+  attachCanvasListener() {
+    // Find canvas element (could be canvas or svg-container)
+    const canvas =
+      document.getElementById('canvas') ||
+      document.getElementById('svg-container');
+    if (canvas) {
+      canvas.addEventListener('click', this.handleCanvasClick);
+      canvas.addEventListener('touchend', this.handleCanvasClick);
+    }
+  }
+
+  /**
+   * Handle clicks on canvas to close menu
+   */
+  handleCanvasClick(event) {
+    // Only close if clicking on canvas itself (not on menu or connection elements)
+    if (
+      this.activeMenu &&
+      !event.target.closest('.context-menu') &&
+      !event.target.closest('.connector-hotspot')
+    ) {
+      this.activeMenu.style.display = 'none';
+      this.activeMenu = null;
+      clearTimeout(this.touchAutoCloseTimeout);
+    }
+  }
+
+  /**
+   * Set up auto-close timer for touch devices
+   */
+  setupTouchAutoClose() {
+    clearTimeout(this.touchAutoCloseTimeout);
+
+    if (this.isTouchDevice) {
+      this.touchAutoCloseTimeout = setTimeout(() => {
+        if (this.activeMenu) {
+          this.activeMenu.style.display = 'none';
+          this.activeMenu = null;
+        }
+      }, 2000); // 2 second auto-close for touch devices
+    }
   }
 }
