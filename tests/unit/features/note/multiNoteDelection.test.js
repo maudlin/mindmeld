@@ -138,12 +138,12 @@ describe('Multiple Note Deletion', () => {
       // Click the delete button
       deleteButton.click();
 
-      // Should NOT emit single note delete event
-      expect(eventBus.emit).not.toHaveBeenCalled();
+      // Should emit notes.deleteSelected event for multi-delete
+      expect(eventBus.emit).toHaveBeenCalledWith('notes.deleteSelected');
 
-      // Should call deleteNote function which deletes all selected
-      expect(mockNotes[0].remove).toHaveBeenCalledTimes(1);
-      expect(mockNotes[1].remove).toHaveBeenCalledTimes(1);
+      // Should NOT call individual note remove directly (that's handled by the event handler)
+      expect(mockNotes[0].remove).not.toHaveBeenCalled();
+      expect(mockNotes[1].remove).not.toHaveBeenCalled();
       expect(mockNotes[2].remove).not.toHaveBeenCalled();
     });
   });

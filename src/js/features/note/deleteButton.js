@@ -3,7 +3,6 @@
 import { eventBus } from '../../core/eventBus.js';
 import { createHTMLDeleteButton } from '../../components/deleteButton/deleteButtonFactory.js';
 import { noteManager } from '../../services/noteManager.js';
-import { deleteNote } from './noteDeletion.js';
 
 /**
  * Creates a delete button for a note
@@ -17,8 +16,8 @@ export function createDeleteButton(note) {
       const selectedNotes = noteManager.getSelectedNotes();
 
       if (selectedNotes.length > 1) {
-        // Multiple notes selected - delete all selected notes
-        deleteNote();
+        // Multiple notes selected - emit event to delete all selected notes
+        eventBus.emit('notes.deleteSelected');
         announceMultiDelete(selectedNotes.length);
       } else {
         // Single note or no selection - delete this specific note
