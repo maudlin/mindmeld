@@ -15,76 +15,91 @@ branch=$(git rev-parse --abbrev-ref HEAD)
 get_version_type() {
   local branch_name="$1"
   
-  # Check for explicit version type override in branch name
-  if [[ "$branch_name" == *"/major/"* ]]; then
-    echo "major"
-  elif [[ "$branch_name" == *"/minor/"* ]]; then
-    echo "minor" 
-  elif [[ "$branch_name" == *"/patch/"* ]]; then
-    echo "patch"
-  else
-    # Skip versioning for docs/tests branches (non-functional changes)
-    if [[ "$branch_name" == docs/* || "$branch_name" == tests/* ]]; then
-      echo "none"
-    # Branch type defaults for functional changes
-    elif [[ "$branch_name" == feat/* || "$branch_name" == feature/* ]]; then
+  # Check for explicit version type override in branch name (highest priority)
+  case "$branch_name" in
+    *"/major/"*)
+      echo "major"
+      return
+      ;;
+    *"/minor/"*)
+      echo "minor"
+      return
+      ;;
+    *"/patch/"*)
+      echo "patch"
+      return
+      ;;
+  esac
+  
+  # Branch type defaults (lower priority)
+  case "$branch_name" in
+    docs/* | tests/*)
+      echo "none"  # Skip versioning for docs/tests branches
+      ;;
+    feat/* | feature/*)
       echo "minor"  # Features default to minor
-    elif [[ "$branch_name" == fix/* || "$branch_name" == bugfix/* || "$branch_name" == chore/* || "$branch_name" == perf/* || "$branch_name" == performance/* ]]; then
+      ;;
+    fix/* | bugfix/* | chore/* | perf/* | performance/*)
       echo "patch"  # Fixes, chores, and performance default to patch
-    elif [[ "$branch_name" == major/* || "$branch_name" == breaking/* ]]; then
+      ;;
+    major/* | breaking/*)
       echo "major"  # Breaking changes default to major
-    else
-      # Fallback: Check if any src/ files changed (ensures cache busting for any functional changes)
+      ;;
+    *)
+      # Fallback: Check if any src/ files changed (ensures cache busting)
       if git diff --name-only origin/main...HEAD | grep -q "^src/"; then
         echo "patch"  # Any src/ change gets at least a patch bump
       else
         echo "none"   # No src/ changes, no version bump needed
       fi
-    fi
-  fi
+      ;;
+  esac
 }
 
+# DISABLED: Auto-versioning temporarily disabled to prevent hyperversioning
 # Determine version bump type
-version_type=$(get_version_type "$branch")
+# version_type=$(get_version_type "$branch")
 
-case "$version_type" in
-  major)
-    echo "🔍 Major version branch detected: $branch"
-    echo "📦 Auto-bumping major version (breaking changes)..."
-    npm run version:major
-    
-    git add package.json src/index.html
-    git commit -m "chore: bump major version for release
+echo "🔍 Branch: $branch (auto-versioning disabled)"
 
-🤖 Generated with [Claude Code](https://claude.ai/code)" || true
-    ;;
-    
-  minor)
-    echo "🔍 Minor version branch detected: $branch"  
-    echo "📦 Auto-bumping minor version (new features)..."
-    npm run version:minor
-    
-    git add package.json src/index.html
-    git commit -m "chore: bump minor version for release
-
-🤖 Generated with [Claude Code](https://claude.ai/code)" || true
-    ;;
-    
-  patch)
-    echo "🔍 Patch version branch detected: $branch"
-    echo "📦 Auto-bumping patch version (fixes/improvements)..."
-    npm run version:patch
-    
-    git add package.json src/index.html
-    git commit -m "chore: bump patch version for release
-
-🤖 Generated with [Claude Code](https://claude.ai/code)" || true
-    ;;
-    
-  none)
-    echo "🔍 Non-versioned branch detected: $branch (skipping version bump, but will be deployed when merged)"
-    ;;
-esac
+# case "$version_type" in
+#   major)
+#     echo "🔍 Major version branch detected: $branch"
+#     echo "📦 Auto-bumping major version (breaking changes)..."
+#     npm run version:major
+#     
+#     git add package.json src/index.html
+#     git commit -m "chore: bump major version for release
+# 
+# 🤖 Generated with [Claude Code](https://claude.ai/code)" || true
+#     ;;
+#     
+#   minor)
+#     echo "🔍 Minor version branch detected: $branch"  
+#     echo "📦 Auto-bumping minor version (new features)..."
+#     npm run version:minor
+#     
+#     git add package.json src/index.html
+#     git commit -m "chore: bump minor version for release
+# 
+# 🤖 Generated with [Claude Code](https://claude.ai/code)" || true
+#     ;;
+#     
+#   patch)
+#     echo "🔍 Patch version branch detected: $branch"
+#     echo "📦 Auto-bumping patch version (fixes/improvements)..."
+#     npm run version:patch
+#     
+#     git add package.json src/index.html
+#     git commit -m "chore: bump patch version for release
+# 
+# 🤖 Generated with [Claude Code](https://claude.ai/code)" || true
+#     ;;
+#     
+#   none)
+#     echo "🔍 Non-versioned branch detected: $branch (skipping version bump, but will be deployed when merged)"
+#     ;;
+# esac
 
 # Continue with existing pre-push checks
 npm run format:check
