@@ -1,3 +1,58 @@
+#!/bin/sh
+
+# Get current branch name
+branch=$(git rev-parse --abbrev-ref HEAD)
+
+# Smart version bumping for release-ready branches
+if [[ "$branch" == *"feat/"* || "$branch" == *"feature/"* ]]; then
+  echo "🔍 Feature branch detected: $branch"
+  echo "📦 Auto-bumping minor version for new feature..."
+  npm run version:minor
+  
+  # Stage and commit version changes
+  git add package.json src/index.html
+  git commit -m "chore: bump version for feature release
+
+🤖 Generated with [Claude Code](https://claude.ai/code)" || true
+
+elif [[ "$branch" == *"fix/"* || "$branch" == *"bugfix/"* ]]; then
+  echo "🔍 Bugfix branch detected: $branch"
+  echo "📦 Auto-bumping patch version for bugfix..."
+  npm run version:patch
+  
+  # Stage and commit version changes
+  git add package.json src/index.html
+  git commit -m "chore: bump version for bugfix release
+
+🤖 Generated with [Claude Code](https://claude.ai/code)" || true
+
+elif [[ "$branch" == *"perf/"* || "$branch" == *"performance/"* ]]; then
+  echo "🔍 Performance branch detected: $branch"
+  echo "📦 Auto-bumping patch version for performance improvement..."
+  npm run version:patch
+  
+  # Stage and commit version changes
+  git add package.json src/index.html
+  git commit -m "chore: bump version for performance release
+
+🤖 Generated with [Claude Code](https://claude.ai/code)" || true
+
+elif [[ "$branch" == *"major/"* || "$branch" == *"breaking/"* ]]; then
+  echo "🔍 Breaking change branch detected: $branch"
+  echo "📦 Auto-bumping major version for breaking changes..."
+  npm run version:major
+  
+  # Stage and commit version changes
+  git add package.json src/index.html
+  git commit -m "chore: bump version for major release
+
+🤖 Generated with [Claude Code](https://claude.ai/code)" || true
+
+else
+  echo "🔍 Non-release branch detected: $branch (skipping version bump)"
+fi
+
+# Continue with existing pre-push checks
 npm run format:check
 npm run lint
 echo "✅ Pre-push checks passed - should pass in CI"
