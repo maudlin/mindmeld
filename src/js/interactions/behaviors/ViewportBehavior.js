@@ -108,7 +108,7 @@ export class ViewportBehavior {
     // FIXED: Direct proportional zoom level calculation from current zoom
     // scaleDelta 1.0 = no change, scaleDelta > 1.0 = zoom in, scaleDelta < 1.0 = zoom out
     // Apply relative zoom change from current zoom level for smooth control
-    const zoomDelta = Math.log2(scaleDelta) * 0.1; // 0.1x sensitivity (~20x less sensitive, requires larger finger movements)
+    const zoomDelta = Math.log2(scaleDelta) * 0.05; // 0.05x sensitivity (~40x less sensitive, very controlled zooming)
     const newZoomLevel = this.zoomLevel + zoomDelta;
 
     // Apply zoom with viewport center point - applyZoomAtPoint will handle coordinate conversion
