@@ -82,23 +82,23 @@ export class ConnectionUtils {
   createArrowMarkers() {
     const startMarker = this.createSVGElement('marker', {
       id: 'arrow-start',
-      markerWidth: '10',
-      markerHeight: '7',
+      markerWidth: '8',
+      markerHeight: '5',
       refX: '0',
-      refY: '3.5',
+      refY: '2.5',
       orient: 'auto',
     });
-    startMarker.innerHTML = '<path d="M10,0 L0,3.5 L10,7" fill="#888" />';
+    startMarker.innerHTML = '<path d="M8,0 L0,2.5 L8,5" fill="#666" />';
 
     const endMarker = this.createSVGElement('marker', {
       id: 'arrow-end',
-      markerWidth: '10',
-      markerHeight: '7',
-      refX: '10',
-      refY: '3.5',
+      markerWidth: '8',
+      markerHeight: '5',
+      refX: '8',
+      refY: '2.5',
       orient: 'auto',
     });
-    endMarker.innerHTML = '<path d="M0,0 L10,3.5 L0,7" fill="#888" />';
+    endMarker.innerHTML = '<path d="M0,0 L8,2.5 L0,5" fill="#666" />';
 
     return [startMarker, endMarker];
   }

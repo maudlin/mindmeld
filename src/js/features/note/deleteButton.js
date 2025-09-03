@@ -2,6 +2,7 @@
 
 import { eventBus } from '../../core/eventBus.js';
 import { createHTMLDeleteButton } from '../../components/deleteButton/deleteButtonFactory.js';
+import { noteManager } from '../../services/noteManager.js';
 
 /**
  * Creates a delete button for a note
@@ -11,15 +12,22 @@ export function createDeleteButton(note) {
   const button = createHTMLDeleteButton({
     ariaLabel: 'Delete note',
     onClick: () => {
-      // Delete this note using existing deletion system
-      const canvas = document.getElementById('canvas');
-      eventBus.emit('note.deleteWithConnections', {
-        note: note,
-        canvas: canvas,
-      });
+      // Check if multiple notes are selected
+      const selectedNotes = noteManager.getSelectedNotes();
 
-      // Announce to screen readers
-      announceDelete();
+      if (selectedNotes.length > 1) {
+        // Multiple notes selected - emit event to delete all selected notes
+        eventBus.emit('notes.deleteSelected');
+        announceMultiDelete(selectedNotes.length);
+      } else {
+        // Single note or no selection - delete this specific note
+        const canvas = document.getElementById('canvas');
+        eventBus.emit('note.deleteWithConnections', {
+          note: note,
+          canvas: canvas,
+        });
+        announceDelete();
+      }
     },
   });
 
@@ -30,6 +38,20 @@ export function createDeleteButton(note) {
  * Announce deletion to screen readers
  */
 function announceDelete() {
+  announce('Note deleted');
+}
+
+/**
+ * Announce multiple note deletion to screen readers
+ */
+function announceMultiDelete(count) {
+  announce(`${count} notes deleted`);
+}
+
+/**
+ * Generic announce function for screen readers
+ */
+function announce(message) {
   // Find or create screen reader announcer
   let announcer = document.getElementById('sr-announcer');
   if (!announcer) {
@@ -40,6 +62,6 @@ function announceDelete() {
     document.body.appendChild(announcer);
   }
 
-  announcer.textContent = 'Note deleted';
+  announcer.textContent = message;
   setTimeout(() => (announcer.textContent = ''), 1000);
 }

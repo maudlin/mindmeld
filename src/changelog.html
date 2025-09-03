@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>What's New - MindMeld</title>
-    <link rel="stylesheet" href="css/styles.css?v=0.11.0" />
+    <link rel="stylesheet" href="css/styles.css?v=1.0.0" />
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap"
       rel="stylesheet"
@@ -45,7 +45,7 @@
           Recent updates and improvements to make your mind mapping experience
           better.
         </p>
-        <p><strong>Current Version:</strong> v0.7.0</p>
+        <p><strong>Current Version:</strong> v1.0.0</p>
       </section>
       
       
@@ -54,22 +54,23 @@
         <ul>
           
             <li>
-              Add deterministic changelog generation from PR data
+              Added touch-friendly auto-close behavior for connector menus (2-second timeout + tap-to-close)
               <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/49" target="_blank">#49</a>, July 24, 2025)
+                (<a href="https://github.com/maudlin/mindmeld/pull/106" target="_blank">#106</a>, September 2, 2025)
               </small>
             </li>
           
-        </ul>
-      </section>
-      <section>
-        <h2>⚡ Improvements</h2>
-        <ul>
+            <li>
+              Enhanced connector menu with new capsule-style design inspired by nav-test.html
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/105" target="_blank">#105</a>, September 2, 2025)
+              </small>
+            </li>
           
             <li>
-              Improve CSS organization by grouping related properties
+              Added adaptive sizing: touch devices get larger targets, desktop gets compact layout
               <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/52" target="_blank">#52</a>, July 24, 2025)
+                (<a href="https://github.com/maudlin/mindmeld/pull/105" target="_blank">#105</a>, September 2, 2025)
               </small>
             </li>
           
@@ -80,16 +81,23 @@
         <ul>
           
             <li>
-              ✅ **Production enhancements**: Error resilience and memory cleanup improvements
+              fix: Enhanced touch interactions and auto-versioning system
               <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/53" target="_blank">#53</a>, July 29, 2025)
+                (<a href="https://github.com/maudlin/mindmeld/pull/108" target="_blank">#108</a>, September 3, 2025)
               </small>
             </li>
           
             <li>
-              Fix dropdown menu styling to work with both buttons and anchor tags
+              Fixed touch zoom snapping issue - reduced pinch sensitivity for smoother zoom control
               <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/52" target="_blank">#52</a>, July 24, 2025)
+                (<a href="https://github.com/maudlin/mindmeld/pull/106" target="_blank">#106</a>, September 2, 2025)
+              </small>
+            </li>
+          
+            <li>
+              Fixed font consistency issues in zoom display (now consistently uses Poppins)
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/106" target="_blank">#106</a>, September 2, 2025)
               </small>
             </li>
           
@@ -100,79 +108,79 @@
         <ul>
           
             <li>
-              ✅ **Complete event bus test suite**: 20 comprehensive unit tests with 100% code coverage
+              **V1 Release Ready**: Final pinch zoom sensitivity refinement for production
               <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/53" target="_blank">#53</a>, July 29, 2025)
+                (<a href="https://github.com/maudlin/mindmeld/pull/109" target="_blank">#109</a>, September 3, 2025)
               </small>
             </li>
           
             <li>
-              ✅ **Documentation updates**: Updated TODO.md and tests/README.md
+              Reduced sensitivity from 0.1x to 0.05x (~40x less sensitive than original)
               <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/53" target="_blank">#53</a>, July 29, 2025)
+                (<a href="https://github.com/maudlin/mindmeld/pull/109" target="_blank">#109</a>, September 3, 2025)
               </small>
             </li>
           
             <li>
-              ✅ **Jira task completion**: MM-94 moved to Done status
+              Eliminates perceived lag/inertia while maintaining smooth decimal progression
               <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/53" target="_blank">#53</a>, July 29, 2025)
+                (<a href="https://github.com/maudlin/mindmeld/pull/109" target="_blank">#109</a>, September 3, 2025)
               </small>
             </li>
           
             <li>
-              Set correct font size (0.65rem) for dropdown items to match main navigation
+              Pan works perfectly, zoom now matches that immediate responsiveness
               <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/52" target="_blank">#52</a>, July 24, 2025)
+                (<a href="https://github.com/maudlin/mindmeld/pull/109" target="_blank">#109</a>, September 3, 2025)
               </small>
             </li>
           
             <li>
-              Remove redundant CSS declarations
+              *Before:** 5x → 3x → 1x (discrete integer jumps)
               <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/52" target="_blank">#52</a>, July 24, 2025)
+                (<a href="https://github.com/maudlin/mindmeld/pull/107" target="_blank">#107</a>, September 3, 2025)
               </small>
             </li>
           
             <li>
-              Create changelog.yml
+              *After:** 5x → 2.2x → 1x (smooth decimal scaling)
               <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/51" target="_blank">#51</a>, July 24, 2025)
+                (<a href="https://github.com/maudlin/mindmeld/pull/107" target="_blank">#107</a>, September 3, 2025)
               </small>
             </li>
           
             <li>
-              Extended CSS selectors to properly style anchor tags in dropdown menus
+              Applied capsule design to connector menus with device-appropriate spacing
               <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/50" target="_blank">#50</a>, July 24, 2025)
+                (<a href="https://github.com/maudlin/mindmeld/pull/106" target="_blank">#106</a>, September 2, 2025)
               </small>
             </li>
           
             <li>
-              The About dropdown was using `<a>` tags but CSS only targeted `dropdown button`
+              Simplified navigation by removing broken dropdown links and consolidating About/Instructions
               <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/50" target="_blank">#50</a>, July 24, 2025)
+                (<a href="https://github.com/maudlin/mindmeld/pull/106" target="_blank">#106</a>, September 2, 2025)
               </small>
             </li>
           
             <li>
-              Now both buttons and anchor tags in dropdowns have consistent styling
+              Prevented help button from getting selected during double-click interactions
               <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/50" target="_blank">#50</a>, July 24, 2025)
+                (<a href="https://github.com/maudlin/mindmeld/pull/106" target="_blank">#106</a>, September 2, 2025)
               </small>
             </li>
           
             <li>
-              Create user-facing changelog page following existing design patterns
+              Implemented smooth hover behavior and consistent button animations
               <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/49" target="_blank">#49</a>, July 24, 2025)
+                (<a href="https://github.com/maudlin/mindmeld/pull/105" target="_blank">#105</a>, September 2, 2025)
               </small>
             </li>
           
             <li>
-              Enable manual changelog updates with future automation potential
+              Maintained existing functionality while improving usability
               <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/49" target="_blank">#49</a>, July 24, 2025)
+                (<a href="https://github.com/maudlin/mindmeld/pull/105" target="_blank">#105</a>, September 2, 2025)
               </small>
             </li>
           
