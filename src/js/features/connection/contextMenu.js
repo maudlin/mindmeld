@@ -26,6 +26,8 @@ export class ContextMenu {
     this.handleClick = this.handleClick.bind(this);
     this.handleMouseEnter = this.handleMouseEnter.bind(this);
     this.handleMouseLeave = this.handleMouseLeave.bind(this);
+    this.handleMouseOver = this.handleMouseOver.bind(this);
+    this.handleMouseOut = this.handleMouseOut.bind(this);
     this.handleCanvasClick = this.handleCanvasClick.bind(this);
 
     // Set up canvas click listener for touch devices
@@ -67,6 +69,7 @@ export class ContextMenu {
       stroke: 'none',
       filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.18))',
       class: 'capsule-background',
+      style: 'pointer-events: all', // Ensure background receives mouse events
     });
     menu.appendChild(capsuleBackground);
 
@@ -79,6 +82,7 @@ export class ContextMenu {
       stroke: '#e5e7eb',
       'stroke-width': 1,
       class: 'capsule-separator',
+      style: 'pointer-events: none', // Separator shouldn't interfere with mouse events
     });
     menu.appendChild(separator);
 
@@ -87,9 +91,12 @@ export class ContextMenu {
       menu.appendChild(this.createMenuItem(item));
     });
 
-    // Single event listener on the main menu group only - simpler and more reliable
+    // Enhanced mouse event handling for reliable capsule hover behavior
+    // Use both mouseenter/mouseleave on the menu group AND mouseover/mouseout for better coverage
     menu.addEventListener('mouseenter', this.handleMouseEnter);
     menu.addEventListener('mouseleave', this.handleMouseLeave);
+    menu.addEventListener('mouseover', this.handleMouseOver);
+    menu.addEventListener('mouseout', this.handleMouseOut);
 
     return menu;
   }
@@ -241,6 +248,29 @@ export class ContextMenu {
   handleMouseLeave() {
     this.isMouseOver = false;
     this.hide();
+  }
+
+  handleMouseOver() {
+    // Additional coverage for mouse over any part of the capsule
+    // This helps catch cases where mouseenter/mouseleave might miss edge cases
+    this.isMouseOver = true;
+    clearTimeout(this.hideTimeout);
+    clearTimeout(this.touchAutoCloseTimeout);
+  }
+
+  handleMouseOut(event) {
+    // Only trigger mouse out if we're actually leaving the entire menu area
+    // Check if the mouse is moving to a child element or staying within the menu
+    const relatedTarget = event.relatedTarget;
+    const menuElement = event.currentTarget;
+
+    // If relatedTarget is null (mouse left the window) or not a descendant of the menu,
+    // then we're truly leaving the menu area
+    if (!relatedTarget || !menuElement.contains(relatedTarget)) {
+      this.isMouseOver = false;
+      this.hide();
+    }
+    // Otherwise, mouse is still within the menu area, keep it open
   }
 
   handleClick(event) {
