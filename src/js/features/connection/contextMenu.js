@@ -306,13 +306,21 @@ export class ContextMenu {
 
     if (connectionType === 'delete') {
       this.onDelete?.(startId, endId, connectionGroup);
+      this.hide(); // Always close menu after delete
     } else if (connectionType === 'cycle') {
       const currentType = connectionGroup.dataset.type;
       const newType = this.getNextConnectionType(currentType);
       this.onTypeChange?.(startId, endId, newType);
-    }
 
-    this.hide();
+      // On touch devices, keep menu open for multiple connection type changes
+      // On desktop, close immediately (better for mouse workflow)
+      if (this.isTouchDevice) {
+        // Reset the auto-close timer to give user more time for additional clicks
+        this.setupTouchAutoClose();
+      } else {
+        this.hide(); // Close immediately on desktop
+      }
+    }
   }
 
   getNextConnectionType(currentType) {
