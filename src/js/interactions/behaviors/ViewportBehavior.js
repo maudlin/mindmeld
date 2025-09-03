@@ -91,8 +91,7 @@ export class ViewportBehavior {
 
   /**
    * Handle pinch zoom from TouchAdapter
-   * Receives: { scaleDelta, centerX, centerY } (viewport coordinates from gesture)
-   * FIXED: Now properly treats centerX, centerY as viewport coordinates
+   * FIXED: Fine-grained proportional zoom control like Google Maps
    */
   handlePinchZoom(scaleDelta, centerX, centerY, inputType) {
     if (!this.canvas) {
@@ -106,12 +105,10 @@ export class ViewportBehavior {
       inputType,
     });
 
-    // Convert scale ratio to zoom level delta (smooth continuous zoom for mobile)
-    // Use more conservative logarithmic scaling for natural feel
-    const rawZoomDelta = Math.log2(scaleDelta) * 1.5; // Reduced from 4x to 1.5x for smoother control
-
-    // Clamp zoom delta to prevent extreme jumps (max ±0.5 levels per gesture)
-    const zoomDelta = Math.max(-0.5, Math.min(0.5, rawZoomDelta));
+    // FIXED: Direct proportional zoom level calculation from current zoom
+    // scaleDelta 1.0 = no change, scaleDelta > 1.0 = zoom in, scaleDelta < 1.0 = zoom out
+    // Apply relative zoom change from current zoom level for smooth control
+    const zoomDelta = Math.log2(scaleDelta) * 2; // 2x sensitivity for good control range
     const newZoomLevel = this.zoomLevel + zoomDelta;
 
     // Apply zoom with viewport center point - applyZoomAtPoint will handle coordinate conversion

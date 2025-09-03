@@ -866,7 +866,7 @@ export class TouchAdapter extends BaseAdapter {
 
   /**
    * Detect pinch gesture (zoom)
-   * Thin adapter: Extract scale ratio and let ViewportBehavior handle the logic
+   * FIXED: Continuous updates for fine-grained control like Google Maps
    */
   detectPinchGesture(touches) {
     if (touches.length !== 2 || !this.multiTouchState.initialDistance) {
@@ -875,23 +875,26 @@ export class TouchAdapter extends BaseAdapter {
 
     const currentDistance = this.multiTouchState.lastDistance;
     const initialDistance = this.multiTouchState.initialDistance;
-    const distanceChange =
-      Math.abs(currentDistance - initialDistance) / initialDistance;
+    const center = this.multiTouchState.lastCenter;
 
-    // Only trigger if change > 10%
-    if (distanceChange > this.multiTouchState.pinchThreshold) {
-      const scaleRatio = currentDistance / initialDistance;
-      const center = this.multiTouchState.lastCenter;
+    // Calculate scale ratio for proportional zoom control
+    const scaleRatio = currentDistance / initialDistance;
 
-      return {
-        type: 'pinch',
-        scaleDelta: scaleRatio, // Send scale ratio - let ViewportBehavior convert to zoom delta
-        centerX: center.x, // Canvas-relative coordinates
-        centerY: center.y,
-      };
+    // Only return pinch gesture if there's meaningful scale change (> 1% change)
+    // This prevents interference with pan gestures while allowing fine-grained zoom
+    const scaleChange = Math.abs(scaleRatio - 1.0);
+    if (scaleChange < 0.01) {
+      return null; // Not enough scale change, let pan gesture handle this
     }
 
-    return null;
+    // Debug logging removed for production
+
+    return {
+      type: 'pinch',
+      scaleDelta: scaleRatio, // Continuous scale ratio for proportional zoom
+      centerX: center.x,
+      centerY: center.y,
+    };
   }
 
   /**
