@@ -202,6 +202,73 @@ test.describe('Viewport Touch Interactions @integration', () => {
     expect(errors).toEqual([]);
   });
 
+  test('should support fine-grained zoom control (like Google Maps)', async ({
+    page,
+  }) => {
+    // This test validates that pinch zoom provides smooth, continuous zoom levels
+    // rather than jumping from max zoom (5x) to min zoom (1x)
+
+    console.log('Testing fine-grained pinch zoom control...');
+
+    // Start from max zoom level (5x) - this is the default
+    const initialZoom = await getZoomDisplay(page);
+    console.log('Initial zoom level (max):', initialZoom);
+
+    // Perform a PARTIAL pinch zoom out (smaller finger movement)
+    await performPartialPinchGesture(page, '#canvas', 'out', 0.3); // 30% of full pinch
+    await page.waitForTimeout(200);
+
+    const partialZoom1 = await getZoomDisplay(page);
+    console.log('After partial pinch out (30%):', partialZoom1);
+
+    // Perform another PARTIAL pinch zoom out
+    await performPartialPinchGesture(page, '#canvas', 'out', 0.5); // 50% of full pinch
+    await page.waitForTimeout(200);
+
+    const partialZoom2 = await getZoomDisplay(page);
+    console.log('After partial pinch out (50%):', partialZoom2);
+
+    // Parse zoom levels to numbers for comparison
+    const initialLevel = parseFloat(initialZoom.replace('x', ''));
+    const partialLevel1 = parseFloat(partialZoom1.replace('x', ''));
+    const partialLevel2 = parseFloat(partialZoom2.replace('x', ''));
+
+    console.log('Zoom progression:', {
+      initialLevel,
+      partialLevel1,
+      partialLevel2,
+    });
+
+    // CRITICAL: Test for fine-grained control (zoom out progression)
+    // 1. Each partial gesture should reduce zoom level smoothly
+    expect(partialLevel1).toBeLessThan(initialLevel);
+    expect(partialLevel2).toBeLessThan(partialLevel1);
+
+    // 2. Should support decimal zoom levels (like Google Maps)
+    const hasDecimalPrecision =
+      partialLevel1 % 1 !== 0 || // First level has decimals
+      partialLevel2 % 1 !== 0 || // Second level has decimals
+      Math.abs(partialLevel2 - partialLevel1) < 1.0; // Small increments
+
+    // This should PASS for Google Maps-like behavior
+    expect(hasDecimalPrecision).toBe(true);
+
+    // 3. Should not jump from 5x to 1x (the "jumpy" bug)
+    const maxJumpSize = Math.max(
+      Math.abs(partialLevel1 - initialLevel),
+      Math.abs(partialLevel2 - partialLevel1),
+    );
+
+    // Fine-grained control means no single gesture should jump more than ~3.5x
+    // (Large jumps indicate threshold-based rather than proportional scaling)
+    expect(maxJumpSize).toBeLessThan(3.5);
+
+    // 4. Verify no JavaScript errors during fine-grained zoom
+    expect(errors).toEqual([]);
+
+    console.log('Fine-grained zoom test completed successfully');
+  });
+
   test('should capture and log touch-related errors for debugging', async ({
     page,
   }) => {
@@ -289,6 +356,96 @@ test.describe('Viewport Touch Interactions @integration', () => {
     return await page.evaluate(() => {
       const display = document.querySelector('#zoom-display');
       return display ? display.textContent : 'not found';
+    });
+  }
+
+  // Helper function to perform partial pinch zoom gesture with fine control
+  async function performPartialPinchGesture(
+    page,
+    selector,
+    direction,
+    intensity = 1.0,
+  ) {
+    // intensity: 0.1 = very small pinch, 1.0 = full pinch gesture
+    const locator = page.locator(selector);
+
+    // Get element center
+    const { centerX, centerY } = await locator.evaluate((target) => {
+      const bounds = target.getBoundingClientRect();
+      const centerX = bounds.left + bounds.width / 2;
+      const centerY = bounds.top + bounds.height / 2;
+      return { centerX, centerY };
+    });
+
+    // FIXED: Create realistic finger distances that meet 1% scale change threshold
+    const baseDistance = 100; // Start with fingers 100px apart
+    const changeDistance = baseDistance * intensity * 0.5; // 50% change for full intensity
+
+    let initialDistance, finalDistance;
+    if (direction === 'out') {
+      initialDistance = baseDistance;
+      finalDistance = baseDistance - changeDistance; // Fingers move closer (zoom out)
+    } else {
+      initialDistance = baseDistance;
+      finalDistance = baseDistance + changeDistance; // Fingers move apart (zoom in)
+    }
+
+    const steps = 5;
+
+    // Start with initial finger positions
+    let touches = [
+      {
+        identifier: 0,
+        clientX: centerX - initialDistance / 2,
+        clientY: centerY,
+      },
+      {
+        identifier: 1,
+        clientX: centerX + initialDistance / 2,
+        clientY: centerY,
+      },
+    ];
+
+    // Start the pinch gesture
+    await locator.dispatchEvent('touchstart', {
+      touches,
+      changedTouches: touches,
+      targetTouches: touches,
+    });
+
+    // Gradually move fingers to final positions
+    for (let i = 1; i <= steps; i++) {
+      const progress = i / steps;
+      const currentDistance =
+        initialDistance + (finalDistance - initialDistance) * progress;
+
+      touches = [
+        {
+          identifier: 0,
+          clientX: centerX - currentDistance / 2,
+          clientY: centerY,
+        },
+        {
+          identifier: 1,
+          clientX: centerX + currentDistance / 2,
+          clientY: centerY,
+        },
+      ];
+
+      await locator.dispatchEvent('touchmove', {
+        touches,
+        changedTouches: touches,
+        targetTouches: touches,
+      });
+
+      await page.waitForTimeout(50);
+    }
+
+    // End the pinch gesture
+    await locator.dispatchEvent('touchend', {
+      touches: [],
+      changedTouches: touches,
+      targetTouches: [],
     });
   }
 

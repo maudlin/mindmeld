@@ -34,7 +34,7 @@ export default defineConfig({
   projects: [
     {
       name: 'dev',
-      testMatch: 'tests/e2e/**/*.spec.js',
+      testMatch: '**/*.spec.js',
       use: { ...devices['Desktop Chrome'], hasTouch: true },
     },
   ],
