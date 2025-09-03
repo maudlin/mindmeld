@@ -3,54 +3,74 @@
 # Get current branch name
 branch=$(git rev-parse --abbrev-ref HEAD)
 
-# Smart version bumping for release-ready branches
-if [[ "$branch" == *"feat/"* || "$branch" == *"feature/"* ]]; then
-  echo "🔍 Feature branch detected: $branch"
-  echo "📦 Auto-bumping minor version for new feature..."
-  npm run version:minor
+# Smart version bumping with nuanced semver detection
+# Supports patterns like: feat/major/new-api, fix/minor/refactor, perf/patch/optimization
+
+get_version_type() {
+  local branch_name="$1"
   
-  # Stage and commit version changes
-  git add package.json src/index.html
-  git commit -m "chore: bump version for feature release
+  # Check for explicit version type in branch name (after the category)
+  if [[ "$branch_name" == *"/major/"* ]]; then
+    echo "major"
+  elif [[ "$branch_name" == *"/minor/"* ]]; then
+    echo "minor" 
+  elif [[ "$branch_name" == *"/patch/"* ]]; then
+    echo "patch"
+  else
+    # Default based on branch category
+    if [[ "$branch_name" == feat/* || "$branch_name" == feature/* ]]; then
+      echo "minor"  # Features default to minor
+    elif [[ "$branch_name" == fix/* || "$branch_name" == bugfix/* || "$branch_name" == perf/* || "$branch_name" == performance/* ]]; then
+      echo "patch"  # Fixes and performance default to patch
+    elif [[ "$branch_name" == major/* || "$branch_name" == breaking/* ]]; then
+      echo "major"  # Breaking changes default to major
+    else
+      echo "none"   # Skip versioning
+    fi
+  fi
+}
+
+# Determine version bump type
+version_type=$(get_version_type "$branch")
+
+case "$version_type" in
+  major)
+    echo "🔍 Major version branch detected: $branch"
+    echo "📦 Auto-bumping major version (breaking changes)..."
+    npm run version:major
+    
+    git add package.json src/index.html
+    git commit -m "chore: bump major version for release
 
 🤖 Generated with [Claude Code](https://claude.ai/code)" || true
-
-elif [[ "$branch" == *"fix/"* || "$branch" == *"bugfix/"* ]]; then
-  echo "🔍 Bugfix branch detected: $branch"
-  echo "📦 Auto-bumping patch version for bugfix..."
-  npm run version:patch
-  
-  # Stage and commit version changes
-  git add package.json src/index.html
-  git commit -m "chore: bump version for bugfix release
-
-🤖 Generated with [Claude Code](https://claude.ai/code)" || true
-
-elif [[ "$branch" == *"perf/"* || "$branch" == *"performance/"* ]]; then
-  echo "🔍 Performance branch detected: $branch"
-  echo "📦 Auto-bumping patch version for performance improvement..."
-  npm run version:patch
-  
-  # Stage and commit version changes
-  git add package.json src/index.html
-  git commit -m "chore: bump version for performance release
+    ;;
+    
+  minor)
+    echo "🔍 Minor version branch detected: $branch"  
+    echo "📦 Auto-bumping minor version (new features)..."
+    npm run version:minor
+    
+    git add package.json src/index.html
+    git commit -m "chore: bump minor version for release
 
 🤖 Generated with [Claude Code](https://claude.ai/code)" || true
-
-elif [[ "$branch" == *"major/"* || "$branch" == *"breaking/"* ]]; then
-  echo "🔍 Breaking change branch detected: $branch"
-  echo "📦 Auto-bumping major version for breaking changes..."
-  npm run version:major
-  
-  # Stage and commit version changes
-  git add package.json src/index.html
-  git commit -m "chore: bump version for major release
+    ;;
+    
+  patch)
+    echo "🔍 Patch version branch detected: $branch"
+    echo "📦 Auto-bumping patch version (fixes/improvements)..."
+    npm run version:patch
+    
+    git add package.json src/index.html
+    git commit -m "chore: bump patch version for release
 
 🤖 Generated with [Claude Code](https://claude.ai/code)" || true
-
-else
-  echo "🔍 Non-release branch detected: $branch (skipping version bump)"
-fi
+    ;;
+    
+  none)
+    echo "🔍 Non-release branch detected: $branch (skipping version bump)"
+    ;;
+esac
 
 # Continue with existing pre-push checks
 npm run format:check

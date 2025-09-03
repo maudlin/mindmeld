@@ -51,7 +51,7 @@ src/js/
 **Git**: Branch as `feature/description`, conventional commits, use PR template  
 **Security**: ESLint security plugins catch vulnerabilities
 
-## Git Workflow & Branch Protection
+## Git Workflow & Auto-Versioning
 
 **Branch Protection**: The `main` branch has comprehensive protection enabled:
 
@@ -61,6 +61,68 @@ src/js/
 - ✅ **Dismisses stale reviews** on new commits
 - ✅ **Requires conversation resolution** before merge
 
+### Branch Naming & Auto-Versioning
+
+MindMeld uses **smart branch naming** to automatically handle version bumping and cache busting. When you push certain types of branches, the system automatically increments the version and updates cache-busting parameters.
+
+#### 🚀 **Feature Branches** → Minor Version Bump
+```bash
+feat/touch-pinch-zoom-fine-grained-control    # ✅ 0.11.0 → 0.12.0
+feature/new-markdown-editor                   # ✅ 0.11.0 → 0.12.0
+```
+
+#### 🐛 **Bugfix Branches** → Patch Version Bump  
+```bash
+fix/touch-pinch-zoom-fine-grained-control     # ✅ 0.11.0 → 0.11.1
+bugfix/connection-drag-performance             # ✅ 0.11.0 → 0.11.1
+```
+
+#### ⚡ **Performance Branches** → Patch Version Bump
+```bash
+perf/canvas-rendering-optimization             # ✅ 0.11.0 → 0.11.1
+performance/memory-leak-fixes                  # ✅ 0.11.0 → 0.11.1
+```
+
+#### 💥 **Breaking Changes** → Major Version Bump
+```bash
+major/new-data-format                          # ✅ 0.11.0 → 1.0.0
+breaking/api-restructure                       # ✅ 0.11.0 → 1.0.0
+```
+
+#### 🎯 **Explicit Version Control** → Custom Bump Type
+```bash
+feat/major/breaking-api-changes                # ✅ 0.11.0 → 1.0.0 (feat + explicit major)
+fix/minor/significant-refactor                 # ✅ 0.11.0 → 0.12.0 (fix + explicit minor)  
+perf/patch/micro-optimization                  # ✅ 0.11.0 → 0.11.1 (perf + explicit patch)
+```
+
+#### 🔧 **Other Branches** → No Version Bump
+```bash
+chore/update-dependencies                      # ⚪ No version change
+docs/update-readme                            # ⚪ No version change  
+test/add-e2e-coverage                         # ⚪ No version change
+refactor/cleanup-utils                        # ⚪ No version change
+```
+
+#### How Auto-Versioning Works
+
+1. **Push branch** with appropriate naming convention
+2. **Pre-push hook detects** branch type
+3. **Version script runs** (`npm run version:minor/patch/major`)
+4. **Cache busting updated** in `src/index.html`:
+   ```html
+   <link rel="stylesheet" href="css/styles.css?v=0.12.0" />
+   <script type="module" src="js/app.js?v=0.12.0"></script>
+   ```
+5. **Version commit added** to your branch automatically
+6. **Normal pre-push checks** run (format, lint, tests)
+
+**What Gets Updated:**
+- `package.json` version field
+- HTML meta tags (`app-version`, `build-date`)  
+- Cache busting parameters (`?v=0.12.0`)
+- Automatic commit with version changes
+
 ### Workflow Best Practices
 
 **Starting New Work:**
@@ -68,12 +130,14 @@ src/js/
 1. **Always branch from latest main**: `git checkout main && git pull && git checkout -b feature/your-feature`
 2. **Check for conflicting PRs**: Review open PRs that might modify similar files
 3. **Use descriptive branch names**: `feature/MM-123-smoke-test-categorization`
+4. **Choose branch names carefully** - they determine version bump type
 
 **Creating Pull Requests:**
 
 1. **Use PR template**: Automatically provided, includes dependency checks
 2. **Verify independence**: Ensure your PR can be merged without dependencies
 3. **Mark dependencies**: If your work depends on other open PRs, mark them clearly
+4. **Check version changes**: Review the auto-generated version commit
 
 **Handling Dependencies:**
 
@@ -86,6 +150,40 @@ src/js/
 - **Prevents merge conflicts**: "Require up-to-date branches" forces automatic conflict resolution
 - **Maintains history quality**: Linear history requirement keeps commits clean
 - **Ensures review**: All changes get proper code review before merge
+
+### Manual Override & Examples
+
+**Skip Auto-Versioning:**
+```bash
+# Skip versioning for this push
+git push --no-verify
+
+# Manual version bump
+npm run version:patch   # or minor/major
+git add package.json src/index.html  
+git commit -m "chore: manual version bump"
+git push
+```
+
+**Typical Feature Development:**
+```bash
+# Start feature
+git checkout -b feat/dark-mode-toggle
+# ... make changes ...
+git commit -m "feat: add dark mode toggle component"
+git push -u origin feat/dark-mode-toggle
+# → Auto-bumps to 0.12.0, creates PR with version included
+```
+
+**Typical Bugfix:**
+```bash  
+# Start bugfix
+git checkout -b fix/zoom-button-alignment
+# ... make changes ...
+git commit -m "fix: correct zoom button positioning in mobile"
+git push -u origin fix/zoom-button-alignment  
+# → Auto-bumps to 0.11.1, creates PR with version included
+```
 
 ### Common Scenarios
 
