@@ -2,25 +2,52 @@
 
 ## Overview
 
-MindMeld is a powerful, browser-based mind mapping application that helps you organize thoughts, create visual connections, and explore ideas through interactive diagrams.
+MindMeld is a web-based mind mapping tool that helps you organize your thoughts, brainstorm ideas, and create visual connections between concepts. It works seamlessly on both desktop computers and mobile devices.
 
 ## Getting Started
 
-### Accessing MindMeld
+### First Steps
 
-1. Open MindMeld in your web browser
-2. The application loads with a blank canvas ready for mind mapping
-3. Start creating notes by double-clicking anywhere on the canvas
+1. Open MindMeld in any web browser
+2. You'll see a clean, blank canvas ready for your ideas
+3. **On desktop**: Double-click anywhere to create your first note
+4. **On mobile/tablet**: Double-tap anywhere to create your first note
 
-## Core Features
+## Working with Notes
 
-### Creating Notes
+### Creating and Editing Notes
 
-- **Double-click** anywhere on the canvas to create a new note
-- **Click once** on a note to select it
-- **Double-click** on a note to edit its content
-- **Type** to add or modify note content
-- **Press Enter** to save your changes
+**Desktop:**
+- **Double-click empty space** → Create a new note
+- **Click a note** → Select it (shows colored border)
+- **Click a selected note again** → Start editing the text
+- **Type your content** → Add your ideas
+- **Click outside or press Enter** → Save your changes
+
+**Mobile/Tablet:**
+- **Double-tap empty space** → Create a new note
+- **Tap a note** → Select it
+- **Double-tap a note** → Start editing the text
+- **Type your content** → Add your ideas
+- **Tap outside** → Save your changes
+
+### Rich Text in Notes ✨
+
+MindMeld supports rich formatting to make your notes more expressive and organized:
+
+**Headings:**
+- Type `# Main Topic` for large headings
+- Type `## Subtopic` for smaller headings
+
+**Text Formatting:**
+- Type `**bold text**` for **bold text**
+- Type `*italic text*` for *italic text*
+
+**Lists:**
+- Type `- List item` for bullet points
+- Each line starting with `- ` becomes a bullet point
+
+**Live Preview:** Your formatting appears instantly as you type, making your notes more readable and organized.
 
 ### Coloring Notes
 
@@ -32,173 +59,112 @@ MindMeld is a powerful, browser-based mind mapping application that helps you or
 
 ### Connecting Notes
 
-1. **Select or hover** over a note to reveal connection points (ghost connectors)
-2. **Click and drag** from a connection point to another note's connection point
-3. **Release** to create the connection
-4. **Touch devices**: Ghost connectors are larger with enhanced visual feedback
-5. Connections automatically route around other notes and update in real-time
+Connect your ideas with visual lines and arrows:
 
-### Moving and Organizing
+1. **Hover over any note** to see small connection points appear around it
+2. **Click and drag** from a connection point to another note's connection point  
+3. **Release** to create the connection with an arrow
+4. Connections automatically adjust when you move notes around
+
+**Managing Connections:**
+- **Desktop**: Hover over a connection line to see editing options (delete or change arrow direction)
+- **Mobile**: Tap a connection line to see editing options
+- **Connection Types**: Choose from no arrow, one-way arrows, or two-way arrows
+
+### Moving and Organizing Notes
 
 **Desktop:**
-
-- **Click and drag** notes to reposition them
-- **Click and drag** a selection box around multiple notes to select them
-- **Move selected notes** together by dragging any selected note
+- **Drag notes** to move them around the canvas
+- **Drag a box around multiple notes** to select them all at once
+- **Move multiple selected notes** by dragging any one of them
 - **Delete notes** by selecting them and pressing the Delete key
 
-**Touch Devices (Automatic Detection):**
+**Mobile/Tablet:**
+- **Long-press a note until it wiggles** → Then drag to move it
+- **Tap and hold on empty space** → Select multiple notes in an area  
+- **Move multiple selected notes** by dragging any one of them
+- **No delete key?** Use the menu options to remove notes
 
-- **Long-press and drag** notes to move them (~500ms hold time with jiggle animation)
-- **Single-finger drag** on empty canvas to create lasso selection
-- **Double-tap** notes to edit content
-- **Single tap** notes to select
-- **Ghost connectors** with enhanced touch targets and visual feedback
-- **Two-finger gestures** for canvas pan and zoom
-
-### Canvas Templates
-
-Choose from different canvas layouts to structure your mind maps:
-
-- **Standard Canvas**: Clean, open workspace for free-form mind mapping
-- **Hero's Journey**: Structured template for storytelling and character development
-- **Now, Next, Future**: Timeline-based planning template
-- **Wardley Map**: Strategic business mapping template
-
-### Saving and Loading
+### Saving and Loading Your Work
 
 - **Auto-save**: Your work is automatically saved to your browser's local storage
 - **Export**: Save your mind map as a JSON file for backup or sharing
 - **Import**: Load previously saved mind maps from JSON files
 - **Clipboard**: Copy and paste mind maps via your system clipboard
 
-## Navigation and Controls
+## Navigating Your Mind Map
 
-### Zoom and Pan
+### Zooming and Panning
 
 **Desktop:**
+- **Mouse wheel** → Zoom in and out (1x to 5x)
+- **Right-click and drag** → Move around the canvas
+- **Zoom level shown** → Look for "3x" display in the corner
 
-- **Mouse wheel**: Zoom in and out
-- **Right-click and drag**: Pan around the canvas
-- **Zoom controls**: Use the zoom indicator in the top-right corner
+**Mobile/Tablet:**
+- **Pinch with two fingers** → Smooth zoom in/out with precise control (1.0x to 5.0x)
+- **Drag with two fingers** → Move around the canvas
+- **Smooth experience** → Just like Google Maps zooming
 
-**Mobile/Touch Devices (Automatic Detection):**
+### Menu Options
 
-- **Two-finger pinch**: Zoom in and out
-- **Two-finger drag**: Pan around the canvas
-- **Enhanced interactions**: Automatic device detection provides optimized touch experience
+Access the menu by clicking the three dots (⋮) in the color picker:
 
-### Menu System
-
-- **About**: Access information about MindMeld and what's new
 - **Import/Export**: Save and load your mind maps
-  - Export to File: Download as JSON
-  - Import from File: Upload JSON files
-  - Clipboard operations: Copy/paste mind maps
-- **Canvas Style**: Switch between different canvas templates
-- **Clear Canvas**: Remove all notes and connections (with confirmation)
+  - **Export to File** → Download as JSON backup
+  - **Import from File** → Upload previous mind maps
+  - **Copy to Clipboard** → Share your mind map
+  - **Paste from Clipboard** → Import shared mind maps
+- **Clear Canvas** → Remove all notes and start fresh (asks for confirmation)
 
-## Adaptive Touch Features
+## Quick Tips for Success
 
-MindMeld automatically detects your device capabilities and provides an optimized experience for mobile and tablet devices. No configuration needed - the interface adapts seamlessly.
+### For Mobile Users
+- **Wait for the wiggle** → When moving notes, hold until you see the jiggle animation
+- **Use two fingers** → For zooming and panning, always use two fingers to avoid conflicts  
+- **Tap connections** → Touch connection lines to edit or delete them
+- **Precise zooming** → Pinch slowly for fine control, just like in Google Maps
 
-### Automatic Touch Detection
+### For Desktop Users  
+- **Hover for menus** → Hover over connections to see edit options
+- **Right-click to pan** → Drag with right mouse button to move around
+- **Quick editing** → Click a selected note again to start typing immediately
 
-The system uses advanced capability detection to provide device-appropriate interactions:
+### General Tips
+- **Use colors wisely** → Different colors help organize themes or priorities
+- **Rich text helps** → Use `# headings` and `**bold**` to make notes clearer
+- **Save backups** → Export your mind maps regularly using the menu
+- **Start simple** → Begin with one central idea and branch outward
 
-#### Single-Finger Gestures
+## Making Great Mind Maps
 
-- **Single tap**: Select notes or UI elements
-- **Double-tap on canvas**: Create new notes
-- **Double-tap on notes**: Edit note content
-- **Single-finger drag on empty canvas**: Draw lasso selection box
-- **Long-press and drag on notes**: Move notes with jiggle animation feedback (hold ~500ms, then drag)
+### Getting Started Right
+1. **Start with one central idea** → Put your main topic in the center
+2. **Branch outward** → Add related ideas around your central theme
+3. **Keep notes short** → Use keywords and phrases, not full sentences
+4. **Connect related ideas** → Use arrows to show how concepts relate
 
-#### Two-Finger Gestures
+### Using Colors Effectively
+- **Yellow** → Main ideas or neutral topics
+- **Pink** → Important points that need attention  
+- **Green** → Positive outcomes or approved items
+- **Blue** → Facts, data, or reference information
 
-- **Two-finger pinch**: Zoom in/out
-- **Two-finger drag**: Pan around the canvas
+### Organization Ideas
+- **Mind map** → Central topic with branches radiating out
+- **Process flow** → Use arrows to show step-by-step sequences
+- **Categories** → Group similar ideas using the same color
+- **Priorities** → Use colors to show what's most/least important
 
-#### Enhanced Touch Features
+---
 
-- **Visual feedback**: Touch elements show immediate visual response with animations
-- **Optimized hit targets**: Larger touch-friendly interaction areas for ghost connectors
-- **Jiggle animation**: Selected notes show ready-to-drag feedback on long-press
-- **Smart detection**: Automatic switching between desktop and touch interaction patterns
-- **Ghost connector enhancements**: Larger, more responsive connection points on touch devices
-
-### Touch Interaction Best Practices
-
-1. **Note Movement**: Use long-press and drag (wait for jiggle animation) rather than immediate drag
-2. **Multi-Select**: Single-finger drag creates selection lasso
-3. **Canvas Navigation**: Always use two fingers for pan/zoom to avoid conflicts
-4. **Note Editing**: Double-tap notes to enter edit mode
-5. **Connection Creation**: Ghost connectors automatically adapt with larger touch targets
-
-## Advanced Features
-
-### Selection and Multi-Select
-
-- **Single Selection**: Click on a note
-- **Multi-Selection**: Click and drag a selection box around multiple notes
-- **Group Operations**: Move, delete, or modify multiple selected notes together
-
-### Connection Types
-
-- **Standard Connections**: Basic lines between notes
-- **Directional Connections**: Arrows indicating flow or hierarchy
-- **Custom Styling**: Connections adapt to your canvas template
-
-### Keyboard Shortcuts
-
-- **Delete**: Remove selected notes and their connections
-- **Escape**: Deselect all notes
-- **Double-click**: Create notes or edit existing ones
-
-## Tips and Best Practices
-
-### Effective Mind Mapping
-
-1. **Start Central**: Begin with a central idea and branch outward
-2. **Use Keywords**: Keep notes concise with key concepts
-3. **Color Coding**: Use colors to categorize ideas, priorities, or themes
-   - Yellow: Main ideas or neutral content
-   - Pink: Important points or highlights
-   - Green: Positive outcomes or go-ahead items
-   - Blue: Information, data, or reference material
-4. **Color and Layout**: Use different canvas templates for different purposes
-5. **Regular Saves**: Export important mind maps as backups
-
-### Organization Strategies
-
-- **Hierarchical**: Use connections to show parent-child relationships
-- **Categorical**: Group related ideas in clusters using color coding
-- **Sequential**: Arrange ideas in logical flow or timeline
-- **Web Structure**: Create interconnected idea networks
-- **Color-Based**: Organize by color themes (e.g., blue for data, green for actions)
-
-### Performance Tips
-
-- **Browser Compatibility**: Works best in modern browsers (Chrome, Firefox, Safari, Edge)
-- **Large Maps**: For complex mind maps with many notes, consider breaking into smaller, focused maps
-- **Regular Cleanup**: Remove unused notes to keep your workspace organized
+**Need help?** Look for the small **?** button in the bottom-left corner for interactive tips!
 
 ## Troubleshooting
 
-### Common Issues
+**Not working as expected?**
+- **Try refreshing the page** → This fixes most issues. If it doesn't help, try exporting the map, clearing the canvas (from the menu) and re-importing the map.
+- **Check your internet connection** → Make sure you're online
+- **Use a modern browser** → Works best in Chrome, Firefox, Safari, or Edge
 
-- **Notes not saving**: Check if local storage is enabled in your browser
-- **Slow performance**: Try refreshing the page or clearing browser cache
-- **Export/import problems**: Ensure you're using valid JSON files generated by MindMeld
-
-### Browser Support
-
-- **Recommended**: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
-- **Required**: JavaScript enabled, local storage support
-- **Features**: Clipboard operations may have limited support in some browsers
-
-### Getting Help
-
-- **Documentation**: Explore the help sections and tooltips within the application
-- **Issues**: Report bugs or request features through the project's issue tracker
-- **Community**: Connect with other users and contributors
+**Questions or feedback?** MindMeld is designed to be intuitive - if something feels confusing, that's valuable feedback for making it better!

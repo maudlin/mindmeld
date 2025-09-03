@@ -3,13 +3,19 @@
 # Get current branch name
 branch=$(git rev-parse --abbrev-ref HEAD)
 
-# Smart version bumping with nuanced semver detection
-# Supports patterns like: feat/major/new-api, fix/minor/refactor, perf/patch/optimization
+# Smart version bumping with hybrid branch-type + file-change detection
+# 
+# Logic:
+# 1. Explicit overrides: /major/, /minor/, /patch/ in branch name
+# 2. Branch type defaults: feat/=minor, fix|chore/=patch, docs|tests/=none
+# 3. Fallback: any src/ changes get patch bump (ensures cache busting)
+# 
+# Examples: feat/major/new-api, fix/minor/refactor, chore/update-deps, docs/readme
 
 get_version_type() {
   local branch_name="$1"
   
-  # Check for explicit version type in branch name (after the category)
+  # Check for explicit version type override in branch name
   if [[ "$branch_name" == *"/major/"* ]]; then
     echo "major"
   elif [[ "$branch_name" == *"/minor/"* ]]; then
@@ -17,15 +23,23 @@ get_version_type() {
   elif [[ "$branch_name" == *"/patch/"* ]]; then
     echo "patch"
   else
-    # Default based on branch category
-    if [[ "$branch_name" == feat/* || "$branch_name" == feature/* ]]; then
+    # Skip versioning for docs/tests branches (non-functional changes)
+    if [[ "$branch_name" == docs/* || "$branch_name" == tests/* ]]; then
+      echo "none"
+    # Branch type defaults for functional changes
+    elif [[ "$branch_name" == feat/* || "$branch_name" == feature/* ]]; then
       echo "minor"  # Features default to minor
-    elif [[ "$branch_name" == fix/* || "$branch_name" == bugfix/* || "$branch_name" == perf/* || "$branch_name" == performance/* ]]; then
-      echo "patch"  # Fixes and performance default to patch
+    elif [[ "$branch_name" == fix/* || "$branch_name" == bugfix/* || "$branch_name" == chore/* || "$branch_name" == perf/* || "$branch_name" == performance/* ]]; then
+      echo "patch"  # Fixes, chores, and performance default to patch
     elif [[ "$branch_name" == major/* || "$branch_name" == breaking/* ]]; then
       echo "major"  # Breaking changes default to major
     else
-      echo "none"   # Skip versioning
+      # Fallback: Check if any src/ files changed (ensures cache busting for any functional changes)
+      if git diff --name-only origin/main...HEAD | grep -q "^src/"; then
+        echo "patch"  # Any src/ change gets at least a patch bump
+      else
+        echo "none"   # No src/ changes, no version bump needed
+      fi
     fi
   fi
 }
@@ -68,11 +82,16 @@ case "$version_type" in
     ;;
     
   none)
-    echo "🔍 Non-release branch detected: $branch (skipping version bump)"
+    echo "🔍 Non-versioned branch detected: $branch (skipping version bump, but will be deployed when merged)"
     ;;
 esac
 
 # Continue with existing pre-push checks
 npm run format:check
 npm run lint
+
+# Generate changelog for deployment
+echo "📄 Generating changelog..."
+npm run changelog:generate
+
 echo "✅ Pre-push checks passed - should pass in CI"

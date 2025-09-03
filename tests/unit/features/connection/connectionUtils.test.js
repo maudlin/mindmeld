@@ -168,20 +168,20 @@ describe('ConnectionUtils', () => {
       // Start marker attributes (points backward)
       expect(startMarker.getAttribute('refX')).toBe('0');
       expect(startMarker.innerHTML).toBe(
-        '<path d="M10,0 L0,3.5 L10,7" fill="#888"></path>',
+        '<path d="M8,0 L0,2.5 L8,5" fill="#666"></path>',
       );
 
       // End marker attributes (points forward)
-      expect(endMarker.getAttribute('refX')).toBe('10');
+      expect(endMarker.getAttribute('refX')).toBe('8');
       expect(endMarker.innerHTML).toBe(
-        '<path d="M0,0 L10,3.5 L0,7" fill="#888"></path>',
+        '<path d="M0,0 L8,2.5 L0,5" fill="#666"></path>',
       );
 
       // Common attributes
       [startMarker, endMarker].forEach((marker) => {
-        expect(marker.getAttribute('markerWidth')).toBe('10');
-        expect(marker.getAttribute('markerHeight')).toBe('7');
-        expect(marker.getAttribute('refY')).toBe('3.5');
+        expect(marker.getAttribute('markerWidth')).toBe('8');
+        expect(marker.getAttribute('markerHeight')).toBe('5');
+        expect(marker.getAttribute('refY')).toBe('2.5');
         expect(marker.getAttribute('orient')).toBe('auto');
       });
     });

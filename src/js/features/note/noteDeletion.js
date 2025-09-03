@@ -12,9 +12,12 @@ export function deleteNoteWithConnections(note, canvas) {
 }
 
 export function deleteNote() {
-  const selected = noteManager.getSelectedNotes()[0];
-  if (selected) {
+  const selectedNotes = noteManager.getSelectedNotes();
+  if (selectedNotes.length > 0) {
     const canvas = document.getElementById('canvas');
-    deleteNoteWithConnections(selected, canvas);
+    // Delete all selected notes
+    selectedNotes.forEach((note) => {
+      deleteNoteWithConnections(note, canvas);
+    });
   }
 }

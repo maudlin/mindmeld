@@ -2,9 +2,10 @@
 
 [![CI Tests](https://github.com/maudlin/mindmeld/actions/workflows/ci.yml/badge.svg)](https://github.com/maudlin/mindmeld/actions/workflows/ci.yml)
 
-MindMeld is a web-based mind mapping tool that allows users to create, organize, and connect notes in a flexible, freeform manner. Built with modern event-driven architecture, it provides an intuitive interface for visualizing ideas and their relationships.
+MindMeld is a web-based mind mapping tool that allows users to create, organize, and connect notes in a flexible, freeform manner. Built with modern event-driven architecture, it provides an intuitive interface for visualizing ideas and their relationships on both desktop and mobile devices.
 
-**🌐 Live Demo**: [mind-meld.co](https://mind-meld.co/)
+**🌐 Live Demo**: [mind-meld.co](https://mind-meld.co/)  
+**📱 Status**: V1.0 - Production Ready with Full Touch Support
 
 ## Prerequisites
 
@@ -31,20 +32,28 @@ npm install && npm start
 
 Visit `http://localhost:8080` to begin mind mapping.
 
-### Mobile & Touch Support
+### Mobile & Touch Support ✨
 
-MindMeld automatically adapts to touch devices with optimized interactions. See [User Guide](docs/user-guide.md) for complete touch interaction details.
+MindMeld features a **fully optimized touch interface** with:
+- **Fine-grained pinch zoom** - Smooth, Google Maps-style zooming from 1x to 5x
+- **Multi-touch gestures** - Pan, zoom, and select with natural finger movements
+- **Touch-friendly UI** - Larger targets, context menus, and connection controls
+- **Responsive design** - Seamless experience across phones, tablets, and desktops
+
+See [User Guide](docs/user-guide.md) for complete interaction details.
 
 ## Key Features
 
-- **Dynamic Note Creation**: Double-click to create notes anywhere on the canvas
-- **Color-Coded Notes**: 4-color palette (yellow, pink, green, blue) with intuitive selection-based picker
-- **Intelligent Connections**: Visual connections with directional arrows and real-time updates
-- **Multi-Canvas Templates**: Standard Canvas, Hero's Journey, and custom templates
-- **Advanced Selection**: Multi-select with group operations and touch-optimized lasso selection
+- **Cross-Platform Design**: Optimized for desktop mouse, trackpad, and mobile touch interactions
+- **Dynamic Note Creation**: Double-click (desktop) or tap (mobile) to create notes anywhere
+- **Fine-Grained Zoom**: Smooth pinch-to-zoom with decimal precision (1.0x to 5.0x)
+- **Color-Coded Notes**: 4-color palette (yellow, pink, green, blue) with intuitive picker
+- **Smart Connections**: Directional arrows with context menus for easy type switching
+- **Multi-Canvas Templates**: Standard Canvas, Hero's Journey, and extensible template system
+- **Advanced Selection**: Multi-select with group operations and touch-optimized selection
 - **Data Management**: Export/import mind maps as JSON with full state preservation
 - **Modern Architecture**: Event-driven design with zero circular dependencies
-- **Enterprise-Grade Data Integrity**: Comprehensive corruption resistance with browser compatibility
+- **Enterprise-Grade Data Integrity**: Comprehensive corruption resistance and browser compatibility
 - **Secure Markdown System**: XSS-protected rendering with zero HTML injection
 
 ## Documentation
@@ -75,7 +84,7 @@ See the full documentation index in docs/README.md.
 
 **Bootstrap Architecture**: Clean application initialization with specialized modules  
 **Event-driven design**: Zero circular dependencies with central EventBus  
-**Service layer**: Dependency injection with clear separation of concerns  
+**Cross-platform interactions**: Unified touch and desktop input handling  
 **Modular bootstrap**: DataBootstrap → ServiceBootstrap → UIBootstrap → InteractionBootstrap
 
 **Health**: Run `npm run health-check` | **Tests**: Run `npm test`  

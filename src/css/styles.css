@@ -229,16 +229,16 @@ html {
   position: fixed;
   bottom: 20px;
   left: 20px;
-  width: 44px;
-  height: 44px;
+  width: 31px;
+  height: 31px;
   user-select: none; /* Prevent text selection on double-click */
   border: none;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.8);
-  color: #374151;
-  font-family: var(--font-family);
-  font-size: 16px;
-  font-weight: bold;
+  background: rgba(255, 255, 255, 0.3);
+  color: #9ca3af;
+  font-family: var(--font-family-headings);
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition:
@@ -253,8 +253,9 @@ html {
 }
 
 .help-button:hover {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.5);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  color: #6b7280;
 }
 
 .help-button:active {
@@ -270,9 +271,9 @@ html {
 /* Touch-specific help button adjustments */
 @media (pointer: coarse) {
   .help-button {
-    width: 48px;
-    height: 48px;
-    font-size: 18px;
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
   }
 }
 

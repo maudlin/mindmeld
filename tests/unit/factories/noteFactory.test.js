@@ -13,6 +13,9 @@ describe('noteFactory', () => {
     mockEventBus = { emit: jest.fn() };
     mockUtils = {
       toBase62: jest.fn().mockImplementation((num) => `base62_${num}`),
+      log: jest.fn(),
+      debounce: jest.fn().mockImplementation((fn) => fn),
+      throttle: jest.fn().mockImplementation((fn) => fn),
     };
     mockConfig = { noteSize: { width: 200, height: 100, padding: 10 } };
     mockConstants = { NOTE_CONTENT_LIMIT: 500 };
