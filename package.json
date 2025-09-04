@@ -1,6 +1,6 @@
 {
   "name": "mindmeld",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A web-based mind mapping tool",
   "main": "src/js/app.js",
   "type": "module",
