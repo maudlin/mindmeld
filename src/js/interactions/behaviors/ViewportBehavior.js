@@ -105,10 +105,11 @@ export class ViewportBehavior {
       inputType,
     });
 
-    // FIXED: Direct proportional zoom level calculation from current zoom
+    // MM-222: Linear scaling for consistent zoom sensitivity across all zoom levels
     // scaleDelta 1.0 = no change, scaleDelta > 1.0 = zoom in, scaleDelta < 1.0 = zoom out
-    // Apply relative zoom change from current zoom level for smooth control
-    const zoomDelta = Math.log2(scaleDelta) * 0.05; // 0.05x sensitivity (~40x less sensitive, very controlled zooming)
+    // Linear approach: same finger movement = same zoom amount regardless of current zoom level
+    const ZOOM_SENSITIVITY = 2.0; // Calibrated for 1-2cm finger movement = full 4x zoom range
+    const zoomDelta = (scaleDelta - 1.0) * ZOOM_SENSITIVITY;
     const newZoomLevel = this.zoomLevel + zoomDelta;
 
     // Apply zoom with viewport center point - applyZoomAtPoint will handle coordinate conversion
