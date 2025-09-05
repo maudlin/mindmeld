@@ -12,6 +12,7 @@ import { SelectionBoxBehavior } from './behaviors/SelectionBoxBehavior.js';
 import { CanvasBehavior } from './behaviors/CanvasBehavior.js';
 import { ConnectionBehavior } from './behaviors/ConnectionBehavior.js';
 import { ViewportBehavior } from './behaviors/ViewportBehavior.js';
+import { MenuBehavior } from './behaviors/MenuBehavior.js';
 
 export class InteractionController {
   constructor() {
@@ -64,6 +65,7 @@ export class InteractionController {
       const canvasBehavior = new CanvasBehavior(this.eventBus);
       const connectionBehavior = new ConnectionBehavior(this.eventBus);
       const viewportBehavior = new ViewportBehavior(this.eventBus);
+      const menuBehavior = new MenuBehavior(this.eventBus);
 
       // Register behaviors
       this.registerBehavior('note', noteBehavior);
@@ -72,6 +74,7 @@ export class InteractionController {
       this.registerBehavior('canvas', canvasBehavior);
       this.registerBehavior('connection', connectionBehavior);
       this.registerBehavior('viewport', viewportBehavior);
+      this.registerBehavior('menu', menuBehavior);
 
       // Initialize all behaviors
       await noteBehavior.initialize();
@@ -88,6 +91,9 @@ export class InteractionController {
 
       await connectionBehavior.initialize();
       console.log('InteractionController: ConnectionBehavior initialized');
+
+      await menuBehavior.initialize();
+      console.log('InteractionController: MenuBehavior initialized');
 
       // ViewportBehavior needs canvas and zoomDisplay - will be initialized later during bootstrap
       console.log(

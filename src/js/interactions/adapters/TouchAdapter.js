@@ -25,6 +25,7 @@ export class TouchAdapter extends BaseAdapter {
     this.canvasBehavior = null;
     this.connectionBehavior = null;
     this.viewportBehavior = null;
+    this.menuBehavior = null;
 
     // Core components
     this.canvas = null;
@@ -81,6 +82,7 @@ export class TouchAdapter extends BaseAdapter {
           this.interactionController.getBehavior('connection');
         this.viewportBehavior =
           this.interactionController.getBehavior('viewport');
+        this.menuBehavior = this.interactionController.getBehavior('menu');
 
         console.log('TouchAdapter: Behavior references initialized', {
           hasNoteBehavior: !!this.noteBehavior,
@@ -89,6 +91,7 @@ export class TouchAdapter extends BaseAdapter {
           hasCanvasBehavior: !!this.canvasBehavior,
           hasConnectionBehavior: !!this.connectionBehavior,
           hasViewportBehavior: !!this.viewportBehavior,
+          hasMenuBehavior: !!this.menuBehavior,
         });
       } else {
         console.warn('TouchAdapter: InteractionController not available');
@@ -508,6 +511,32 @@ export class TouchAdapter extends BaseAdapter {
 
     const target = this.expandTouchTarget(touch);
 
+    // Check for kebab menu button interaction (but not during double tap)
+    if (
+      (target.classList.contains('kebab-menu-button') ||
+        target.closest('.kebab-menu-button')) &&
+      !this.isDoubleTapInProgress
+    ) {
+      console.log(
+        'TouchAdapter: Kebab menu button tap detected, delegating to MenuBehavior',
+      );
+      this.handleMenuButtonInteraction();
+      return;
+    }
+
+    // Check for kebab menu item interaction (but not during double tap)
+    if (
+      (target.classList.contains('kebab-menu-item') ||
+        target.closest('.kebab-menu-item')) &&
+      !this.isDoubleTapInProgress
+    ) {
+      console.log(
+        'TouchAdapter: Kebab menu item tap detected, delegating to MenuBehavior',
+      );
+      this.handleMenuItemInteraction(target);
+      return;
+    }
+
     // Check for ghost connector interaction
     if (target.classList.contains('ghost-connector')) {
       this.handleGhostConnectorTap(touch, target);
@@ -654,6 +683,44 @@ export class TouchAdapter extends BaseAdapter {
 
     // Delegate to ConnectionBehavior for unified touch connection handling
     this.connectionBehavior.startTouchDrag(sourceNote, touchEvent, 'touch');
+  }
+
+  /**
+   * Handle kebab menu button interaction - delegate to MenuBehavior
+   */
+  handleMenuButtonInteraction() {
+    if (!this.menuBehavior) {
+      console.warn(
+        'TouchAdapter: MenuBehavior not available for kebab menu interaction',
+      );
+      return;
+    }
+
+    console.log(
+      'TouchAdapter: Delegating kebab menu button action to MenuBehavior',
+    );
+    this.menuBehavior.handleMenuButtonAction('touch');
+  }
+
+  /**
+   * Handle kebab menu item interaction - delegate to MenuBehavior
+   */
+  handleMenuItemInteraction(target) {
+    if (!this.menuBehavior) {
+      console.warn(
+        'TouchAdapter: MenuBehavior not available for kebab menu item interaction',
+      );
+      return;
+    }
+
+    const menuItem = target.closest('.kebab-menu-item');
+    const action = menuItem?.getAttribute('data-action') || undefined;
+
+    console.log(
+      'TouchAdapter: Delegating kebab menu item action to MenuBehavior',
+      { action },
+    );
+    this.menuBehavior.handleMenuAction(action, 'touch');
   }
 
   /**

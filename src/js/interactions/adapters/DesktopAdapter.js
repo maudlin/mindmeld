@@ -31,6 +31,7 @@ export class DesktopAdapter extends BaseAdapter {
     this.canvasBehavior = null;
     this.connectionBehavior = null;
     this.viewportBehavior = null;
+    this.menuBehavior = null;
 
     // Canvas and container references
     this.canvas = null;
@@ -92,6 +93,7 @@ export class DesktopAdapter extends BaseAdapter {
         this.interactionController.getBehavior('connection');
       this.viewportBehavior =
         this.interactionController.getBehavior('viewport');
+      this.menuBehavior = this.interactionController.getBehavior('menu');
 
       console.log('DesktopAdapter: Behavior references initialized', {
         hasNoteBehavior: !!this.noteBehavior,
@@ -217,6 +219,30 @@ export class DesktopAdapter extends BaseAdapter {
   detectInteractionStart(event) {
     const target = event.target;
 
+    // Check for kebab menu button interaction
+    if (
+      target.classList.contains('kebab-menu-button') ||
+      target.closest('.kebab-menu-button')
+    ) {
+      console.log(
+        'DesktopAdapter: Kebab menu button click detected, delegating to MenuBehavior',
+      );
+      this.handleMenuButtonInteraction(event);
+      return;
+    }
+
+    // Check for kebab menu item interaction
+    if (
+      target.classList.contains('kebab-menu-item') ||
+      target.closest('.kebab-menu-item')
+    ) {
+      console.log(
+        'DesktopAdapter: Kebab menu item click detected, delegating to MenuBehavior',
+      );
+      this.handleMenuItemInteraction(event);
+      return;
+    }
+
     // Check for ghost connector interaction (CRITICAL - missing from refactor!)
     if (target.classList.contains('ghost-connector')) {
       console.log(
@@ -240,6 +266,47 @@ export class DesktopAdapter extends BaseAdapter {
     }
 
     console.log('DesktopAdapter: No recognized interaction target');
+  }
+
+  /**
+   * Handle kebab menu button interaction - delegate to MenuBehavior
+   */
+  handleMenuButtonInteraction(event) {
+    if (!this.menuBehavior) {
+      console.warn(
+        'DesktopAdapter: MenuBehavior not available for kebab menu interaction',
+      );
+      return;
+    }
+
+    if (event.preventDefault) event.preventDefault();
+    if (event.stopPropagation) event.stopPropagation();
+
+    console.log(
+      'DesktopAdapter: Delegating kebab menu button action to MenuBehavior',
+    );
+    this.menuBehavior.handleMenuButtonAction('desktop');
+  }
+
+  /**
+   * Handle kebab menu item interaction - delegate to MenuBehavior
+   */
+  handleMenuItemInteraction(event) {
+    if (!this.menuBehavior) {
+      console.warn(
+        'DesktopAdapter: MenuBehavior not available for kebab menu item interaction',
+      );
+      return;
+    }
+
+    const menuItem = event.target.closest('.kebab-menu-item');
+    const action = menuItem?.getAttribute('data-action') || undefined;
+
+    console.log(
+      'DesktopAdapter: Delegating kebab menu item action to MenuBehavior',
+      { action },
+    );
+    this.menuBehavior.handleMenuAction(action, 'desktop');
   }
 
   /**
@@ -624,6 +691,35 @@ export class DesktopAdapter extends BaseAdapter {
    * Handle keyboard events (KEEP - this is input-specific)
    */
   handleKeyDown(event) {
+    const target = event.target;
+
+    // Handle kebab menu keyboard navigation
+    if (
+      target &&
+      target.classList &&
+      (target.classList.contains('kebab-menu-button') ||
+        (target.closest && target.closest('.kebab-menu-button'))) &&
+      (event.key === 'Enter' || event.key === ' ')
+    ) {
+      if (event.preventDefault) event.preventDefault();
+      if (event.stopPropagation) event.stopPropagation();
+      this.handleMenuButtonInteraction(event);
+      return;
+    }
+
+    if (
+      target &&
+      target.classList &&
+      (target.classList.contains('kebab-menu-item') ||
+        (target.closest && target.closest('.kebab-menu-item'))) &&
+      (event.key === 'Enter' || event.key === ' ')
+    ) {
+      if (event.preventDefault) event.preventDefault();
+      if (event.stopPropagation) event.stopPropagation();
+      this.handleMenuItemInteraction(event);
+      return;
+    }
+
     // Handle keyboard shortcuts
     if (event.ctrlKey || event.metaKey) {
       switch (event.key) {
