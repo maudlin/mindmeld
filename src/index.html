@@ -31,8 +31,8 @@
       href="img/icon16.png"
       media="(prefers-color-scheme: dark)"
     />
-    <meta name="app-version" content="1.0.1" />
-    <meta name="build-date" content="2025-09-06" />
+    <meta name="app-version" content="1.0.1">
+    <meta name="build-date" content="2025-09-06">
   </head>
   <body>
     <nav id="navbar">
@@ -164,6 +164,47 @@
           <span>Paste from Clipboard</span>
         </div>
       </div>
+      <div class="kebab-menu-divider"></div>
+
+      <div class="kebab-menu-group">
+        <div class="kebab-menu-subtitle">Server</div>
+        <div
+          class="kebab-menu-item server-connect-item"
+          role="menuitem"
+          data-action="connect-server"
+          tabindex="0"
+        >
+          <span class="server-menu-text">Connect to Server...</span>
+          <div class="server-status-dot" style="display: none;"></div>
+        </div>
+        <div
+          class="kebab-menu-item server-disconnect-item"
+          role="menuitem"
+          data-action="disconnect-server"
+          tabindex="0"
+          style="display: none;"
+        >
+          <span>Disconnect from Server</span>
+        </div>
+        <div
+          class="kebab-menu-item server-save-item"
+          role="menuitem"
+          data-action="save-to-server"
+          tabindex="0"
+          style="display: none;"
+        >
+          <span>Save to Server</span>
+        </div>
+        <div
+          class="kebab-menu-item server-load-item"
+          role="menuitem"
+          data-action="load-from-server"
+          tabindex="0"
+          style="display: none;"
+        >
+          <span>Load from Server</span>
+        </div>
+      </div>
     </div>
 
     <div id="canvas-container">
@@ -173,6 +214,73 @@
     </div>
     <div id="help-text"></div>
     <div id="zoom-display">5x</div>
+
+    <!-- Server Connection Modal -->
+    <div
+      id="server-connection-modal"
+      class="server-modal"
+      style="display: none;"
+      role="dialog"
+      aria-labelledby="server-modal-title"
+      aria-modal="true"
+    >
+      <div class="server-modal-content">
+        <div class="server-modal-header">
+          <h2 id="server-modal-title">Connect to Server</h2>
+          <button
+            type="button"
+            class="modal-close server-modal-close"
+            aria-label="Close modal"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <form id="server-connection-form" class="server-connection-form">
+          <div class="form-group">
+            <label for="server-uri-input" class="form-label">
+              Server URL
+              <span class="form-help"
+                >Enter the HTTPS URL of your MindMeld server</span
+              >
+            </label>
+            <input
+              type="url"
+              id="server-uri-input"
+              class="form-input"
+              placeholder="https://api.example.com"
+              required
+              pattern="https://.*"
+              title="Please enter a valid HTTPS URL"
+            />
+          </div>
+
+          <div class="form-actions">
+            <button type="button" id="test-connection-btn" class="btn btn-secondary">
+              Test Connection
+            </button>
+            <button type="submit" id="connect-server-btn" class="btn btn-primary">
+              Connect
+            </button>
+          </div>
+
+          <div class="server-connection-status" id="connection-status">
+            <!-- Status messages will appear here -->
+          </div>
+        </form>
+      </div>
+    </div>
+
     <script type="module" src="js/app.js?v=1.0.1"></script>
   </body>
 </html>

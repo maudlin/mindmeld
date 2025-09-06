@@ -12,6 +12,8 @@ import { createMapsApi } from '../../services/mapsApi.js';
 import { exportToJSON, importFromJSON } from '../../data/dataStore.js';
 import { clearAllState } from '../../data/storageManager.js';
 import { notificationManager } from '../../services/notificationManager.js';
+import { ServerClient } from '../../services/serverClient.js';
+import { ServerConnectionService } from '../../services/serverConnectionService.js';
 
 export class MenuBehavior {
   constructor(eventBus, canvas = null) {
@@ -52,6 +54,12 @@ export class MenuBehavior {
 
     // Set up event listeners for system integration
     this.setupEventListeners();
+
+    // Update menu UI to reflect initial state
+    // Use setTimeout to ensure DOM is ready
+    setTimeout(() => {
+      this.updateMenuUI();
+    }, 0);
 
     this.isInitialized = true;
     console.log('MenuBehavior: Initialized', {
@@ -339,6 +347,18 @@ export class MenuBehavior {
   handleMenuAction(action, inputType) {
     console.log('MenuBehavior: Menu action selected', { action, inputType });
 
+    // Show loading indicator for server operations
+    if (
+      [
+        'connect-server',
+        'disconnect-server',
+        'save-to-server',
+        'load-from-server',
+      ].includes(action)
+    ) {
+      this.showMenuItemLoading(action, true);
+    }
+
     // Handle async operations without blocking the UI
     // Note: We don't await these since menu should close immediately
     switch (action) {
@@ -372,8 +392,21 @@ export class MenuBehavior {
       case 'connect-server':
         this.handleConnectServerRequest(inputType);
         break;
+      case 'server-status':
+        this.handleServerStatus(inputType);
+        break;
       case 'disconnect-server':
-        this.handleDisconnectServer(inputType);
+        this.handleServerDisconnect(inputType);
+        break;
+      case 'load-from-server':
+        this.handleLoadFromServer(inputType).catch((error) =>
+          console.error('MenuBehavior: Error in load from server:', error),
+        );
+        break;
+      case 'save-to-server':
+        this.handleSaveToServer(inputType).catch((error) =>
+          console.error('MenuBehavior: Error in save to server:', error),
+        );
         break;
       default:
         console.warn('MenuBehavior: Unknown menu action', { action });
@@ -508,7 +541,93 @@ export class MenuBehavior {
   }
 
   /**
-   * Handle connect to server request - open modal
+   * Handle load from server action (MM-106)
+   */
+  async handleLoadFromServer(inputType) {
+    console.log('MenuBehavior: Loading from server', { inputType });
+
+    try {
+      const status = ServerClient.getConnectionStatus();
+
+      if (!status.isConnected) {
+        notificationManager.error('Not connected to server');
+        return;
+      }
+
+      if (!this.canvas) {
+        console.error(
+          'MenuBehavior: Canvas reference is null! Cannot load from server.',
+        );
+        notificationManager.error(
+          'Cannot load from server - canvas reference missing',
+        );
+        return;
+      }
+
+      const success = await ServerClient.loadState(this.canvas);
+      if (success) {
+        notificationManager.success('Data loaded from server successfully!');
+      } else {
+        notificationManager.error('Failed to load data from server');
+      }
+    } catch (error) {
+      console.error('MenuBehavior: Error loading from server:', error);
+      notificationManager.error('Failed to load data from server');
+    } finally {
+      // Always clear loading state
+      this.showMenuItemLoading('load-from-server', false);
+    }
+  }
+
+  /**
+   * Handle save to server action (MM-106)
+   */
+  async handleSaveToServer(inputType) {
+    console.log('MenuBehavior: Saving to server', { inputType });
+
+    try {
+      const status = ServerClient.getConnectionStatus();
+
+      if (!status.isConnected) {
+        notificationManager.error('Not connected to server');
+        return;
+      }
+
+      const success = await ServerClient.saveState();
+      if (success) {
+        notificationManager.success('Data saved to server successfully!');
+      } else {
+        notificationManager.error('Failed to save data to server');
+      }
+    } catch (error) {
+      console.error('MenuBehavior: Error saving to server:', error);
+      notificationManager.error('Failed to save data to server');
+    } finally {
+      // Always clear loading state
+      this.showMenuItemLoading('save-to-server', false);
+    }
+  }
+
+  /**
+   * Get server connection status for menu state
+   */
+  getServerConnectionStatus() {
+    return ServerClient.getConnectionStatus();
+  }
+
+  /**
+   * Get available server actions based on connection status
+   */
+  getAvailableServerActions() {
+    const status = ServerClient.getConnectionStatus();
+    return {
+      loadFromServer: status.isConnected,
+      saveToServer: status.isConnected,
+    };
+  }
+
+  /**
+   * Connect to server request - open modal
    */
   handleConnectServerRequest(inputType) {
     this.modalOpen = true;
@@ -520,6 +639,31 @@ export class MenuBehavior {
       inputType,
       currentUrl: this.serverConfig.url || '',
     });
+  }
+
+  /**
+   * Handle server status when connected - show status modal
+   */
+  handleServerStatus(inputType) {
+    console.log('MenuBehavior: Show server status', { inputType });
+
+    const serverConnectionStatus = this.getServerConnectionStatus();
+    const serverUri = this.getServerUri() || 'Unknown server';
+
+    if (serverConnectionStatus && serverConnectionStatus.isConnected) {
+      this.modalOpen = true;
+
+      this.eventBus.emit('modal.serverConnection.open', {
+        behavior: this,
+        inputType,
+        currentUrl: serverUri,
+        isConnected: true,
+        connectionStatus: serverConnectionStatus.connectionStatus,
+      });
+    } else {
+      // Fallback to regular connect modal if not connected
+      this.handleConnectServerRequest(inputType);
+    }
   }
 
   /**
@@ -561,6 +705,9 @@ export class MenuBehavior {
       // Save to localStorage
       this.saveServerConfig();
 
+      // Update menu UI to show connected state
+      this.updateMenuUI();
+
       console.log('MenuBehavior: Server connection successful', { url });
 
       this.eventBus.emit('server.connected', {
@@ -575,6 +722,9 @@ export class MenuBehavior {
       this.serverConfig.connecting = false;
       this.mapsApi = null;
 
+      // Update menu UI to show disconnected state
+      this.updateMenuUI();
+
       this.eventBus.emit('server.connectionFailed', {
         behavior: this,
         url,
@@ -586,28 +736,36 @@ export class MenuBehavior {
   /**
    * Handle server disconnection
    */
-  handleDisconnectServer(inputType) {
+  handleServerDisconnect(inputType = 'system-event') {
     console.log('MenuBehavior: Disconnecting from server', { inputType });
 
-    this.serverConfig.url = null;
-    this.serverConfig.connected = false;
-    this.serverConfig.connecting = false;
-    this.mapsApi = null;
-
-    // Clear localStorage
     try {
-      localStorage.removeItem('mindmeld-server-config');
-    } catch (error) {
-      console.warn(
-        'MenuBehavior: Failed to clear server config from localStorage',
-        error,
-      );
-    }
+      this.serverConfig.url = null;
+      this.serverConfig.connected = false;
+      this.serverConfig.connecting = false;
+      this.mapsApi = null;
 
-    this.eventBus.emit('server.disconnected', {
-      behavior: this,
-      inputType,
-    });
+      // Clear localStorage
+      try {
+        localStorage.removeItem('mindmeld-server-config');
+      } catch (error) {
+        console.warn(
+          'MenuBehavior: Failed to clear server config from localStorage',
+          error,
+        );
+      }
+
+      // Update menu UI to show disconnected state
+      this.updateMenuUI();
+
+      this.eventBus.emit('server.disconnected', {
+        behavior: this,
+        inputType,
+      });
+    } finally {
+      // Always clear loading state
+      this.showMenuItemLoading('disconnect-server', false);
+    }
   }
 
   /**
@@ -641,7 +799,115 @@ export class MenuBehavior {
       isOpen: this.isOpen,
       modalOpen: this.modalOpen,
       serverStatus: this.getServerStatus(),
+      serverConnection: this.getServerConnectionStatus(),
+      availableActions: this.getAvailableServerActions(),
     };
+  }
+
+  /**
+   * Get menu state with server info (alias for compatibility)
+   */
+  getMenuStateWithServerInfo() {
+    return this.getMenuState();
+  }
+
+  /**
+   * Update menu UI based on server connection state
+   */
+  updateMenuUI() {
+    const serverConnectionStatus = this.getServerConnectionStatus();
+    const isConnected = serverConnectionStatus
+      ? serverConnectionStatus.isConnected
+      : false;
+
+    // Get menu item elements
+    const connectItem = document.querySelector('.server-connect-item');
+    const menuText = connectItem?.querySelector('.server-menu-text');
+    const statusDot = connectItem?.querySelector('.server-status-dot');
+    const disconnectItem = document.querySelector('.server-disconnect-item');
+    const saveItem = document.querySelector('.server-save-item');
+    const loadItem = document.querySelector('.server-load-item');
+
+    if (
+      !connectItem ||
+      !menuText ||
+      !statusDot ||
+      !disconnectItem ||
+      !saveItem ||
+      !loadItem
+    ) {
+      return; // Menu items not found, probably not initialized yet
+    }
+
+    if (isConnected) {
+      // Update main menu item to show connected state
+      menuText.textContent = 'Connected to Server';
+      statusDot.className = 'server-status-dot connected';
+      statusDot.style.display = 'inline-block';
+
+      // Change action to show status instead of connect
+      connectItem.setAttribute('data-action', 'server-status');
+
+      // Show server operation items
+      disconnectItem.style.display = 'flex';
+      saveItem.style.display = 'flex';
+      loadItem.style.display = 'flex';
+    } else {
+      // Update main menu item to show disconnected state
+      menuText.textContent = 'Connect to Server...';
+      statusDot.style.display = 'none';
+
+      // Change action back to connect
+      connectItem.setAttribute('data-action', 'connect-server');
+
+      // Hide server operation items
+      disconnectItem.style.display = 'none';
+      saveItem.style.display = 'none';
+      loadItem.style.display = 'none';
+    }
+  }
+
+  /**
+   * Show loading indicator on menu item during operations
+   */
+  showMenuItemLoading(action, show = true) {
+    const actionMap = {
+      'connect-server': '.server-connect-item',
+      'disconnect-server': '.server-disconnect-item',
+      'save-to-server': '.server-save-item',
+      'load-from-server': '.server-load-item',
+    };
+
+    const selector = actionMap[action];
+    if (!selector) return;
+
+    const menuItem = document.querySelector(selector);
+    if (!menuItem) return;
+
+    const span = menuItem.querySelector('span');
+    if (!span) return;
+
+    if (show) {
+      // Add loading state
+      menuItem.classList.add('server-loading');
+
+      // Add spinner
+      let spinner = menuItem.querySelector('.server-loading-spinner');
+      if (!spinner) {
+        spinner = document.createElement('div');
+        spinner.className = 'server-loading-spinner';
+        span.appendChild(spinner);
+      }
+    } else {
+      // Remove loading state
+      menuItem.classList.remove('server-loading');
+
+      // Remove spinner
+      const spinner = menuItem.querySelector('.server-loading-spinner');
+      if (spinner) {
+        spinner.remove();
+      }
+    }
   }
 
   /**
@@ -664,5 +930,13 @@ export class MenuBehavior {
     this.mapsApi = null;
 
     console.log('MenuBehavior: Destroyed');
+  }
+
+  /**
+   * Get the configured server URI 
+   */
+  getServerUri() {
+    const connectionState = ServerConnectionService.getConnectionState();
+    return connectionState?.serverUri || null;
   }
 }

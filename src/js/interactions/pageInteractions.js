@@ -3,9 +3,11 @@
  *
  * Handles interactions for elements outside the canvas (menus, nav, etc.)
  * Incorporates the working KebabMenu UI logic with MenuBehavior business logic.
+ * MM-104: Server Connection Configuration UI
  */
 
 let menuBehavior = null;
+let serverConnectionBehavior = null;
 let menuButton = null;
 let menuElement = null;
 let isMenuOpen = false;
@@ -20,11 +22,17 @@ let dragging = false;
  * @param {Object} interactionController - Controller with behavior references
  */
 export function initializePageInteractions(interactionController) {
-  // Get behavior reference
+  // Get behavior references
   menuBehavior = interactionController.getBehavior('menu');
+  serverConnectionBehavior = interactionController.getBehavior('serverConnection');
 
   if (!menuBehavior) {
     console.warn('PageInteractions: MenuBehavior not available');
+    return;
+  }
+
+  if (!serverConnectionBehavior) {
+    console.warn('PageInteractions: ServerConnectionBehavior not available');
     return;
   }
 
@@ -40,8 +48,11 @@ export function initializePageInteractions(interactionController) {
   // Set up menu interactions
   setupMenuInteractions();
 
+  // Set up server connection modal interactions  
+  setupServerConnectionModalInteractions();
+
   console.log(
-    'PageInteractions: Initialized with MenuBehavior and UI elements',
+    'PageInteractions: Initialized with MenuBehavior, ServerConnectionBehavior, and UI elements',
   );
 }
 
@@ -85,6 +96,11 @@ function setupMenuInteractions() {
       e.target.tagName === 'TEXTAREA' &&
       e.target.classList.contains('note-content')
     ) {
+      return;
+    }
+
+    // Don't close menu when interacting with server connection modal
+    if (e.target.closest('#server-connection-modal')) {
       return;
     }
 
@@ -248,4 +264,19 @@ function setupMobileInteractions() {
   menuElement.addEventListener('touchstart', onTouchStart, { passive: true });
   menuElement.addEventListener('touchmove', onTouchMove, { passive: true });
   menuElement.addEventListener('touchend', onTouchEnd);
+}
+
+/**
+ * Set up server connection modal interactions
+ * MM-104: Server Connection Configuration UI
+ */
+function setupServerConnectionModalInteractions() {
+  // Verify server connection modal elements exist (they should be in index.html)
+  const modal = document.getElementById('server-connection-modal');
+  if (!modal) {
+    console.warn('PageInteractions: Server connection modal not found in HTML');
+    return;
+  }
+
+  console.log('PageInteractions: Server connection modal interactions set up');
 }

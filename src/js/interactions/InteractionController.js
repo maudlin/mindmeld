@@ -13,6 +13,7 @@ import { CanvasBehavior } from './behaviors/CanvasBehavior.js';
 import { ConnectionBehavior } from './behaviors/ConnectionBehavior.js';
 import { ViewportBehavior } from './behaviors/ViewportBehavior.js';
 import { MenuBehavior } from './behaviors/MenuBehavior.js';
+import { ServerConnectionBehavior } from '../features/serverConnection/serverConnectionBehavior.js';
 
 export class InteractionController {
   constructor() {
@@ -66,6 +67,7 @@ export class InteractionController {
       const connectionBehavior = new ConnectionBehavior(this.eventBus);
       const viewportBehavior = new ViewportBehavior(this.eventBus);
       const menuBehavior = new MenuBehavior(this.eventBus);
+      const serverConnectionBehavior = new ServerConnectionBehavior(this.eventBus);
 
       // Register behaviors
       this.registerBehavior('note', noteBehavior);
@@ -75,6 +77,7 @@ export class InteractionController {
       this.registerBehavior('connection', connectionBehavior);
       this.registerBehavior('viewport', viewportBehavior);
       this.registerBehavior('menu', menuBehavior);
+      this.registerBehavior('serverConnection', serverConnectionBehavior);
 
       // Initialize all behaviors
       await noteBehavior.initialize();
@@ -91,6 +94,9 @@ export class InteractionController {
 
       await connectionBehavior.initialize();
       console.log('InteractionController: ConnectionBehavior initialized');
+
+      await serverConnectionBehavior.initialize();
+      console.log('InteractionController: ServerConnectionBehavior initialized');
 
       // MenuBehavior will be initialized later when DOM elements are available
       console.log(
