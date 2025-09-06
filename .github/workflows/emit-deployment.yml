@@ -3,7 +3,7 @@ name: Report deployment to Jira
 on:
   push:
     branches:
-      - main  # change if your prod branch is different
+      - main # change if your prod branch is different
 
 permissions:
   deployments: write
@@ -29,7 +29,7 @@ jobs:
           step: finish
           token: ${{ secrets.GITHUB_TOKEN }}
           env: production
-          status: ${{ job.status }}  # success | failure | cancelled
+          status: ${{ job.status }} # success | failure | cancelled
           deployment_id: ${{ steps.start.outputs.deployment_id }}
-          env_url: https://mind-meld.co   # your live site URL
+          env_url: https://mind-meld.co # your live site URL
           auto_inactive: false

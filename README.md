@@ -35,6 +35,7 @@ Visit `http://localhost:8080` to begin mind mapping.
 ### Mobile & Touch Support ✨
 
 MindMeld features a **fully optimized touch interface** with:
+
 - **Fine-grained pinch zoom** - Smooth, Google Maps-style zooming from 1x to 5x
 - **Multi-touch gestures** - Pan, zoom, and select with natural finger movements
 - **Touch-friendly UI** - Larger targets, context menus, and connection controls

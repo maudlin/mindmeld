@@ -9,10 +9,14 @@
  */
 
 import { createMapsApi } from '../../services/mapsApi.js';
+import { exportToJSON, importFromJSON } from '../../data/dataStore.js';
+import { clearAllState } from '../../data/storageManager.js';
+import { notificationManager } from '../../services/notificationManager.js';
 
 export class MenuBehavior {
-  constructor(eventBus) {
+  constructor(eventBus, canvas = null) {
     this.eventBus = eventBus;
+    this.canvas = canvas;
     this.isInitialized = false;
     this.name = 'MenuBehavior';
 
@@ -66,6 +70,8 @@ export class MenuBehavior {
     );
     this.eventBus.on('server.disconnect', () => this.handleServerDisconnect());
     this.eventBus.on('modal.close', () => this.handleModalClose());
+
+    // Note: Menu actions now handled directly by adapters calling handleMenuAction
   }
 
   /**
@@ -123,9 +129,14 @@ export class MenuBehavior {
   }
 
   /**
-   * Handle menu button click/tap from adapters
+   * Handle menu button click/tap from pageInteractions
    */
   handleMenuButtonAction(inputType) {
+    console.log('MenuBehavior: Menu button action', {
+      inputType,
+      isOpen: this.isOpen,
+    });
+
     if (this.isOpen) {
       this.closeMenu(inputType);
     } else {
@@ -134,32 +145,192 @@ export class MenuBehavior {
   }
 
   /**
-   * Open menu
+   * Set up UI event listeners for menu interactions
+   */
+  setupMenuUIListeners() {
+    if (!this.menuButton || !this.menuElement) {
+      return;
+    }
+
+    // Click-away to close
+    document.addEventListener('click', (e) => {
+      // Don't close menu when clicking on textarea in edit mode
+      if (
+        e.target.tagName === 'TEXTAREA' &&
+        e.target.classList.contains('note-content')
+      ) {
+        return;
+      }
+
+      if (
+        !this.menuElement.contains(e.target) &&
+        !this.menuButton.contains(e.target)
+      ) {
+        this.closeMenu('ui');
+      }
+    });
+
+    // Escape key to close
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.isOpen) {
+        this.closeMenu('keyboard');
+      }
+    });
+
+    // Reposition on resize (desktop <-> mobile)
+    window.addEventListener('resize', () => {
+      if (this.isOpen) {
+        this.positionMenu();
+      }
+    });
+
+    // Mobile swipe-to-close functionality
+    this.setupMobileInteractions();
+  }
+
+  /**
+   * Setup mobile touch interactions for bottom sheet
+   */
+  setupMobileInteractions() {
+    if (!this.menuElement) return;
+
+    const onTouchStart = (e) => {
+      if (window.innerWidth > 720) return;
+      if (!e.target.closest('.kebab-menu-handle')) return;
+
+      this.startY = e.touches[0].clientY;
+      this.currentY = this.startY;
+      this.dragging = true;
+      this.menuElement.style.transition = 'transform 0.2s ease';
+      document.body.style.overflow = 'hidden';
+    };
+
+    const onTouchMove = (e) => {
+      if (!this.dragging) return;
+
+      this.currentY = e.touches[0].clientY;
+      const diff = this.currentY - this.startY;
+
+      if (diff > 0) {
+        this.menuElement.style.transform = `translateY(${diff}px)`;
+      } else {
+        this.menuElement.style.transform = '';
+      }
+    };
+
+    const onTouchEnd = () => {
+      if (!this.dragging) return;
+
+      this.dragging = false;
+      const diff = this.currentY - this.startY;
+      document.body.style.overflow = '';
+
+      if (diff > 50) {
+        this.closeMenu('swipe');
+      } else {
+        this.menuElement.style.transform = '';
+      }
+    };
+
+    this.menuElement.addEventListener('touchstart', onTouchStart, {
+      passive: true,
+    });
+    this.menuElement.addEventListener('touchmove', onTouchMove, {
+      passive: true,
+    });
+    this.menuElement.addEventListener('touchend', onTouchEnd);
+  }
+
+  /**
+   * Open menu - delegates to working KebabMenu logic
    */
   openMenu(inputType) {
     this.isOpen = true;
-
     console.log('MenuBehavior: Opening menu', { inputType });
 
+    // Emit event for any other systems that need to know
     this.eventBus.emit('menu.opened', {
       behavior: this,
       inputType,
       serverConfig: this.getServerStatus(),
     });
+
+    // UI management will be handled by the working KebabMenu code we'll restore
   }
 
   /**
-   * Close menu
+   * Close menu - delegates to working KebabMenu logic
    */
   closeMenu(inputType) {
     this.isOpen = false;
-
     console.log('MenuBehavior: Closing menu', { inputType });
 
+    // Emit event for any other systems that need to know
     this.eventBus.emit('menu.closed', {
       behavior: this,
       inputType,
     });
+
+    // UI management will be handled by the working KebabMenu code we'll restore
+  }
+
+  /**
+   * Position the menu intelligently based on screen size and available space
+   */
+  positionMenu() {
+    if (!this.menuElement || !this.menuButton) {
+      return;
+    }
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const margin = 16;
+    const gap = 8;
+
+    // Mobile: bottom sheet full width
+    if (vw <= 720) {
+      this.menuElement.style.position = 'fixed';
+      this.menuElement.style.top = '';
+      this.menuElement.style.left = '0';
+      this.menuElement.style.right = '0';
+      this.menuElement.style.bottom = '0';
+      this.menuElement.style.width = '100%';
+      this.menuElement.style.borderRadius = '16px 16px 0 0';
+      return;
+    }
+
+    // Desktop/tablet: place near button, never off-screen
+    const rect = this.menuButton.getBoundingClientRect();
+
+    // Temporarily make visible to measure true size
+    const prevVis = this.menuElement.style.visibility;
+    const prevDisp = this.menuElement.style.display;
+    this.menuElement.style.visibility = 'hidden';
+    this.menuElement.style.display = 'block';
+
+    const menuRect = this.menuElement.getBoundingClientRect();
+
+    // Prefer below; flip above if needed
+    let top = rect.bottom + gap;
+    if (top + menuRect.height > vh - margin) {
+      top = rect.top - menuRect.height - gap;
+    }
+
+    // Prefer align-left with button; shift/clamp as needed
+    let left = rect.left;
+    if (left + menuRect.width > vw - margin) {
+      left = vw - menuRect.width - margin;
+    }
+    if (left < margin) left = margin;
+
+    this.menuElement.style.position = 'absolute';
+    this.menuElement.style.top = `${top + window.scrollY}px`;
+    this.menuElement.style.left = `${left + window.scrollX}px`;
+    this.menuElement.style.width = '';
+
+    // Restore styles
+    this.menuElement.style.visibility = prevVis;
+    this.menuElement.style.display = prevDisp || '';
   }
 
   /**
@@ -168,21 +339,35 @@ export class MenuBehavior {
   handleMenuAction(action, inputType) {
     console.log('MenuBehavior: Menu action selected', { action, inputType });
 
+    // Handle async operations without blocking the UI
+    // Note: We don't await these since menu should close immediately
     switch (action) {
       case 'clear-canvas':
-        this.handleClearCanvas(inputType);
+        console.log('MenuBehavior: About to call handleClearCanvas');
+        this.handleClearCanvas(inputType).catch((error) => {
+          console.error('MenuBehavior: Error in clear canvas:', error);
+          console.error('MenuBehavior: Error stack:', error.stack);
+        });
         break;
       case 'import-file':
+      case 'import-from-file':
         this.handleImportFile(inputType);
         break;
       case 'export-file':
+      case 'export-to-file':
         this.handleExportFile(inputType);
         break;
       case 'copy-clipboard':
-        this.handleCopyClipboard(inputType);
+      case 'export-to-clipboard':
+        this.handleCopyClipboard(inputType).catch((error) =>
+          console.error('MenuBehavior: Error in copy clipboard:', error),
+        );
         break;
       case 'paste-clipboard':
-        this.handlePasteClipboard(inputType);
+      case 'import-from-clipboard':
+        this.handlePasteClipboard(inputType).catch((error) =>
+          console.error('MenuBehavior: Error in paste clipboard:', error),
+        );
         break;
       case 'connect-server':
         this.handleConnectServerRequest(inputType);
@@ -201,51 +386,125 @@ export class MenuBehavior {
   /**
    * Handle clear canvas action
    */
-  handleClearCanvas(inputType) {
-    this.eventBus.emit('canvas.clear', {
-      behavior: this,
+  async handleClearCanvas(inputType) {
+    console.log('MenuBehavior: Clearing canvas', {
       inputType,
+      canvas: this.canvas,
     });
+
+    if (!this.canvas) {
+      console.error(
+        'MenuBehavior: Canvas reference is null! Cannot clear canvas.',
+      );
+      notificationManager.error(
+        'Cannot clear canvas - canvas reference missing',
+      );
+      return;
+    }
+
+    const confirmed = await notificationManager.confirm(
+      'Are you sure you want to clear the canvas?',
+    );
+
+    if (confirmed) {
+      clearAllState(this.canvas);
+      notificationManager.success('Canvas cleared successfully!');
+    }
   }
 
   /**
    * Handle import file action
    */
   handleImportFile(inputType) {
-    this.eventBus.emit('file.import', {
-      behavior: this,
-      inputType,
-    });
+    console.log('MenuBehavior: Importing from file', { inputType });
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          if (this.canvas) {
+            importFromJSON(e.target.result, this.canvas);
+            notificationManager.success('Mind map imported successfully!');
+          }
+        } catch (error) {
+          console.error('Error importing file:', error);
+          notificationManager.error(
+            "Error importing file. Please make sure it's a valid JSON file.",
+          );
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
   }
 
   /**
    * Handle export file action
    */
   handleExportFile(inputType) {
-    this.eventBus.emit('file.export', {
-      behavior: this,
-      inputType,
-    });
+    console.log('MenuBehavior: Exporting to file', { inputType });
+
+    try {
+      const json = exportToJSON();
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'mindmap_export.json';
+      a.click();
+      URL.revokeObjectURL(url);
+
+      notificationManager.info(
+        "Download started - check your browser's download area",
+      );
+    } catch (error) {
+      console.error('Error exporting file:', error);
+      notificationManager.error('Error exporting file. Please try again.');
+    }
   }
 
   /**
    * Handle copy to clipboard action
    */
-  handleCopyClipboard(inputType) {
-    this.eventBus.emit('clipboard.copy', {
-      behavior: this,
-      inputType,
-    });
+  async handleCopyClipboard(inputType) {
+    console.log('MenuBehavior: Copying to clipboard', { inputType });
+
+    try {
+      const json = exportToJSON();
+      await navigator.clipboard.writeText(json);
+      notificationManager.success('Mind map exported to clipboard!');
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+      notificationManager.error(
+        'Failed to copy to clipboard. Please try again.',
+      );
+    }
   }
 
   /**
    * Handle paste from clipboard action
    */
-  handlePasteClipboard(inputType) {
-    this.eventBus.emit('clipboard.paste', {
-      behavior: this,
-      inputType,
-    });
+  async handlePasteClipboard(inputType) {
+    console.log('MenuBehavior: Pasting from clipboard', { inputType });
+
+    try {
+      const text = await navigator.clipboard.readText();
+      if (this.canvas) {
+        importFromJSON(text, this.canvas);
+        notificationManager.success('Mind map imported from clipboard!');
+      }
+    } catch (error) {
+      console.error('Error importing from clipboard:', error);
+      notificationManager.error(
+        'Error importing from clipboard. Please make sure the clipboard contains valid JSON data.',
+      );
+    }
   }
 
   /**

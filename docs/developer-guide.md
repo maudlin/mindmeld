@@ -66,40 +66,46 @@ src/js/
 MindMeld uses **smart branch naming** to automatically handle version bumping and cache busting. When you push certain types of branches, the system automatically increments the version and updates cache-busting parameters.
 
 #### 🚀 **Feature Branches** → Minor Version Bump
+
 ```bash
 feat/touch-pinch-zoom-fine-grained-control    # ✅ 0.11.0 → 0.12.0
 feature/new-markdown-editor                   # ✅ 0.11.0 → 0.12.0
 ```
 
-#### 🐛 **Bugfix Branches** → Patch Version Bump  
+#### 🐛 **Bugfix Branches** → Patch Version Bump
+
 ```bash
 fix/touch-pinch-zoom-fine-grained-control     # ✅ 0.11.0 → 0.11.1
 bugfix/connection-drag-performance             # ✅ 0.11.0 → 0.11.1
 ```
 
 #### ⚡ **Performance Branches** → Patch Version Bump
+
 ```bash
 perf/canvas-rendering-optimization             # ✅ 0.11.0 → 0.11.1
 performance/memory-leak-fixes                  # ✅ 0.11.0 → 0.11.1
 ```
 
 #### 💥 **Breaking Changes** → Major Version Bump
+
 ```bash
 major/new-data-format                          # ✅ 0.11.0 → 1.0.0
 breaking/api-restructure                       # ✅ 0.11.0 → 1.0.0
 ```
 
 #### 🎯 **Explicit Version Control** → Custom Bump Type
+
 ```bash
 feat/major/breaking-api-changes                # ✅ 0.11.0 → 1.0.0 (feat + explicit major)
-fix/minor/significant-refactor                 # ✅ 0.11.0 → 0.12.0 (fix + explicit minor)  
+fix/minor/significant-refactor                 # ✅ 0.11.0 → 0.12.0 (fix + explicit minor)
 perf/patch/micro-optimization                  # ✅ 0.11.0 → 0.11.1 (perf + explicit patch)
 ```
 
 #### 🔧 **Other Branches** → No Version Bump
+
 ```bash
 chore/update-dependencies                      # ⚪ No version change
-docs/update-readme                            # ⚪ No version change  
+docs/update-readme                            # ⚪ No version change
 test/add-e2e-coverage                         # ⚪ No version change
 refactor/cleanup-utils                        # ⚪ No version change
 ```
@@ -118,8 +124,9 @@ refactor/cleanup-utils                        # ⚪ No version change
 6. **Normal pre-push checks** run (format, lint, tests)
 
 **What Gets Updated:**
+
 - `package.json` version field
-- HTML meta tags (`app-version`, `build-date`)  
+- HTML meta tags (`app-version`, `build-date`)
 - Cache busting parameters (`?v=0.12.0`)
 - Automatic commit with version changes
 
@@ -154,18 +161,20 @@ refactor/cleanup-utils                        # ⚪ No version change
 ### Manual Override & Examples
 
 **Skip Auto-Versioning:**
+
 ```bash
 # Skip versioning for this push
 git push --no-verify
 
 # Manual version bump
 npm run version:patch   # or minor/major
-git add package.json src/index.html  
+git add package.json src/index.html
 git commit -m "chore: manual version bump"
 git push
 ```
 
 **Typical Feature Development:**
+
 ```bash
 # Start feature
 git checkout -b feat/dark-mode-toggle
@@ -176,12 +185,13 @@ git push -u origin feat/dark-mode-toggle
 ```
 
 **Typical Bugfix:**
-```bash  
+
+```bash
 # Start bugfix
 git checkout -b fix/zoom-button-alignment
 # ... make changes ...
 git commit -m "fix: correct zoom button positioning in mobile"
-git push -u origin fix/zoom-button-alignment  
+git push -u origin fix/zoom-button-alignment
 # → Auto-bumps to 0.11.1, creates PR with version included
 ```
 
@@ -226,6 +236,7 @@ gh pr list --state open --json number,title,files
 ```
 
 **High-Risk Conflict Areas:**
+
 - Core testing infrastructure files (helpers, page objects)
 - `package.json` - Scripts and dependencies
 - Any files in `src/js/core/` - Core architecture
@@ -241,6 +252,7 @@ gh pr list --state open --json number,title,files
 #### Branch Protection Error Resolution
 
 **"Branch is not up to date" Error:**
+
 ```bash
 git checkout your-branch
 git fetch origin
@@ -250,6 +262,7 @@ git push --force-with-lease origin your-branch
 ```
 
 **"Linear history required" Error:**
+
 ```bash
 # Use rebase instead of merge
 git checkout your-branch
@@ -258,6 +271,7 @@ git push --force-with-lease origin your-branch
 ```
 
 **"Required status checks failed" Error:**
+
 ```bash
 # Run checks locally first
 npm test && npm run test:e2e
@@ -272,6 +286,7 @@ git push origin your-branch
 #### Complex Rebase Scenarios
 
 **Multiple Conflicted Commits:**
+
 ```bash
 # Start interactive rebase
 git rebase -i origin/main
@@ -287,6 +302,7 @@ git push --force-with-lease origin your-branch
 ```
 
 **Preserving Important Work:**
+
 ```bash
 # Create backup branch first
 git checkout your-branch
@@ -301,6 +317,7 @@ git rebase origin/main
 #### Team Communication Patterns
 
 **PR Dependency Comments:**
+
 ```
 ## Dependencies
 This PR depends on #123 (E2E infrastructure improvements) merging first.
@@ -313,6 +330,7 @@ This PR depends on #123 (E2E infrastructure improvements) merging first.
 ```
 
 **Coordinating Overlapping Work:**
+
 ```
 @teammate I see we're both modifying `CanvasPage.js`.
 
@@ -389,11 +407,13 @@ User Interaction → Adapter (Input Detection) → Behavior (Business Logic) →
 **Purpose**: Detect platform-specific input patterns and delegate to appropriate behaviors
 
 **DO**:
+
 - ✅ Detect input events (clicks, taps, drags, gestures)
 - ✅ Identify interaction targets (note, canvas, connector)
 - ✅ Call appropriate behavior methods with normalized parameters
 
 **DON'T**:
+
 - ❌ **Never** emit business events directly
 - ❌ **Never** contain business logic (selection, editing, creation)
 - ❌ **Never** manipulate DOM or application state
@@ -434,12 +454,14 @@ handleDoubleTap(touch) {
 **Purpose**: Handle interaction logic and coordinate with services
 
 **DO**:
+
 - ✅ Implement all business logic for interaction types
 - ✅ Emit events to EventBus for service coordination
 - ✅ Manage interaction state and validation
 - ✅ Coordinate with services (noteManager, connectionManager, etc.)
 
 **DON'T**:
+
 - ❌ **Never** handle platform-specific input events directly
 - ❌ **Never** contain input detection logic
 
@@ -472,12 +494,14 @@ handleNoteDoubleClick(noteElement, inputEvent, inputType) {
 ### Platform-Specific Optimizations
 
 #### DesktopAdapter Specializations
+
 - Precise pointer coordinates
 - Right-click context menus
 - Hover states and feedback
 - Keyboard shortcuts
 
 #### TouchAdapter Specializations
+
 - Hit target expansion (20px) for mobile
 - Multi-touch gesture recognition (pinch, two-finger pan)
 - Visual touch feedback and jiggle animations
@@ -500,15 +524,15 @@ class TouchAdapter {
   touchStart: (event) => {
     const touch = event.touches[0];
     const now = Date.now();
-    
+
     // Double-tap detection
-    if (this.lastTap && 
+    if (this.lastTap &&
         (now - this.lastTap.time) <= 300 &&
         distance <= 30) {
       this.handleDoubleTap(touch);
       return;
     }
-    
+
     // Long press timer
     this.longPressTimer = setTimeout(() => {
       this.handleLongPress(touch);
@@ -518,6 +542,7 @@ class TouchAdapter {
 ```
 
 **Benefits**:
+
 - ✅ **Single source of truth** for touch input (matches DesktopAdapter pattern)
 - ✅ **No competing gesture systems** or event bus complexity
 - ✅ **Clean console logs** - one user gesture = one detection message
@@ -527,9 +552,11 @@ class TouchAdapter {
 ### Architecture Testing Strategy
 
 #### Adapter Tests
+
 Focus on input detection - test that correct behavior methods are called with correct parameters
 
 #### Behavior Tests
+
 Focus on business logic - test state management, event emission, and service coordination
 
 ### Common Anti-Patterns to Avoid
@@ -608,8 +635,10 @@ const ALLOWED_TAGS = ['h1', 'h2', 'p', 'ul', 'li', 'em', 'strong'];
 ```javascript
 export function getCurrentMarkdownContent(noteContent) {
   // NEW: Check if noteContent itself is a textarea (revolutionary architecture)
-  if (noteContent.tagName === 'TEXTAREA' && 
-      noteContent.classList.contains('edit-textarea')) {
+  if (
+    noteContent.tagName === 'TEXTAREA' &&
+    noteContent.classList.contains('edit-textarea')
+  ) {
     return noteContent.value; // Direct access to textarea value
   }
 
@@ -619,6 +648,7 @@ export function getCurrentMarkdownContent(noteContent) {
 ```
 
 **Why this matters:**
+
 - **Edit mode**: Returns raw text user is typing (markdown)
 - **View mode**: Returns stored markdown from dataset, NOT rendered HTML
 - **Never returns HTML**: Prevents the MM-174 corruption cycle
@@ -628,16 +658,19 @@ export function getCurrentMarkdownContent(noteContent) {
 MindMeld implements a breakthrough **"element replacement"** architecture for seamless edit/view mode transitions:
 
 **View Mode**:
+
 ```html
 <div class="note-content view-mode">Rendered HTML content</div>
 ```
 
 **Edit Mode**:
+
 ```html
 <textarea class="note-content edit-mode edit-textarea">Raw markdown</textarea>
 ```
 
 **Key Benefits**:
+
 - ✅ **Event delegation works**: Textarea IS .note-content, so all existing click handlers work
 - ✅ **Focus management**: No interference from parent divs or other UI elements
 - ✅ **Clean transitions**: Element replacement creates seamless view/edit switching
@@ -648,9 +681,11 @@ MindMeld implements a breakthrough **"element replacement"** architecture for se
 Multiple layers prevent the corruption cycle where markdown becomes HTML:
 
 **Original Problem**:
+
 - `# H1` (markdown) → `<h1>H1</h1>` (HTML in storage) → `H1` (plain text after defanging)
 
 **Prevention Layers**:
+
 1. **Content Extraction**: `getCurrentMarkdownContent()` never returns HTML
 2. **Storage Validation**: Only markdown persisted to localStorage
 3. **Render Separation**: HTML generation happens only at display time
@@ -659,11 +694,13 @@ Multiple layers prevent the corruption cycle where markdown becomes HTML:
 ### Security Hardening
 
 #### Input Validation
+
 - **Size limits**: 10KB maximum prevents DoS attacks
 - **Type coercion**: All input safely converted to string
 - **Null handling**: Graceful handling of null/undefined input
 
 #### XSS Protection
+
 - **HTML sanitization**: DOMParser with script/style removal
 - **Attribute stripping**: No attributes ever output in final HTML
 - **URI scheme filtering**: Dangerous URIs removed from ANY context
@@ -683,20 +720,23 @@ result = result.replace(DANGEROUS_URI_SCHEMES, '');
 ### Integration Points
 
 **Data Store** (`src/js/data/dataStore.js`):
+
 ```javascript
 export function getCurrentState() {
-  const notes = Array.from(document.querySelectorAll('.note')).map((noteElement) => {
-    const noteContent = noteElement.querySelector('.note-content');
-    
-    // CRITICAL: Use getCurrentMarkdownContent, never innerHTML
-    const content = getCurrentMarkdownContent(noteContent) || '';
-    
-    return {
-      id: noteElement.id,
-      content: content, // Always markdown, never HTML
-      // ... position data
-    };
-  });
+  const notes = Array.from(document.querySelectorAll('.note')).map(
+    (noteElement) => {
+      const noteContent = noteElement.querySelector('.note-content');
+
+      // CRITICAL: Use getCurrentMarkdownContent, never innerHTML
+      const content = getCurrentMarkdownContent(noteContent) || '';
+
+      return {
+        id: noteElement.id,
+        content: content, // Always markdown, never HTML
+        // ... position data
+      };
+    },
+  );
 }
 ```
 
@@ -710,10 +750,12 @@ export function getCurrentState() {
 ### Testing Requirements
 
 **Regression Tests** (`tests/unit/data/refreshPersistenceRegression.test.js`):
+
 - **Purpose**: Prevent return of MM-174 data corruption bug
 - **Critical**: These tests MUST PASS always
 
 **Security Tests** (`tests/unit/features/markdown/defangPipeline.test.js`):
+
 - XSS vector prevention (15+ attack patterns tested)
 - Size limit enforcement
 - Dangerous URI scheme removal

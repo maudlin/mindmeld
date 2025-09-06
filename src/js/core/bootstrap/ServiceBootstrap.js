@@ -12,8 +12,6 @@ import { connectionManager } from '../../features/connection/connectionManager.j
 import { updateConnectionInDataStore } from '../../data/dataStore.js';
 import { ColorPickerEvents } from '../../features/colorPicker/colorPickerEvents.js';
 import { NoteColorApplication } from '../../features/note/noteColorApplication.js';
-import { KebabMenu } from '../../features/kebabMenu/kebabMenu.js';
-import { KebabMenuEvents } from '../../features/kebabMenu/kebabMenuEvents.js';
 import { notificationManager } from '../../services/notificationManager.js';
 import { ZoomStateService } from '../../services/zoomStateService.js';
 import { CanvasStateService } from '../../services/canvasStateService.js';
@@ -118,12 +116,8 @@ export class ServiceBootstrap extends BaseBootstrap {
 
   async initializeMenuServices() {
     try {
-      const kebabMenu = new KebabMenu();
-      kebabMenu.initialize();
-
-      new KebabMenuEvents();
-
-      log('ServiceBootstrap: Menu services initialized');
+      // Menu services now handled by MenuBehavior through InteractionBootstrap
+      log('ServiceBootstrap: Menu services delegated to MenuBehavior');
     } catch (error) {
       console.error(
         'ServiceBootstrap: Menu service initialization failed:',

@@ -511,31 +511,7 @@ export class TouchAdapter extends BaseAdapter {
 
     const target = this.expandTouchTarget(touch);
 
-    // Check for kebab menu button interaction (but not during double tap)
-    if (
-      (target.classList.contains('kebab-menu-button') ||
-        target.closest('.kebab-menu-button')) &&
-      !this.isDoubleTapInProgress
-    ) {
-      console.log(
-        'TouchAdapter: Kebab menu button tap detected, delegating to MenuBehavior',
-      );
-      this.handleMenuButtonInteraction();
-      return;
-    }
-
-    // Check for kebab menu item interaction (but not during double tap)
-    if (
-      (target.classList.contains('kebab-menu-item') ||
-        target.closest('.kebab-menu-item')) &&
-      !this.isDoubleTapInProgress
-    ) {
-      console.log(
-        'TouchAdapter: Kebab menu item tap detected, delegating to MenuBehavior',
-      );
-      this.handleMenuItemInteraction(target);
-      return;
-    }
+    // Menu interactions are handled by pageInteractions.js since menu is outside canvas
 
     // Check for ghost connector interaction
     if (target.classList.contains('ghost-connector')) {
@@ -685,43 +661,7 @@ export class TouchAdapter extends BaseAdapter {
     this.connectionBehavior.startTouchDrag(sourceNote, touchEvent, 'touch');
   }
 
-  /**
-   * Handle kebab menu button interaction - delegate to MenuBehavior
-   */
-  handleMenuButtonInteraction() {
-    if (!this.menuBehavior) {
-      console.warn(
-        'TouchAdapter: MenuBehavior not available for kebab menu interaction',
-      );
-      return;
-    }
-
-    console.log(
-      'TouchAdapter: Delegating kebab menu button action to MenuBehavior',
-    );
-    this.menuBehavior.handleMenuButtonAction('touch');
-  }
-
-  /**
-   * Handle kebab menu item interaction - delegate to MenuBehavior
-   */
-  handleMenuItemInteraction(target) {
-    if (!this.menuBehavior) {
-      console.warn(
-        'TouchAdapter: MenuBehavior not available for kebab menu item interaction',
-      );
-      return;
-    }
-
-    const menuItem = target.closest('.kebab-menu-item');
-    const action = menuItem?.getAttribute('data-action') || undefined;
-
-    console.log(
-      'TouchAdapter: Delegating kebab menu item action to MenuBehavior',
-      { action },
-    );
-    this.menuBehavior.handleMenuAction(action, 'touch');
-  }
+  // Menu interaction methods removed - now handled by pageInteractions.js
 
   /**
    * Handle note tap - check for connection mode first, then delegate to NoteBehavior

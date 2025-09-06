@@ -92,8 +92,10 @@ export class InteractionController {
       await connectionBehavior.initialize();
       console.log('InteractionController: ConnectionBehavior initialized');
 
-      await menuBehavior.initialize();
-      console.log('InteractionController: MenuBehavior initialized');
+      // MenuBehavior will be initialized later when DOM elements are available
+      console.log(
+        'InteractionController: MenuBehavior created, will initialize later',
+      );
 
       // ViewportBehavior needs canvas and zoomDisplay - will be initialized later during bootstrap
       console.log(
@@ -129,6 +131,25 @@ export class InteractionController {
    */
   getBehavior(name) {
     return this.behaviors.get(name);
+  }
+
+  /**
+   * Initialize MenuBehavior with canvas reference
+   * Called after canvas is available during bootstrap
+   */
+  async initializeMenuBehavior(canvas) {
+    const menuBehavior = this.getBehavior('menu');
+    if (menuBehavior) {
+      menuBehavior.canvas = canvas;
+      await menuBehavior.initialize(); // Initialize now that DOM elements are available
+      console.log(
+        'InteractionController: MenuBehavior initialized with canvas and DOM elements',
+      );
+    } else {
+      console.warn(
+        'InteractionController: MenuBehavior not found for canvas initialization',
+      );
+    }
   }
 
   /**

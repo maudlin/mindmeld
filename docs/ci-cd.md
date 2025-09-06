@@ -70,6 +70,7 @@ npm run test:unit
 ```
 
 **CI Strategy**: Only unit tests run in CI for fast feedback. E2E tests run locally during development.
+
 - **Unit tests**: Fast, comprehensive logic coverage
 - **E2E tests**: Local development only (browser installation overhead avoided)
 

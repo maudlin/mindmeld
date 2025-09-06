@@ -17,7 +17,7 @@ The system uses the **CapabilityDetector** (`src/js/interactions/capabilities/de
 - **TouchAdapter** (`src/js/interactions/adapters/TouchAdapter.js`) for touch-first devices:
   - **Native Gesture Detection**: Single source of truth for all touch gesture recognition (like DesktopAdapter)
   - **Direct Behavior Delegation**: Clean routing to behaviors without intermediate event bus complexity
-  - **Canvas Integration**: Direct integration with zoom, pan, and selection systems  
+  - **Canvas Integration**: Direct integration with zoom, pan, and selection systems
   - **Visual Feedback**: Touch-optimized visual responses including jiggle animations
   - **Enhanced Ghost Connectors**: Tap-to-tap connection creation with visual connection mode
 
@@ -65,18 +65,18 @@ setupNativeTouchHandlers() {
 touchStart: (event) => {
   const touch = event.touches[0];
   const now = Date.now();
-  
+
   // Double-tap detection with proper timing
-  if (this.lastTap && 
+  if (this.lastTap &&
       (now - this.lastTap.time) <= 300 &&
       distance <= 30) {
     this.handleDoubleTap(touch);
     return;
   }
-  
+
   // Store tap for potential double-tap
   this.lastTap = { time: now, x: touch.clientX, y: touch.clientY };
-  
+
   // Start long press timer
   this.longPressTimer = setTimeout(() => {
     this.handleLongPress(touch);
@@ -87,7 +87,7 @@ touchStart: (event) => {
 **Benefits of Native Approach**:
 
 - ✅ **Single source of truth** (like DesktopAdapter pattern)
-- ✅ **No competing gesture systems** or event bus complexity  
+- ✅ **No competing gesture systems** or event bus complexity
 - ✅ **Clean console logs** - one gesture = one log message
 - ✅ **Direct behavior delegation** without intermediate layers
 - ✅ **Easier debugging** - single input detection point
@@ -112,7 +112,7 @@ touchStart: (event) => {
 The TouchAdapter uses a **direct gesture detection system** (no intermediate layers):
 
 1. **Touch Start**: Direct native touch event handling with timing detection
-2. **Movement Detection**: Real-time distance calculation for drag threshold detection  
+2. **Movement Detection**: Real-time distance calculation for drag threshold detection
 3. **Long-Press Detection**: Native setTimeout-based detection for note movement prep
 4. **Gesture Classification**: Direct routing based on touch patterns and timing
 5. **Behavior Delegation**: Clean delegation to appropriate behaviors (NoteBehavior, DragBehavior, etc.)
