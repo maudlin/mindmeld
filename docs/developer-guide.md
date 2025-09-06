@@ -374,6 +374,8 @@ npm run deps:check          # Dependency health check
 
 MindMeld uses a **clean separation** between input detection and business logic through the **Adapter-Behavior pattern**. This architecture eliminates code duplication while preserving platform-specific optimizations.
 
+**Domain Separation**: The system separates **Canvas interactions** (handled by adapters) from **Page UI interactions** (handled by pageInteractions.js), ensuring adapters focus purely on complex canvas gestures while page UI uses simple DOM event delegation.
+
 ### Core Principles
 
 #### 1. Single Responsibility Separation
@@ -486,10 +488,21 @@ handleNoteDoubleClick(noteElement, inputEvent, inputType) {
 
 ### Interaction Types and Ownership
 
+#### Canvas Domain (Adapters → Behaviors)
 - **Note Interactions** → `NoteBehavior` (selection, editing, movement)
 - **Canvas Interactions** → `CanvasBehavior` (note creation, selection clearing)
 - **Drag Operations** → `DragBehavior` (note movement, connection updates)
 - **Multi-Selection** → `SelectionBoxBehavior` (selection box creation, multi-select)
+
+#### Page UI Domain (pageInteractions.js → Behaviors)
+- **Menu Interactions** → `pageInteractions.js` → `MenuBehavior` (menu actions, business logic)
+- **Navigation Elements** → `pageInteractions.js` (buttons, settings outside canvas)
+
+### Domain Separation
+
+**Canvas Adapters** handle only canvas-based interactions and do NOT interact with page UI elements like menus, navigation, or buttons outside the canvas.
+
+**pageInteractions.js** handles page UI elements and delegates business logic to appropriate behaviors like MenuBehavior.
 
 ### Platform-Specific Optimizations
 
