@@ -125,7 +125,7 @@ export class ServerClient {
 
         // Try saving again with the updated ETag
         log('ServerClient: Retrying save after ETag refresh...');
-        return await this.updateExistingMap(data);
+        return await this.saveState();
       } catch (retryError) {
         log(
           'ServerClient: Failed to resolve ETag conflict:',
