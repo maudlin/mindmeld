@@ -161,7 +161,6 @@ export class ServerConnectionBehavior {
         );
       }
 
-
       // Add a status indicator or help text to make it clearer
       this.addConnectionStatusInfo();
     } else {
@@ -182,7 +181,6 @@ export class ServerConnectionBehavior {
         this.connectButton.removeAttribute('aria-label');
       }
 
-
       // Remove any connection status info
       this.removeConnectionStatusInfo();
     }
@@ -201,15 +199,27 @@ export class ServerConnectionBehavior {
     // Create status info element
     const statusInfo = document.createElement('div');
     statusInfo.className = 'connection-status-info';
-    statusInfo.innerHTML = `
-      <div class="status-indicator">
-        <span class="status-dot connected"></span>
-        <span class="status-text">Connected to server</span>
-      </div>
-      <div class="status-help">
-        You can disconnect from this server or close this dialog to continue using the app.
-      </div>
-    `;
+    // Create status indicator safely
+    const statusIndicator = document.createElement('div');
+    statusIndicator.className = 'status-indicator';
+
+    const statusDot = document.createElement('span');
+    statusDot.className = 'status-dot connected';
+
+    const statusText = document.createElement('span');
+    statusText.className = 'status-text';
+    statusText.textContent = 'Connected to server';
+
+    statusIndicator.appendChild(statusDot);
+    statusIndicator.appendChild(statusText);
+
+    const statusHelp = document.createElement('div');
+    statusHelp.className = 'status-help';
+    statusHelp.textContent =
+      'You can disconnect from this server or close this dialog to continue using the app.';
+
+    statusInfo.appendChild(statusIndicator);
+    statusInfo.appendChild(statusHelp);
 
     // Insert the status info after the form input
     const formGroup = document.querySelector('.form-group');
@@ -262,7 +272,6 @@ export class ServerConnectionBehavior {
       e.preventDefault();
       this.handleConnect();
     };
-
 
     // Close button only (no click-outside-to-close for better UX)
     const handleCloseClick = (e) => {
@@ -318,12 +327,22 @@ export class ServerConnectionBehavior {
   showStatusMessage(message, type = 'info') {
     if (!this.statusElement) return;
 
-    this.statusElement.innerHTML = `
-      <div class="status-message status-${type}">
-        ${type === 'info' ? '<div class="spinner"></div>' : ''}
-        <span>${message}</span>
-      </div>
-    `;
+    // Create elements safely to avoid innerHTML security issues
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `status-message status-${type}`;
+
+    if (type === 'info') {
+      const spinner = document.createElement('div');
+      spinner.className = 'spinner';
+      messageDiv.appendChild(spinner);
+    }
+
+    const span = document.createElement('span');
+    span.textContent = message;
+    messageDiv.appendChild(span);
+
+    this.statusElement.innerHTML = '';
+    this.statusElement.appendChild(messageDiv);
     this.statusElement.style.display = 'block';
   }
 
@@ -355,7 +374,10 @@ export class ServerConnectionBehavior {
 
     // Validate URI format
     if (!ServerConnectionService.validateServerUri(uri)) {
-      this.showStatusMessage('Please enter a valid HTTPS URL or HTTP localhost (e.g., https://api.example.com or http://localhost:3000)', 'error');
+      this.showStatusMessage(
+        'Please enter a valid HTTPS URL or HTTP localhost (e.g., https://api.example.com or http://localhost:3000)',
+        'error',
+      );
       return;
     }
 
@@ -373,11 +395,13 @@ export class ServerConnectionBehavior {
 
       if (!testResult.success) {
         // Show detailed error from test
-        const errorMessage = testResult.error || 'Connection test failed. Please check the server URL and try again.';
+        const errorMessage =
+          testResult.error ||
+          'Connection test failed. Please check the server URL and try again.';
         this.showStatusMessage(errorMessage, 'error');
-        
+
         ServerConnectionService.setConnectionStatus('error');
-        
+
         // Keep modal open on test failure
         this.isConnecting = false;
         this.updateConnectButtonState(false);
@@ -386,10 +410,13 @@ export class ServerConnectionBehavior {
       }
 
       // Phase 2: Connection Success - proceed with actual connection
-      this.showStatusMessage('Connection test successful! Connecting...', 'info');
-      
+      this.showStatusMessage(
+        'Connection test successful! Connecting...',
+        'info',
+      );
+
       // Small delay to show the success message
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Set server URI and update status
       const success = ServerConnectionService.setServerUri(uri);
@@ -397,7 +424,7 @@ export class ServerConnectionBehavior {
       if (success) {
         ServerConnectionService.setConnectionStatus('connected');
         this.showStatusMessage('Successfully connected to server!', 'success');
-        
+
         // Show success for a moment before closing
         setTimeout(() => {
           this.hideModal();
@@ -409,7 +436,10 @@ export class ServerConnectionBehavior {
     } catch (error) {
       console.error('ServerConnectionBehavior: Connect error:', error);
       ServerConnectionService.setConnectionStatus('error');
-      this.showStatusMessage('Failed to connect to server. Please check the URL and try again.', 'error');
+      this.showStatusMessage(
+        'Failed to connect to server. Please check the URL and try again.',
+        'error',
+      );
     } finally {
       this.isConnecting = false;
       this.updateConnectButtonState(false);

@@ -1456,8 +1456,12 @@ line.connection-line {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Server Modal Overlay - Similar to notification modal pattern */
@@ -1478,7 +1482,7 @@ line.connection-line {
   transition: opacity 0.2s ease;
 }
 
-.server-modal[style*="display: none"] {
+.server-modal[style*='display: none'] {
   opacity: 0;
   pointer-events: none;
 }
@@ -1571,7 +1575,9 @@ line.connection-line {
   border-radius: 8px;
   font-size: 0.875rem;
   font-family: var(--font-family);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
   box-sizing: border-box;
 }
 
@@ -1816,7 +1822,7 @@ line.connection-line {
     background: #e74c3c;
     border-color: #e74c3c;
   }
-  
+
   .btn.disconnect:hover:not(:disabled) {
     background: #c0392b;
     border-color: #c0392b;
@@ -1914,13 +1920,23 @@ line.connection-line {
 }
 
 @keyframes pulse-orange {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 @keyframes pulse-red {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 /* Loading Spinner */
@@ -1935,8 +1951,12 @@ line.connection-line {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Server Menu Item States */

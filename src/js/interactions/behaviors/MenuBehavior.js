@@ -94,33 +94,30 @@ export class MenuBehavior {
     try {
       // Load from ServerConnectionService which handles localStorage persistence
       const storedUri = ServerConnectionService.loadServerUriFromStorage();
-      
+
       if (storedUri) {
         // Update ServerConnectionService state with stored URI
         ServerConnectionService.setServerUri(storedUri);
-        
+
         // Update our internal state
         this.serverConfig.url = storedUri;
-        
+
         // Initialize API client but don't mark as connected yet
         this.initializeApiClient(storedUri);
-        
+
         console.log('MenuBehavior: Loaded server URI from storage:', storedUri);
-        
+
         // Test connection in background to update status accurately
         this.testStoredConnection(storedUri);
       }
-      
+
       // Migrate old localStorage data if it exists
       this.migrateOldServerConfig();
     } catch (error) {
-      console.warn(
-        'MenuBehavior: Failed to load server config',
-        error,
-      );
+      console.warn('MenuBehavior: Failed to load server config', error);
     }
   }
-  
+
   /**
    * Test stored connection and update status
    * @private
@@ -139,9 +136,12 @@ export class MenuBehavior {
         ServerConnectionService.setConnectionStatus('error');
         this.serverConfig.connected = false;
         this.serverConfig.connecting = false;
-        console.log('MenuBehavior: Stored connection failed:', testResult.error);
+        console.log(
+          'MenuBehavior: Stored connection failed:',
+          testResult.error,
+        );
       }
-      
+
       // Update UI after connection test
       this.updateMenuUI();
     } catch (error) {
@@ -152,7 +152,7 @@ export class MenuBehavior {
       this.updateMenuUI();
     }
   }
-  
+
   /**
    * Migrate old localStorage config to ServerConnectionService
    * @private
@@ -163,7 +163,9 @@ export class MenuBehavior {
       if (oldStored) {
         const config = JSON.parse(oldStored);
         if (config.url && !ServerConnectionService.getServerUri()) {
-          console.log('MenuBehavior: Migrating old server config to ServerConnectionService');
+          console.log(
+            'MenuBehavior: Migrating old server config to ServerConnectionService',
+          );
           ServerConnectionService.setServerUri(config.url);
           this.serverConfig.url = config.url;
           this.initializeApiClient(config.url);
@@ -187,10 +189,7 @@ export class MenuBehavior {
         ServerConnectionService.setServerUri(this.serverConfig.url);
       }
     } catch (error) {
-      console.warn(
-        'MenuBehavior: Failed to save server config',
-        error,
-      );
+      console.warn('MenuBehavior: Failed to save server config', error);
     }
   }
 
@@ -420,11 +419,9 @@ export class MenuBehavior {
 
     // Show loading indicator for server operations
     if (
-      [
-        'connect-server',
-        'disconnect-server',
-        'load-from-server',
-      ].includes(action)
+      ['connect-server', 'disconnect-server', 'load-from-server'].includes(
+        action,
+      )
     ) {
       this.showMenuItemLoading(action, true);
     }
@@ -781,10 +778,10 @@ export class MenuBehavior {
     try {
       // Use ServerConnectionService to properly disconnect
       const success = ServerConnectionService.setServerUri(null);
-      
+
       if (success) {
         ServerConnectionService.setConnectionStatus('disconnected');
-        
+
         // Update local state to match
         this.serverConfig.url = null;
         this.serverConfig.connected = false;
@@ -798,7 +795,7 @@ export class MenuBehavior {
           behavior: this,
           inputType,
         });
-        
+
         // Show success notification
         notificationManager.success('Disconnected from server successfully');
         console.log('MenuBehavior: Successfully disconnected from server');
@@ -917,8 +914,8 @@ export class MenuBehavior {
       'load-from-server': '.server-load-item',
     };
 
+    if (!Object.hasOwn(actionMap, action)) return;
     const selector = actionMap[action];
-    if (!selector) return;
 
     const menuItem = document.querySelector(selector);
     if (!menuItem) return;

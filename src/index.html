@@ -31,8 +31,8 @@
       href="img/icon16.png"
       media="(prefers-color-scheme: dark)"
     />
-    <meta name="app-version" content="1.0.1">
-    <meta name="build-date" content="2025-09-07">
+    <meta name="app-version" content="1.0.1" />
+    <meta name="build-date" content="2025-09-07" />
   </head>
   <body>
     <nav id="navbar">
@@ -175,14 +175,14 @@
           tabindex="0"
         >
           <span class="server-menu-text">Connect to Server...</span>
-          <div class="server-status-dot" style="display: none;"></div>
+          <div class="server-status-dot" style="display: none"></div>
         </div>
         <div
           class="kebab-menu-item server-disconnect-item"
           role="menuitem"
           data-action="disconnect-server"
           tabindex="0"
-          style="display: none;"
+          style="display: none"
         >
           <span>Disconnect from Server</span>
         </div>
@@ -191,7 +191,7 @@
           role="menuitem"
           data-action="load-from-server"
           tabindex="0"
-          style="display: none;"
+          style="display: none"
         >
           <span>Load from Server</span>
         </div>
@@ -210,7 +210,7 @@
     <div
       id="server-connection-modal"
       class="server-modal"
-      style="display: none;"
+      style="display: none"
       role="dialog"
       aria-labelledby="server-modal-title"
       aria-modal="true"
@@ -242,7 +242,8 @@
             <label for="server-uri-input" class="form-label">
               Server URL
               <span class="form-help"
-                >Enter the HTTPS URL of your MindMeld server (HTTP allowed for localhost)</span
+                >Enter the HTTPS URL of your MindMeld server (HTTP allowed for
+                localhost)</span
               >
             </label>
             <input
@@ -255,7 +256,11 @@
           </div>
 
           <div class="form-actions">
-            <button type="submit" id="connect-server-btn" class="btn btn-primary">
+            <button
+              type="submit"
+              id="connect-server-btn"
+              class="btn btn-primary"
+            >
               Connect
             </button>
           </div>

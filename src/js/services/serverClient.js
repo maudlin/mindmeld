@@ -73,14 +73,16 @@ export class ServerClient {
       const errorData = await response.json().catch(() => ({}));
       ServerConnectionService.setConnectionStatus('error');
       eventBus.emit('server.save.error', {
-        error: errorData.detail || `Server error: ${response.status} ${response.statusText}`,
+        error:
+          errorData.detail ||
+          `Server error: ${response.status} ${response.statusText}`,
       });
       return false;
     }
 
     const result = await response.json();
     const etag = response.headers.get('ETag')?.replace(/"/g, '');
-    
+
     // Store map ID and ETag for future updates
     this.currentMapId = result.id;
     this.currentETag = etag;
@@ -113,22 +115,27 @@ export class ServerClient {
 
     if (response.status === 409) {
       // Conflict - map was modified by another user/tab
-      log('ServerClient: ETag conflict detected, auto-resolving by fetching latest version');
-      
+      log(
+        'ServerClient: ETag conflict detected, auto-resolving by fetching latest version',
+      );
+
       try {
         // Fetch the latest version to get the current ETag
         await this.loadState(document.getElementById('mainCanvas'));
-        
+
         // Try saving again with the updated ETag
         log('ServerClient: Retrying save after ETag refresh...');
-        return await this.updateExistingMap(mapData);
-        
+        return await this.updateExistingMap(data);
       } catch (retryError) {
-        log('ServerClient: Failed to resolve ETag conflict:', retryError.message);
+        log(
+          'ServerClient: Failed to resolve ETag conflict:',
+          retryError.message,
+        );
         eventBus.emit('server.save.error', {
-          error: 'Could not save - map was modified elsewhere. Changes may be lost.',
+          error:
+            'Could not save - map was modified elsewhere. Changes may be lost.',
           type: 'conflict',
-          originalError: retryError.message
+          originalError: retryError.message,
         });
         return false;
       }
@@ -138,14 +145,16 @@ export class ServerClient {
       const errorData = await response.json().catch(() => ({}));
       ServerConnectionService.setConnectionStatus('error');
       eventBus.emit('server.save.error', {
-        error: errorData.detail || `Server error: ${response.status} ${response.statusText}`,
+        error:
+          errorData.detail ||
+          `Server error: ${response.status} ${response.statusText}`,
       });
       return false;
     }
 
     const result = await response.json();
     const etag = response.headers.get('ETag')?.replace(/"/g, '');
-    
+
     // Update ETag for future updates
     this.currentETag = etag;
 
@@ -225,42 +234,47 @@ export class ServerClient {
       const errorData = await response.json().catch(() => ({}));
       ServerConnectionService.setConnectionStatus('error');
       eventBus.emit('server.load.error', {
-        error: errorData.detail || `Server error: ${response.status} ${response.statusText}`,
+        error:
+          errorData.detail ||
+          `Server error: ${response.status} ${response.statusText}`,
       });
       return false;
     }
 
     const mapData = await response.json();
     const etag = response.headers.get('ETag')?.replace(/"/g, '');
-    
+
     // Update ETag for future updates
     this.currentETag = etag;
-    
+
     // Convert map data to JSON string for importFromJSON
     // importFromJSON expects { data: { n: [], c: [] } } structure
     const stateData = mapData.data || mapData.state;
-    
+
     // Debug logging to understand the data structure
     log('ServerClient: Raw mapData structure:', {
       hasData: !!mapData.data,
       hasState: !!mapData.state,
       stateDataType: typeof stateData,
-      stateDataKeys: stateData ? Object.keys(stateData) : 'null/undefined'
+      stateDataKeys: stateData ? Object.keys(stateData) : 'null/undefined',
     });
-    
+
     if (!stateData) {
       throw new Error('No data or state found in server response');
     }
-    
+
     // Ensure stateData has the required structure
     const normalizedData = {
       n: stateData.n || [],
-      c: stateData.c || []
+      c: stateData.c || [],
     };
-    
+
     const stateJsonString = JSON.stringify({ data: normalizedData });
-    log('ServerClient: Normalized data for import:', { noteCount: normalizedData.n.length, connectionCount: normalizedData.c.length });
-    
+    log('ServerClient: Normalized data for import:', {
+      noteCount: normalizedData.n.length,
+      connectionCount: normalizedData.c.length,
+    });
+
     await importFromJSON(stateJsonString, canvas);
 
     eventBus.emit('server.load.success', {
@@ -289,13 +303,15 @@ export class ServerClient {
       const errorData = await response.json().catch(() => ({}));
       ServerConnectionService.setConnectionStatus('error');
       eventBus.emit('server.load.error', {
-        error: errorData.detail || `Server error: ${response.status} ${response.statusText}`,
+        error:
+          errorData.detail ||
+          `Server error: ${response.status} ${response.statusText}`,
       });
       return false;
     }
 
     const maps = await response.json();
-    
+
     if (!maps || maps.length === 0) {
       eventBus.emit('server.load.error', {
         error: 'No maps found on server',
@@ -306,7 +322,7 @@ export class ServerClient {
     // Load the most recent map (first in the list)
     const mostRecentMap = maps[0];
     this.currentMapId = mostRecentMap.id;
-    
+
     return await this.loadSpecificMap(serverUri, mostRecentMap.id, canvas);
   }
 
@@ -462,19 +478,21 @@ export class ServerClient {
         // Connection restored - enable auto-save and process queue
         this.enableAutoSave();
         this.processQueuedSaves();
-        
+
         // Smart auto-loading: if canvas is empty, load server data
         if (this.isCanvasEmpty()) {
           log('Canvas is empty, auto-loading server data...');
-          this.loadState(document.getElementById('mainCanvas')).then((success) => {
-            if (success) {
-              eventBus.emit('server.autoload.success', {
-                reason: 'Empty canvas on reconnect'
-              });
-            } else {
-              log('Auto-load failed, but connection is still active');
-            }
-          });
+          this.loadState(document.getElementById('mainCanvas')).then(
+            (success) => {
+              if (success) {
+                eventBus.emit('server.autoload.success', {
+                  reason: 'Empty canvas on reconnect',
+                });
+              } else {
+                log('Auto-load failed, but connection is still active');
+              }
+            },
+          );
         }
       } else {
         // Connection lost - disable auto-save
