@@ -78,7 +78,9 @@ describe('ServerClient', () => {
 
   describe('saveState', () => {
     beforeEach(() => {
-      mockServerConnectionService.getServerUri.mockReturnValue('https://api.example.com');
+      mockServerConnectionService.getServerUri.mockReturnValue(
+        'https://api.example.com',
+      );
       mockServerConnectionService.getConnectionState.mockReturnValue({
         serverUri: 'https://api.example.com',
         isConnected: true,
@@ -116,7 +118,7 @@ describe('ServerClient', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         body: expect.stringContaining('"name":"MindMeld Map - '),
         // body: JSON.stringify({
@@ -155,18 +157,21 @@ describe('ServerClient', () => {
       const result = await ServerClient.saveState();
 
       expect(result).toBe(true);
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/maps/existing-map-id', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'If-Match': '"existing-etag"',
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.example.com/maps/existing-map-id',
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'If-Match': '"existing-etag"',
+          },
+          body: JSON.stringify({
+            data: { n: [], c: [] },
+            version: 1,
+          }),
         },
-        body: JSON.stringify({
-          data: {"n":[],"c":[]},
-          version: 1,
-        }),
-      });
+      );
       expect(ServerClient.currentETag).toBe('new-etag');
     });
 
@@ -178,7 +183,7 @@ describe('ServerClient', () => {
       };
       mockFetch.mockResolvedValue(mockResponse);
 
-      // Set existing map ID and ETag  
+      // Set existing map ID and ETag
       ServerClient.currentMapId = 'existing-map-id';
       ServerClient.currentETag = 'existing-etag';
 
@@ -186,7 +191,8 @@ describe('ServerClient', () => {
 
       expect(result).toBe(false);
       expect(mockEventBus.emit).toHaveBeenCalledWith('server.save.error', {
-        error: 'Map was modified by another user. Please reload to get the latest version.',
+        error:
+          'Map was modified by another user. Please reload to get the latest version.',
         type: 'conflict',
       });
     });
@@ -209,7 +215,9 @@ describe('ServerClient', () => {
       const result = await ServerClient.saveState();
 
       expect(result).toBe(false);
-      expect(mockServerConnectionService.setConnectionStatus).toHaveBeenCalledWith('error');
+      expect(
+        mockServerConnectionService.setConnectionStatus,
+      ).toHaveBeenCalledWith('error');
       expect(mockEventBus.emit).toHaveBeenCalledWith('server.save.error', {
         error: 'Internal server error occurred',
       });
@@ -217,7 +225,7 @@ describe('ServerClient', () => {
 
     it('should validate server URI before saving', async () => {
       mockServerConnectionService.getServerUri.mockReturnValue(null);
-      
+
       const result = await ServerClient.saveState();
 
       expect(result).toBe(false);
@@ -247,14 +255,15 @@ describe('ServerClient', () => {
 
       await ServerClient.saveState();
 
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/maps', 
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.example.com/maps',
         expect.objectContaining({
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Accept': 'application/json',
+            Accept: 'application/json',
           },
-        })
+        }),
       );
     });
 
@@ -264,7 +273,9 @@ describe('ServerClient', () => {
       const result = await ServerClient.saveState();
 
       expect(result).toBe(false);
-      expect(mockServerConnectionService.setConnectionStatus).toHaveBeenCalledWith('error');
+      expect(
+        mockServerConnectionService.setConnectionStatus,
+      ).toHaveBeenCalledWith('error');
       expect(mockEventBus.emit).toHaveBeenCalledWith('server.save.error', {
         error: 'Network error',
       });
@@ -273,7 +284,9 @@ describe('ServerClient', () => {
 
   describe('loadState', () => {
     beforeEach(() => {
-      mockServerConnectionService.getServerUri.mockReturnValue('https://api.example.com');
+      mockServerConnectionService.getServerUri.mockReturnValue(
+        'https://api.example.com',
+      );
       mockServerConnectionService.getConnectionState.mockReturnValue({
         serverUri: 'https://api.example.com',
         isConnected: true,
@@ -286,14 +299,16 @@ describe('ServerClient', () => {
       const mapsListResponse = {
         ok: true,
         status: 200,
-        json: jest.fn().mockResolvedValue([{
-          id: 'most-recent-map-id',
-          name: 'Recent Map',
-          version: 1,
-          updatedAt: '2025-09-07T11:40:09.628Z',
-        }]),
+        json: jest.fn().mockResolvedValue([
+          {
+            id: 'most-recent-map-id',
+            name: 'Recent Map',
+            version: 1,
+            updatedAt: '2025-09-07T11:40:09.628Z',
+          },
+        ]),
       };
-      
+
       // Mock GET /maps/{id} response (load specific map)
       const mapDataResponse = {
         ok: true,
@@ -302,14 +317,14 @@ describe('ServerClient', () => {
           id: 'most-recent-map-id',
           name: 'Recent Map',
           version: 1,
-          data: {"n":[{"i":"note1","c":"Hello","p":[100,200]}],"c":[]},
-          state: {"n":[{"i":"note1","c":"Hello","p":[100,200]}],"c":[]},
+          data: { n: [{ i: 'note1', c: 'Hello', p: [100, 200] }], c: [] },
+          state: { n: [{ i: 'note1', c: 'Hello', p: [100, 200] }], c: [] },
         }),
         headers: {
           get: jest.fn().mockReturnValue('"map-etag"'),
         },
       };
-      
+
       // First call returns maps list, second call returns map data
       mockFetch
         .mockResolvedValueOnce(mapsListResponse)
@@ -325,21 +340,31 @@ describe('ServerClient', () => {
       const result = await ServerClient.loadState(mockCanvas);
 
       expect(result).toBe(true);
-      expect(mockFetch).toHaveBeenNthCalledWith(1, 'https://api.example.com/maps?limit=1', {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        1,
+        'https://api.example.com/maps?limit=1',
+        {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+          },
         },
-      });
-      expect(mockFetch).toHaveBeenNthCalledWith(2, 'https://api.example.com/maps/most-recent-map-id', {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
+      );
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
+        'https://api.example.com/maps/most-recent-map-id',
+        {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+          },
         },
-      });
+      );
       expect(mockDataStore.importFromJSON).toHaveBeenCalledWith(
-        JSON.stringify({data: {"n":[{"i":"note1","c":"Hello","p":[100,200]}],"c":[]}}),
-        mockCanvas
+        JSON.stringify({
+          data: { n: [{ i: 'note1', c: 'Hello', p: [100, 200] }], c: [] },
+        }),
+        mockCanvas,
       );
       expect(mockEventBus.emit).toHaveBeenCalledWith('server.load.success', {
         mapId: 'most-recent-map-id',
@@ -359,7 +384,7 @@ describe('ServerClient', () => {
           id: 'specific-map-id',
           name: 'Specific Map',
           version: 1,
-          data: {"n":[{"i":"note2","c":"World","p":[200,300]}],"c":[]},
+          data: { n: [{ i: 'note2', c: 'World', p: [200, 300] }], c: [] },
         }),
         headers: {
           get: jest.fn().mockReturnValue('"specific-etag"'),
@@ -377,12 +402,15 @@ describe('ServerClient', () => {
       const result = await ServerClient.loadState(mockCanvas);
 
       expect(result).toBe(true);
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/maps/specific-map-id', {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.example.com/maps/specific-map-id',
+        {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+          },
         },
-      });
+      );
       expect(ServerClient.currentETag).toBe('specific-etag');
     });
 
@@ -395,11 +423,11 @@ describe('ServerClient', () => {
       mockFetch.mockResolvedValue(mockResponse);
 
       const mockCanvas = document.createElement('div');
-      
+
       // Reset currentMapId to ensure load most recent path
       ServerClient.currentMapId = null;
       ServerClient.currentETag = null;
-      
+
       const result = await ServerClient.loadState(mockCanvas);
 
       expect(result).toBe(false);
@@ -415,11 +443,11 @@ describe('ServerClient', () => {
         status: 404,
       };
       mockFetch.mockResolvedValue(mockResponse);
-      
+
       // Set currentMapId to test specific map loading path
       ServerClient.currentMapId = 'non-existent-map-id';
       ServerClient.currentETag = 'some-etag';
-      
+
       const mockCanvas = document.createElement('div');
       const result = await ServerClient.loadState(mockCanvas);
 
@@ -475,9 +503,12 @@ describe('ServerClient', () => {
 
       expect(result).toBe(false);
       expect(ServerClient.autoSaveEnabled).toBe(false);
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.autosave.disabled', {
-        reason: 'Not connected to server',
-      });
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        'server.autosave.disabled',
+        {
+          reason: 'Not connected to server',
+        },
+      );
     });
 
     it('should setup event listeners for state changes', () => {
@@ -498,8 +529,11 @@ describe('ServerClient', () => {
         'note.color.changed',
       ];
 
-      expectedEvents.forEach(eventName => {
-        expect(mockEventBus.on).toHaveBeenCalledWith(eventName, expect.any(Function));
+      expectedEvents.forEach((eventName) => {
+        expect(mockEventBus.on).toHaveBeenCalledWith(
+          eventName,
+          expect.any(Function),
+        );
       });
     });
   });
@@ -509,9 +543,12 @@ describe('ServerClient', () => {
       ServerClient.disableAutoSave();
 
       expect(ServerClient.autoSaveEnabled).toBe(false);
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.autosave.disabled', {
-        reason: 'Manually disabled',
-      });
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        'server.autosave.disabled',
+        {
+          reason: 'Manually disabled',
+        },
+      );
     });
   });
 
@@ -574,13 +611,17 @@ describe('ServerClient', () => {
 
     it('should process queued saves when connection restored', async () => {
       // Set up a queued save
-      ServerClient.saveQueue = [{
-        timestamp: Date.now(),
-        data: '{"test":"data"}',
-      }];
+      ServerClient.saveQueue = [
+        {
+          timestamp: Date.now(),
+          data: '{"test":"data"}',
+        },
+      ];
 
       // Mock successful save
-      mockServerConnectionService.getServerUri.mockReturnValue('https://api.example.com');
+      mockServerConnectionService.getServerUri.mockReturnValue(
+        'https://api.example.com',
+      );
       mockDataStore.exportToJSON.mockReturnValue('{"current":"data"}');
       const mockResponse = {
         ok: true,
@@ -593,7 +634,9 @@ describe('ServerClient', () => {
       await ServerClient.processQueuedSaves();
 
       expect(ServerClient.saveQueue).toHaveLength(0);
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.save.queue.processed');
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        'server.save.queue.processed',
+      );
     });
   });
 });

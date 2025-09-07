@@ -379,6 +379,16 @@ describe('ServerClient - Auto-save Behavior', () => {
   });
 
   describe('auto-save lifecycle integration', () => {
+    beforeEach(() => {
+      // Enable auto-save first to set up event listeners
+      mockServerConnectionService.getConnectionState.mockReturnValue({
+        serverUri: 'https://api.example.com',
+        isConnected: true,
+        connectionStatus: 'connected',
+      });
+      ServerClient.enableAutoSave();
+    });
+
     it('should auto-enable when connection restored', () => {
       ServerClient.autoSaveEnabled = false;
 

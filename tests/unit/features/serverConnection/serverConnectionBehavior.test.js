@@ -38,27 +38,27 @@ describe('ServerConnectionBehavior', () => {
     const mockModalElement = document.createElement('div');
     mockModalElement.id = 'server-connection-modal';
     mockModalElement.style.display = 'none';
-    
+
     const mockForm = document.createElement('form');
     mockForm.id = 'server-connection-form';
-    
+
     const mockInput = document.createElement('input');
     mockInput.id = 'server-uri-input';
     mockForm.appendChild(mockInput);
-    
+
     const mockConnectBtn = document.createElement('button');
     mockConnectBtn.id = 'connect-server-btn';
     mockConnectBtn.textContent = 'Connect';
     mockForm.appendChild(mockConnectBtn);
-    
+
     const mockStatusElement = document.createElement('div');
     mockStatusElement.id = 'connection-status';
     mockForm.appendChild(mockStatusElement);
-    
+
     const mockCloseBtn = document.createElement('button');
     mockCloseBtn.className = 'modal-close';
     mockForm.appendChild(mockCloseBtn);
-    
+
     mockModalElement.appendChild(mockForm);
     document.body.appendChild(mockModalElement);
 
@@ -89,16 +89,21 @@ describe('ServerConnectionBehavior', () => {
       eventBus: mockEventBus,
     }));
 
-    jest.doMock('../../../../src/js/services/serverConnectionService.js', () => ({
-      ServerConnectionService: mockServerConnectionService,
-    }));
+    jest.doMock(
+      '../../../../src/js/services/serverConnectionService.js',
+      () => ({
+        ServerConnectionService: mockServerConnectionService,
+      }),
+    );
 
     jest.doMock('../../../../src/js/services/notificationManager.js', () => ({
       notificationManager: mockNotificationManager,
     }));
 
     // Import the module to test
-    const module = await import('../../../../src/js/features/serverConnection/serverConnectionBehavior.js');
+    const module = await import(
+      '../../../../src/js/features/serverConnection/serverConnectionBehavior.js'
+    );
     ServerConnectionBehavior = module.ServerConnectionBehavior;
   });
 
@@ -130,8 +135,14 @@ describe('ServerConnectionBehavior', () => {
       await behavior.initialize();
 
       expect(behavior.isInitialized).toBe(true);
-      expect(mockEventBus.on).toHaveBeenCalledWith('modal.serverConnection.open', expect.any(Function));
-      expect(mockEventBus.on).toHaveBeenCalledWith('modal.serverConnection.close', expect.any(Function));
+      expect(mockEventBus.on).toHaveBeenCalledWith(
+        'modal.serverConnection.open',
+        expect.any(Function),
+      );
+      expect(mockEventBus.on).toHaveBeenCalledWith(
+        'modal.serverConnection.close',
+        expect.any(Function),
+      );
     });
 
     it('should not reinitialize if already initialized', async () => {
@@ -150,28 +161,32 @@ describe('ServerConnectionBehavior', () => {
     beforeEach(async () => {
       behavior = new ServerConnectionBehavior(mockEventBus);
       await behavior.initialize();
-      mockServerConnectionService.getServerUri.mockReturnValue('https://existing-server.com');
+      mockServerConnectionService.getServerUri.mockReturnValue(
+        'https://existing-server.com',
+      );
     });
 
     it('should show modal and populate current server URI', () => {
       const data = { currentUrl: 'https://test-server.com' };
-      
+
       behavior.showModal(data);
 
       const modal = document.getElementById('server-connection-modal');
       const input = document.getElementById('server-uri-input');
-      
+
       expect(behavior.isModalOpen).toBe(true);
       expect(modal.style.display).toBe('flex');
       expect(input.value).toBe('https://test-server.com');
-      expect(mockEventBus.emit).toHaveBeenCalledWith('modal.opened', { type: 'serverConnection' });
+      expect(mockEventBus.emit).toHaveBeenCalledWith('modal.opened', {
+        type: 'serverConnection',
+      });
     });
 
     it('should use existing server URI when no currentUrl provided', () => {
       behavior.showModal({});
 
       const input = document.getElementById('server-uri-input');
-      
+
       expect(input.value).toBe('https://existing-server.com');
     });
 
@@ -199,10 +214,12 @@ describe('ServerConnectionBehavior', () => {
       behavior.hideModal();
 
       const modal = document.getElementById('server-connection-modal');
-      
+
       expect(behavior.isModalOpen).toBe(false);
       expect(modal.style.display).toBe('none');
-      expect(mockEventBus.emit).toHaveBeenCalledWith('modal.closed', { type: 'serverConnection' });
+      expect(mockEventBus.emit).toHaveBeenCalledWith('modal.closed', {
+        type: 'serverConnection',
+      });
     });
 
     it('should clear form event listeners', () => {
@@ -284,7 +301,9 @@ describe('ServerConnectionBehavior', () => {
 
     it('should connect to server successfully with integrated testing', async () => {
       const uri = 'https://connect-server.com';
-      mockServerConnectionService.testConnection.mockResolvedValue({ success: true });
+      mockServerConnectionService.testConnection.mockResolvedValue({
+        success: true,
+      });
 
       const input = document.getElementById('server-uri-input');
       input.value = uri;
@@ -293,14 +312,20 @@ describe('ServerConnectionBehavior', () => {
       jest.useFakeTimers();
 
       const connectPromise = behavior.handleConnect();
-      
+
       // Fast-forward timers to skip delays
       await jest.runAllTimersAsync();
       await connectPromise;
 
-      expect(mockServerConnectionService.testConnection).toHaveBeenCalledWith(uri);
-      expect(mockServerConnectionService.setServerUri).toHaveBeenCalledWith(uri);
-      expect(mockServerConnectionService.setConnectionStatus).toHaveBeenCalledWith('connected');
+      expect(mockServerConnectionService.testConnection).toHaveBeenCalledWith(
+        uri,
+      );
+      expect(mockServerConnectionService.setServerUri).toHaveBeenCalledWith(
+        uri,
+      );
+      expect(
+        mockServerConnectionService.setConnectionStatus,
+      ).toHaveBeenCalledWith('connected');
       expect(behavior.isModalOpen).toBe(false);
 
       jest.useRealTimers();
@@ -309,9 +334,9 @@ describe('ServerConnectionBehavior', () => {
     it('should handle connection test failure with status message', async () => {
       const uri = 'https://failing-server.com';
       const errorMessage = 'Server not reachable';
-      mockServerConnectionService.testConnection.mockResolvedValue({ 
-        success: false, 
-        error: errorMessage 
+      mockServerConnectionService.testConnection.mockResolvedValue({
+        success: false,
+        error: errorMessage,
       });
 
       const input = document.getElementById('server-uri-input');
@@ -320,10 +345,14 @@ describe('ServerConnectionBehavior', () => {
 
       await behavior.handleConnect();
 
-      expect(mockServerConnectionService.testConnection).toHaveBeenCalledWith(uri);
-      expect(mockServerConnectionService.setConnectionStatus).toHaveBeenCalledWith('error');
+      expect(mockServerConnectionService.testConnection).toHaveBeenCalledWith(
+        uri,
+      );
+      expect(
+        mockServerConnectionService.setConnectionStatus,
+      ).toHaveBeenCalledWith('error');
       expect(behavior.isModalOpen).toBe(true); // Modal stays open on failure
-      
+
       // Should show error in status area
       const statusElement = document.getElementById('connection-status');
       expect(statusElement.innerHTML).toContain(errorMessage);
@@ -340,17 +369,22 @@ describe('ServerConnectionBehavior', () => {
 
       expect(mockServerConnectionService.setServerUri).not.toHaveBeenCalled();
       expect(mockServerConnectionService.testConnection).not.toHaveBeenCalled();
-      
+
       // Should show error in status area instead of notification
       const statusElement = document.getElementById('connection-status');
-      expect(statusElement.innerHTML).toContain('Please enter a valid HTTPS URL or HTTP localhost');
+      expect(statusElement.innerHTML).toContain(
+        'Please enter a valid HTTPS URL or HTTP localhost',
+      );
       expect(statusElement.innerHTML).toContain('status-error');
     });
 
     it('should disable form during connection with integrated testing', async () => {
       const uri = 'https://slow-server.com';
       mockServerConnectionService.testConnection.mockImplementation(
-        () => new Promise(resolve => setTimeout(() => resolve({ success: true }), 50))
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => resolve({ success: true }), 50),
+          ),
       );
 
       const input = document.getElementById('server-uri-input');
@@ -361,7 +395,7 @@ describe('ServerConnectionBehavior', () => {
       jest.useFakeTimers();
 
       const connectPromise = behavior.handleConnect();
-      
+
       expect(behavior.isConnecting).toBe(true);
       expect(connectBtn.disabled).toBe(true);
       expect(connectBtn.textContent).toBe('Connecting...');
@@ -378,7 +412,9 @@ describe('ServerConnectionBehavior', () => {
 
     it('should handle trailing slash in URI correctly', async () => {
       const uri = 'https://test-server.com/';
-      mockServerConnectionService.testConnection.mockResolvedValue({ success: true });
+      mockServerConnectionService.testConnection.mockResolvedValue({
+        success: true,
+      });
 
       const input = document.getElementById('server-uri-input');
       input.value = uri;
@@ -386,13 +422,17 @@ describe('ServerConnectionBehavior', () => {
       jest.useFakeTimers();
 
       const connectPromise = behavior.handleConnect();
-      
+
       await jest.runAllTimersAsync();
       await connectPromise;
 
       // Should normalize the URI by removing trailing slash before calling testConnection
-      expect(mockServerConnectionService.testConnection).toHaveBeenCalledWith(uri);
-      expect(mockServerConnectionService.setServerUri).toHaveBeenCalledWith(uri);
+      expect(mockServerConnectionService.testConnection).toHaveBeenCalledWith(
+        uri,
+      );
+      expect(mockServerConnectionService.setServerUri).toHaveBeenCalledWith(
+        uri,
+      );
 
       jest.useRealTimers();
     });
@@ -412,7 +452,9 @@ describe('ServerConnectionBehavior', () => {
         isConnected: true,
         connectionStatus: 'connected',
       };
-      mockServerConnectionService.getConnectionState.mockReturnValue(connectionState);
+      mockServerConnectionService.getConnectionState.mockReturnValue(
+        connectionState,
+      );
 
       behavior.updateConnectionUI();
 
@@ -420,7 +462,7 @@ describe('ServerConnectionBehavior', () => {
       const connectBtn = document.getElementById('connect-server-btn');
 
       expect(input.value).toBe('https://connected-server.com');
-      expect(connectBtn.textContent).toBe('Connected');
+      expect(connectBtn.textContent).toBe('Disconnect');
       expect(connectBtn.classList.contains('connected')).toBe(true);
     });
 
@@ -430,7 +472,9 @@ describe('ServerConnectionBehavior', () => {
         isConnected: false,
         connectionStatus: 'disconnected',
       };
-      mockServerConnectionService.getConnectionState.mockReturnValue(connectionState);
+      mockServerConnectionService.getConnectionState.mockReturnValue(
+        connectionState,
+      );
 
       behavior.updateConnectionUI();
 
@@ -446,7 +490,9 @@ describe('ServerConnectionBehavior', () => {
         isConnected: false,
         connectionStatus: 'error',
       };
-      mockServerConnectionService.getConnectionState.mockReturnValue(connectionState);
+      mockServerConnectionService.getConnectionState.mockReturnValue(
+        connectionState,
+      );
 
       behavior.updateConnectionUI();
 

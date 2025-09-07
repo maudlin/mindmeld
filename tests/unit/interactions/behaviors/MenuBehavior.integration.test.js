@@ -78,16 +78,21 @@ describe('MenuBehavior - Server Connection Integration', () => {
       },
     }));
 
-    jest.doMock('../../../../src/js/services/serverConnectionService.js', () => ({
-      ServerConnectionService: mockServerConnectionService,
-    }));
+    jest.doMock(
+      '../../../../src/js/services/serverConnectionService.js',
+      () => ({
+        ServerConnectionService: mockServerConnectionService,
+      }),
+    );
 
     jest.doMock('../../../../src/js/services/serverClient.js', () => ({
       ServerClient: mockServerClient,
     }));
 
     // Import the module to test
-    const module = await import('../../../../src/js/interactions/behaviors/MenuBehavior.js');
+    const module = await import(
+      '../../../../src/js/interactions/behaviors/MenuBehavior.js'
+    );
     MenuBehavior = module.MenuBehavior;
   });
 
@@ -107,11 +112,14 @@ describe('MenuBehavior - Server Connection Integration', () => {
       it('should handle connect-server action', () => {
         behavior.handleMenuAction('connect-server', 'click');
 
-        expect(mockEventBus.emit).toHaveBeenCalledWith('modal.serverConnection.open', {
-          behavior: behavior,
-          inputType: 'click',
-          currentUrl: behavior.serverConfig.url || '',
-        });
+        expect(mockEventBus.emit).toHaveBeenCalledWith(
+          'modal.serverConnection.open',
+          {
+            behavior: behavior,
+            inputType: 'click',
+            currentUrl: behavior.serverConfig.url || '',
+          },
+        );
         expect(behavior.modalOpen).toBe(true);
         expect(behavior.isOpen).toBe(false); // Menu should close
       });
@@ -157,12 +165,15 @@ describe('MenuBehavior - Server Connection Integration', () => {
         });
         mockServerClient.loadState.mockResolvedValue(true);
 
-        const notificationManager = require('../../../../src/js/services/notificationManager.js').notificationManager;
+        const notificationManager =
+          require('../../../../src/js/services/notificationManager.js').notificationManager;
 
         await behavior.handleLoadFromServer('click');
 
         expect(mockServerClient.loadState).toHaveBeenCalledWith(mockCanvas);
-        expect(notificationManager.success).toHaveBeenCalledWith('Data loaded from server successfully!');
+        expect(notificationManager.success).toHaveBeenCalledWith(
+          'Data loaded from server successfully!',
+        );
       });
 
       it('should show error when load-from-server clicked while disconnected', async () => {
@@ -171,14 +182,16 @@ describe('MenuBehavior - Server Connection Integration', () => {
           connectionStatus: 'disconnected',
         });
 
-        const notificationManager = require('../../../../src/js/services/notificationManager.js').notificationManager;
+        const notificationManager =
+          require('../../../../src/js/services/notificationManager.js').notificationManager;
 
         await behavior.handleLoadFromServer('click');
 
         expect(mockServerClient.loadState).not.toHaveBeenCalled();
-        expect(notificationManager.error).toHaveBeenCalledWith('Not connected to server');
+        expect(notificationManager.error).toHaveBeenCalledWith(
+          'Not connected to server',
+        );
       });
-
 
       it('should get server connection status for menu state', () => {
         mockServerConnectionService.getConnectionState.mockReturnValue({
@@ -257,17 +270,20 @@ describe('MenuBehavior - Server Connection Integration', () => {
 
     describe('event handling', () => {
       it('should handle server.connect event', async () => {
-        const mockApi = { health: jest.fn().mockResolvedValue({ status: 'ok' }) };
-        const createMapsApi = require('../../../../src/js/services/mapsApi.js').createMapsApi;
+        const mockApi = {
+          health: jest.fn().mockResolvedValue({ status: 'ok' }),
+        };
+        const createMapsApi =
+          require('../../../../src/js/services/mapsApi.js').createMapsApi;
         createMapsApi.mockReturnValue(mockApi);
 
         const connectData = { url: 'https://connect-test.com' };
 
         // Simulate event emission
         const connectHandler = mockEventBus.on.mock.calls.find(
-          call => call[0] === 'server.connect'
+          (call) => call[0] === 'server.connect',
         )?.[1];
-        
+
         if (connectHandler) {
           await connectHandler(connectData);
 
@@ -298,8 +314,12 @@ describe('MenuBehavior - Server Connection Integration', () => {
         expect(behavior.serverConfig.url).toBe(null);
         expect(behavior.serverConfig.connected).toBe(false);
         expect(behavior.mapsApi).toBe(null);
-        expect(mockServerConnectionService.setServerUri).toHaveBeenCalledWith(null);
-        expect(mockServerConnectionService.setConnectionStatus).toHaveBeenCalledWith('disconnected');
+        expect(mockServerConnectionService.setServerUri).toHaveBeenCalledWith(
+          null,
+        );
+        expect(
+          mockServerConnectionService.setConnectionStatus,
+        ).toHaveBeenCalledWith('disconnected');
         expect(mockEventBus.emit).toHaveBeenCalledWith('server.disconnected', {
           behavior: behavior,
           inputType: 'test',
@@ -311,27 +331,34 @@ describe('MenuBehavior - Server Connection Integration', () => {
 
         // Simulate event emission
         const modalCloseHandler = mockEventBus.on.mock.calls.find(
-          call => call[0] === 'modal.close'
+          (call) => call[0] === 'modal.close',
         )?.[1];
-        
+
         if (modalCloseHandler) {
           modalCloseHandler();
 
           expect(behavior.modalOpen).toBe(false);
-          expect(mockEventBus.emit).toHaveBeenCalledWith('modal.serverConnection.closed', {
-            behavior: behavior,
-          });
+          expect(mockEventBus.emit).toHaveBeenCalledWith(
+            'modal.serverConnection.closed',
+            {
+              behavior: behavior,
+            },
+          );
         }
       });
     });
 
     describe('server configuration persistence', () => {
       it('should load server config from ServerConnectionService', () => {
-        mockServerConnectionService.loadServerUriFromStorage.mockReturnValue('https://stored-server.com');
+        mockServerConnectionService.loadServerUriFromStorage.mockReturnValue(
+          'https://stored-server.com',
+        );
 
         behavior.loadServerConfig();
 
-        expect(mockServerConnectionService.setServerUri).toHaveBeenCalledWith('https://stored-server.com');
+        expect(mockServerConnectionService.setServerUri).toHaveBeenCalledWith(
+          'https://stored-server.com',
+        );
         expect(behavior.serverConfig.url).toBe('https://stored-server.com');
       });
 
@@ -348,7 +375,9 @@ describe('MenuBehavior - Server Connection Integration', () => {
 
         behavior.saveServerConfig();
 
-        expect(mockServerConnectionService.setServerUri).toHaveBeenCalledWith('https://save-test.com');
+        expect(mockServerConnectionService.setServerUri).toHaveBeenCalledWith(
+          'https://save-test.com',
+        );
       });
     });
 
@@ -369,7 +398,7 @@ describe('MenuBehavior - Server Connection Integration', () => {
           isConnected: true,
           connectionStatus: 'connected',
         });
-        
+
         mockServerConnectionService.getConnectionState.mockReturnValue({
           isConnected: true,
           connectionStatus: 'connected',
@@ -420,28 +449,34 @@ describe('MenuBehavior - Server Connection Integration', () => {
 
     describe('error handling', () => {
       it('should handle server connection failure', async () => {
-        const mockApi = { health: jest.fn().mockRejectedValue(new Error('Connection failed')) };
-        const createMapsApi = require('../../../../src/js/services/mapsApi.js').createMapsApi;
+        const mockApi = {
+          health: jest.fn().mockRejectedValue(new Error('Connection failed')),
+        };
+        const createMapsApi =
+          require('../../../../src/js/services/mapsApi.js').createMapsApi;
         createMapsApi.mockReturnValue(mockApi);
 
         const connectData = { url: 'https://failing-server.com' };
 
         // Simulate event emission
         const connectHandler = mockEventBus.on.mock.calls.find(
-          call => call[0] === 'server.connect'
+          (call) => call[0] === 'server.connect',
         )?.[1];
-        
+
         if (connectHandler) {
           await connectHandler(connectData);
 
           expect(behavior.serverConfig.connected).toBe(false);
           expect(behavior.serverConfig.connecting).toBe(false);
           expect(behavior.mapsApi).toBe(null);
-          expect(mockEventBus.emit).toHaveBeenCalledWith('server.connectionFailed', {
-            behavior: behavior,
-            url: 'https://failing-server.com',
-            error: 'Connection failed',
-          });
+          expect(mockEventBus.emit).toHaveBeenCalledWith(
+            'server.connectionFailed',
+            {
+              behavior: behavior,
+              url: 'https://failing-server.com',
+              error: 'Connection failed',
+            },
+          );
         }
       });
     });
