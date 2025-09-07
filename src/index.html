@@ -32,7 +32,7 @@
       media="(prefers-color-scheme: dark)"
     />
     <meta name="app-version" content="1.0.1">
-    <meta name="build-date" content="2025-09-06">
+    <meta name="build-date" content="2025-09-07">
   </head>
   <body>
     <nav id="navbar">
@@ -187,15 +187,6 @@
           <span>Disconnect from Server</span>
         </div>
         <div
-          class="kebab-menu-item server-save-item"
-          role="menuitem"
-          data-action="save-to-server"
-          tabindex="0"
-          style="display: none;"
-        >
-          <span>Save to Server</span>
-        </div>
-        <div
           class="kebab-menu-item server-load-item"
           role="menuitem"
           data-action="load-from-server"
@@ -251,31 +242,26 @@
             <label for="server-uri-input" class="form-label">
               Server URL
               <span class="form-help"
-                >Enter the HTTPS URL of your MindMeld server</span
+                >Enter the HTTPS URL of your MindMeld server (HTTP allowed for localhost)</span
               >
             </label>
             <input
-              type="url"
+              type="text"
               id="server-uri-input"
               class="form-input"
-              placeholder="https://api.example.com"
+              placeholder="https://api.example.com or http://localhost:3000"
               required
-              pattern="https://.*"
-              title="Please enter a valid HTTPS URL"
             />
           </div>
 
           <div class="form-actions">
-            <button type="button" id="test-connection-btn" class="btn btn-secondary">
-              Test Connection
-            </button>
             <button type="submit" id="connect-server-btn" class="btn btn-primary">
               Connect
             </button>
           </div>
 
           <div class="server-connection-status" id="connection-status">
-            <!-- Status messages will appear here -->
+            <!-- Connection progress and status messages will appear here -->
           </div>
         </form>
       </div>

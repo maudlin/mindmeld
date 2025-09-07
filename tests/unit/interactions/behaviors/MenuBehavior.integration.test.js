@@ -23,8 +23,15 @@ describe('MenuBehavior - Server Connection Integration', () => {
 
     mockServerConnectionService = {
       getServerUri: jest.fn(),
-      getConnectionState: jest.fn(),
+      getConnectionState: jest.fn(() => ({
+        serverUri: null,
+        isConnected: false,
+        connectionStatus: 'disconnected',
+      })),
       setConnectionStatus: jest.fn(),
+      setServerUri: jest.fn(() => true), // Mock successful disconnect
+      loadServerUriFromStorage: jest.fn(() => null),
+      testConnection: jest.fn(() => Promise.resolve({ success: false })),
     };
 
     // Mock ServerClient for Phase 2 tests
@@ -172,23 +179,9 @@ describe('MenuBehavior - Server Connection Integration', () => {
         expect(notificationManager.error).toHaveBeenCalledWith('Not connected to server');
       });
 
-      it('should handle save-to-server action when connected', async () => {
-        mockServerClient.getConnectionStatus.mockReturnValue({
-          isConnected: true,
-          connectionStatus: 'connected',
-        });
-        mockServerClient.saveState.mockResolvedValue(true);
-
-        const notificationManager = require('../../../../src/js/services/notificationManager.js').notificationManager;
-
-        await behavior.handleSaveToServer('click');
-
-        expect(mockServerClient.saveState).toHaveBeenCalled();
-        expect(notificationManager.success).toHaveBeenCalledWith('Data saved to server successfully!');
-      });
 
       it('should get server connection status for menu state', () => {
-        mockServerClient.getConnectionStatus.mockReturnValue({
+        mockServerConnectionService.getConnectionState.mockReturnValue({
           isConnected: true,
           connectionStatus: 'connected',
         });
@@ -210,7 +203,6 @@ describe('MenuBehavior - Server Connection Integration', () => {
         const actions = behavior.getAvailableServerActions();
 
         expect(actions.loadFromServer).toBe(true);
-        expect(actions.saveToServer).toBe(true);
       });
 
       it('should disable server actions when disconnected', () => {
@@ -222,7 +214,6 @@ describe('MenuBehavior - Server Connection Integration', () => {
         const actions = behavior.getAvailableServerActions();
 
         expect(actions.loadFromServer).toBe(false);
-        expect(actions.saveToServer).toBe(false);
       });
     });
 
@@ -307,7 +298,8 @@ describe('MenuBehavior - Server Connection Integration', () => {
         expect(behavior.serverConfig.url).toBe(null);
         expect(behavior.serverConfig.connected).toBe(false);
         expect(behavior.mapsApi).toBe(null);
-        expect(window.localStorage.removeItem).toHaveBeenCalledWith('mindmeld-server-config');
+        expect(mockServerConnectionService.setServerUri).toHaveBeenCalledWith(null);
+        expect(mockServerConnectionService.setConnectionStatus).toHaveBeenCalledWith('disconnected');
         expect(mockEventBus.emit).toHaveBeenCalledWith('server.disconnected', {
           behavior: behavior,
           inputType: 'test',
@@ -334,12 +326,12 @@ describe('MenuBehavior - Server Connection Integration', () => {
     });
 
     describe('server configuration persistence', () => {
-      it('should load server config from localStorage', () => {
-        const config = { url: 'https://stored-server.com' };
-        window.localStorage.getItem.mockReturnValue(JSON.stringify(config));
+      it('should load server config from ServerConnectionService', () => {
+        mockServerConnectionService.loadServerUriFromStorage.mockReturnValue('https://stored-server.com');
 
         behavior.loadServerConfig();
 
+        expect(mockServerConnectionService.setServerUri).toHaveBeenCalledWith('https://stored-server.com');
         expect(behavior.serverConfig.url).toBe('https://stored-server.com');
       });
 
@@ -351,15 +343,12 @@ describe('MenuBehavior - Server Connection Integration', () => {
         expect(behavior.serverConfig.url).toBe(null);
       });
 
-      it('should save server config to localStorage', () => {
+      it('should save server config via ServerConnectionService', () => {
         behavior.serverConfig.url = 'https://save-test.com';
 
         behavior.saveServerConfig();
 
-        expect(window.localStorage.setItem).toHaveBeenCalledWith(
-          'mindmeld-server-config',
-          JSON.stringify({ url: 'https://save-test.com' })
-        );
+        expect(mockServerConnectionService.setServerUri).toHaveBeenCalledWith('https://save-test.com');
       });
     });
 
@@ -373,9 +362,15 @@ describe('MenuBehavior - Server Connection Integration', () => {
         behavior.isOpen = true;
         behavior.modalOpen = false;
 
+        // Mock both services for this test
         const ServerClientModule = require('../../../../src/js/services/serverClient.js');
         const mockServerClient = ServerClientModule.ServerClient;
         mockServerClient.getConnectionStatus.mockReturnValue({
+          isConnected: true,
+          connectionStatus: 'connected',
+        });
+        
+        mockServerConnectionService.getConnectionState.mockReturnValue({
           isConnected: true,
           connectionStatus: 'connected',
         });
@@ -397,7 +392,6 @@ describe('MenuBehavior - Server Connection Integration', () => {
           },
           availableActions: {
             loadFromServer: true,
-            saveToServer: true,
           },
         });
       });

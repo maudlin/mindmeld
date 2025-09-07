@@ -57,7 +57,9 @@ export class ServerConnectionService {
     }
 
     try {
-      const response = await fetch(`${uri}/health`, {
+      // Normalize URI by removing trailing slash before appending /health
+      const normalizedUri = uri.replace(/\/$/, '');
+      const response = await fetch(`${normalizedUri}/health`, {
         method: 'GET',
         headers: {
           Accept: 'application/json',

@@ -67,7 +67,9 @@ export class InteractionController {
       const connectionBehavior = new ConnectionBehavior(this.eventBus);
       const viewportBehavior = new ViewportBehavior(this.eventBus);
       const menuBehavior = new MenuBehavior(this.eventBus);
-      const serverConnectionBehavior = new ServerConnectionBehavior(this.eventBus);
+      const serverConnectionBehavior = new ServerConnectionBehavior(
+        this.eventBus,
+      );
 
       // Register behaviors
       this.registerBehavior('note', noteBehavior);
@@ -96,7 +98,9 @@ export class InteractionController {
       console.log('InteractionController: ConnectionBehavior initialized');
 
       await serverConnectionBehavior.initialize();
-      console.log('InteractionController: ServerConnectionBehavior initialized');
+      console.log(
+        'InteractionController: ServerConnectionBehavior initialized',
+      );
 
       // MenuBehavior will be initialized later when DOM elements are available
       console.log(

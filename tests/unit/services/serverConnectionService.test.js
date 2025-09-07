@@ -48,7 +48,9 @@ describe('ServerConnectionService', () => {
     }));
 
     // Import the module to test
-    const module = await import('../../../src/js/services/serverConnectionService.js');
+    const module = await import(
+      '../../../src/js/services/serverConnectionService.js'
+    );
     ServerConnectionService = module.ServerConnectionService;
   });
 
@@ -59,40 +61,72 @@ describe('ServerConnectionService', () => {
 
   describe('validateServerUri', () => {
     it('should accept valid HTTPS URLs', () => {
-      expect(ServerConnectionService.validateServerUri('https://example.com')).toBe(true);
-      expect(ServerConnectionService.validateServerUri('https://api.mindmeld.com')).toBe(true);
-      expect(ServerConnectionService.validateServerUri('https://localhost:3000')).toBe(true);
+      expect(
+        ServerConnectionService.validateServerUri('https://example.com'),
+      ).toBe(true);
+      expect(
+        ServerConnectionService.validateServerUri('https://api.mindmeld.com'),
+      ).toBe(true);
+      expect(
+        ServerConnectionService.validateServerUri('https://localhost:3000'),
+      ).toBe(true);
     });
 
     it('should accept HTTP URLs for localhost development', () => {
-      expect(ServerConnectionService.validateServerUri('http://localhost')).toBe(true);
-      expect(ServerConnectionService.validateServerUri('http://localhost:3001')).toBe(true);
-      expect(ServerConnectionService.validateServerUri('http://127.0.0.1')).toBe(true);
-      expect(ServerConnectionService.validateServerUri('http://127.0.0.1:8080')).toBe(true);
-      expect(ServerConnectionService.validateServerUri('http://0.0.0.0:3000')).toBe(true);
+      expect(
+        ServerConnectionService.validateServerUri('http://localhost'),
+      ).toBe(true);
+      expect(
+        ServerConnectionService.validateServerUri('http://localhost:3001'),
+      ).toBe(true);
+      expect(
+        ServerConnectionService.validateServerUri('http://127.0.0.1'),
+      ).toBe(true);
+      expect(
+        ServerConnectionService.validateServerUri('http://127.0.0.1:8080'),
+      ).toBe(true);
+      expect(
+        ServerConnectionService.validateServerUri('http://0.0.0.0:3000'),
+      ).toBe(true);
     });
 
     it('should reject HTTP URLs for non-localhost hosts', () => {
-      expect(ServerConnectionService.validateServerUri('http://example.com')).toBe(false);
-      expect(ServerConnectionService.validateServerUri('http://192.168.1.100')).toBe(false);
-      expect(ServerConnectionService.validateServerUri('http://api.mindmeld.com')).toBe(false);
+      expect(
+        ServerConnectionService.validateServerUri('http://example.com'),
+      ).toBe(false);
+      expect(
+        ServerConnectionService.validateServerUri('http://192.168.1.100'),
+      ).toBe(false);
+      expect(
+        ServerConnectionService.validateServerUri('http://api.mindmeld.com'),
+      ).toBe(false);
     });
 
     it('should reject non-HTTP/HTTPS protocols', () => {
-      expect(ServerConnectionService.validateServerUri('ftp://example.com')).toBe(false);
-      expect(ServerConnectionService.validateServerUri('ws://localhost:3000')).toBe(false);
+      expect(
+        ServerConnectionService.validateServerUri('ftp://example.com'),
+      ).toBe(false);
+      expect(
+        ServerConnectionService.validateServerUri('ws://localhost:3000'),
+      ).toBe(false);
     });
 
     it('should reject invalid URL formats', () => {
-      expect(ServerConnectionService.validateServerUri('not-a-url')).toBe(false);
+      expect(ServerConnectionService.validateServerUri('not-a-url')).toBe(
+        false,
+      );
       expect(ServerConnectionService.validateServerUri('')).toBe(false);
       expect(ServerConnectionService.validateServerUri(null)).toBe(false);
       expect(ServerConnectionService.validateServerUri(undefined)).toBe(false);
     });
 
     it('should reject URLs with invalid characters', () => {
-      expect(ServerConnectionService.validateServerUri('https://example .com')).toBe(false);
-      expect(ServerConnectionService.validateServerUri('https://exam<ple.com')).toBe(false);
+      expect(
+        ServerConnectionService.validateServerUri('https://example .com'),
+      ).toBe(false);
+      expect(
+        ServerConnectionService.validateServerUri('https://exam<ple.com'),
+      ).toBe(false);
     });
   });
 
@@ -105,13 +139,15 @@ describe('ServerConnectionService', () => {
       };
       mockFetch.mockResolvedValue(mockResponse);
 
-      const result = await ServerConnectionService.testConnection('https://api.example.com');
-      
+      const result = await ServerConnectionService.testConnection(
+        'https://api.example.com',
+      );
+
       expect(result).toEqual({ success: true });
       expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/health', {
         method: 'GET',
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         timeout: 5000,
       });
@@ -120,8 +156,10 @@ describe('ServerConnectionService', () => {
     it('should return error details for failed connection test', async () => {
       mockFetch.mockRejectedValue(new Error('Network error'));
 
-      const result = await ServerConnectionService.testConnection('https://api.example.com');
-      
+      const result = await ServerConnectionService.testConnection(
+        'https://api.example.com',
+      );
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Network error');
       expect(result.errorType).toBe('network');
@@ -135,18 +173,23 @@ describe('ServerConnectionService', () => {
       };
       mockFetch.mockResolvedValue(mockResponse);
 
-      const result = await ServerConnectionService.testConnection('https://api.example.com');
-      
+      const result = await ServerConnectionService.testConnection(
+        'https://api.example.com',
+      );
+
       expect(result.success).toBe(false);
       expect(result.error).toBe('Server responded with 404 Not Found');
       expect(result.errorType).toBe('server');
     });
 
     it('should reject invalid URLs without making request', async () => {
-      const result = await ServerConnectionService.testConnection('invalid-url');
-      
+      const result =
+        await ServerConnectionService.testConnection('invalid-url');
+
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Invalid server URI. Must be HTTPS URL or HTTP localhost.');
+      expect(result.error).toBe(
+        'Invalid server URI. Must be HTTPS URL or HTTP localhost.',
+      );
       expect(result.errorType).toBe('validation');
       expect(mockFetch).not.toHaveBeenCalled();
     });
@@ -159,13 +202,15 @@ describe('ServerConnectionService', () => {
       };
       mockFetch.mockResolvedValue(mockResponse);
 
-      const result = await ServerConnectionService.testConnection('http://localhost:3001');
-      
+      const result = await ServerConnectionService.testConnection(
+        'http://localhost:3001',
+      );
+
       expect(result).toEqual({ success: true });
       expect(mockFetch).toHaveBeenCalledWith('http://localhost:3001/health', {
         method: 'GET',
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         timeout: 5000,
       });
@@ -176,12 +221,14 @@ describe('ServerConnectionService', () => {
       const result = ServerConnectionService.handleCorsError(
         'http://localhost:3001',
         new Error('CORS policy error'),
-        'http://127.0.0.1:8080'
+        'http://127.0.0.1:8080',
       );
 
       expect(result.success).toBe(false);
       expect(result.errorType).toBe('cors-localhost');
-      expect(result.error).toContain('Try accessing your app at http://localhost:8080');
+      expect(result.error).toContain(
+        'Try accessing your app at http://localhost:8080',
+      );
       expect(result.suggestion).toBe('Access app at http://localhost:8080');
     });
 
@@ -189,7 +236,7 @@ describe('ServerConnectionService', () => {
       const result = ServerConnectionService.handleCorsError(
         'http://127.0.0.1:3001',
         new Error('CORS policy error'),
-        'http://localhost:8080'
+        'http://localhost:8080',
       );
 
       expect(result.success).toBe(false);
@@ -202,22 +249,25 @@ describe('ServerConnectionService', () => {
       const result = ServerConnectionService.handleCorsError(
         'https://api.example.com',
         new Error('CORS policy error'),
-        'http://localhost:8080'
+        'http://localhost:8080',
       );
 
       expect(result.success).toBe(false);
       expect(result.errorType).toBe('cors');
-      expect(result.error).toContain('Server at https://api.example.com doesn\'t allow requests');
+      expect(result.error).toContain(
+        "Server at https://api.example.com doesn't allow requests",
+      );
       expect(result.suggestion).toBe('Configure server CORS settings');
     });
-
 
     it('should handle network unreachable errors', async () => {
       const networkError = new Error('Failed to fetch');
       networkError.name = 'TypeError';
       mockFetch.mockRejectedValue(networkError);
 
-      const result = await ServerConnectionService.testConnection('http://localhost:3001');
+      const result = await ServerConnectionService.testConnection(
+        'http://localhost:3001',
+      );
 
       expect(result.success).toBe(false);
       expect(result.errorType).toBe('unreachable');
@@ -248,12 +298,19 @@ describe('ServerConnectionService', () => {
           connectionStatus: 'configured',
         },
       });
-      expect(window.localStorage.setItem).toHaveBeenCalledWith('mindmeld.serverUri', uri);
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.uri.changed', { serverUri: uri });
+      expect(window.localStorage.setItem).toHaveBeenCalledWith(
+        'mindmeld.serverUri',
+        uri,
+      );
+      expect(mockEventBus.emit).toHaveBeenCalledWith('server.uri.changed', {
+        serverUri: uri,
+      });
     });
 
     it('should reject invalid server URI', () => {
-      const result = ServerConnectionService.setServerUri('http://insecure.com');
+      const result = ServerConnectionService.setServerUri(
+        'http://insecure.com',
+      );
 
       expect(result).toBe(false);
       expect(mockAppState.setState).not.toHaveBeenCalled();
@@ -273,8 +330,13 @@ describe('ServerConnectionService', () => {
           connectionStatus: 'configured',
         },
       });
-      expect(window.localStorage.setItem).toHaveBeenCalledWith('mindmeld.serverUri', uri);
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.uri.changed', { serverUri: uri });
+      expect(window.localStorage.setItem).toHaveBeenCalledWith(
+        'mindmeld.serverUri',
+        uri,
+      );
+      expect(mockEventBus.emit).toHaveBeenCalledWith('server.uri.changed', {
+        serverUri: uri,
+      });
     });
 
     it('should clear server URI when passed null', () => {
@@ -288,8 +350,12 @@ describe('ServerConnectionService', () => {
           connectionStatus: 'disconnected',
         },
       });
-      expect(window.localStorage.removeItem).toHaveBeenCalledWith('mindmeld.serverUri');
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.uri.changed', { serverUri: null });
+      expect(window.localStorage.removeItem).toHaveBeenCalledWith(
+        'mindmeld.serverUri',
+      );
+      expect(mockEventBus.emit).toHaveBeenCalledWith('server.uri.changed', {
+        serverUri: null,
+      });
     });
   });
 
@@ -335,10 +401,13 @@ describe('ServerConnectionService', () => {
           connectionStatus: 'connected',
         },
       });
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.connection.status.changed', {
-        status: 'connected',
-        isConnected: true,
-      });
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        'server.connection.status.changed',
+        {
+          status: 'connected',
+          isConnected: true,
+        },
+      );
     });
 
     it('should update connection status to error', () => {
@@ -351,10 +420,13 @@ describe('ServerConnectionService', () => {
           connectionStatus: 'error',
         },
       });
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.connection.status.changed', {
-        status: 'error',
-        isConnected: false,
-      });
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        'server.connection.status.changed',
+        {
+          status: 'error',
+          isConnected: false,
+        },
+      );
     });
   });
 
@@ -382,7 +454,9 @@ describe('ServerConnectionService', () => {
       const result = ServerConnectionService.loadServerUriFromStorage();
 
       expect(result).toBe(uri);
-      expect(window.localStorage.getItem).toHaveBeenCalledWith('mindmeld.serverUri');
+      expect(window.localStorage.getItem).toHaveBeenCalledWith(
+        'mindmeld.serverUri',
+      );
     });
 
     it('should return null for invalid stored URI', () => {
@@ -400,7 +474,9 @@ describe('ServerConnectionService', () => {
       const result = ServerConnectionService.loadServerUriFromStorage();
 
       expect(result).toBe(uri);
-      expect(window.localStorage.getItem).toHaveBeenCalledWith('mindmeld.serverUri');
+      expect(window.localStorage.getItem).toHaveBeenCalledWith(
+        'mindmeld.serverUri',
+      );
     });
 
     it('should return null when no URI stored', () => {
@@ -423,7 +499,9 @@ describe('ServerConnectionService', () => {
           connectionStatus: 'disconnected',
         },
       });
-      expect(window.localStorage.removeItem).toHaveBeenCalledWith('mindmeld.serverUri');
+      expect(window.localStorage.removeItem).toHaveBeenCalledWith(
+        'mindmeld.serverUri',
+      );
       expect(mockEventBus.emit).toHaveBeenCalledWith('server.connection.reset');
     });
   });

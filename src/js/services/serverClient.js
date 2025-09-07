@@ -14,9 +14,11 @@ export class ServerClient {
   static autoSaveEnabled = false;
   static saveQueue = [];
   static processingQueue = false;
+  static currentMapId = null;
+  static currentETag = null;
 
   /**
-   * Save current state to server
+   * Save current state to server using Maps API v1
    * @returns {Promise<boolean>} True if save successful
    */
   static async saveState() {
@@ -29,30 +31,17 @@ export class ServerClient {
     }
 
     try {
-      // Get current state as JSON
-      const stateData = exportToJSON();
+      // Get current state as JSON and parse it
+      const stateJsonString = exportToJSON();
+      const stateData = JSON.parse(stateJsonString);
 
-      // Make POST request to save state
-      const response = await fetch(`${serverUri}/state`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: stateData,
-      });
-
-      if (!response.ok) {
-        ServerConnectionService.setConnectionStatus('error');
-        eventBus.emit('server.save.error', {
-          error: `Server error: ${response.status} ${response.statusText}`,
-        });
-        return false;
+      if (this.currentMapId && this.currentETag) {
+        // Update existing map
+        return await this.updateExistingMap(serverUri, stateData);
+      } else {
+        // Create new map
+        return await this.createNewMap(serverUri, stateData);
       }
-
-      eventBus.emit('server.save.success');
-      log('State saved to server successfully');
-      return true;
     } catch (error) {
       ServerConnectionService.setConnectionStatus('error');
       eventBus.emit('server.save.error', {
@@ -64,7 +53,113 @@ export class ServerClient {
   }
 
   /**
-   * Load state from server
+   * Create new map on server
+   * @private
+   */
+  static async createNewMap(serverUri, stateData) {
+    const response = await fetch(`${serverUri}/maps`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({
+        name: `MindMeld Map - ${new Date().toLocaleDateString()}`,
+        data: stateData,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      ServerConnectionService.setConnectionStatus('error');
+      eventBus.emit('server.save.error', {
+        error: errorData.detail || `Server error: ${response.status} ${response.statusText}`,
+      });
+      return false;
+    }
+
+    const result = await response.json();
+    const etag = response.headers.get('ETag')?.replace(/"/g, '');
+    
+    // Store map ID and ETag for future updates
+    this.currentMapId = result.id;
+    this.currentETag = etag;
+
+    eventBus.emit('server.save.success', {
+      mapId: result.id,
+      version: result.version,
+    });
+    log('New map created on server successfully:', result.id);
+    return true;
+  }
+
+  /**
+   * Update existing map on server
+   * @private
+   */
+  static async updateExistingMap(serverUri, stateData) {
+    const response = await fetch(`${serverUri}/maps/${this.currentMapId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'If-Match': `"${this.currentETag}"`,
+      },
+      body: JSON.stringify({
+        data: stateData,
+        version: 1,
+      }),
+    });
+
+    if (response.status === 409) {
+      // Conflict - map was modified by another user/tab
+      log('ServerClient: ETag conflict detected, auto-resolving by fetching latest version');
+      
+      try {
+        // Fetch the latest version to get the current ETag
+        await this.loadState(document.getElementById('mainCanvas'));
+        
+        // Try saving again with the updated ETag
+        log('ServerClient: Retrying save after ETag refresh...');
+        return await this.updateExistingMap(mapData);
+        
+      } catch (retryError) {
+        log('ServerClient: Failed to resolve ETag conflict:', retryError.message);
+        eventBus.emit('server.save.error', {
+          error: 'Could not save - map was modified elsewhere. Changes may be lost.',
+          type: 'conflict',
+          originalError: retryError.message
+        });
+        return false;
+      }
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      ServerConnectionService.setConnectionStatus('error');
+      eventBus.emit('server.save.error', {
+        error: errorData.detail || `Server error: ${response.status} ${response.statusText}`,
+      });
+      return false;
+    }
+
+    const result = await response.json();
+    const etag = response.headers.get('ETag')?.replace(/"/g, '');
+    
+    // Update ETag for future updates
+    this.currentETag = etag;
+
+    eventBus.emit('server.save.success', {
+      mapId: result.id,
+      version: result.version,
+    });
+    log('Map updated on server successfully:', result.id);
+    return true;
+  }
+
+  /**
+   * Load state from server using Maps API v1
+   * If no specific map ID is stored, shows map selection dialog
    * @param {HTMLElement} canvas - Canvas element for importing data
    * @returns {Promise<boolean>} True if load successful
    */
@@ -85,36 +180,13 @@ export class ServerClient {
     }
 
     try {
-      // Make GET request to load state
-      const response = await fetch(`${serverUri}/state`, {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-        },
-      });
-
-      if (response.status === 404) {
-        eventBus.emit('server.load.error', {
-          error: 'No saved state found on server',
-        });
-        return false;
+      // If we have a current map ID, load it directly
+      if (this.currentMapId) {
+        return await this.loadSpecificMap(serverUri, this.currentMapId, canvas);
       }
 
-      if (!response.ok) {
-        ServerConnectionService.setConnectionStatus('error');
-        eventBus.emit('server.load.error', {
-          error: `Server error: ${response.status} ${response.statusText}`,
-        });
-        return false;
-      }
-
-      // Get response text and import data
-      const stateData = await response.text();
-      await importFromJSON(stateData, canvas);
-
-      eventBus.emit('server.load.success');
-      log('State loaded from server successfully');
-      return true;
+      // Otherwise, get list of available maps and load the most recent one
+      return await this.loadMostRecentMap(serverUri, canvas);
     } catch (error) {
       if (error.message.includes('timeout') || error.name === 'AbortError') {
         eventBus.emit('server.load.error', {
@@ -128,6 +200,114 @@ export class ServerClient {
       log('Error loading state from server:', error);
       return false;
     }
+  }
+
+  /**
+   * Load a specific map by ID
+   * @private
+   */
+  static async loadSpecificMap(serverUri, mapId, canvas) {
+    const response = await fetch(`${serverUri}/maps/${mapId}`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    if (response.status === 404) {
+      eventBus.emit('server.load.error', {
+        error: 'Map not found on server',
+      });
+      return false;
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      ServerConnectionService.setConnectionStatus('error');
+      eventBus.emit('server.load.error', {
+        error: errorData.detail || `Server error: ${response.status} ${response.statusText}`,
+      });
+      return false;
+    }
+
+    const mapData = await response.json();
+    const etag = response.headers.get('ETag')?.replace(/"/g, '');
+    
+    // Update ETag for future updates
+    this.currentETag = etag;
+    
+    // Convert map data to JSON string for importFromJSON
+    // importFromJSON expects { data: { n: [], c: [] } } structure
+    const stateData = mapData.data || mapData.state;
+    
+    // Debug logging to understand the data structure
+    log('ServerClient: Raw mapData structure:', {
+      hasData: !!mapData.data,
+      hasState: !!mapData.state,
+      stateDataType: typeof stateData,
+      stateDataKeys: stateData ? Object.keys(stateData) : 'null/undefined'
+    });
+    
+    if (!stateData) {
+      throw new Error('No data or state found in server response');
+    }
+    
+    // Ensure stateData has the required structure
+    const normalizedData = {
+      n: stateData.n || [],
+      c: stateData.c || []
+    };
+    
+    const stateJsonString = JSON.stringify({ data: normalizedData });
+    log('ServerClient: Normalized data for import:', { noteCount: normalizedData.n.length, connectionCount: normalizedData.c.length });
+    
+    await importFromJSON(stateJsonString, canvas);
+
+    eventBus.emit('server.load.success', {
+      mapId: mapData.id,
+      mapName: mapData.name,
+      version: mapData.version,
+    });
+    log('Map loaded from server successfully:', mapData.id);
+    return true;
+  }
+
+  /**
+   * Load the most recent map from the server
+   * @private
+   */
+  static async loadMostRecentMap(serverUri, canvas) {
+    // Get list of available maps
+    const response = await fetch(`${serverUri}/maps?limit=1`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      ServerConnectionService.setConnectionStatus('error');
+      eventBus.emit('server.load.error', {
+        error: errorData.detail || `Server error: ${response.status} ${response.statusText}`,
+      });
+      return false;
+    }
+
+    const maps = await response.json();
+    
+    if (!maps || maps.length === 0) {
+      eventBus.emit('server.load.error', {
+        error: 'No maps found on server',
+      });
+      return false;
+    }
+
+    // Load the most recent map (first in the list)
+    const mostRecentMap = maps[0];
+    this.currentMapId = mostRecentMap.id;
+    
+    return await this.loadSpecificMap(serverUri, mostRecentMap.id, canvas);
   }
 
   /**
@@ -257,6 +437,22 @@ export class ServerClient {
   }
 
   /**
+   * Check if the canvas is empty (no notes or connections)
+   * @returns {boolean} True if canvas has no content
+   * @private
+   */
+  static isCanvasEmpty() {
+    try {
+      const stateJsonString = exportToJSON();
+      const { data } = JSON.parse(stateJsonString);
+      return data.n.length === 0 && data.c.length === 0;
+    } catch (error) {
+      log('Error checking canvas state:', error);
+      return false; // If we can't check, don't auto-load to be safe
+    }
+  }
+
+  /**
    * Initialize server client functionality
    */
   static initialize() {
@@ -266,6 +462,20 @@ export class ServerClient {
         // Connection restored - enable auto-save and process queue
         this.enableAutoSave();
         this.processQueuedSaves();
+        
+        // Smart auto-loading: if canvas is empty, load server data
+        if (this.isCanvasEmpty()) {
+          log('Canvas is empty, auto-loading server data...');
+          this.loadState(document.getElementById('mainCanvas')).then((success) => {
+            if (success) {
+              eventBus.emit('server.autoload.success', {
+                reason: 'Empty canvas on reconnect'
+              });
+            } else {
+              log('Auto-load failed, but connection is still active');
+            }
+          });
+        }
       } else {
         // Connection lost - disable auto-save
         this.disableAutoSave();
@@ -281,4 +491,3 @@ export class ServerClient {
     log('ServerClient initialized');
   }
 }
-

@@ -1413,6 +1413,53 @@ line.connection-line {
    SERVER CONNECTION MODAL (MM-104)
    ========================================================================== */
 
+/* Connection Status Message Styles */
+.server-connection-status {
+  margin-top: 16px;
+}
+
+.status-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.status-message.status-info {
+  background: #e3f2fd;
+  color: #1976d2;
+  border-left: 4px solid #1976d2;
+}
+
+.status-message.status-success {
+  background: #e8f5e8;
+  color: #2e7d32;
+  border-left: 4px solid #4caf50;
+}
+
+.status-message.status-error {
+  background: #ffebee;
+  color: #c62828;
+  border-left: 4px solid #f44336;
+}
+
+.status-message .spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* Server Modal Overlay - Similar to notification modal pattern */
 .server-modal {
   position: fixed;
@@ -1787,6 +1834,25 @@ line.connection-line {
 
   .status-help {
     color: #9ca3af;
+  }
+
+  /* Dark mode status message styles */
+  .status-message.status-info {
+    background: #0d47a1;
+    color: #90caf9;
+    border-left-color: #1976d2;
+  }
+
+  .status-message.status-success {
+    background: #1b5e20;
+    color: #a5d6a7;
+    border-left-color: #4caf50;
+  }
+
+  .status-message.status-error {
+    background: #b71c1c;
+    color: #ef9a9a;
+    border-left-color: #f44336;
   }
 }
 

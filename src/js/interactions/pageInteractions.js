@@ -24,7 +24,8 @@ let dragging = false;
 export function initializePageInteractions(interactionController) {
   // Get behavior references
   menuBehavior = interactionController.getBehavior('menu');
-  serverConnectionBehavior = interactionController.getBehavior('serverConnection');
+  serverConnectionBehavior =
+    interactionController.getBehavior('serverConnection');
 
   if (!menuBehavior) {
     console.warn('PageInteractions: MenuBehavior not available');
@@ -48,7 +49,7 @@ export function initializePageInteractions(interactionController) {
   // Set up menu interactions
   setupMenuInteractions();
 
-  // Set up server connection modal interactions  
+  // Set up server connection modal interactions
   setupServerConnectionModalInteractions();
 
   console.log(

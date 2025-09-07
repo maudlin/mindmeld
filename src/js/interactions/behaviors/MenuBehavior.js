@@ -79,45 +79,116 @@ export class MenuBehavior {
     this.eventBus.on('server.disconnect', () => this.handleServerDisconnect());
     this.eventBus.on('modal.close', () => this.handleModalClose());
 
+    // Listen for server connection status changes to update menu UI
+    this.eventBus.on('server.connection.status.changed', () => {
+      this.updateMenuUI();
+    });
+
     // Note: Menu actions now handled directly by adapters calling handleMenuAction
   }
 
   /**
-   * Load server configuration from localStorage
+   * Load server configuration from ServerConnectionService
    */
   loadServerConfig() {
     try {
-      const stored = localStorage.getItem('mindmeld-server-config');
-      if (stored) {
-        const config = JSON.parse(stored);
-        this.serverConfig.url = config.url;
-
-        if (config.url) {
-          this.initializeApiClient(config.url);
-        }
+      // Load from ServerConnectionService which handles localStorage persistence
+      const storedUri = ServerConnectionService.loadServerUriFromStorage();
+      
+      if (storedUri) {
+        // Update ServerConnectionService state with stored URI
+        ServerConnectionService.setServerUri(storedUri);
+        
+        // Update our internal state
+        this.serverConfig.url = storedUri;
+        
+        // Initialize API client but don't mark as connected yet
+        this.initializeApiClient(storedUri);
+        
+        console.log('MenuBehavior: Loaded server URI from storage:', storedUri);
+        
+        // Test connection in background to update status accurately
+        this.testStoredConnection(storedUri);
       }
+      
+      // Migrate old localStorage data if it exists
+      this.migrateOldServerConfig();
     } catch (error) {
       console.warn(
-        'MenuBehavior: Failed to load server config from localStorage',
+        'MenuBehavior: Failed to load server config',
         error,
       );
     }
   }
+  
+  /**
+   * Test stored connection and update status
+   * @private
+   */
+  async testStoredConnection(uri) {
+    try {
+      const testResult = await ServerConnectionService.testConnection(uri);
+      if (testResult.success) {
+        // Connection is valid - update status
+        ServerConnectionService.setConnectionStatus('connected');
+        this.serverConfig.connected = true;
+        this.serverConfig.connecting = false;
+        console.log('MenuBehavior: Stored connection verified');
+      } else {
+        // Connection failed - keep URI but mark as disconnected
+        ServerConnectionService.setConnectionStatus('error');
+        this.serverConfig.connected = false;
+        this.serverConfig.connecting = false;
+        console.log('MenuBehavior: Stored connection failed:', testResult.error);
+      }
+      
+      // Update UI after connection test
+      this.updateMenuUI();
+    } catch (error) {
+      console.warn('MenuBehavior: Failed to test stored connection:', error);
+      ServerConnectionService.setConnectionStatus('error');
+      this.serverConfig.connected = false;
+      this.serverConfig.connecting = false;
+      this.updateMenuUI();
+    }
+  }
+  
+  /**
+   * Migrate old localStorage config to ServerConnectionService
+   * @private
+   */
+  migrateOldServerConfig() {
+    try {
+      const oldStored = localStorage.getItem('mindmeld-server-config');
+      if (oldStored) {
+        const config = JSON.parse(oldStored);
+        if (config.url && !ServerConnectionService.getServerUri()) {
+          console.log('MenuBehavior: Migrating old server config to ServerConnectionService');
+          ServerConnectionService.setServerUri(config.url);
+          this.serverConfig.url = config.url;
+          this.initializeApiClient(config.url);
+        }
+        // Remove old config after migration
+        localStorage.removeItem('mindmeld-server-config');
+      }
+    } catch (error) {
+      console.warn('MenuBehavior: Failed to migrate old server config:', error);
+    }
+  }
 
   /**
-   * Save server configuration to localStorage
+   * Save server configuration (now delegated to ServerConnectionService)
    */
   saveServerConfig() {
     try {
-      localStorage.setItem(
-        'mindmeld-server-config',
-        JSON.stringify({
-          url: this.serverConfig.url,
-        }),
-      );
+      // ServerConnectionService now handles all persistence
+      // This method is kept for compatibility but delegates to ServerConnectionService
+      if (this.serverConfig.url) {
+        ServerConnectionService.setServerUri(this.serverConfig.url);
+      }
     } catch (error) {
       console.warn(
-        'MenuBehavior: Failed to save server config to localStorage',
+        'MenuBehavior: Failed to save server config',
         error,
       );
     }
@@ -352,7 +423,6 @@ export class MenuBehavior {
       [
         'connect-server',
         'disconnect-server',
-        'save-to-server',
         'load-from-server',
       ].includes(action)
     ) {
@@ -401,11 +471,6 @@ export class MenuBehavior {
       case 'load-from-server':
         this.handleLoadFromServer(inputType).catch((error) =>
           console.error('MenuBehavior: Error in load from server:', error),
-        );
-        break;
-      case 'save-to-server':
-        this.handleSaveToServer(inputType).catch((error) =>
-          console.error('MenuBehavior: Error in save to server:', error),
         );
         break;
       default:
@@ -580,39 +645,14 @@ export class MenuBehavior {
   }
 
   /**
-   * Handle save to server action (MM-106)
-   */
-  async handleSaveToServer(inputType) {
-    console.log('MenuBehavior: Saving to server', { inputType });
-
-    try {
-      const status = ServerClient.getConnectionStatus();
-
-      if (!status.isConnected) {
-        notificationManager.error('Not connected to server');
-        return;
-      }
-
-      const success = await ServerClient.saveState();
-      if (success) {
-        notificationManager.success('Data saved to server successfully!');
-      } else {
-        notificationManager.error('Failed to save data to server');
-      }
-    } catch (error) {
-      console.error('MenuBehavior: Error saving to server:', error);
-      notificationManager.error('Failed to save data to server');
-    } finally {
-      // Always clear loading state
-      this.showMenuItemLoading('save-to-server', false);
-    }
-  }
-
-  /**
    * Get server connection status for menu state
    */
   getServerConnectionStatus() {
-    return ServerClient.getConnectionStatus();
+    const connectionState = ServerConnectionService.getConnectionState() || {};
+    return {
+      isConnected: connectionState.isConnected || false,
+      connectionStatus: connectionState.connectionStatus || 'disconnected',
+    };
   }
 
   /**
@@ -622,7 +662,6 @@ export class MenuBehavior {
     const status = ServerClient.getConnectionStatus();
     return {
       loadFromServer: status.isConnected,
-      saveToServer: status.isConnected,
     };
   }
 
@@ -740,28 +779,33 @@ export class MenuBehavior {
     console.log('MenuBehavior: Disconnecting from server', { inputType });
 
     try {
-      this.serverConfig.url = null;
-      this.serverConfig.connected = false;
-      this.serverConfig.connecting = false;
-      this.mapsApi = null;
+      // Use ServerConnectionService to properly disconnect
+      const success = ServerConnectionService.setServerUri(null);
+      
+      if (success) {
+        ServerConnectionService.setConnectionStatus('disconnected');
+        
+        // Update local state to match
+        this.serverConfig.url = null;
+        this.serverConfig.connected = false;
+        this.serverConfig.connecting = false;
+        this.mapsApi = null;
 
-      // Clear localStorage
-      try {
-        localStorage.removeItem('mindmeld-server-config');
-      } catch (error) {
-        console.warn(
-          'MenuBehavior: Failed to clear server config from localStorage',
-          error,
-        );
+        // Update menu UI to show disconnected state
+        this.updateMenuUI();
+
+        this.eventBus.emit('server.disconnected', {
+          behavior: this,
+          inputType,
+        });
+        
+        // Show success notification
+        notificationManager.success('Disconnected from server successfully');
+        console.log('MenuBehavior: Successfully disconnected from server');
+      } else {
+        console.error('MenuBehavior: Failed to disconnect from server');
+        notificationManager.error('Failed to disconnect from server');
       }
-
-      // Update menu UI to show disconnected state
-      this.updateMenuUI();
-
-      this.eventBus.emit('server.disconnected', {
-        behavior: this,
-        inputType,
-      });
     } finally {
       // Always clear loading state
       this.showMenuItemLoading('disconnect-server', false);
@@ -825,7 +869,6 @@ export class MenuBehavior {
     const menuText = connectItem?.querySelector('.server-menu-text');
     const statusDot = connectItem?.querySelector('.server-status-dot');
     const disconnectItem = document.querySelector('.server-disconnect-item');
-    const saveItem = document.querySelector('.server-save-item');
     const loadItem = document.querySelector('.server-load-item');
 
     if (
@@ -833,7 +876,6 @@ export class MenuBehavior {
       !menuText ||
       !statusDot ||
       !disconnectItem ||
-      !saveItem ||
       !loadItem
     ) {
       return; // Menu items not found, probably not initialized yet
@@ -850,7 +892,6 @@ export class MenuBehavior {
 
       // Show server operation items
       disconnectItem.style.display = 'flex';
-      saveItem.style.display = 'flex';
       loadItem.style.display = 'flex';
     } else {
       // Update main menu item to show disconnected state
@@ -862,7 +903,6 @@ export class MenuBehavior {
 
       // Hide server operation items
       disconnectItem.style.display = 'none';
-      saveItem.style.display = 'none';
       loadItem.style.display = 'none';
     }
   }
@@ -874,7 +914,6 @@ export class MenuBehavior {
     const actionMap = {
       'connect-server': '.server-connect-item',
       'disconnect-server': '.server-disconnect-item',
-      'save-to-server': '.server-save-item',
       'load-from-server': '.server-load-item',
     };
 
@@ -933,7 +972,7 @@ export class MenuBehavior {
   }
 
   /**
-   * Get the configured server URI 
+   * Get the configured server URI
    */
   getServerUri() {
     const connectionState = ServerConnectionService.getConnectionState();

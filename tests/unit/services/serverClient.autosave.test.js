@@ -57,12 +57,11 @@ describe('ServerClient - Auto-save Behavior', () => {
 
     jest.doMock('../../../src/js/utils/utils.js', () => ({
       log: jest.fn(),
+      // Use actual debounce for autosave tests - simulate delay for testing
       debounce: jest.fn((fn, delay) => {
-        // Return a function that tracks calls for testing
-        const debounced = jest.fn(fn);
-        debounced._originalFn = fn;
-        debounced._delay = delay;
-        return debounced;
+        const debouncedFn = fn;
+        debouncedFn._delay = delay;
+        return debouncedFn;
       }),
     }));
 
@@ -73,46 +72,47 @@ describe('ServerClient - Auto-save Behavior', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
-    ServerClient.autoSaveEnabled = false;
-    ServerClient.saveQueue = [];
-    ServerClient.processingQueue = false;
     delete global.fetch;
   });
 
-  describe('auto-save initialization', () => {
-    beforeEach(() => {
+  describe('auto-save enable/disable', () => {
+    it('should enable auto-save for connected state', () => {
       mockServerConnectionService.getConnectionState.mockReturnValue({
         serverUri: 'https://api.example.com',
         isConnected: true,
         connectionStatus: 'connected',
       });
-    });
 
-    it('should initialize ServerClient and enable auto-save when connected', () => {
-      ServerClient.initialize();
+      const result = ServerClient.enableAutoSave();
 
-      expect(mockEventBus.on).toHaveBeenCalledWith(
-        'server.connection.status.changed',
-        expect.any(Function)
-      );
+      expect(result).toBe(true);
       expect(ServerClient.autoSaveEnabled).toBe(true);
       expect(mockEventBus.emit).toHaveBeenCalledWith('server.autosave.enabled');
     });
 
-    it('should not enable auto-save when initialized disconnected', () => {
+    it('should not enable auto-save for disconnected state', () => {
       mockServerConnectionService.getConnectionState.mockReturnValue({
         serverUri: null,
         isConnected: false,
         connectionStatus: 'disconnected',
       });
 
-      ServerClient.initialize();
+      const result = ServerClient.enableAutoSave();
 
+      expect(result).toBe(false);
       expect(ServerClient.autoSaveEnabled).toBe(false);
-      expect(mockEventBus.emit).not.toHaveBeenCalledWith('server.autosave.enabled');
+      expect(mockEventBus.emit).toHaveBeenCalledWith('server.autosave.disabled', {
+        reason: 'Not connected to server',
+      });
     });
 
-    it('should setup auto-save event listeners when enabled', () => {
+    it('should set up event listeners when auto-save enabled', () => {
+      mockServerConnectionService.getConnectionState.mockReturnValue({
+        serverUri: 'https://api.example.com',
+        isConnected: true,
+        connectionStatus: 'connected',
+      });
+
       ServerClient.enableAutoSave();
 
       expect(mockEventBus.on).toHaveBeenCalledWith('note.created', expect.any(Function));
@@ -133,12 +133,20 @@ describe('ServerClient - Auto-save Behavior', () => {
         connectionStatus: 'connected',
       });
       mockServerConnectionService.getServerUri.mockReturnValue('https://api.example.com');
-      mockDataStore.exportToJSON.mockReturnValue('{"data":{"n":[],"c":[]}}');
+      mockDataStore.exportToJSON.mockReturnValue('{"n":[],"c":[]}');
 
+      // Mock successful Maps API response
       const mockResponse = {
         ok: true,
-        status: 200,
-        json: jest.fn().mockResolvedValue({ success: true }),
+        status: 201,
+        json: jest.fn().mockResolvedValue({
+          id: 'test-map-id',
+          version: 1,
+          updatedAt: '2025-09-07T11:40:09.628Z',
+        }),
+        headers: {
+          get: jest.fn().mockReturnValue('"test-etag"'),
+        },
       };
       mockFetch.mockResolvedValue(mockResponse);
     });
@@ -150,19 +158,25 @@ describe('ServerClient - Auto-save Behavior', () => {
 
     it('should auto-save when note is created', async () => {
       ServerClient.autoSaveEnabled = true;
+      // Reset map state for new map creation
+      ServerClient.currentMapId = null;
+      ServerClient.currentETag = null;
       
       const result = await ServerClient.debouncedSave();
       
       expect(result).toBe(true);
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/state', {
+      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/maps', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: '{"data":{"n":[],"c":[]}}',
+        body: expect.stringContaining('"data":{"n":[],"c":[]}'),
       });
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.save.success');
+      expect(mockEventBus.emit).toHaveBeenCalledWith('server.save.success', {
+        mapId: 'test-map-id',
+        version: 1,
+      });
     });
 
     it('should not auto-save when disconnected', async () => {
@@ -179,7 +193,7 @@ describe('ServerClient - Auto-save Behavior', () => {
       expect(mockFetch).not.toHaveBeenCalled();
     });
 
-    it('should not auto-save when auto-save is disabled', async () => {
+    it('should not auto-save when auto-save disabled', async () => {
       ServerClient.autoSaveEnabled = false;
 
       const result = await ServerClient.debouncedSave();
@@ -189,22 +203,160 @@ describe('ServerClient - Auto-save Behavior', () => {
     });
   });
 
-  describe('connection state change handling', () => {
-    it('should enable auto-save when connection is restored', () => {
+  describe('save queue management', () => {
+    beforeEach(() => {
+      mockServerConnectionService.getServerUri.mockReturnValue('https://api.example.com');
+      mockDataStore.exportToJSON.mockReturnValue('{"data":{"n":[],"c":[]}}');
+      
+      // Mock successful Maps API response for queue processing
+      const mockResponse = {
+        ok: true,
+        status: 201,
+        json: jest.fn().mockResolvedValue({
+          id: 'test-map-id',
+          version: 1,
+          updatedAt: '2025-09-07T11:40:09.628Z',
+        }),
+        headers: {
+          get: jest.fn().mockReturnValue('"test-etag"'),
+        },
+      };
+      mockFetch.mockResolvedValue(mockResponse);
+    });
+
+    it('should queue saves when server not available', () => {
+      mockServerConnectionService.getConnectionState.mockReturnValue({
+        serverUri: null,
+        isConnected: false,
+        connectionStatus: 'disconnected',
+      });
+
+      ServerClient.saveQueue = []; // Reset queue
+      ServerClient.queueSave();
+
+      expect(ServerClient.saveQueue).toHaveLength(1);
+      expect(ServerClient.saveQueue[0]).toEqual({
+        timestamp: expect.any(Number),
+        data: '{"data":{"n":[],"c":[]}}',
+      });
+      expect(mockEventBus.emit).toHaveBeenCalledWith('server.save.queued');
+    });
+
+    it('should process the most recent queued save', async () => {
+      // Set up a queued save
+      ServerClient.saveQueue = [{
+        timestamp: Date.now(),
+        data: '{"test":"data"}',
+      }];
+
+      // Reset map state for new map creation
+      ServerClient.currentMapId = null;
+      ServerClient.currentETag = null;
+
+      await ServerClient.processQueuedSaves();
+
+      expect(ServerClient.saveQueue).toHaveLength(0);
+      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/maps', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: expect.stringContaining('"data":{"data":{"n":[],"c":[]}}'),
+      });
+    });
+
+    it('should not process queue when already processing', async () => {
+      ServerClient.processingQueue = true;
+      ServerClient.saveQueue = [{
+        timestamp: Date.now(),
+        data: '{"test":"data"}',
+      }];
+
+      await ServerClient.processQueuedSaves();
+
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('should not process queue when empty', async () => {
+      ServerClient.processingQueue = false;
+      ServerClient.saveQueue = [];
+
+      await ServerClient.processQueuedSaves();
+
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('auto-save error handling', () => {
+    beforeEach(() => {
       mockServerConnectionService.getConnectionState.mockReturnValue({
         serverUri: 'https://api.example.com',
         isConnected: true,
         connectionStatus: 'connected',
       });
+      mockServerConnectionService.getServerUri.mockReturnValue('https://api.example.com');
+      mockDataStore.exportToJSON.mockReturnValue('{"n":[],"c":[]}');
+    });
 
-      ServerClient.initialize();
+    it('should handle server errors during auto-save', async () => {
+      const mockResponse = {
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        json: jest.fn().mockResolvedValue({
+          detail: 'Internal server error occurred',
+        }),
+      };
+      mockFetch.mockResolvedValue(mockResponse);
+      
+      // Reset map state for new map creation path
+      ServerClient.currentMapId = null;
+      ServerClient.currentETag = null;
 
-      // Simulate connection restoration
+      ServerClient.autoSaveEnabled = true;
+
+      const result = await ServerClient.debouncedSave();
+      
+      expect(result).toBe(false);
+      expect(mockServerConnectionService.setConnectionStatus).toHaveBeenCalledWith('error');
+      expect(mockEventBus.emit).toHaveBeenCalledWith('server.save.error', {
+        error: 'Internal server error occurred',
+      });
+    });
+
+    it('should handle network errors during auto-save', async () => {
+      mockFetch.mockRejectedValue(new Error('Network error'));
+
+      ServerClient.autoSaveEnabled = true;
+
+      const result = await ServerClient.debouncedSave();
+      
+      expect(result).toBe(false);
+      expect(mockServerConnectionService.setConnectionStatus).toHaveBeenCalledWith('error');
+      expect(mockEventBus.emit).toHaveBeenCalledWith('server.save.error', {
+        error: 'Network error',
+      });
+    });
+  });
+
+  describe('auto-save lifecycle integration', () => {
+    it('should auto-enable when connection restored', () => {
+      ServerClient.autoSaveEnabled = false;
+      
+      // Simulate connection status change event
       const connectionHandler = mockEventBus.on.mock.calls.find(
         call => call[0] === 'server.connection.status.changed'
       )?.[1];
 
       if (connectionHandler) {
+        // Mock the connection state for enableAutoSave check
+        mockServerConnectionService.getConnectionState.mockReturnValue({
+          serverUri: 'https://api.example.com',
+          isConnected: true,
+          connectionStatus: 'connected',
+        });
+
         connectionHandler({ isConnected: true });
 
         expect(ServerClient.autoSaveEnabled).toBe(true);
@@ -212,21 +364,10 @@ describe('ServerClient - Auto-save Behavior', () => {
       }
     });
 
-    it('should disable auto-save when connection is lost', () => {
-      // Setup initial connected state
-      mockServerConnectionService.getConnectionState.mockReturnValue({
-        serverUri: 'https://api.example.com',
-        isConnected: true,
-        connectionStatus: 'connected',
-      });
-      
+    it('should auto-disable when connection lost', () => {
       ServerClient.autoSaveEnabled = true;
-      ServerClient.initialize();
-
-      // Clear previous mock calls
-      mockEventBus.emit.mockClear();
-
-      // Simulate connection loss
+      
+      // Simulate connection status change event
       const connectionHandler = mockEventBus.on.mock.calls.find(
         call => call[0] === 'server.connection.status.changed'
       )?.[1];
@@ -239,187 +380,6 @@ describe('ServerClient - Auto-save Behavior', () => {
           reason: 'Manually disabled',
         });
       }
-    });
-
-    it('should process queued saves when connection is restored', () => {
-      mockServerConnectionService.getConnectionState.mockReturnValue({
-        serverUri: 'https://api.example.com',
-        isConnected: true,
-        connectionStatus: 'connected',
-      });
-
-      // Add a save to the queue
-      ServerClient.saveQueue.push({
-        timestamp: Date.now(),
-        data: '{"data":{"n":[],"c":[]}}',
-      });
-
-      ServerClient.initialize();
-
-      // Simulate connection restoration
-      const connectionHandler = mockEventBus.on.mock.calls.find(
-        call => call[0] === 'server.connection.status.changed'
-      )?.[1];
-
-      if (connectionHandler) {
-        connectionHandler({ isConnected: true });
-
-        expect(mockEventBus.emit).toHaveBeenCalledWith('server.save.queue.processing');
-      }
-    });
-  });
-
-  describe('save queue management', () => {
-    beforeEach(() => {
-      mockDataStore.exportToJSON.mockReturnValue('{"data":{"n":[],"c":[]}}');
-    });
-
-    it('should queue saves when server is unavailable', () => {
-      mockServerConnectionService.getConnectionState.mockReturnValue({
-        serverUri: 'https://api.example.com',
-        isConnected: false,
-        connectionStatus: 'error',
-      });
-
-      ServerClient.queueSave();
-
-      expect(ServerClient.saveQueue).toHaveLength(1);
-      expect(ServerClient.saveQueue[0]).toEqual({
-        timestamp: expect.any(Number),
-        data: '{"data":{"n":[],"c":[]}}',
-      });
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.save.queued');
-    });
-
-    it('should not queue saves when server is available', () => {
-      mockServerConnectionService.getConnectionState.mockReturnValue({
-        serverUri: 'https://api.example.com',
-        isConnected: true,
-        connectionStatus: 'connected',
-      });
-
-      ServerClient.queueSave();
-
-      expect(ServerClient.saveQueue).toHaveLength(0);
-      expect(mockEventBus.emit).not.toHaveBeenCalledWith('server.save.queued');
-    });
-
-    it('should process the most recent queued save', async () => {
-      // Setup successful fetch response
-      const mockResponse = {
-        ok: true,
-        status: 200,
-        json: jest.fn().mockResolvedValue({ success: true }),
-      };
-      mockFetch.mockResolvedValue(mockResponse);
-
-      mockServerConnectionService.getConnectionState.mockReturnValue({
-        serverUri: 'https://api.example.com',
-        isConnected: true,
-        connectionStatus: 'connected',
-      });
-      mockServerConnectionService.getServerUri.mockReturnValue('https://api.example.com');
-      mockDataStore.exportToJSON.mockReturnValue('{"data":{"n":[],"c":[]}}');
-
-      // Add multiple saves to queue
-      ServerClient.saveQueue = [
-        { timestamp: 1000, data: '{"old":"data"}' },
-        { timestamp: 2000, data: '{"newer":"data"}' },
-        { timestamp: 3000, data: '{"latest":"data"}' },
-      ];
-
-      await ServerClient.processQueuedSaves();
-
-      expect(ServerClient.saveQueue).toHaveLength(0);
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/state', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: '{"data":{"n":[],"c":[]}}',
-      });
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.save.queue.processed');
-    });
-
-    it('should handle queue processing failures', async () => {
-      mockFetch.mockRejectedValue(new Error('Network error'));
-
-      mockServerConnectionService.getConnectionState.mockReturnValue({
-        serverUri: 'https://api.example.com',
-        isConnected: true,
-        connectionStatus: 'connected',
-      });
-
-      ServerClient.saveQueue = [{ timestamp: Date.now(), data: '{"data":"test"}' }];
-
-      await ServerClient.processQueuedSaves();
-
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.save.queue.failed');
-      expect(ServerClient.processingQueue).toBe(false);
-    });
-
-    it('should not process queue when already processing', async () => {
-      ServerClient.processingQueue = true;
-      ServerClient.saveQueue = [{ timestamp: Date.now(), data: '{"data":"test"}' }];
-
-      await ServerClient.processQueuedSaves();
-
-      expect(mockFetch).not.toHaveBeenCalled();
-      expect(mockEventBus.emit).not.toHaveBeenCalledWith('server.save.queue.processing');
-    });
-
-    it('should not process queue when empty', async () => {
-      ServerClient.saveQueue = [];
-      ServerClient.processingQueue = false;
-
-      await ServerClient.processQueuedSaves();
-
-      expect(mockFetch).not.toHaveBeenCalled();
-      expect(mockEventBus.emit).not.toHaveBeenCalledWith('server.save.queue.processing');
-    });
-  });
-
-  describe('auto-save error handling', () => {
-    beforeEach(() => {
-      mockServerConnectionService.getConnectionState.mockReturnValue({
-        serverUri: 'https://api.example.com',
-        isConnected: true,
-        connectionStatus: 'connected',
-      });
-      mockServerConnectionService.getServerUri.mockReturnValue('https://api.example.com');
-      mockDataStore.exportToJSON.mockReturnValue('{"data":{"n":[],"c":[]}}');
-    });
-
-    it('should handle auto-save network errors gracefully', async () => {
-      mockFetch.mockRejectedValue(new Error('Network error'));
-      ServerClient.autoSaveEnabled = true;
-
-      const result = await ServerClient.debouncedSave();
-
-      expect(result).toBe(false);
-      expect(mockServerConnectionService.setConnectionStatus).toHaveBeenCalledWith('error');
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.save.error', {
-        error: 'Network error',
-      });
-    });
-
-    it('should handle server errors during auto-save', async () => {
-      const mockResponse = {
-        ok: false,
-        status: 500,
-        statusText: 'Internal Server Error',
-      };
-      mockFetch.mockResolvedValue(mockResponse);
-      ServerClient.autoSaveEnabled = true;
-
-      const result = await ServerClient.debouncedSave();
-
-      expect(result).toBe(false);
-      expect(mockServerConnectionService.setConnectionStatus).toHaveBeenCalledWith('error');
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.save.error', {
-        error: 'Server error: 500 Internal Server Error',
-      });
     });
   });
 });

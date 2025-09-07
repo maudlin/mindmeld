@@ -15,6 +15,7 @@ import { NoteColorApplication } from '../../features/note/noteColorApplication.j
 import { notificationManager } from '../../services/notificationManager.js';
 import { ZoomStateService } from '../../services/zoomStateService.js';
 import { CanvasStateService } from '../../services/canvasStateService.js';
+import { ServerClient } from '../../services/serverClient.js';
 import { log } from '../../utils/utils.js';
 
 export class ServiceBootstrap extends BaseBootstrap {
@@ -29,6 +30,7 @@ export class ServiceBootstrap extends BaseBootstrap {
     await this.initializeConnectionServices();
     await this.initializeColorServices();
     await this.initializeStateServices();
+    await this.initializeServerServices();
     await this.initializeMenuServices();
 
     return {
@@ -37,6 +39,7 @@ export class ServiceBootstrap extends BaseBootstrap {
       connectionServiceReady: true,
       colorServicesReady: true,
       stateServicesReady: true,
+      serverServicesReady: true,
       menuServicesReady: true,
     };
   }
@@ -111,6 +114,20 @@ export class ServiceBootstrap extends BaseBootstrap {
       );
       // State services are not critical - continue without them
       log('ServiceBootstrap: Continuing without state services');
+    }
+  }
+
+  async initializeServerServices() {
+    try {
+      ServerClient.initialize();
+      log('ServiceBootstrap: Server services initialized');
+    } catch (error) {
+      console.error(
+        'ServiceBootstrap: Server service initialization failed:',
+        error,
+      );
+      // Server services are not critical - continue without them
+      log('ServiceBootstrap: Continuing without server services');
     }
   }
 
