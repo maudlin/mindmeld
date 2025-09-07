@@ -143,20 +143,25 @@ export class ServerConnectionBehavior {
       if (this.uriInput) {
         this.uriInput.readOnly = true;
         this.uriInput.classList.add('readonly');
+        this.uriInput.setAttribute('aria-label', 'Current server URL (read-only)');
       }
 
       // Update button text and behavior for connected state
       if (this.connectButton) {
-        this.connectButton.textContent = 'Disconnect';
+        this.connectButton.textContent = 'Disconnect from Server';
         this.connectButton.classList.add('disconnect');
         // Change the form action to disconnect
         this.connectButton.setAttribute('data-action', 'disconnect');
+        this.connectButton.setAttribute('aria-label', 'Disconnect from the current server');
       }
 
       // Hide test button when viewing connection status
       if (this.testButton) {
         this.testButton.style.display = 'none';
       }
+
+      // Add a status indicator or help text to make it clearer
+      this.addConnectionStatusInfo(connectionState);
     } else {
       // Not connected - show connection form
       modalTitle.textContent = 'Connect to Server';
@@ -172,12 +177,57 @@ export class ServerConnectionBehavior {
         this.connectButton.textContent = 'Connect';
         this.connectButton.classList.remove('disconnect');
         this.connectButton.removeAttribute('data-action');
+        this.connectButton.removeAttribute('aria-label');
       }
 
       // Show test button for new connections
       if (this.testButton) {
         this.testButton.style.display = 'inline-block';
       }
+
+      // Remove any connection status info
+      this.removeConnectionStatusInfo();
+    }
+  }
+
+  /**
+   * Add connection status information to the modal
+   * @param {Object} connectionState - Current connection state
+   */
+  addConnectionStatusInfo(connectionState) {
+    // Remove any existing status info
+    const existingInfo = document.querySelector('.connection-status-info');
+    if (existingInfo) {
+      existingInfo.remove();
+    }
+
+    // Create status info element
+    const statusInfo = document.createElement('div');
+    statusInfo.className = 'connection-status-info';
+    statusInfo.innerHTML = `
+      <div class="status-indicator">
+        <span class="status-dot connected"></span>
+        <span class="status-text">Connected to server</span>
+      </div>
+      <div class="status-help">
+        You can disconnect from this server or close this dialog to continue using the app.
+      </div>
+    `;
+
+    // Insert the status info after the form input
+    const formGroup = document.querySelector('.form-group');
+    if (formGroup) {
+      formGroup.appendChild(statusInfo);
+    }
+  }
+
+  /**
+   * Remove connection status information from the modal
+   */
+  removeConnectionStatusInfo() {
+    const existingInfo = document.querySelector('.connection-status-info');
+    if (existingInfo) {
+      existingInfo.remove();
     }
   }
 
@@ -193,6 +243,9 @@ export class ServerConnectionBehavior {
 
     // Clear form event listeners
     this.clearFormEventListeners();
+
+    // Remove any connection status info
+    this.removeConnectionStatusInfo();
 
     // Emit event for other systems
     this.eventBus.emit('modal.closed', { type: 'serverConnection' });
@@ -404,7 +457,7 @@ export class ServerConnectionBehavior {
 
     try {
       // Clear server URI and update status
-      const success = ServerConnectionService.clearServerUri();
+      const success = ServerConnectionService.setServerUri(null);
 
       if (success) {
         ServerConnectionService.setConnectionStatus('disconnected');
@@ -481,8 +534,11 @@ export class ServerConnectionBehavior {
     this.connectButton.disabled = isConnecting;
 
     if (isConnecting) {
-      this.connectButton.textContent = 'Connecting...';
+      // Check if we're in disconnect mode
+      const isDisconnecting = this.connectButton.getAttribute('data-action') === 'disconnect';
+      this.connectButton.textContent = isDisconnecting ? 'Disconnecting...' : 'Connecting...';
     }
+    // Don't change text when not connecting - let updateConnectionUI handle that
   }
 
   /**

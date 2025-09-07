@@ -1664,6 +1664,41 @@ line.connection-line {
   border-color: #bd2130;
 }
 
+/* Connection status info styles */
+.connection-status-info {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #10b981;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.status-text {
+  font-weight: 500;
+  color: #065f46;
+}
+
+.status-help {
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
   .server-modal-content {
@@ -1738,6 +1773,20 @@ line.connection-line {
   .btn.disconnect:hover:not(:disabled) {
     background: #c0392b;
     border-color: #c0392b;
+  }
+
+  /* Dark mode connection status info styles */
+  .connection-status-info {
+    background: #2d3748;
+    border-left-color: #10b981;
+  }
+
+  .status-text {
+    color: #a7f3d0;
+  }
+
+  .status-help {
+    color: #9ca3af;
   }
 }
 
