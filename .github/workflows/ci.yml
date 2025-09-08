@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [ main, master ]
   pull_request:
-    branches: [main, master]
+    branches: [ main, master ]
   schedule:
     - cron: '0 6 * * 1' # Weekly Monday 06:00 UTC security sweep
 
@@ -46,7 +46,7 @@ jobs:
     name: Security Scanning (Semgrep)
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [test] # optional
+    needs: [ test ] # optional
     permissions:
       contents: read
       security-events: write
@@ -62,7 +62,7 @@ jobs:
             p/security-audit
             p/javascript
             p/owasp-top-ten
-          generateSarif: '1'
+          generateSarif: "1"
           baseline-ref: main
           severity: ERROR
 
