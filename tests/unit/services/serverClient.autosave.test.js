@@ -159,7 +159,7 @@ describe('ServerClient - Auto-save Behavior', () => {
       mockServerConnectionService.getServerUri.mockReturnValue(
         'https://api.example.com',
       );
-      mockDataStore.exportToJSON.mockReturnValue('{"n":[],"c":[]}');
+      mockDataStore.exportToJSON.mockReturnValue('{"data":{"n":[],"c":[]}}');
 
       // Mock successful Maps API response
       const mockResponse = {
@@ -292,7 +292,7 @@ describe('ServerClient - Auto-save Behavior', () => {
           'Content-Type': 'application/json',
           Accept: 'application/json',
         },
-        body: expect.stringContaining('"data":{"data":{"n":[],"c":[]}}'),
+        body: expect.stringContaining('"data":{"n":[],"c":[]}'),
       });
     });
 
@@ -330,7 +330,7 @@ describe('ServerClient - Auto-save Behavior', () => {
       mockServerConnectionService.getServerUri.mockReturnValue(
         'https://api.example.com',
       );
-      mockDataStore.exportToJSON.mockReturnValue('{"n":[],"c":[]}');
+      mockDataStore.exportToJSON.mockReturnValue('{"data":{"n":[],"c":[]}}');
     });
 
     it('should handle server errors during auto-save', async () => {
@@ -386,7 +386,7 @@ describe('ServerClient - Auto-save Behavior', () => {
         isConnected: true,
         connectionStatus: 'connected',
       });
-      ServerClient.enableAutoSave();
+      ServerClient.initialize();
     });
 
     it('should auto-enable when connection restored', () => {

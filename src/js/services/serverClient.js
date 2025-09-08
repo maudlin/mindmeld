@@ -33,7 +33,10 @@ export class ServerClient {
     try {
       // Get current state as JSON and parse it
       const stateJsonString = exportToJSON();
-      const stateData = JSON.parse(stateJsonString);
+      const parsedState = JSON.parse(stateJsonString);
+
+      // Extract the actual data (notes and connections) from the wrapper
+      const stateData = parsedState.data;
 
       if (this.currentMapId && this.currentETag) {
         // Update existing map
@@ -263,11 +266,8 @@ export class ServerClient {
       throw new Error('No data or state found in server response');
     }
 
-    // Ensure stateData has the required structure
-    const normalizedData = {
-      n: stateData.n || [],
-      c: stateData.c || [],
-    };
+    // Detect and repair corrupt data (e.g., double-wrapped from old bug)
+    const normalizedData = this.repairCorruptData(stateData, mapData.id);
 
     const stateJsonString = JSON.stringify({ data: normalizedData });
     log('ServerClient: Normalized data for import:', {
@@ -284,6 +284,114 @@ export class ServerClient {
     });
     log('Map loaded from server successfully:', mapData.id);
     return true;
+  }
+
+  /**
+   * Detect and repair corrupt data from server
+   * @private
+   */
+  static repairCorruptData(stateData, mapId) {
+    try {
+      // Check for double-wrapped data (old bug pattern)
+      if (stateData.data && typeof stateData.data === 'object') {
+        log('ServerClient: Detected double-wrapped data, auto-repairing...');
+        stateData = stateData.data;
+
+        eventBus.emit('server.data.repaired', {
+          mapId,
+          repairType: 'double-wrapped',
+          message: 'Automatically repaired double-wrapped data from server',
+        });
+      }
+
+      // Ensure we have the required structure
+      if (!stateData.n && !stateData.c) {
+        // Try to find data in unexpected locations
+        const possibleData = this.findDataInCorruptStructure(stateData);
+        if (possibleData) {
+          log('ServerClient: Found data in unexpected structure, repairing...');
+          stateData = possibleData;
+
+          eventBus.emit('server.data.repaired', {
+            mapId,
+            repairType: 'structure-mismatch',
+            message: 'Found and extracted data from unexpected structure',
+          });
+        } else {
+          // Completely corrupt or empty - emit error with raw data for manual recovery
+          let rawDataString;
+          try {
+            rawDataString = JSON.stringify(stateData, null, 2);
+          } catch (stringifyError) {
+            rawDataString = `[Unable to serialize data: ${stringifyError.message}]`;
+          }
+
+          eventBus.emit('server.data.corrupt', {
+            mapId,
+            rawData: rawDataString,
+            error: 'Could not find valid note or connection data',
+          });
+
+          log('ServerClient: Corrupt data detected, using empty fallback');
+          return { n: [], c: [] };
+        }
+      }
+
+      // Validate and normalize the structure
+      return {
+        n: Array.isArray(stateData.n) ? stateData.n : [],
+        c: Array.isArray(stateData.c) ? stateData.c : [],
+      };
+    } catch (error) {
+      log('ServerClient: Error repairing corrupt data:', error);
+
+      // Safely stringify even circular data
+      let rawDataString;
+      try {
+        rawDataString = JSON.stringify(stateData, null, 2);
+      } catch (stringifyError) {
+        rawDataString = `[Unable to serialize data: ${stringifyError.message}]`;
+      }
+
+      eventBus.emit('server.data.corrupt', {
+        mapId,
+        rawData: rawDataString,
+        error: `Data repair failed: ${error.message}`,
+      });
+
+      // Return empty data as safe fallback
+      return { n: [], c: [] };
+    }
+  }
+
+  /**
+   * Try to find valid data in corrupted structure
+   * @private
+   */
+  static findDataInCorruptStructure(data) {
+    // Common patterns to check
+    const patterns = [
+      () => data.state?.data, // state.data wrapper
+      () => data.map?.data, // map.data wrapper
+      () => data.content, // content field
+      () =>
+        data.notes && data.connections
+          ? { n: data.notes, c: data.connections }
+          : null, // expanded format
+    ];
+
+    for (const pattern of patterns) {
+      try {
+        const result = pattern();
+        if (result && (result.n || result.c)) {
+          return result;
+        }
+      } catch {
+        // Continue checking other patterns
+      }
+    }
+
+    return null;
   }
 
   /**
