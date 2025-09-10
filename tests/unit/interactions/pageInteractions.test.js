@@ -1,6 +1,9 @@
 // tests/unit/interactions/pageInteractions.test.js
 
-import { initializePageInteractions } from '../../../src/js/interactions/pageInteractions.js';
+import {
+  initializePageInteractions,
+  resetPageInteractions,
+} from '../../../src/js/interactions/pageInteractions.js';
 
 describe('PageInteractions Menu Integration', () => {
   let mockInteractionController;
@@ -77,6 +80,7 @@ describe('PageInteractions Menu Integration', () => {
   });
 
   afterEach(() => {
+    resetPageInteractions();
     document.body.innerHTML = '';
     jest.clearAllMocks();
   });
@@ -332,7 +336,7 @@ describe('PageInteractions Menu Integration', () => {
       // Should use fixed positioning with full width on mobile
       expect(mockKebabMenu.style.position).toBe('fixed');
       expect(mockKebabMenu.style.width).toBe('100%');
-      expect(mockKebabMenu.style.bottom).toBe('0');
+      expect(mockKebabMenu.style.bottom).toBe('0px');
     });
   });
 

@@ -18,6 +18,21 @@ let currentY = 0;
 let dragging = false;
 
 /**
+ * Reset/cleanup page interactions (for testing)
+ */
+export function resetPageInteractions() {
+  // Reset module state
+  menuBehavior = null;
+  serverConnectionBehavior = null;
+  menuButton = null;
+  menuElement = null;
+  isMenuOpen = false;
+  startY = 0;
+  currentY = 0;
+  dragging = false;
+}
+
+/**
  * Initialize page interactions with behavior references
  * @param {Object} interactionController - Controller with behavior references
  */

@@ -14,6 +14,7 @@ export class ServerClient {
   static autoSaveEnabled = false;
   static saveQueue = [];
   static processingQueue = false;
+  static loadingInProgress = false;
   static currentMapId = null;
   static currentMapName = 'Untitled Map';
   static currentETag = null;
@@ -516,7 +517,7 @@ export class ServerClient {
    * Update existing map on server
    * @private
    */
-  static async updateExistingMap(serverUri, stateData) {
+  static async updateExistingMap(serverUri, stateData, retryCount = 0) {
     const response = await fetch(`${serverUri}/maps/${this.currentMapId}`, {
       method: 'PUT',
       headers: {
@@ -532,17 +533,33 @@ export class ServerClient {
 
     if (response.status === 409) {
       // Conflict - map was modified by another user/tab
+      const MAX_RETRIES = 3;
+
+      if (retryCount >= MAX_RETRIES) {
+        const error = `ETag conflict: Maximum retries (${MAX_RETRIES}) exceeded. Please refresh and try again.`;
+        log('ServerClient:', error);
+        ServerConnectionService.setConnectionStatus('error');
+        eventBus.emit('server.save.error', { error });
+        throw new Error(error);
+      }
+
       log(
-        'ServerClient: ETag conflict detected, auto-resolving by fetching latest version',
+        `ServerClient: ETag conflict detected (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), auto-resolving by fetching latest version`,
       );
 
       try {
         // Fetch the latest version to get the current ETag
         await this.loadState(document.getElementById('canvas'));
 
-        // Try saving again with the updated ETag - call updateExistingMap directly to avoid recursion
-        log('ServerClient: Retrying save after ETag refresh...');
-        return await this.updateExistingMap(serverUri, stateData);
+        // Try saving again with the updated ETag - increment retry count to prevent infinite recursion
+        log(
+          `ServerClient: Retrying save after ETag refresh (attempt ${retryCount + 1})...`,
+        );
+        return await this.updateExistingMap(
+          serverUri,
+          stateData,
+          retryCount + 1,
+        );
       } catch (retryError) {
         log(
           'ServerClient: Failed to resolve ETag conflict:',
@@ -601,8 +618,12 @@ export class ServerClient {
       return false;
     }
 
+    // Set loading flag to prevent auto-save during load
+    this.loadingInProgress = true;
+
     const serverUri = ServerConnectionService.getServerUri();
     if (!serverUri) {
+      this.loadingInProgress = false;
       eventBus.emit('server.load.error', {
         error: 'No server configured',
       });
@@ -629,6 +650,9 @@ export class ServerClient {
       }
       log('Error loading state from server:', error);
       return false;
+    } finally {
+      // Always clear loading flag
+      this.loadingInProgress = false;
     }
   }
 
@@ -844,6 +868,11 @@ export class ServerClient {
     }
 
     if (!this.autoSaveEnabled) {
+      return false;
+    }
+
+    if (this.loadingInProgress) {
+      log('ServerClient: Skipping auto-save during loading operation');
       return false;
     }
 

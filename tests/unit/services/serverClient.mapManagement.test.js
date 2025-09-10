@@ -515,6 +515,13 @@ describe('ServerClient - Map Management', () => {
 
       expect(mockMapSafetyService.confirmMapOperation).toHaveBeenCalledWith(
         'load-map',
+        expect.objectContaining({
+          mapId: null,
+          mapName: 'Untitled Map',
+          lastEditTime: null,
+          lastSaveTime: null,
+          isConnected: false,
+        }),
         'Target Map',
       );
     });
@@ -634,9 +641,11 @@ describe('ServerClient - Map Management', () => {
       await expect(ServerClient.loadMap('nonexistent-map')).rejects.toThrow(
         'Map not found',
       );
+      // Note: loadMap failures don't set connection status to 'error'
+      // because the connection is still valid - just the map doesn't exist
       expect(
         mockServerConnectionService.setConnectionStatus,
-      ).toHaveBeenCalledWith('error');
+      ).not.toHaveBeenCalledWith('error');
     });
 
     it('should handle confirmation rejection', async () => {
