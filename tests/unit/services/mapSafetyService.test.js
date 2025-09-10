@@ -3,7 +3,6 @@
 describe('MapSafetyService', () => {
   let MapSafetyService;
   let mockServerClient;
-  let mockMenuBehavior;
   let mockNotificationManager;
   let mockEventBus;
 
@@ -69,38 +68,39 @@ describe('MapSafetyService', () => {
 
   describe('hasUnsavedChanges()', () => {
     it('should return true when lastEditTime is more recent than lastSaveTime', () => {
-      mockServerClient.lastEditTime = Date.now();
-      mockServerClient.lastSaveTime = Date.now() - 5000;
+      const lastEditTime = Date.now();
+      const lastSaveTime = Date.now() - 5000;
 
-      const result = MapSafetyService.hasUnsavedChanges();
+      const result = MapSafetyService.hasUnsavedChanges(
+        lastEditTime,
+        lastSaveTime,
+      );
 
       expect(result).toBe(true);
     });
 
     it('should return false when lastSaveTime is more recent than lastEditTime', () => {
-      mockServerClient.lastEditTime = Date.now() - 5000;
-      mockServerClient.lastSaveTime = Date.now();
+      const lastEditTime = Date.now() - 5000;
+      const lastSaveTime = Date.now();
 
-      const result = MapSafetyService.hasUnsavedChanges();
+      const result = MapSafetyService.hasUnsavedChanges(
+        lastEditTime,
+        lastSaveTime,
+      );
 
       expect(result).toBe(false);
     });
 
     it('should return false when timestamps are equal', () => {
       const now = Date.now();
-      mockServerClient.lastEditTime = now;
-      mockServerClient.lastSaveTime = now;
 
-      const result = MapSafetyService.hasUnsavedChanges();
+      const result = MapSafetyService.hasUnsavedChanges(now, now);
 
       expect(result).toBe(false);
     });
 
     it('should return false when timestamps are not set', () => {
-      mockServerClient.lastEditTime = null;
-      mockServerClient.lastSaveTime = null;
-
-      const result = MapSafetyService.hasUnsavedChanges();
+      const result = MapSafetyService.hasUnsavedChanges(null, null);
 
       expect(result).toBe(false);
     });
@@ -108,39 +108,62 @@ describe('MapSafetyService', () => {
 
   describe('getCurrentMapContext()', () => {
     it('should return complete map context when connected', () => {
-      const result = MapSafetyService.getCurrentMapContext();
+      const contextData = {
+        mapId: 'test-map-123',
+        mapName: 'Test Map Name',
+        lastEditTime: Date.now(),
+        lastSaveTime: Date.now() - 5000,
+        isConnected: true,
+      };
+
+      const result = MapSafetyService.getCurrentMapContext(contextData);
 
       expect(result).toEqual({
         mapId: 'test-map-123',
         mapName: 'Test Map Name',
-        hasUnsavedChanges: true, // Based on mock timestamps
+        hasUnsavedChanges: true, // EditTime more recent than SaveTime
         isConnected: true,
       });
     });
 
     it('should return "Untitled Map" when no map name available', () => {
-      mockMenuBehavior.getCurrentMapName.mockReturnValue(null);
+      const contextData = {
+        mapId: 'test-map-123',
+        mapName: null,
+        lastEditTime: Date.now(),
+        lastSaveTime: Date.now(),
+        isConnected: true,
+      };
 
-      const result = MapSafetyService.getCurrentMapContext();
+      const result = MapSafetyService.getCurrentMapContext(contextData);
 
       expect(result.mapName).toBe('Untitled Map');
     });
 
     it('should handle disconnected state', () => {
-      mockServerClient.getConnectionStatus.mockReturnValue({
+      const contextData = {
+        mapId: 'test-map-123',
+        mapName: 'Test Map Name',
+        lastEditTime: Date.now(),
+        lastSaveTime: Date.now(),
         isConnected: false,
-        status: 'disconnected',
-      });
+      };
 
-      const result = MapSafetyService.getCurrentMapContext();
+      const result = MapSafetyService.getCurrentMapContext(contextData);
 
       expect(result.isConnected).toBe(false);
     });
 
     it('should handle null mapId', () => {
-      mockServerClient.currentMapId = null;
+      const contextData = {
+        mapId: null,
+        mapName: 'Test Map Name',
+        lastEditTime: Date.now(),
+        lastSaveTime: Date.now(),
+        isConnected: true,
+      };
 
-      const result = MapSafetyService.getCurrentMapContext();
+      const result = MapSafetyService.getCurrentMapContext(contextData);
 
       expect(result.mapId).toBe(null);
     });
@@ -148,56 +171,81 @@ describe('MapSafetyService', () => {
 
   describe('ensureCurrentMapSaved()', () => {
     it('should call forceSave when auto-save enabled and has unsaved changes', async () => {
-      mockServerClient.autoSaveEnabled = true;
-      mockServerClient.lastEditTime = Date.now();
-      mockServerClient.lastSaveTime = Date.now() - 5000;
+      const mockForceSave = jest.fn().mockResolvedValue(true);
+      const lastEditTime = Date.now();
+      const lastSaveTime = Date.now() - 5000;
 
-      const result = await MapSafetyService.ensureCurrentMapSaved();
+      const result = await MapSafetyService.ensureCurrentMapSaved(
+        mockForceSave,
+        true, // autoSaveEnabled
+        lastEditTime,
+        lastSaveTime,
+      );
 
-      expect(mockServerClient.forceSave).toHaveBeenCalled();
+      expect(mockForceSave).toHaveBeenCalled();
       expect(result).toBe(true);
     });
 
     it('should return true when no unsaved changes exist', async () => {
-      mockServerClient.autoSaveEnabled = true;
-      mockServerClient.lastEditTime = Date.now() - 5000;
-      mockServerClient.lastSaveTime = Date.now();
+      const mockForceSave = jest.fn();
+      const lastEditTime = Date.now() - 5000;
+      const lastSaveTime = Date.now();
 
-      const result = await MapSafetyService.ensureCurrentMapSaved();
+      const result = await MapSafetyService.ensureCurrentMapSaved(
+        mockForceSave,
+        true, // autoSaveEnabled
+        lastEditTime,
+        lastSaveTime,
+      );
 
-      expect(mockServerClient.forceSave).not.toHaveBeenCalled();
+      expect(mockForceSave).not.toHaveBeenCalled();
       expect(result).toBe(true);
     });
 
     it('should return true when auto-save is disabled', async () => {
-      mockServerClient.autoSaveEnabled = false;
-      mockServerClient.lastEditTime = Date.now();
-      mockServerClient.lastSaveTime = Date.now() - 5000;
+      const mockForceSave = jest.fn();
+      const lastEditTime = Date.now();
+      const lastSaveTime = Date.now() - 5000;
 
-      const result = await MapSafetyService.ensureCurrentMapSaved();
+      const result = await MapSafetyService.ensureCurrentMapSaved(
+        mockForceSave,
+        false, // autoSaveEnabled
+        lastEditTime,
+        lastSaveTime,
+      );
 
-      expect(mockServerClient.forceSave).not.toHaveBeenCalled();
+      expect(mockForceSave).not.toHaveBeenCalled();
       expect(result).toBe(true);
     });
 
     it('should handle forceSave failure gracefully', async () => {
-      mockServerClient.autoSaveEnabled = true;
-      mockServerClient.lastEditTime = Date.now();
-      mockServerClient.lastSaveTime = Date.now() - 5000;
-      mockServerClient.forceSave.mockResolvedValue(false);
+      const mockForceSave = jest.fn().mockResolvedValue(false);
+      const lastEditTime = Date.now();
+      const lastSaveTime = Date.now() - 5000;
 
-      const result = await MapSafetyService.ensureCurrentMapSaved();
+      const result = await MapSafetyService.ensureCurrentMapSaved(
+        mockForceSave,
+        true, // autoSaveEnabled
+        lastEditTime,
+        lastSaveTime,
+      );
 
       expect(result).toBe(false);
     });
 
     it('should handle forceSave rejection gracefully', async () => {
-      mockServerClient.autoSaveEnabled = true;
-      mockServerClient.lastEditTime = Date.now();
-      mockServerClient.lastSaveTime = Date.now() - 5000;
-      mockServerClient.forceSave.mockRejectedValue(new Error('Save failed'));
+      const mockForceSave = jest
+        .fn()
+        .mockRejectedValue(new Error('Save failed'));
+      const lastEditTime = Date.now();
+      const lastSaveTime = Date.now() - 5000;
 
-      const result = await MapSafetyService.ensureCurrentMapSaved();
+      const result = await MapSafetyService.ensureCurrentMapSaved(
+        mockForceSave,
+        true, // autoSaveEnabled
+        lastEditTime,
+        lastSaveTime,
+      );
 
       expect(result).toBe(false);
     });
@@ -205,7 +253,19 @@ describe('MapSafetyService', () => {
 
   describe('confirmMapOperation()', () => {
     it('should show correct message for new-map operation', async () => {
-      await MapSafetyService.confirmMapOperation('new-map', 'New Project Map');
+      const contextData = {
+        mapId: 'test-map-123',
+        mapName: 'Test Map Name',
+        lastEditTime: Date.now(),
+        lastSaveTime: Date.now(),
+        isConnected: true,
+      };
+
+      await MapSafetyService.confirmMapOperation(
+        'new-map',
+        contextData,
+        'New Project Map',
+      );
 
       expect(mockNotificationManager.confirm).toHaveBeenCalledWith(
         'Create new map "New Project Map"? Current work will be saved as "Test Map Name".',
@@ -213,7 +273,19 @@ describe('MapSafetyService', () => {
     });
 
     it('should show correct message for load-map operation', async () => {
-      await MapSafetyService.confirmMapOperation('load-map', 'Existing Map');
+      const contextData = {
+        mapId: 'test-map-123',
+        mapName: 'Test Map Name',
+        lastEditTime: Date.now(),
+        lastSaveTime: Date.now(),
+        isConnected: true,
+      };
+
+      await MapSafetyService.confirmMapOperation(
+        'load-map',
+        contextData,
+        'Existing Map',
+      );
 
       expect(mockNotificationManager.confirm).toHaveBeenCalledWith(
         'Load "Existing Map"? Current map "Test Map Name" will be saved first.',
@@ -221,7 +293,15 @@ describe('MapSafetyService', () => {
     });
 
     it('should show correct message for clear-canvas operation', async () => {
-      await MapSafetyService.confirmMapOperation('clear-canvas');
+      const contextData = {
+        mapId: 'test-map-123',
+        mapName: 'Test Map Name',
+        lastEditTime: Date.now(),
+        lastSaveTime: Date.now(),
+        isConnected: true,
+      };
+
+      await MapSafetyService.confirmMapOperation('clear-canvas', contextData);
 
       expect(mockNotificationManager.confirm).toHaveBeenCalledWith(
         'Clear all content from "Test Map Name"? This cannot be undone.',
@@ -231,8 +311,17 @@ describe('MapSafetyService', () => {
     it('should return confirmation result', async () => {
       mockNotificationManager.confirm.mockResolvedValue(false);
 
+      const contextData = {
+        mapId: 'test-map-123',
+        mapName: 'Test Map Name',
+        lastEditTime: Date.now(),
+        lastSaveTime: Date.now(),
+        isConnected: true,
+      };
+
       const result = await MapSafetyService.confirmMapOperation(
         'new-map',
+        contextData,
         'Test',
       );
 
@@ -240,7 +329,18 @@ describe('MapSafetyService', () => {
     });
 
     it('should handle unknown operation gracefully', async () => {
-      await MapSafetyService.confirmMapOperation('unknown-operation');
+      const contextData = {
+        mapId: 'test-map-123',
+        mapName: 'Test Map Name',
+        lastEditTime: Date.now(),
+        lastSaveTime: Date.now(),
+        isConnected: true,
+      };
+
+      await MapSafetyService.confirmMapOperation(
+        'unknown-operation',
+        contextData,
+      );
 
       expect(mockNotificationManager.confirm).toHaveBeenCalledWith(
         'Perform unknown-operation? Current map "Test Map Name" may be affected.',
@@ -248,7 +348,15 @@ describe('MapSafetyService', () => {
     });
 
     it('should handle null newMapName for load-map', async () => {
-      await MapSafetyService.confirmMapOperation('load-map', null);
+      const contextData = {
+        mapId: 'test-map-123',
+        mapName: 'Test Map Name',
+        lastEditTime: Date.now(),
+        lastSaveTime: Date.now(),
+        isConnected: true,
+      };
+
+      await MapSafetyService.confirmMapOperation('load-map', contextData, null);
 
       expect(mockNotificationManager.confirm).toHaveBeenCalledWith(
         'Load "Unknown Map"? Current map "Test Map Name" will be saved first.',
@@ -256,9 +364,15 @@ describe('MapSafetyService', () => {
     });
 
     it('should use "Untitled Map" when current map has no name', async () => {
-      mockMenuBehavior.getCurrentMapName.mockReturnValue(null);
+      const contextData = {
+        mapId: 'test-map-123',
+        mapName: null, // No map name
+        lastEditTime: Date.now(),
+        lastSaveTime: Date.now(),
+        isConnected: true,
+      };
 
-      await MapSafetyService.confirmMapOperation('clear-canvas');
+      await MapSafetyService.confirmMapOperation('clear-canvas', contextData);
 
       expect(mockNotificationManager.confirm).toHaveBeenCalledWith(
         'Clear all content from "Untitled Map"? This cannot be undone.',
@@ -296,7 +410,7 @@ describe('MapSafetyService', () => {
       );
     });
 
-    it('should update lastEditTime when content changes', () => {
+    it('should emit timestamp event when content changes', () => {
       MapSafetyService.initialize();
 
       // Get the event handler for note.created
@@ -308,8 +422,18 @@ describe('MapSafetyService', () => {
       noteCreatedHandler();
       const afterTime = Date.now();
 
-      expect(mockServerClient.lastEditTime).toBeGreaterThanOrEqual(beforeTime);
-      expect(mockServerClient.lastEditTime).toBeLessThanOrEqual(afterTime);
+      // Verify that the service emitted a map.edit.timestamp event
+      expect(mockEventBus.emit).toHaveBeenCalledWith('map.edit.timestamp', {
+        timestamp: expect.any(Number),
+      });
+
+      // Verify the timestamp is within reasonable bounds
+      const emitCall = mockEventBus.emit.mock.calls.find(
+        (call) => call[0] === 'map.edit.timestamp',
+      );
+      const timestamp = emitCall[1].timestamp;
+      expect(timestamp).toBeGreaterThanOrEqual(beforeTime);
+      expect(timestamp).toBeLessThanOrEqual(afterTime);
     });
 
     it('should not initialize multiple times', () => {
