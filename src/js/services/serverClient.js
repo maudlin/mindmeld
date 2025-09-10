@@ -1,5 +1,6 @@
 // src/js/services/serverClient.js
 import { ServerConnectionService } from './serverConnectionService.js';
+import { ConnectionService } from './connectionService.js';
 import { exportToJSON, importFromJSON } from '../data/dataStore.js';
 import { eventBus } from '../core/eventBus.js';
 import { log, debounce } from '../utils/utils.js';
@@ -960,6 +961,22 @@ export class ServerClient {
   }
 
   /**
+   * Check if required services are initialized for data loading
+   * @returns {boolean} True if services are ready
+   * @private
+   */
+  static areServicesReady() {
+    // Check if ConnectionService has been properly initialized with a connection manager
+    try {
+      return ConnectionService && 
+             typeof ConnectionService.initializeConnectionDrawing === 'function' &&
+             ConnectionService.connectionManager !== null;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Check if the canvas is empty (no notes or connections)
    * @returns {boolean} True if canvas has no content
    * @private
@@ -995,8 +1012,9 @@ export class ServerClient {
         this.processQueuedSaves();
 
         // Smart auto-loading: if canvas is empty, load server data
-        if (this.isCanvasEmpty()) {
-          log('Canvas is empty, auto-loading server data...');
+        // But only if all required services are initialized
+        if (this.isCanvasEmpty() && this.areServicesReady()) {
+          log('Canvas is empty and services ready, auto-loading server data...');
           this.loadState(document.getElementById('canvas')).then((success) => {
             if (success) {
               eventBus.emit('server.autoload.success', {
@@ -1006,6 +1024,8 @@ export class ServerClient {
               log('Auto-load failed, but connection is still active');
             }
           });
+        } else if (this.isCanvasEmpty()) {
+          log('Canvas is empty but services not ready yet, deferring auto-load');
         }
       } else {
         // Connection lost - disable auto-save
@@ -1018,6 +1038,21 @@ export class ServerClient {
     if (connectionState.isConnected) {
       this.enableAutoSave();
     }
+
+    // Listen for when services become ready to retry deferred auto-loads
+    eventBus.on('app.services.ready', () => {
+      const currentConnectionState = ServerConnectionService.getConnectionState();
+      if (currentConnectionState.isConnected && this.isCanvasEmpty() && this.areServicesReady()) {
+        log('Services now ready, attempting deferred auto-load...');
+        this.loadState(document.getElementById('canvas')).then((success) => {
+          if (success) {
+            eventBus.emit('server.autoload.success', {
+              reason: 'Deferred load after services ready',
+            });
+          }
+        });
+      }
+    });
 
     log('ServerClient initialized');
   }
