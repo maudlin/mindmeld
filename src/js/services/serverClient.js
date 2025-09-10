@@ -175,7 +175,12 @@ export class ServerClient {
     const { MapSafetyService } = await import('./mapSafetyService.js');
 
     // Ensure current work is saved first
-    const saveSuccess = await MapSafetyService.ensureCurrentMapSaved();
+    const saveSuccess = await MapSafetyService.ensureCurrentMapSaved(
+      () => this.forceSave(),
+      this.autoSaveEnabled,
+      this.lastEditTime,
+      this.lastSaveTime,
+    );
     if (!saveSuccess) {
       throw new Error('Failed to save current map before creating new one');
     }
@@ -291,8 +296,16 @@ export class ServerClient {
 
     // Confirm the operation if mapName is provided
     if (options.mapName) {
+      const contextData = {
+        mapId: this.currentMapId,
+        mapName: this.getCurrentMapName(),
+        lastEditTime: this.lastEditTime,
+        lastSaveTime: this.lastSaveTime,
+        isConnected: this.getConnectionStatus().isConnected,
+      };
       const confirmed = await MapSafetyService.confirmMapOperation(
         'load-map',
+        contextData,
         options.mapName,
       );
       if (!confirmed) {
@@ -939,6 +952,11 @@ export class ServerClient {
   static initialize() {
     // Initialize map persistence
     this.initializeMapPersistence();
+
+    // Listen for map edit timestamp events from MapSafetyService
+    eventBus.on('map.edit.timestamp', ({ timestamp }) => {
+      this.lastEditTime = timestamp;
+    });
 
     // Listen for connection status changes
     eventBus.on('server.connection.status.changed', ({ isConnected }) => {

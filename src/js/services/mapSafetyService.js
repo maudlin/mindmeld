@@ -1,5 +1,4 @@
 // src/js/services/mapSafetyService.js
-import { ServerClient } from './serverClient.js';
 import { notificationManager } from './notificationManager.js';
 import { eventBus } from '../core/eventBus.js';
 import { log } from '../utils/utils.js';
@@ -45,46 +44,71 @@ export class MapSafetyService {
    * @private
    */
   static updateLastEditTime() {
-    ServerClient.lastEditTime = Date.now();
+    // This will be called by ServerClient to update its own timestamp
+    // The actual timestamp update is now handled by ServerClient
+    const timestamp = Date.now();
+    eventBus.emit('map.edit.timestamp', { timestamp });
   }
 
   /**
    * Check if there are unsaved changes by comparing timestamps
+   * @param {number} lastEditTime - Timestamp of last edit
+   * @param {number} lastSaveTime - Timestamp of last save
    * @returns {boolean} True if there are unsaved changes
    */
-  static hasUnsavedChanges() {
-    if (!ServerClient.lastEditTime || !ServerClient.lastSaveTime) {
+  static hasUnsavedChanges(lastEditTime, lastSaveTime) {
+    if (!lastEditTime || !lastSaveTime) {
       return false;
     }
-    return ServerClient.lastEditTime > ServerClient.lastSaveTime;
+    return lastEditTime > lastSaveTime;
   }
 
   /**
    * Get the current map context including ID, name, and state
+   * @param {Object} contextData - Map context data
+   * @param {string} contextData.mapId - Current map ID
+   * @param {string} contextData.mapName - Current map name
+   * @param {number} contextData.lastEditTime - Timestamp of last edit
+   * @param {number} contextData.lastSaveTime - Timestamp of last save
+   * @param {boolean} contextData.isConnected - Connection status
    * @returns {Object} Map context information
    */
-  static getCurrentMapContext() {
-    const mapName = ServerClient.getCurrentMapName() || 'Untitled Map';
-    const connectionStatus = ServerClient.getConnectionStatus();
+  static getCurrentMapContext(contextData) {
+    const mapName = contextData.mapName || 'Untitled Map';
 
     return {
-      mapId: ServerClient.currentMapId,
+      mapId: contextData.mapId,
       mapName: mapName,
-      hasUnsavedChanges: this.hasUnsavedChanges(),
-      isConnected: connectionStatus.isConnected,
+      hasUnsavedChanges: this.hasUnsavedChanges(
+        contextData.lastEditTime,
+        contextData.lastSaveTime,
+      ),
+      isConnected: contextData.isConnected,
     };
   }
 
   /**
    * Ensure current map is saved before performing operations
    * Forces immediate save bypassing debounce if needed
+   * @param {Function} forceSaveCallback - Function to call to force save
+   * @param {boolean} autoSaveEnabled - Whether auto-save is enabled
+   * @param {number} lastEditTime - Timestamp of last edit
+   * @param {number} lastSaveTime - Timestamp of last save
    * @returns {Promise<boolean>} True if save successful or not needed
    */
-  static async ensureCurrentMapSaved() {
+  static async ensureCurrentMapSaved(
+    forceSaveCallback,
+    autoSaveEnabled,
+    lastEditTime,
+    lastSaveTime,
+  ) {
     try {
       // Only force save if auto-save is enabled and there are unsaved changes
-      if (ServerClient.autoSaveEnabled && this.hasUnsavedChanges()) {
-        return await ServerClient.forceSave();
+      if (
+        autoSaveEnabled &&
+        this.hasUnsavedChanges(lastEditTime, lastSaveTime)
+      ) {
+        return await forceSaveCallback();
       }
 
       return true;
@@ -97,11 +121,12 @@ export class MapSafetyService {
   /**
    * Show confirmation dialog for map operations with contextual messages
    * @param {string} operation - Type of operation (new-map, load-map, clear-canvas)
+   * @param {Object} contextData - Map context data
    * @param {string|null} newMapName - Name of the new/target map (optional)
    * @returns {Promise<boolean>} User's confirmation choice
    */
-  static async confirmMapOperation(operation, newMapName = null) {
-    const context = this.getCurrentMapContext();
+  static async confirmMapOperation(operation, contextData, newMapName = null) {
+    const context = this.getCurrentMapContext(contextData);
 
     const messages = {
       'new-map': `Create new map "${newMapName}"? Current work will be saved as "${context.mapName}".`,
