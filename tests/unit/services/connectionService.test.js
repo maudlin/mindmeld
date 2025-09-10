@@ -14,7 +14,7 @@ describe('ConnectionService', () => {
       setConnectionUpdateCallback: jest.fn(),
       createConnection: jest.fn(),
       updateConnections: jest.fn(),
-      initializeConnectionDrawing: jest.fn(),
+      initializeSVGContainer: jest.fn(),
     };
 
     // Create mock constants
@@ -166,7 +166,7 @@ describe('ConnectionService', () => {
     it('should delegate to connection manager and return result', () => {
       const mockCanvas = document.createElement('div');
       const mockResult = document.createElement('svg');
-      mockConnectionManager.initializeConnectionDrawing.mockReturnValue(
+      mockConnectionManager.initializeSVGContainer.mockReturnValue(
         mockResult,
       );
       ConnectionService.connectionManager = mockConnectionManager;
@@ -174,7 +174,7 @@ describe('ConnectionService', () => {
       const result = ConnectionService.initializeConnectionDrawing(mockCanvas);
 
       expect(
-        mockConnectionManager.initializeConnectionDrawing,
+        mockConnectionManager.initializeSVGContainer,
       ).toHaveBeenCalledWith(mockCanvas);
       expect(result).toBe(mockResult);
     });
@@ -187,7 +187,7 @@ describe('ConnectionService', () => {
 
       expect(result).toBe(null);
       expect(
-        mockConnectionManager.initializeConnectionDrawing,
+        mockConnectionManager.initializeSVGContainer,
       ).not.toHaveBeenCalled();
     });
   });

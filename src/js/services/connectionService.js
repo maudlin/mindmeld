@@ -35,7 +35,7 @@ export class ConnectionService {
 
   static initializeConnectionDrawing(canvas) {
     if (this.connectionManager) {
-      return this.connectionManager.initializeConnectionDrawing(canvas);
+      return this.connectionManager.initializeSVGContainer(canvas);
     }
     return null;
   }
