@@ -301,7 +301,7 @@ export class ServerClient {
         mapName: this.getCurrentMapName(),
         lastEditTime: this.lastEditTime,
         lastSaveTime: this.lastSaveTime,
-        isConnected: this.getConnectionStatus().isConnected,
+        isConnected: ServerClient.getConnectionStatus()?.isConnected || false,
       };
       const confirmed = await MapSafetyService.confirmMapOperation(
         'load-map',

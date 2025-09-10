@@ -5,6 +5,7 @@ import { initializePageInteractions } from '../../../src/js/interactions/pageInt
 describe('PageInteractions Menu Integration', () => {
   let mockInteractionController;
   let mockMenuBehavior;
+  let mockServerConnectionBehavior;
   let mockKebabButton;
   let mockKebabMenu;
   let mockMenuItem;
@@ -46,10 +47,17 @@ describe('PageInteractions Menu Integration', () => {
       destroy: jest.fn().mockResolvedValue(),
     };
 
-    // Create mock InteractionController with MenuBehavior
+    // Create mock ServerConnectionBehavior
+    mockServerConnectionBehavior = {
+      initialize: jest.fn().mockResolvedValue(),
+      destroy: jest.fn().mockResolvedValue(),
+    };
+
+    // Create mock InteractionController with both behaviors
     mockInteractionController = {
       getBehavior: jest.fn((name) => {
         if (name === 'menu') return mockMenuBehavior;
+        if (name === 'serverConnection') return mockServerConnectionBehavior;
         return null;
       }),
     };
@@ -83,7 +91,7 @@ describe('PageInteractions Menu Integration', () => {
         'menu',
       );
       expect(consoleSpy).toHaveBeenCalledWith(
-        'PageInteractions: Initialized with MenuBehavior and UI elements',
+        'PageInteractions: Initialized with MenuBehavior, ServerConnectionBehavior, and UI elements',
       );
 
       consoleSpy.mockRestore();
