@@ -171,6 +171,20 @@ export class InteractionBootstrap extends BaseBootstrap {
     }
   }
 
+  async initializeMapSelectionBehavior() {
+    try {
+      await this.interactionController.initializeMapSelectionBehavior();
+      log(
+        'InteractionBootstrap: MapSelectionBehavior initialized with DOM elements',
+      );
+    } catch (error) {
+      console.error(
+        'InteractionBootstrap: Failed to initialize MapSelectionBehavior:',
+        error,
+      );
+    }
+  }
+
   initializeEditModeController() {
     try {
       editModeController.initialize();

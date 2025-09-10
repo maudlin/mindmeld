@@ -32,7 +32,7 @@
       media="(prefers-color-scheme: dark)"
     />
     <meta name="app-version" content="1.0.1">
-    <meta name="build-date" content="2025-09-08">
+    <meta name="build-date" content="2025-09-09">
   </head>
   <body>
     <nav id="navbar">
@@ -187,6 +187,25 @@
           <span>Disconnect from Server</span>
         </div>
         <div
+          class="kebab-menu-item server-new-map-item"
+          role="menuitem"
+          data-action="new-map"
+          tabindex="0"
+          style="display: none"
+        >
+          <span>New Map...</span>
+        </div>
+        <div
+          class="kebab-menu-item server-browse-maps-item"
+          role="menuitem"
+          data-action="browse-maps"
+          tabindex="0"
+          style="display: none"
+        >
+          <span>Browse Maps...</span>
+        </div>
+        <div class="kebab-menu-divider"></div>
+        <div
           class="kebab-menu-item server-load-item"
           role="menuitem"
           data-action="load-from-server"
@@ -269,6 +288,137 @@
             <!-- Connection progress and status messages will appear here -->
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Map Selection Modal -->
+    <div
+      id="map-selection-modal"
+      class="server-modal"
+      style="display: none"
+      role="dialog"
+      aria-labelledby="map-selection-modal-title"
+      aria-modal="true"
+    >
+      <div class="server-modal-content">
+        <div class="server-modal-header">
+          <h2 id="map-selection-modal-title">Select Map</h2>
+          <button
+            type="button"
+            class="modal-close server-modal-close"
+            aria-label="Close modal"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="map-selection-content">
+          <!-- Search and Filter Section -->
+          <div class="map-selection-controls">
+            <div class="form-group">
+              <input
+                type="text"
+                id="map-search-input"
+                class="form-input"
+                placeholder="Search maps by name..."
+                aria-label="Search maps"
+              />
+            </div>
+            <div class="map-selection-actions">
+              <button
+                type="button"
+                id="create-new-map-btn"
+                class="btn btn-secondary"
+              >
+                Create New Map
+              </button>
+              <button
+                type="button"
+                id="refresh-maps-btn"
+                class="btn btn-secondary"
+                aria-label="Refresh map list"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Maps List Section -->
+          <div class="maps-list-container">
+            <div id="maps-loading" class="maps-loading" style="display: none">
+              <div class="loading-spinner"></div>
+              <span>Loading maps...</span>
+            </div>
+
+            <div id="maps-list" class="maps-list">
+              <!-- Maps will be dynamically populated here -->
+            </div>
+
+            <div id="maps-empty" class="maps-empty" style="display: none">
+              <div class="empty-state">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14,2 14,8 20,8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10,9 9,9 8,9"></polyline>
+                </svg>
+                <h3>No Maps Found</h3>
+                <p>Create your first map to get started</p>
+                <button type="button" id="create-first-map-btn" class="btn btn-primary">
+                  Create New Map
+                </button>
+              </div>
+            </div>
+
+            <div id="maps-error" class="maps-error" style="display: none">
+              <div class="error-state">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="15" y1="9" x2="9" y2="15"></line>
+                  <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                <h3>Failed to Load Maps</h3>
+                <p id="maps-error-message">Unable to connect to server</p>
+                <button type="button" id="retry-load-maps-btn" class="btn btn-primary">
+                  Try Again
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pagination Controls -->
+          <div id="maps-pagination" class="maps-pagination" style="display: none">
+            <button type="button" id="prev-page-btn" class="btn btn-secondary" disabled>
+              Previous
+            </button>
+            <span id="page-info" class="page-info">Page 1 of 1</span>
+            <button type="button" id="next-page-btn" class="btn btn-secondary" disabled>
+              Next
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="form-actions">
+          <button type="button" id="cancel-map-selection-btn" class="btn btn-secondary">
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
 

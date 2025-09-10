@@ -14,6 +14,7 @@ import { ConnectionBehavior } from './behaviors/ConnectionBehavior.js';
 import { ViewportBehavior } from './behaviors/ViewportBehavior.js';
 import { MenuBehavior } from './behaviors/MenuBehavior.js';
 import { ServerConnectionBehavior } from '../features/serverConnection/serverConnectionBehavior.js';
+import { MapSelectionBehavior } from '../features/mapSelection/mapSelectionBehavior.js';
 
 export class InteractionController {
   constructor() {
@@ -70,6 +71,7 @@ export class InteractionController {
       const serverConnectionBehavior = new ServerConnectionBehavior(
         this.eventBus,
       );
+      const mapSelectionBehavior = new MapSelectionBehavior(this);
 
       // Register behaviors
       this.registerBehavior('note', noteBehavior);
@@ -80,6 +82,7 @@ export class InteractionController {
       this.registerBehavior('viewport', viewportBehavior);
       this.registerBehavior('menu', menuBehavior);
       this.registerBehavior('serverConnection', serverConnectionBehavior);
+      this.registerBehavior('mapSelection', mapSelectionBehavior);
 
       // Initialize all behaviors
       await noteBehavior.initialize();
@@ -101,6 +104,10 @@ export class InteractionController {
       console.log(
         'InteractionController: ServerConnectionBehavior initialized',
       );
+
+      // MapSelectionBehavior can initialize immediately - sets up DOM event listeners
+      await mapSelectionBehavior.initialize();
+      console.log('InteractionController: MapSelectionBehavior initialized');
 
       // MenuBehavior will be initialized later when DOM elements are available
       console.log(
@@ -158,6 +165,24 @@ export class InteractionController {
     } else {
       console.warn(
         'InteractionController: MenuBehavior not found for canvas initialization',
+      );
+    }
+  }
+
+  /**
+   * Initialize MapSelectionBehavior after DOM elements are available
+   * Called after DOM is ready during bootstrap
+   */
+  async initializeMapSelectionBehavior() {
+    const mapSelectionBehavior = this.getBehavior('mapSelection');
+    if (mapSelectionBehavior) {
+      await mapSelectionBehavior.initialize(); // Initialize now that DOM elements are available
+      console.log(
+        'InteractionController: MapSelectionBehavior initialized with DOM elements',
+      );
+    } else {
+      console.warn(
+        'InteractionController: MapSelectionBehavior not found for initialization',
       );
     }
   }

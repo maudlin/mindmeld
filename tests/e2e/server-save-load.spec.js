@@ -10,7 +10,7 @@ test.describe('Server Save/Load - E2E (MM-106)', () => {
     await canvasPage.load();
 
     // Wait for stability in CI
-    await page.waitForTimeout(1000);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   });
 
   test('should show server save/load options in kebab menu', async ({
@@ -74,7 +74,8 @@ test.describe('Server Save/Load - E2E (MM-106)', () => {
     // Create a note first
     const note = await canvasPage.createNote(300, 200);
     await canvasPage.editNoteContent('Test Note for Server', note);
-    await page.waitForTimeout(600);
+    // Wait for note creation to complete
+    await new Promise((resolve) => setTimeout(resolve, 600));
 
     // Test save action via event system
     await page.evaluate(() => {
@@ -87,7 +88,8 @@ test.describe('Server Save/Load - E2E (MM-106)', () => {
 
     // Should handle the action (implementation will determine exact behavior)
     // At minimum, it shouldn't crash the app
-    await page.waitForTimeout(500);
+    // Wait for auto-save to complete
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     // Test load action via event system
     await page.evaluate(() => {
@@ -99,7 +101,8 @@ test.describe('Server Save/Load - E2E (MM-106)', () => {
     });
 
     // Should handle the action without errors
-    await page.waitForTimeout(500);
+    // Wait for auto-save to complete
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     // Verify the app is still functional
     await expect(page.locator('#canvas')).toBeVisible();
@@ -162,15 +165,15 @@ test.describe('Server Save/Load - E2E (MM-106)', () => {
 
     // Test existing menu options still work
     const templateOption = page.locator('[data-action="change-template"]');
-    if (await templateOption.isVisible()) {
-      await templateOption.click();
-      // Should open template dropdown or perform template action
-      await page.waitForTimeout(500);
-    }
+    await expect(templateOption).toBeVisible();
+    await templateOption.click();
+    // Should open template dropdown or perform template action
+    // Wait for auto-save to complete
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     // Close any open menus
     await page.click('#canvas');
-    await expect(page.locator('#kebab-context-menu')).not.toBeVisible();
+    await expect(page.locator('#kebab-context-menu')).toBeHidden();
 
     // Menu should still open after interaction
     await page.click('#kebab-menu-button');

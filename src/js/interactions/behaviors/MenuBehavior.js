@@ -25,11 +25,9 @@ export class MenuBehavior {
     // Menu state
     this.isOpen = false;
 
-    // Server connection state
+    // Server connection state (URL only - connection status managed by ServerConnectionService)
     this.serverConfig = {
       url: null,
-      connected: false,
-      connecting: false,
     };
 
     // Modal state
@@ -37,6 +35,9 @@ export class MenuBehavior {
 
     // API client instance
     this.mapsApi = null;
+
+    // Map state tracking (MM-228)
+    this.currentMapName = 'Untitled Map';
 
     console.log('MenuBehavior: Created');
   }
@@ -50,13 +51,14 @@ export class MenuBehavior {
     }
 
     // Load server configuration from localStorage
-    this.loadServerConfig();
+    await this.loadServerConfig();
 
     // Set up event listeners for system integration
     this.setupEventListeners();
 
     // Update menu UI to reflect initial state
     // Use setTimeout to ensure DOM is ready
+    // Always update UI immediately since we start with disconnected state
     setTimeout(() => {
       this.updateMenuUI();
     }, 0);
@@ -90,14 +92,15 @@ export class MenuBehavior {
   /**
    * Load server configuration from ServerConnectionService
    */
-  loadServerConfig() {
+  async loadServerConfig() {
     try {
       // Load from ServerConnectionService which handles localStorage persistence
       const storedUri = ServerConnectionService.loadServerUriFromStorage();
 
       if (storedUri) {
-        // Update ServerConnectionService state with stored URI
+        // Update ServerConnectionService state with stored URI but mark as disconnected initially
         ServerConnectionService.setServerUri(storedUri);
+        ServerConnectionService.setConnectionStatus('disconnected');
 
         // Update our internal state
         this.serverConfig.url = storedUri;
@@ -107,8 +110,8 @@ export class MenuBehavior {
 
         console.log('MenuBehavior: Loaded server URI from storage:', storedUri);
 
-        // Test connection in background to update status accurately
-        this.testStoredConnection(storedUri);
+        // Test connection and wait for result to ensure UI updates properly
+        await this.testStoredConnection(storedUri);
       }
 
       // Migrate old localStorage data if it exists
@@ -128,14 +131,10 @@ export class MenuBehavior {
       if (testResult.success) {
         // Connection is valid - update status
         ServerConnectionService.setConnectionStatus('connected');
-        this.serverConfig.connected = true;
-        this.serverConfig.connecting = false;
         console.log('MenuBehavior: Stored connection verified');
       } else {
         // Connection failed - keep URI but mark as disconnected
         ServerConnectionService.setConnectionStatus('error');
-        this.serverConfig.connected = false;
-        this.serverConfig.connecting = false;
         console.log(
           'MenuBehavior: Stored connection failed:',
           testResult.error,
@@ -143,12 +142,14 @@ export class MenuBehavior {
       }
 
       // Update UI after connection test
+      console.log(
+        'MenuBehavior: About to call updateMenuUI() after connection test',
+      );
       this.updateMenuUI();
+      console.log('MenuBehavior: Called updateMenuUI() after connection test');
     } catch (error) {
       console.warn('MenuBehavior: Failed to test stored connection:', error);
       ServerConnectionService.setConnectionStatus('error');
-      this.serverConfig.connected = false;
-      this.serverConfig.connecting = false;
       this.updateMenuUI();
     }
   }
@@ -388,10 +389,28 @@ export class MenuBehavior {
 
     const menuRect = this.menuElement.getBoundingClientRect();
 
-    // Prefer below; flip above if needed
+    // Enhanced positioning with constraint handling
     let top = rect.bottom + gap;
     if (top + menuRect.height > vh - margin) {
-      top = rect.top - menuRect.height - gap;
+      // Try flipping above
+      const topAlternative = rect.top - menuRect.height - gap;
+      if (topAlternative >= margin) {
+        // Fits above - use it
+        top = topAlternative;
+        // Reset scroll constraints since we have space
+        this.menuElement.style.maxHeight = '';
+        this.menuElement.style.overflowY = '';
+      } else {
+        // Doesn't fit above OR below - constrain height
+        const maxHeight = vh - margin * 2;
+        this.menuElement.style.maxHeight = `${maxHeight}px`;
+        this.menuElement.style.overflowY = 'auto';
+        top = margin - window.scrollY; // Position at viewport margin (document-relative)
+      }
+    } else {
+      // Fits below - reset scroll constraints
+      this.menuElement.style.maxHeight = '';
+      this.menuElement.style.overflowY = '';
     }
 
     // Prefer align-left with button; shift/clamp as needed
@@ -469,6 +488,12 @@ export class MenuBehavior {
         this.handleLoadFromServer(inputType).catch((error) =>
           console.error('MenuBehavior: Error in load from server:', error),
         );
+        break;
+      case 'new-map':
+        this.handleNewMap(inputType);
+        break;
+      case 'browse-maps':
+        this.handleBrowseMaps(inputType);
         break;
       default:
         console.warn('MenuBehavior: Unknown menu action', { action });
@@ -713,7 +738,7 @@ export class MenuBehavior {
       return;
     }
 
-    this.serverConfig.connecting = true;
+    // Connection attempt starting (ServerConnectionService will manage the status)
 
     console.log('MenuBehavior: Attempting server connection', { url });
 
@@ -735,8 +760,6 @@ export class MenuBehavior {
 
       // Connection successful
       this.serverConfig.url = url;
-      this.serverConfig.connected = true;
-      this.serverConfig.connecting = false;
 
       // Save to localStorage
       this.saveServerConfig();
@@ -754,8 +777,6 @@ export class MenuBehavior {
     } catch (error) {
       console.error('MenuBehavior: Server connection failed', error);
 
-      this.serverConfig.connected = false;
-      this.serverConfig.connecting = false;
       this.mapsApi = null;
 
       // Update menu UI to show disconnected state
@@ -784,8 +805,6 @@ export class MenuBehavior {
 
         // Update local state to match
         this.serverConfig.url = null;
-        this.serverConfig.connected = false;
-        this.serverConfig.connecting = false;
         this.mapsApi = null;
 
         // Update menu UI to show disconnected state
@@ -821,13 +840,84 @@ export class MenuBehavior {
   }
 
   /**
+   * Get current map name (MM-228)
+   */
+  getCurrentMapName() {
+    return this.currentMapName;
+  }
+
+  /**
+   * Set current map name and update UI (MM-228)
+   */
+  setCurrentMapName(name) {
+    this.currentMapName = name || 'Untitled Map';
+    this.updateMenuUI(); // Trigger menu refresh
+    console.log('MenuBehavior: Map name updated to:', this.currentMapName);
+  }
+
+  /**
+   * Handle new map creation request (MM-228)
+   */
+  handleNewMap(inputType) {
+    console.log('MenuBehavior: New Map requested', { inputType });
+
+    // Check if we're connected to a server
+    const serverStatus = this.getServerConnectionStatus();
+    if (!serverStatus || !serverStatus.isConnected) {
+      notificationManager.error(
+        'Please connect to a server first to create new maps.',
+      );
+      return;
+    }
+
+    // Emit event to trigger MapSelectionBehavior with create new map mode
+    this.eventBus.emit('modal.mapSelection.show', {
+      behavior: this,
+      mode: 'create-new',
+      inputType,
+    });
+
+    console.log(
+      'MenuBehavior: Map selection modal requested for new map creation',
+    );
+  }
+
+  /**
+   * Handle browse maps request (MM-228)
+   */
+  handleBrowseMaps(inputType) {
+    console.log('MenuBehavior: Browse Maps requested', { inputType });
+
+    // Check if we're connected to a server
+    const serverStatus = this.getServerConnectionStatus();
+    if (!serverStatus || !serverStatus.isConnected) {
+      notificationManager.error(
+        'Please connect to a server first to browse maps.',
+      );
+      return;
+    }
+
+    // Emit event to trigger MapSelectionBehavior
+    this.eventBus.emit('modal.mapSelection.show', {
+      behavior: this,
+      mode: 'browse',
+      inputType,
+    });
+
+    console.log(
+      'MenuBehavior: Map selection modal requested for browsing maps',
+    );
+  }
+
+  /**
    * Get current server status for UI updates
    */
   getServerStatus() {
+    const connectionState = ServerConnectionService.getConnectionState();
     return {
       url: this.serverConfig.url,
-      connected: this.serverConfig.connected,
-      connecting: this.serverConfig.connecting,
+      connected: connectionState?.isConnected || false,
+      connecting: connectionState?.connectionStatus === 'connecting',
       hasApi: !!this.mapsApi,
     };
   }
@@ -867,20 +957,26 @@ export class MenuBehavior {
     const statusDot = connectItem?.querySelector('.server-status-dot');
     const disconnectItem = document.querySelector('.server-disconnect-item');
     const loadItem = document.querySelector('.server-load-item');
+    // MM-228: New map management items
+    const newMapItem = document.querySelector('.server-new-map-item');
+    const browseMapsItem = document.querySelector('.server-browse-maps-item');
 
     if (
       !connectItem ||
       !menuText ||
       !statusDot ||
       !disconnectItem ||
-      !loadItem
+      !loadItem ||
+      !newMapItem ||
+      !browseMapsItem
     ) {
       return; // Menu items not found, probably not initialized yet
     }
 
     if (isConnected) {
-      // Update main menu item to show connected state
-      menuText.textContent = 'Connected to Server';
+      // Update main menu item to show connected state with map name (MM-228)
+      const mapName = this.getCurrentMapName();
+      menuText.textContent = `Connected: ${mapName}`;
       statusDot.className = 'server-status-dot connected';
       statusDot.style.display = 'inline-block';
 
@@ -890,6 +986,9 @@ export class MenuBehavior {
       // Show server operation items
       disconnectItem.style.display = 'flex';
       loadItem.style.display = 'flex';
+      // MM-228: Show new map management items
+      newMapItem.style.display = 'flex';
+      browseMapsItem.style.display = 'flex';
     } else {
       // Update main menu item to show disconnected state
       menuText.textContent = 'Connect to Server...';
@@ -901,6 +1000,9 @@ export class MenuBehavior {
       // Hide server operation items
       disconnectItem.style.display = 'none';
       loadItem.style.display = 'none';
+      // MM-228: Hide new map management items
+      newMapItem.style.display = 'none';
+      browseMapsItem.style.display = 'none';
     }
   }
 
@@ -914,7 +1016,7 @@ export class MenuBehavior {
       'load-from-server': '.server-load-item',
     };
 
-    if (!Object.hasOwn(actionMap, action)) return;
+    if (!Object.prototype.hasOwnProperty.call(actionMap, action)) return;
     const selector = actionMap[action];
 
     const menuItem = document.querySelector(selector);

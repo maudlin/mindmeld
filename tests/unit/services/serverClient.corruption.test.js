@@ -1,39 +1,29 @@
 // tests/unit/services/serverClient.corruption.test.js
 
-describe('ServerClient - Data Corruption Handling', () => {
+describe('ServerClient - Data Validation', () => {
   let ServerClient;
-  let mockEventBus;
-  let mockServerConnectionService;
-  let mockDataStore;
 
   beforeEach(async () => {
     // Reset modules
     jest.resetModules();
 
-    // Create mock objects
-    mockEventBus = {
-      emit: jest.fn(),
-    };
-
-    mockServerConnectionService = {
-      getServerUri: jest.fn(),
-      setConnectionStatus: jest.fn(),
-    };
-
-    mockDataStore = {
-      importFromJSON: jest.fn(),
-    };
-
     // Mock dependencies before importing
     jest.doMock('../../../src/js/core/eventBus.js', () => ({
-      eventBus: mockEventBus,
+      eventBus: {
+        emit: jest.fn(),
+      },
     }));
 
     jest.doMock('../../../src/js/services/serverConnectionService.js', () => ({
-      ServerConnectionService: mockServerConnectionService,
+      ServerConnectionService: {
+        getServerUri: jest.fn(),
+        setConnectionStatus: jest.fn(),
+      },
     }));
 
-    jest.doMock('../../../src/js/data/dataStore.js', () => mockDataStore);
+    jest.doMock('../../../src/js/data/dataStore.js', () => ({
+      importFromJSON: jest.fn(),
+    }));
 
     jest.doMock('../../../src/js/utils/utils.js', () => ({
       log: jest.fn(),
@@ -53,8 +43,59 @@ describe('ServerClient - Data Corruption Handling', () => {
     jest.clearAllMocks();
   });
 
-  describe('repairCorruptData', () => {
-    it('should auto-repair double-wrapped data', () => {
+  describe('validateStateData', () => {
+    it('should accept valid data with notes and connections', () => {
+      const validData = {
+        n: [{ i: 'note1', p: [100, 200], c: 'Test Note' }],
+        c: [['note1', 'note2', 0]],
+      };
+
+      expect(() => {
+        ServerClient.validateStateData(validData, 'test-map-id');
+      }).not.toThrow();
+    });
+
+    it('should accept data with only notes', () => {
+      const validData = {
+        n: [{ i: 'note1', p: [100, 200], c: 'Test Note' }],
+        c: [],
+      };
+
+      expect(() => {
+        ServerClient.validateStateData(validData, 'test-map-id');
+      }).not.toThrow();
+    });
+
+    it('should accept data with only connections', () => {
+      const validData = {
+        n: [],
+        c: [['note1', 'note2', 0]],
+      };
+
+      expect(() => {
+        ServerClient.validateStateData(validData, 'test-map-id');
+      }).not.toThrow();
+    });
+
+    it('should throw error for null data', () => {
+      expect(() => {
+        ServerClient.validateStateData(null, 'test-map-id');
+      }).toThrow('Invalid state data for map test-map-id: not an object');
+    });
+
+    it('should throw error for undefined data', () => {
+      expect(() => {
+        ServerClient.validateStateData(undefined, 'test-map-id');
+      }).toThrow('Invalid state data for map test-map-id: not an object');
+    });
+
+    it('should throw error for non-object data', () => {
+      expect(() => {
+        ServerClient.validateStateData('string data', 'test-map-id');
+      }).toThrow('Invalid state data for map test-map-id: not an object');
+    });
+
+    it('should throw error for double-wrapped data', () => {
       const corruptData = {
         data: {
           n: [{ i: 'note1', p: [100, 200], c: 'Test Note' }],
@@ -62,225 +103,160 @@ describe('ServerClient - Data Corruption Handling', () => {
         },
       };
 
-      const result = ServerClient.repairCorruptData(corruptData, 'test-map-id');
-
-      expect(result).toEqual({
-        n: [{ i: 'note1', p: [100, 200], c: 'Test Note' }],
-        c: [['note1', 'note2', 0]],
-      });
-
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.data.repaired', {
-        mapId: 'test-map-id',
-        repairType: 'double-wrapped',
-        message: 'Automatically repaired double-wrapped data from server',
-      });
+      expect(() => {
+        ServerClient.validateStateData(corruptData, 'test-map-id');
+      }).toThrow(
+        'Corrupt state data for map test-map-id: double-wrapped data detected',
+      );
     });
 
-    it('should handle valid data without changes', () => {
-      const validData = {
-        n: [{ i: 'note1', p: [100, 200], c: 'Test Note' }],
-        c: [['note1', 'note2', 0]],
-      };
-
-      const result = ServerClient.repairCorruptData(validData, 'test-map-id');
-
-      expect(result).toEqual(validData);
-      expect(mockEventBus.emit).not.toHaveBeenCalled();
-    });
-
-    it('should repair data found in state.data wrapper', () => {
-      const corruptData = {
-        state: {
-          data: {
-            n: [{ i: 'note1', p: [100, 200], c: 'Test Note' }],
-            c: [],
-          },
-        },
-      };
-
-      const result = ServerClient.repairCorruptData(corruptData, 'test-map-id');
-
-      expect(result).toEqual({
-        n: [{ i: 'note1', p: [100, 200], c: 'Test Note' }],
-        c: [],
-      });
-
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.data.repaired', {
-        mapId: 'test-map-id',
-        repairType: 'structure-mismatch',
-        message: 'Found and extracted data from unexpected structure',
-      });
-    });
-
-    it('should repair data in expanded format', () => {
-      const corruptData = {
-        notes: [{ i: 'note1', p: [100, 200], c: 'Test Note' }],
-        connections: [['note1', 'note2', 0]],
-      };
-
-      const result = ServerClient.repairCorruptData(corruptData, 'test-map-id');
-
-      expect(result).toEqual({
-        n: [{ i: 'note1', p: [100, 200], c: 'Test Note' }],
-        c: [['note1', 'note2', 0]],
-      });
-
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.data.repaired', {
-        mapId: 'test-map-id',
-        repairType: 'structure-mismatch',
-        message: 'Found and extracted data from unexpected structure',
-      });
-    });
-
-    it('should emit corrupt data event for unrecoverable data', () => {
+    it('should throw error for missing both n and c arrays', () => {
       const corruptData = {
         invalidStructure: 'totally broken',
         randomField: 123,
       };
 
-      const result = ServerClient.repairCorruptData(corruptData, 'test-map-id');
-
-      expect(result).toEqual({ n: [], c: [] });
-
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.data.corrupt', {
-        mapId: 'test-map-id',
-        rawData: JSON.stringify(corruptData, null, 2),
-        error: 'Could not find valid note or connection data',
-      });
+      expect(() => {
+        ServerClient.validateStateData(corruptData, 'test-map-id');
+      }).toThrow(
+        "Invalid state data for map test-map-id: missing 'n' (notes) and 'c' (connections) arrays",
+      );
     });
 
-    it('should handle empty data gracefully', () => {
-      const emptyData = {};
+    it('should throw error for non-array notes', () => {
+      const corruptData = {
+        n: 'not an array',
+        c: [],
+      };
 
-      const result = ServerClient.repairCorruptData(emptyData, 'test-map-id');
-
-      expect(result).toEqual({ n: [], c: [] });
-
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.data.corrupt', {
-        mapId: 'test-map-id',
-        rawData: JSON.stringify(emptyData, null, 2),
-        error: 'Could not find valid note or connection data',
-      });
+      expect(() => {
+        ServerClient.validateStateData(corruptData, 'test-map-id');
+      }).toThrow(
+        "Invalid state data for map test-map-id: 'n' (notes) is not an array",
+      );
     });
 
-    it('should normalize non-array fields to arrays', () => {
-      const badData = {
+    it('should throw error for non-array connections', () => {
+      const corruptData = {
+        n: [],
+        c: 'not an array',
+      };
+
+      expect(() => {
+        ServerClient.validateStateData(corruptData, 'test-map-id');
+      }).toThrow(
+        "Invalid state data for map test-map-id: 'c' (connections) is not an array",
+      );
+    });
+
+    it('should throw error for both non-array notes and connections', () => {
+      const corruptData = {
         n: 'not an array',
         c: null,
       };
 
-      const result = ServerClient.repairCorruptData(badData, 'test-map-id');
-
-      expect(result).toEqual({ n: [], c: [] });
+      expect(() => {
+        ServerClient.validateStateData(corruptData, 'test-map-id');
+      }).toThrow(
+        "Invalid state data for map test-map-id: 'n' (notes) is not an array",
+      );
     });
 
-    it('should handle exceptions during repair', () => {
-      // Create data that will cause JSON.stringify to throw
-      const cyclicData = {};
-      cyclicData.self = cyclicData;
+    it('should accept empty arrays', () => {
+      const emptyData = {
+        n: [],
+        c: [],
+      };
 
-      const result = ServerClient.repairCorruptData(cyclicData, 'test-map-id');
+      expect(() => {
+        ServerClient.validateStateData(emptyData, 'test-map-id');
+      }).not.toThrow();
+    });
 
-      expect(result).toEqual({ n: [], c: [] });
+    it('should accept data with missing c if n is present', () => {
+      const dataWithoutConnections = {
+        n: [{ i: 'note1' }],
+      };
 
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.data.corrupt', {
-        mapId: 'test-map-id',
-        rawData: expect.stringContaining('Unable to serialize data'),
-        error: 'Could not find valid note or connection data',
-      });
+      expect(() => {
+        ServerClient.validateStateData(dataWithoutConnections, 'test-map-id');
+      }).not.toThrow();
+    });
+
+    it('should accept data with missing n if c is present', () => {
+      const dataWithoutNotes = {
+        c: [['a', 'b', 0]],
+      };
+
+      expect(() => {
+        ServerClient.validateStateData(dataWithoutNotes, 'test-map-id');
+      }).not.toThrow();
     });
   });
 
-  describe('findDataInCorruptStructure', () => {
-    it('should find data in state.data pattern', () => {
-      const data = {
-        state: {
-          data: {
-            n: [{ i: 'note1' }],
-            c: [],
-          },
-        },
-      };
+  describe('loadState with corrupt data validation', () => {
+    let mockCanvas;
+    let originalFetch;
 
-      const result = ServerClient.findDataInCorruptStructure(data);
+    beforeEach(() => {
+      // Reset mocks
+      jest.clearAllMocks();
 
-      expect(result).toEqual({
-        n: [{ i: 'note1' }],
-        c: [],
+      mockCanvas = { id: 'canvas' };
+
+      // Mock DOM
+      const mockGetElementById = jest.fn().mockReturnValue(mockCanvas);
+      Object.defineProperty(document, 'getElementById', {
+        value: mockGetElementById,
+        writable: true,
       });
+
+      // Store original fetch and mock it
+      originalFetch = global.fetch;
+      global.fetch = jest.fn();
+
+      // Reset ServerClient state
+      ServerClient.currentMapId = null;
+      ServerClient.currentETag = null;
     });
 
-    it('should find data in map.data pattern', () => {
-      const data = {
-        map: {
-          data: {
-            n: [],
-            c: [['a', 'b', 0]],
-          },
-        },
-      };
-
-      const result = ServerClient.findDataInCorruptStructure(data);
-
-      expect(result).toEqual({
-        n: [],
-        c: [['a', 'b', 0]],
-      });
+    afterEach(() => {
+      // Restore original fetch
+      if (originalFetch) {
+        global.fetch = originalFetch;
+      } else {
+        delete global.fetch;
+      }
     });
 
-    it('should find data in content field', () => {
-      const data = {
-        content: {
-          n: [{ i: 'note1' }],
+    it('should demonstrate that validation prevents corrupt data from being processed', () => {
+      // Test that validateStateData throws for double-wrapped data
+      const corruptDoubleWrappedData = {
+        data: {
+          n: [{ i: 'note1', c: 'Test Note', p: [100, 200] }],
           c: [],
         },
       };
 
-      const result = ServerClient.findDataInCorruptStructure(data);
-
-      expect(result).toEqual({
-        n: [{ i: 'note1' }],
-        c: [],
-      });
+      expect(() => {
+        ServerClient.validateStateData(corruptDoubleWrappedData, 'test-map-id');
+      }).toThrow(
+        'Corrupt state data for map test-map-id: double-wrapped data detected',
+      );
     });
 
-    it('should convert expanded format', () => {
-      const data = {
-        notes: [{ i: 'note1' }],
-        connections: [['a', 'b', 0]],
-      };
-
-      const result = ServerClient.findDataInCorruptStructure(data);
-
-      expect(result).toEqual({
-        n: [{ i: 'note1' }],
-        c: [['a', 'b', 0]],
-      });
-    });
-
-    it('should return null for unrecognizable patterns', () => {
-      const data = {
-        randomField: 'value',
+    it('should demonstrate that validation prevents invalid data structures from being processed', () => {
+      // Test that validateStateData throws for missing required arrays
+      const invalidStructureData = {
+        invalidField: 'some data',
         anotherField: 123,
       };
 
-      const result = ServerClient.findDataInCorruptStructure(data);
-
-      expect(result).toBeNull();
-    });
-
-    it('should handle exceptions gracefully', () => {
-      // Create data with getter that throws
-      const data = {};
-      Object.defineProperty(data, 'state', {
-        get() {
-          throw new Error('Access denied');
-        },
-      });
-
-      const result = ServerClient.findDataInCorruptStructure(data);
-
-      expect(result).toBeNull();
+      expect(() => {
+        ServerClient.validateStateData(invalidStructureData, 'test-map-id');
+      }).toThrow(
+        "Invalid state data for map test-map-id: missing 'n' (notes) and 'c' (connections) arrays",
+      );
     });
   });
 });

@@ -1,40 +1,78 @@
 // tests/unit/services/serverClient.test.js
 
+// Create mock objects - these will be reused across all tests
+const mockEventBus = {
+  emit: jest.fn(),
+  on: jest.fn(),
+};
+
+const mockAppState = {
+  getState: jest.fn(),
+  setState: jest.fn(),
+};
+
+const mockServerConnectionService = {
+  getServerUri: jest.fn(),
+  getConnectionState: jest.fn(),
+  validateServerUri: jest.fn(),
+  setConnectionStatus: jest.fn(),
+};
+
+const mockDataStore = {
+  exportToJSON: jest.fn(),
+  importFromJSON: jest.fn(),
+};
+
+// Set up mocks once at the top level - avoids expensive module resets
+jest.mock('../../../src/js/core/eventBus.js', () => ({
+  eventBus: mockEventBus,
+}));
+
+jest.mock('../../../src/js/data/observableState.js', () => ({
+  appState: mockAppState,
+}));
+
+jest.mock('../../../src/js/services/serverConnectionService.js', () => ({
+  ServerConnectionService: mockServerConnectionService,
+}));
+
+jest.mock('../../../src/js/data/dataStore.js', () => mockDataStore);
+
+// Create a clean debounce mock that doesn't accumulate memory
+const mockDebounce = jest.fn((fn) => {
+  // Return unwrapped function to avoid closure memory issues
+  return fn;
+});
+
+jest.mock('../../../src/js/utils/utils.js', () => ({
+  log: jest.fn(),
+  debounce: mockDebounce,
+}));
+
+// Import ServerClient once at the top level
+const { ServerClient } = require('../../../src/js/services/serverClient.js');
+
 describe('ServerClient', () => {
-  let ServerClient;
-  let mockEventBus;
-  let mockAppState;
   let mockFetch;
-  let mockServerConnectionService;
-  let mockDataStore;
   let consoleSpy;
 
-  beforeEach(async () => {
-    // Reset modules
-    jest.resetModules();
+  beforeEach(() => {
+    // Only reset mocks, not the entire module system - this is much more efficient
+    jest.clearAllMocks();
+    mockDebounce.mockClear();
 
-    // Create mock objects
-    mockEventBus = {
-      emit: jest.fn(),
-      on: jest.fn(),
-    };
+    // Reset ServerClient static properties to known state
+    ServerClient.autoSaveEnabled = false;
+    ServerClient.currentMapId = null;
+    ServerClient.currentETag = null;
+    ServerClient.saveQueue = [];
+    ServerClient.lastSaveTime = null;
+    ServerClient.lastEditTime = null;
+    ServerClient.processingQueue = false;
 
-    mockAppState = {
-      getState: jest.fn(),
-      setState: jest.fn(),
-    };
-
-    mockServerConnectionService = {
-      getServerUri: jest.fn(),
-      getConnectionState: jest.fn(),
-      validateServerUri: jest.fn(),
-      setConnectionStatus: jest.fn(),
-    };
-
-    mockDataStore = {
-      exportToJSON: jest.fn(),
-      importFromJSON: jest.fn(),
-    };
+    // Reset cache properties to prevent memory accumulation
+    ServerClient.mapsCache = null;
+    ServerClient.mapsCacheExpiry = null;
 
     // Mock global fetch
     mockFetch = jest.fn();
@@ -42,34 +80,10 @@ describe('ServerClient', () => {
 
     // Spy on console methods (optional, not used in cleanup)
     consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-
-    // Mock dependencies before importing
-    jest.doMock('../../../src/js/core/eventBus.js', () => ({
-      eventBus: mockEventBus,
-    }));
-
-    jest.doMock('../../../src/js/data/observableState.js', () => ({
-      appState: mockAppState,
-    }));
-
-    jest.doMock('../../../src/js/services/serverConnectionService.js', () => ({
-      ServerConnectionService: mockServerConnectionService,
-    }));
-
-    jest.doMock('../../../src/js/data/dataStore.js', () => mockDataStore);
-
-    jest.doMock('../../../src/js/utils/utils.js', () => ({
-      log: jest.fn(),
-      debounce: jest.fn((fn, delay) => fn), // Return unwrapped function for easier testing
-    }));
-
-    // Import the module to test
-    const module = await import('../../../src/js/services/serverClient.js');
-    ServerClient = module.ServerClient;
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    // Clean up spies and global mocks
     if (consoleSpy && consoleSpy.mockRestore) {
       consoleSpy.mockRestore();
     }

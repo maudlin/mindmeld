@@ -37,7 +37,7 @@ describe('ServerClient - Auto-load on Reconnection', () => {
       importFromJSON: jest.fn(),
     };
 
-    mockCanvas = { id: 'mainCanvas' };
+    mockCanvas = { id: 'canvas' };
 
     // Mock global fetch
     mockFetch = jest.fn();
@@ -136,28 +136,27 @@ describe('ServerClient - Auto-load on Reconnection', () => {
         (call) => call[0] === 'server.connection.status.changed',
       )?.[1];
 
-      if (connectionHandler) {
-        await connectionHandler({ isConnected: true });
+      expect(connectionHandler).toBeDefined();
+      await connectionHandler({ isConnected: true });
 
-        // Wait for the async auto-loading to complete
-        await new Promise((resolve) => setTimeout(resolve, 10));
+      // Wait for the async auto-loading to complete
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
-        // Should auto-load because canvas is empty
-        expect(mockFetch).toHaveBeenCalledWith(
-          'https://api.example.com/maps?limit=1',
-          {
-            method: 'GET',
-            headers: { Accept: 'application/json' },
-          },
-        );
-        expect(mockDataStore.importFromJSON).toHaveBeenCalled();
-        expect(mockEventBus.emit).toHaveBeenCalledWith(
-          'server.autoload.success',
-          {
-            reason: 'Empty canvas on reconnect',
-          },
-        );
-      }
+      // Should auto-load because canvas is empty
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.example.com/maps?limit=1',
+        {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+        },
+      );
+      expect(mockDataStore.importFromJSON).toHaveBeenCalled();
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        'server.autoload.success',
+        {
+          reason: 'Empty canvas on reconnect',
+        },
+      );
     });
 
     it('should not auto-load server data when canvas has content on reconnection', async () => {
@@ -181,17 +180,16 @@ describe('ServerClient - Auto-load on Reconnection', () => {
         (call) => call[0] === 'server.connection.status.changed',
       )?.[1];
 
-      if (connectionHandler) {
-        await connectionHandler({ isConnected: true });
+      expect(connectionHandler).toBeDefined();
+      await connectionHandler({ isConnected: true });
 
-        // Should NOT auto-load because canvas has content
-        expect(mockFetch).not.toHaveBeenCalled();
-        expect(mockDataStore.importFromJSON).not.toHaveBeenCalled();
-        expect(mockEventBus.emit).not.toHaveBeenCalledWith(
-          'server.autoload.success',
-          expect.anything(),
-        );
-      }
+      // Should NOT auto-load because canvas has content
+      expect(mockFetch).not.toHaveBeenCalled();
+      expect(mockDataStore.importFromJSON).not.toHaveBeenCalled();
+      expect(mockEventBus.emit).not.toHaveBeenCalledWith(
+        'server.autoload.success',
+        expect.anything(),
+      );
     });
 
     it('should handle auto-load errors gracefully', async () => {
@@ -219,20 +217,67 @@ describe('ServerClient - Auto-load on Reconnection', () => {
         (call) => call[0] === 'server.connection.status.changed',
       )?.[1];
 
-      if (connectionHandler) {
-        await connectionHandler({ isConnected: true });
+      expect(connectionHandler).toBeDefined();
+      await connectionHandler({ isConnected: true });
 
-        // Wait for the async auto-loading to complete
-        await new Promise((resolve) => setTimeout(resolve, 10));
+      // Wait for the async auto-loading to complete
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
-        // Should attempt auto-load but handle error gracefully
-        expect(mockFetch).toHaveBeenCalled();
-        expect(mockDataStore.importFromJSON).not.toHaveBeenCalled();
-        expect(mockEventBus.emit).not.toHaveBeenCalledWith(
-          'server.autoload.success',
-          expect.anything(),
-        );
-      }
+      // Should attempt auto-load but handle error gracefully
+      expect(mockFetch).toHaveBeenCalled();
+      expect(mockDataStore.importFromJSON).not.toHaveBeenCalled();
+      expect(mockEventBus.emit).not.toHaveBeenCalledWith(
+        'server.autoload.success',
+        expect.anything(),
+      );
+    });
+
+    it('should NOT corrupt connection status when auto-load fails', async () => {
+      // Mock empty canvas state
+      mockDataStore.exportToJSON.mockReturnValue('{"data":{"n":[],"c":[]}}');
+
+      // Mock server connection state
+      mockServerConnectionService.getConnectionState.mockReturnValue({
+        serverUri: 'https://api.example.com',
+        isConnected: true,
+        connectionStatus: 'connected',
+      });
+      mockServerConnectionService.getServerUri.mockReturnValue(
+        'https://api.example.com',
+      );
+
+      // Mock server error for auto-load
+      mockFetch.mockRejectedValue(new Error('Auto-load server error'));
+
+      // Initialize ServerClient (sets up event listeners)
+      ServerClient.initialize();
+
+      // Simulate connection status change to connected
+      const connectionHandler = mockEventBus.on.mock.calls.find(
+        (call) => call[0] === 'server.connection.status.changed',
+      )?.[1];
+
+      expect(connectionHandler).toBeDefined();
+      await connectionHandler({ isConnected: true });
+
+      // Wait for the async auto-loading to complete
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // CRITICAL: Auto-load failure should NOT change connection status
+      expect(
+        mockServerConnectionService.setConnectionStatus,
+      ).not.toHaveBeenCalledWith('error');
+      expect(
+        mockServerConnectionService.setConnectionStatus,
+      ).not.toHaveBeenCalledWith('disconnected');
+
+      // Should attempt auto-load but fail gracefully
+      expect(mockFetch).toHaveBeenCalled();
+      expect(mockDataStore.importFromJSON).not.toHaveBeenCalled();
+      expect(mockEventBus.emit).not.toHaveBeenCalledWith(
+        'server.autoload.success',
+        expect.anything(),
+      );
     });
 
     it('should handle invalid canvas state when checking if empty', async () => {
@@ -254,13 +299,12 @@ describe('ServerClient - Auto-load on Reconnection', () => {
         (call) => call[0] === 'server.connection.status.changed',
       )?.[1];
 
-      if (connectionHandler) {
-        await connectionHandler({ isConnected: true });
+      expect(connectionHandler).toBeDefined();
+      await connectionHandler({ isConnected: true });
 
-        // Should not auto-load when canvas state can't be determined
-        expect(mockFetch).not.toHaveBeenCalled();
-        expect(mockDataStore.importFromJSON).not.toHaveBeenCalled();
-      }
+      // Should not auto-load when canvas state can't be determined
+      expect(mockFetch).not.toHaveBeenCalled();
+      expect(mockDataStore.importFromJSON).not.toHaveBeenCalled();
     });
   });
 
