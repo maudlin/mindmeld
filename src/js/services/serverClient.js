@@ -329,6 +329,11 @@ export class ServerClient {
     }
 
     try {
+      // Mute auto-save events during map loading to prevent ETag conflicts
+      this.debouncedSave.cancel();
+      this.removeAutoSaveListeners();
+      this.loadingInProgress = true;
+
       const response = await fetch(`${serverUri}/maps/${mapId}`, {
         method: 'GET',
         headers: {
@@ -407,6 +412,12 @@ export class ServerClient {
 
       log('Error loading map:', error);
       throw error;
+    } finally {
+      // Re-enable auto-save listeners and clear loading flag
+      setTimeout(() => {
+        this.setupAutoSaveListeners();
+        this.loadingInProgress = false;
+      }, 100);
     }
   }
 
@@ -622,6 +633,12 @@ export class ServerClient {
     // Set loading flag to prevent auto-save during load
     this.loadingInProgress = true;
 
+    // Cancel any pending auto-save since we're loading fresh data
+    this.debouncedSave.cancel();
+
+    // Temporarily disable auto-save listeners during load
+    this.removeAutoSaveListeners();
+
     const serverUri = ServerConnectionService.getServerUri();
     if (!serverUri) {
       this.loadingInProgress = false;
@@ -652,8 +669,11 @@ export class ServerClient {
       log('Error loading state from server:', error);
       return false;
     } finally {
-      // Always clear loading flag
-      this.loadingInProgress = false;
+      // Re-enable auto-save listeners and clear loading flag
+      setTimeout(() => {
+        this.setupAutoSaveListeners();
+        this.loadingInProgress = false;
+      }, 100);
     }
   }
 
@@ -894,6 +914,17 @@ export class ServerClient {
     eventBus.on('note.color.changed', this.debouncedSave);
   }
 
+  static removeAutoSaveListeners() {
+    // Remove auto-save listeners to prevent triggering during load
+    eventBus.off('note.created', this.debouncedSave);
+    eventBus.off('note.updated', this.debouncedSave);
+    eventBus.off('note.deleted', this.debouncedSave);
+    eventBus.off('connection.created', this.debouncedSave);
+    eventBus.off('connection.updated', this.debouncedSave);
+    eventBus.off('connection.deleted', this.debouncedSave);
+    eventBus.off('note.color.changed', this.debouncedSave);
+  }
+
   /**
    * Get current connection status
    * @returns {Object} Connection state object
@@ -968,9 +999,11 @@ export class ServerClient {
   static areServicesReady() {
     // Check if ConnectionService has been properly initialized with a connection manager
     try {
-      return ConnectionService && 
-             typeof ConnectionService.initializeConnectionDrawing === 'function' &&
-             ConnectionService.connectionManager !== null;
+      return (
+        ConnectionService &&
+        typeof ConnectionService.initializeConnectionDrawing === 'function' &&
+        ConnectionService.connectionManager !== null
+      );
     } catch {
       return false;
     }
@@ -1014,7 +1047,9 @@ export class ServerClient {
         // Smart auto-loading: if canvas is empty, load server data
         // But only if all required services are initialized
         if (this.isCanvasEmpty() && this.areServicesReady()) {
-          log('Canvas is empty and services ready, auto-loading server data...');
+          log(
+            'Canvas is empty and services ready, auto-loading server data...',
+          );
           this.loadState(document.getElementById('canvas')).then((success) => {
             if (success) {
               eventBus.emit('server.autoload.success', {
@@ -1025,7 +1060,9 @@ export class ServerClient {
             }
           });
         } else if (this.isCanvasEmpty()) {
-          log('Canvas is empty but services not ready yet, deferring auto-load');
+          log(
+            'Canvas is empty but services not ready yet, deferring auto-load',
+          );
         }
       } else {
         // Connection lost - disable auto-save
@@ -1041,8 +1078,13 @@ export class ServerClient {
 
     // Listen for when services become ready to retry deferred auto-loads
     eventBus.on('app.services.ready', () => {
-      const currentConnectionState = ServerConnectionService.getConnectionState();
-      if (currentConnectionState.isConnected && this.isCanvasEmpty() && this.areServicesReady()) {
+      const currentConnectionState =
+        ServerConnectionService.getConnectionState();
+      if (
+        currentConnectionState.isConnected &&
+        this.isCanvasEmpty() &&
+        this.areServicesReady()
+      ) {
         log('Services now ready, attempting deferred auto-load...');
         this.loadState(document.getElementById('canvas')).then((success) => {
           if (success) {
