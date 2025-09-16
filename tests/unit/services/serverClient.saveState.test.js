@@ -4,6 +4,7 @@
 const mockEventBus = {
   emit: jest.fn(),
   on: jest.fn(),
+  off: jest.fn(),
 };
 
 const mockAppState = {
@@ -59,6 +60,14 @@ describe('ServerClient - saveState', () => {
 
     mockFetch = jest.fn();
     global.fetch = mockFetch;
+
+    // Mock DOM
+    const mockCanvas = { id: 'canvas' };
+    const mockGetElementById = jest.fn().mockReturnValue(mockCanvas);
+    Object.defineProperty(document, 'getElementById', {
+      value: mockGetElementById,
+      writable: true,
+    });
 
     mockServerConnectionService.getServerUri.mockReturnValue(
       'https://api.example.com',
@@ -149,23 +158,54 @@ describe('ServerClient - saveState', () => {
   });
 
   it('should handle conflict errors (409) during update', async () => {
-    const mockResponse = {
+    // First call returns 409, second call (for loadState) returns map data, third call succeeds
+    const conflict409Response = {
       ok: false,
       status: 409,
       statusText: 'Conflict',
     };
-    mockFetch.mockResolvedValue(mockResponse);
+
+    const mapDataResponse = {
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        id: 'existing-map-id',
+        data: { n: [], c: [] },
+        version: 2,
+      }),
+      headers: {
+        get: jest.fn().mockReturnValue('"updated-etag"'),
+      },
+    };
+
+    const retrySuccessResponse = {
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        id: 'existing-map-id',
+        version: 3,
+      }),
+      headers: {
+        get: jest.fn().mockReturnValue('"final-etag"'),
+      },
+    };
+
+    mockFetch
+      .mockResolvedValueOnce(conflict409Response) // First save attempt fails with 409
+      .mockResolvedValueOnce(mapDataResponse) // loadState gets specific map
+      .mockResolvedValueOnce(retrySuccessResponse); // Retry save succeeds
+
+    // Mock importFromJSON for loadState
+    mockDataStore.importFromJSON.mockResolvedValue();
 
     ServerClient.currentMapId = 'existing-map-id';
     ServerClient.currentETag = 'existing-etag';
 
     const result = await ServerClient.saveState();
 
-    expect(result).toBe(false);
-    expect(mockEventBus.emit).toHaveBeenCalledWith('server.save.error', {
-      error:
-        'Map was modified by another user. Please reload to get the latest version.',
-      type: 'conflict',
+    expect(result).toBe(true);
+    expect(ServerClient.currentETag).toBe('final-etag');
+    expect(mockEventBus.emit).toHaveBeenCalledWith('server.save.success', {
+      mapId: 'existing-map-id',
+      version: 3,
     });
   });
 

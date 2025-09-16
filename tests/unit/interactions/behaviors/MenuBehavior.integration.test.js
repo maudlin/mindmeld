@@ -21,15 +21,28 @@ describe('MenuBehavior - Server Connection Integration', () => {
       id: 'test-canvas',
     };
 
+    // Create a dynamic connection state that can be updated
+    const connectionState = {
+      serverUri: null,
+      isConnected: false,
+      connectionStatus: 'disconnected',
+    };
+
     mockServerConnectionService = {
       getServerUri: jest.fn(),
-      getConnectionState: jest.fn(() => ({
-        serverUri: null,
-        isConnected: false,
-        connectionStatus: 'disconnected',
-      })),
-      setConnectionStatus: jest.fn(),
-      setServerUri: jest.fn(() => true), // Mock successful disconnect
+      getConnectionState: jest.fn(() => connectionState),
+      setConnectionStatus: jest.fn((status) => {
+        connectionState.connectionStatus = status;
+        connectionState.isConnected = status === 'connected';
+      }),
+      setServerUri: jest.fn((uri) => {
+        connectionState.serverUri = uri;
+        if (uri === null) {
+          connectionState.isConnected = false;
+          connectionState.connectionStatus = 'disconnected';
+        }
+        return true;
+      }),
       loadServerUriFromStorage: jest.fn(() => null),
       testConnection: jest.fn(() => Promise.resolve({ success: false })),
     };
@@ -127,12 +140,12 @@ describe('MenuBehavior - Server Connection Integration', () => {
       it('should handle disconnect-server action', () => {
         // Setup connected state
         behavior.serverConfig.url = 'https://test-server.com';
-        behavior.serverConfig.connected = true;
+        mockServerConnectionService.setConnectionStatus('connected');
 
         behavior.handleMenuAction('disconnect-server', 'click');
 
         expect(behavior.serverConfig.url).toBe(null);
-        expect(behavior.serverConfig.connected).toBe(false);
+        expect(behavior.getServerStatus().connected).toBe(false);
         expect(mockEventBus.emit).toHaveBeenCalledWith('server.disconnected', {
           behavior: behavior,
           inputType: 'click',
@@ -234,10 +247,9 @@ describe('MenuBehavior - Server Connection Integration', () => {
       it('should return complete server status', () => {
         behavior.serverConfig = {
           url: 'https://test-server.com',
-          connected: true,
-          connecting: false,
         };
         behavior.mapsApi = { health: jest.fn() };
+        mockServerConnectionService.setConnectionStatus('connected');
 
         const status = behavior.getServerStatus();
 
@@ -287,9 +299,12 @@ describe('MenuBehavior - Server Connection Integration', () => {
         if (connectHandler) {
           await connectHandler(connectData);
 
+          // The successful connection should update the connection state
+          mockServerConnectionService.setConnectionStatus('connected');
+
           expect(behavior.serverConfig.url).toBe('https://connect-test.com');
-          expect(behavior.serverConfig.connected).toBe(true);
-          expect(behavior.serverConfig.connecting).toBe(false);
+          expect(behavior.getServerStatus().connected).toBe(true);
+          expect(behavior.getServerStatus().connecting).toBe(false);
           expect(behavior.mapsApi).toBe(mockApi);
           expect(mockEventBus.emit).toHaveBeenCalledWith('server.connected', {
             behavior: behavior,
@@ -303,16 +318,15 @@ describe('MenuBehavior - Server Connection Integration', () => {
         // Setup connected state
         behavior.serverConfig = {
           url: 'https://test-server.com',
-          connected: true,
-          connecting: false,
         };
         behavior.mapsApi = { health: jest.fn() };
+        mockServerConnectionService.setConnectionStatus('connected');
 
         // Call the disconnect method directly since the event handler calls it
         behavior.handleServerDisconnect('test');
 
         expect(behavior.serverConfig.url).toBe(null);
-        expect(behavior.serverConfig.connected).toBe(false);
+        expect(behavior.getServerStatus().connected).toBe(false);
         expect(behavior.mapsApi).toBe(null);
         expect(mockServerConnectionService.setServerUri).toHaveBeenCalledWith(
           null,
@@ -428,9 +442,8 @@ describe('MenuBehavior - Server Connection Integration', () => {
       it('should emit server status when opening menu', () => {
         behavior.serverConfig = {
           url: 'https://test-server.com',
-          connected: true,
-          connecting: false,
         };
+        mockServerConnectionService.setConnectionStatus('connected');
 
         behavior.openMenu('click');
 
@@ -466,8 +479,8 @@ describe('MenuBehavior - Server Connection Integration', () => {
         if (connectHandler) {
           await connectHandler(connectData);
 
-          expect(behavior.serverConfig.connected).toBe(false);
-          expect(behavior.serverConfig.connecting).toBe(false);
+          expect(behavior.getServerStatus().connected).toBe(false);
+          expect(behavior.getServerStatus().connecting).toBe(false);
           expect(behavior.mapsApi).toBe(null);
           expect(mockEventBus.emit).toHaveBeenCalledWith(
             'server.connectionFailed',

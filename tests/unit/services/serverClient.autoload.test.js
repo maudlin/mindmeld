@@ -63,6 +63,13 @@ describe('ServerClient - Auto-load on Reconnection', () => {
       ServerConnectionService: mockServerConnectionService,
     }));
 
+    jest.doMock('../../../src/js/services/connectionService.js', () => ({
+      ConnectionService: {
+        initializeConnectionDrawing: jest.fn(),
+        connectionManager: {}, // Non-null to satisfy areServicesReady()
+      },
+    }));
+
     jest.doMock('../../../src/js/data/dataStore.js', () => mockDataStore);
 
     jest.doMock('../../../src/js/utils/utils.js', () => ({
