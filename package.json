@@ -94,5 +94,9 @@
     "statements": 80,
     "functions": 80,
     "branches": 80
+  },
+  "dependencies": {
+    "y-websocket": "^3.0.0",
+    "yjs": "^13.6.27"
   }
 }
