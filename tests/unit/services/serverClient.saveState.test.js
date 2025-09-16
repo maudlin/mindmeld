@@ -68,7 +68,7 @@ describe('ServerClient - saveState', () => {
       isConnected: true,
       connectionStatus: 'connected',
     });
-    mockDataStore.exportToJSON.mockReturnValue('{"n":[],"c":[]}');
+    mockDataStore.exportToJSON.mockReturnValue('{"data":{"n":[],"c":[]}}');
   });
 
   afterEach(() => {

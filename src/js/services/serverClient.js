@@ -330,7 +330,12 @@ export class ServerClient {
 
     try {
       // Mute auto-save events during map loading to prevent ETag conflicts
-      this.debouncedSave.cancel();
+      if (
+        ServerClient.debouncedSave &&
+        typeof ServerClient.debouncedSave.cancel === 'function'
+      ) {
+        ServerClient.debouncedSave.cancel();
+      }
       this.removeAutoSaveListeners();
       this.loadingInProgress = true;
 
@@ -634,7 +639,12 @@ export class ServerClient {
     this.loadingInProgress = true;
 
     // Cancel any pending auto-save since we're loading fresh data
-    this.debouncedSave.cancel();
+    if (
+      ServerClient.debouncedSave &&
+      typeof ServerClient.debouncedSave.cancel === 'function'
+    ) {
+      ServerClient.debouncedSave.cancel();
+    }
 
     // Temporarily disable auto-save listeners during load
     this.removeAutoSaveListeners();
@@ -905,13 +915,13 @@ export class ServerClient {
    */
   static setupAutoSaveListeners() {
     // Listen for events that should trigger auto-save
-    eventBus.on('note.created', this.debouncedSave);
-    eventBus.on('note.updated', this.debouncedSave);
-    eventBus.on('note.deleted', this.debouncedSave);
-    eventBus.on('connection.created', this.debouncedSave);
-    eventBus.on('connection.updated', this.debouncedSave);
-    eventBus.on('connection.deleted', this.debouncedSave);
-    eventBus.on('note.color.changed', this.debouncedSave);
+    eventBus.on('note.created', ServerClient.debouncedSave);
+    eventBus.on('note.updated', ServerClient.debouncedSave);
+    eventBus.on('note.deleted', ServerClient.debouncedSave);
+    eventBus.on('connection.created', ServerClient.debouncedSave);
+    eventBus.on('connection.updated', ServerClient.debouncedSave);
+    eventBus.on('connection.deleted', ServerClient.debouncedSave);
+    eventBus.on('note.color.changed', ServerClient.debouncedSave);
   }
 
   static removeAutoSaveListeners() {

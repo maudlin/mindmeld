@@ -53,7 +53,7 @@ export class AppBootstrap {
 
       this.initialized = true;
       log('AppBootstrap: Application initialization completed successfully');
-      
+
       // Emit event to signal that all services are ready
       const { eventBus } = await import('../eventBus.js');
       eventBus.emit('app.services.ready');

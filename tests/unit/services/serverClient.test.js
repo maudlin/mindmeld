@@ -4,6 +4,7 @@
 const mockEventBus = {
   emit: jest.fn(),
   on: jest.fn(),
+  off: jest.fn(),
 };
 
 const mockAppState = {
@@ -78,6 +79,14 @@ describe('ServerClient', () => {
     mockFetch = jest.fn();
     global.fetch = mockFetch;
 
+    // Mock DOM
+    const mockCanvas = { id: 'canvas' };
+    const mockGetElementById = jest.fn().mockReturnValue(mockCanvas);
+    Object.defineProperty(document, 'getElementById', {
+      value: mockGetElementById,
+      writable: true,
+    });
+
     // Spy on console methods (optional, not used in cleanup)
     consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
   });
@@ -100,7 +109,7 @@ describe('ServerClient', () => {
         isConnected: true,
         connectionStatus: 'connected',
       });
-      mockDataStore.exportToJSON.mockReturnValue('{"n":[],"c":[]}');
+      mockDataStore.exportToJSON.mockReturnValue('{"data":{"n":[],"c":[]}}');
     });
 
     it('should create new map when no current map exists', async () => {
@@ -190,24 +199,62 @@ describe('ServerClient', () => {
     });
 
     it('should handle conflict errors (409) during update', async () => {
-      const mockResponse = {
+      // First call returns 409, second call (for loadState) returns maps list, third call returns map data
+      const conflict409Response = {
         ok: false,
         status: 409,
         statusText: 'Conflict',
       };
-      mockFetch.mockResolvedValue(mockResponse);
+
+      const mapsListResponse = {
+        ok: true,
+        json: jest
+          .fn()
+          .mockResolvedValue([{ id: 'existing-map-id', version: 2 }]),
+      };
+
+      const mapDataResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          id: 'existing-map-id',
+          data: { n: [], c: [] },
+          version: 2,
+        }),
+        headers: {
+          get: jest.fn().mockReturnValue('"new-etag"'),
+        },
+      };
+
+      const retrySuccessResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          id: 'existing-map-id',
+          version: 3,
+        }),
+        headers: {
+          get: jest.fn().mockReturnValue('"final-etag"'),
+        },
+      };
+
+      mockFetch
+        .mockResolvedValueOnce(conflict409Response) // First save attempt fails with 409
+        .mockResolvedValueOnce(mapDataResponse) // loadState gets specific map (no maps list needed when ID exists)
+        .mockResolvedValueOnce(retrySuccessResponse); // Retry save succeeds
 
       // Set existing map ID and ETag
       ServerClient.currentMapId = 'existing-map-id';
       ServerClient.currentETag = 'existing-etag';
 
+      // Mock the importFromJSON method that loadState calls
+      mockDataStore.importFromJSON.mockResolvedValue();
+
       const result = await ServerClient.saveState();
 
-      expect(result).toBe(false);
-      expect(mockEventBus.emit).toHaveBeenCalledWith('server.save.error', {
-        error:
-          'Map was modified by another user. Please reload to get the latest version.',
-        type: 'conflict',
+      expect(result).toBe(true);
+      expect(ServerClient.currentETag).toBe('final-etag');
+      expect(mockEventBus.emit).toHaveBeenCalledWith('server.save.success', {
+        mapId: 'existing-map-id',
+        version: 3,
       });
     });
 

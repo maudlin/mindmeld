@@ -166,16 +166,14 @@ describe('ConnectionService', () => {
     it('should delegate to connection manager and return result', () => {
       const mockCanvas = document.createElement('div');
       const mockResult = document.createElement('svg');
-      mockConnectionManager.initializeSVGContainer.mockReturnValue(
-        mockResult,
-      );
+      mockConnectionManager.initializeSVGContainer.mockReturnValue(mockResult);
       ConnectionService.connectionManager = mockConnectionManager;
 
       const result = ConnectionService.initializeConnectionDrawing(mockCanvas);
 
-      expect(
-        mockConnectionManager.initializeSVGContainer,
-      ).toHaveBeenCalledWith(mockCanvas);
+      expect(mockConnectionManager.initializeSVGContainer).toHaveBeenCalledWith(
+        mockCanvas,
+      );
       expect(result).toBe(mockResult);
     });
 
