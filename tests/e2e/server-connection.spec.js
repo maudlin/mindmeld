@@ -29,7 +29,7 @@ test.describe('Server Connection UI (MM-104)', () => {
     );
     await expect(page.locator('#server-uri-input')).toBeVisible();
     await expect(page.locator('#connect-server-btn')).toBeVisible();
-    await expect(page.locator('#test-connection-btn')).toBeVisible();
+    // Note: test-connection-btn removed in simplified UI - Connect now does the test
   });
 
   test('should validate server URI input', async ({ page }) => {
@@ -100,7 +100,7 @@ test.describe('Server Connection UI (MM-104)', () => {
     await expect(page.locator('#server-connection-modal')).toBeHidden();
   });
 
-  test('should handle test connection button click', async ({ page }) => {
+  test('should handle connection attempt with valid URL', async ({ page }) => {
     // Mock network requests for testing
     await page.route('https://test-server.com/health', (route) => {
       route.fulfill({
@@ -118,12 +118,11 @@ test.describe('Server Connection UI (MM-104)', () => {
     // Fill in server URL
     await page.fill('#server-uri-input', 'https://test-server.com');
 
-    // Click test connection button
-    await page.click('#test-connection-btn');
+    // Click connect button (now does test + connect in one step)
+    await page.click('#connect-server-btn');
 
-    // Verify button changes to "Testing..." (briefly)
-    // Note: This might be too fast to reliably test, but the functionality exists
-    await expect(page.locator('#test-connection-btn')).toBeEnabled();
+    // Verify connection attempt was made (button should be available to click)
+    await expect(page.locator('#connect-server-btn')).toBeVisible();
   });
 
   test('should show disconnect option when connected (placeholder)', async ({
@@ -266,9 +265,6 @@ test.describe('Server Connection UI (MM-104)', () => {
     await expect(input).toHaveValue(testUrl);
 
     // Click various UI elements to ensure input data persists
-    await page.click('#test-connection-btn');
-    await expect(input).toHaveValue(testUrl);
-
     await page.click('#connect-server-btn');
     await expect(input).toHaveValue(testUrl);
 

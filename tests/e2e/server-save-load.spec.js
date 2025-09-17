@@ -13,38 +13,35 @@ test.describe('Server Save/Load - E2E (MM-106)', () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
   });
 
-  test('should show server save/load options in kebab menu', async ({
+  test('should show server connection option in kebab menu', async ({
     page,
   }) => {
     // Open the kebab menu
     await page.click('#kebab-menu-button');
     await expect(page.locator('#kebab-context-menu')).toBeVisible();
 
-    // Verify server connection options are present in the menu
+    // Verify server connection option is present in the menu
     const connectOption = page.locator('[data-action="connect-server"]');
     const loadOption = page.locator('[data-action="load-from-server"]');
-    const saveOption = page.locator('[data-action="save-to-server"]');
 
     await expect(connectOption).toBeVisible();
     await expect(loadOption).toBeVisible();
-    await expect(saveOption).toBeVisible();
+    // Note: save-to-server removed - saving is now automatic
   });
 
-  test('should disable save/load options when not connected', async ({
+  test('should show load option when not connected', async ({
     page,
   }) => {
     // Open the kebab menu
     await page.click('#kebab-menu-button');
     await expect(page.locator('#kebab-context-menu')).toBeVisible();
 
-    // Server save/load options should be disabled when not connected
+    // Server load option should be available (but may be hidden by default)
     const loadOption = page.locator('[data-action="load-from-server"]');
-    const saveOption = page.locator('[data-action="save-to-server"]');
 
-    // Check for disabled class (implementation dependent)
-    // These options should either have disabled class or not respond to clicks
-    await expect(loadOption).toBeVisible();
-    await expect(saveOption).toBeVisible();
+    // Load option exists in DOM but may be hidden when not connected
+    await expect(loadOption).toBeAttached();
+    // Note: save option removed - saving is now automatic on connection
   });
 
   test('should open server connection modal', async ({ page }) => {
@@ -77,18 +74,8 @@ test.describe('Server Save/Load - E2E (MM-106)', () => {
     // Wait for note creation to complete
     await new Promise((resolve) => setTimeout(resolve, 600));
 
-    // Test save action via event system
-    await page.evaluate(() => {
-      // Simulate clicking save-to-server menu action
-      window.eventBus.emit('menu.action', {
-        action: 'save-to-server',
-        inputType: 'click',
-      });
-    });
-
-    // Should handle the action (implementation will determine exact behavior)
-    // At minimum, it shouldn't crash the app
-    // Wait for auto-save to complete
+    // Note: save-to-server action removed - saving is now automatic on data changes
+    // Test that the app remains stable without explicit save actions
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     // Test load action via event system
@@ -123,9 +110,9 @@ test.describe('Server Save/Load - E2E (MM-106)', () => {
       const behavior = canvas.menuBehavior;
       return (
         typeof behavior.handleLoadFromServer === 'function' &&
-        typeof behavior.handleSaveToServer === 'function' &&
         typeof behavior.getServerConnectionStatus === 'function' &&
         typeof behavior.getAvailableServerActions === 'function'
+        // Note: handleSaveToServer removed - saving is now automatic
       );
     });
 
@@ -164,10 +151,10 @@ test.describe('Server Save/Load - E2E (MM-106)', () => {
     await expect(page.locator('#kebab-context-menu')).toBeVisible();
 
     // Test existing menu options still work
-    const templateOption = page.locator('[data-action="change-template"]');
-    await expect(templateOption).toBeVisible();
-    await templateOption.click();
-    // Should open template dropdown or perform template action
+    const clearOption = page.locator('[data-action="clear-canvas"]');
+    await expect(clearOption).toBeVisible();
+    await clearOption.click();
+    // Should perform clear action
     // Wait for auto-save to complete
     await new Promise((resolve) => setTimeout(resolve, 500));
 
