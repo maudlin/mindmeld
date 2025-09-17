@@ -30,9 +30,7 @@ test.describe('Server Save/Load - E2E (MM-106)', () => {
     // Note: save-to-server removed - saving is now automatic
   });
 
-  test('should show load option when not connected', async ({
-    page,
-  }) => {
+  test('should show load option when not connected', async ({ page }) => {
     // Open the kebab menu
     await page.click('#kebab-menu-button');
     await expect(page.locator('#kebab-context-menu')).toBeVisible();
@@ -174,7 +172,9 @@ test.describe('Server Save/Load - E2E (MM-106)', () => {
     const modal = page.locator('#notification-modal-overlay');
     if (await modal.isVisible()) {
       // Try different confirm button selectors
-      const confirmButton = modal.locator('button:has-text("Confirm"), button:has-text("Yes"), button:has-text("Clear"), button[class*="confirm"]');
+      const confirmButton = modal.locator(
+        'button:has-text("Confirm"), button:has-text("Yes"), button:has-text("Clear"), button[class*="confirm"]',
+      );
       await confirmButton.click();
       // Wait for modal to fully close
       await expect(modal).toBeHidden();
