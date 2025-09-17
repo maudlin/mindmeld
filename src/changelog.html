@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>What's New - MindMeld</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.0.0" />
+    <link rel="stylesheet" href="css/styles.css?v=1.0.1" />
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap"
       rel="stylesheet"
@@ -45,40 +45,27 @@
           Recent updates and improvements to make your mind mapping experience
           better.
         </p>
-        <p><strong>Current Version:</strong> v1.0.0</p>
+        <p><strong>Current Version:</strong> v1.0.1</p>
       </section>
       
       
-      <section>
-        <h2>✨ New Features</h2>
-        <ul>
-          
-            <li>
-              Added touch-friendly auto-close behavior for connector menus (2-second timeout + tap-to-close)
-              <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/106" target="_blank">#106</a>, September 2, 2025)
-              </small>
-            </li>
-          
-            <li>
-              Enhanced connector menu with new capsule-style design inspired by nav-test.html
-              <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/105" target="_blank">#105</a>, September 2, 2025)
-              </small>
-            </li>
-          
-            <li>
-              Added adaptive sizing: touch devices get larger targets, desktop gets compact layout
-              <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/105" target="_blank">#105</a>, September 2, 2025)
-              </small>
-            </li>
-          
-        </ul>
-      </section>
       <section>
         <h2>🐛 Bug Fixes</h2>
         <ul>
+          
+            <li>
+              Fixes continuous pinch zoom movement issue where zoom continues after fingers stop moving
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/111" target="_blank">#111</a>, September 5, 2025)
+              </small>
+            </li>
+          
+            <li>
+              V1 Critical Fix: Multiple Note Deletion Regression
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/110" target="_blank">#110</a>, September 3, 2025)
+              </small>
+            </li>
           
             <li>
               fix: Enhanced touch interactions and auto-versioning system
@@ -87,25 +74,25 @@
               </small>
             </li>
           
-            <li>
-              Fixed touch zoom snapping issue - reduced pinch sensitivity for smoother zoom control
-              <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/106" target="_blank">#106</a>, September 2, 2025)
-              </small>
-            </li>
-          
-            <li>
-              Fixed font consistency issues in zoom display (now consistently uses Poppins)
-              <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/106" target="_blank">#106</a>, September 2, 2025)
-              </small>
-            </li>
-          
         </ul>
       </section>
       <section>
         <h2>📝 Other Changes</h2>
         <ul>
+          
+            <li>
+              Replaces logarithmic scaling with linear scaling in ViewportBehavior for consistent zoom sensitivity
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/111" target="_blank">#111</a>, September 5, 2025)
+              </small>
+            </li>
+          
+            <li>
+              Bumps version to v1.0.1 with proper HTML meta tag updates and cache-busting
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/111" target="_blank">#111</a>, September 5, 2025)
+              </small>
+            </li>
           
             <li>
               **V1 Release Ready**: Final pinch zoom sensitivity refinement for production
@@ -146,41 +133,6 @@
               *After:** 5x → 2.2x → 1x (smooth decimal scaling)
               <small style="color: #666; margin-left: 1rem">
                 (<a href="https://github.com/maudlin/mindmeld/pull/107" target="_blank">#107</a>, September 3, 2025)
-              </small>
-            </li>
-          
-            <li>
-              Applied capsule design to connector menus with device-appropriate spacing
-              <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/106" target="_blank">#106</a>, September 2, 2025)
-              </small>
-            </li>
-          
-            <li>
-              Simplified navigation by removing broken dropdown links and consolidating About/Instructions
-              <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/106" target="_blank">#106</a>, September 2, 2025)
-              </small>
-            </li>
-          
-            <li>
-              Prevented help button from getting selected during double-click interactions
-              <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/106" target="_blank">#106</a>, September 2, 2025)
-              </small>
-            </li>
-          
-            <li>
-              Implemented smooth hover behavior and consistent button animations
-              <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/105" target="_blank">#105</a>, September 2, 2025)
-              </small>
-            </li>
-          
-            <li>
-              Maintained existing functionality while improving usability
-              <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/105" target="_blank">#105</a>, September 2, 2025)
               </small>
             </li>
           

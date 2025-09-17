@@ -693,6 +693,9 @@ export class MenuBehavior {
   handleConnectServerRequest(inputType) {
     this.modalOpen = true;
 
+    // Clear loading state since we're just opening a modal
+    this.showMenuItemLoading('connect-server', false);
+
     console.log('MenuBehavior: Opening server connection modal', { inputType });
 
     this.eventBus.emit('modal.serverConnection.open', {

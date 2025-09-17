@@ -158,6 +158,7 @@ export class InteractionController {
     const menuBehavior = this.getBehavior('menu');
     if (menuBehavior) {
       menuBehavior.canvas = canvas;
+      canvas.menuBehavior = menuBehavior; // Allow tests to access MenuBehavior from canvas
       await menuBehavior.initialize(); // Initialize now that DOM elements are available
       console.log(
         'InteractionController: MenuBehavior initialized with canvas and DOM elements',
