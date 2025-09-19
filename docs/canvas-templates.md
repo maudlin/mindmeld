@@ -1,5 +1,7 @@
 ## Implementing New Canvas Template Modules
+
 # Currently removed from the application
+
 To add a new canvas template to MindMeld, follow these steps:
 
 ### 1. Create the Module Files

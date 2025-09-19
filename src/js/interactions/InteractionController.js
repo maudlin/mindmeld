@@ -12,6 +12,9 @@ import { SelectionBoxBehavior } from './behaviors/SelectionBoxBehavior.js';
 import { CanvasBehavior } from './behaviors/CanvasBehavior.js';
 import { ConnectionBehavior } from './behaviors/ConnectionBehavior.js';
 import { ViewportBehavior } from './behaviors/ViewportBehavior.js';
+import { MenuBehavior } from './behaviors/MenuBehavior.js';
+import { ServerConnectionBehavior } from '../features/serverConnection/serverConnectionBehavior.js';
+import { MapSelectionBehavior } from '../features/mapSelection/mapSelectionBehavior.js';
 
 export class InteractionController {
   constructor() {
@@ -64,6 +67,11 @@ export class InteractionController {
       const canvasBehavior = new CanvasBehavior(this.eventBus);
       const connectionBehavior = new ConnectionBehavior(this.eventBus);
       const viewportBehavior = new ViewportBehavior(this.eventBus);
+      const menuBehavior = new MenuBehavior(this.eventBus);
+      const serverConnectionBehavior = new ServerConnectionBehavior(
+        this.eventBus,
+      );
+      const mapSelectionBehavior = new MapSelectionBehavior(this);
 
       // Register behaviors
       this.registerBehavior('note', noteBehavior);
@@ -72,6 +80,9 @@ export class InteractionController {
       this.registerBehavior('canvas', canvasBehavior);
       this.registerBehavior('connection', connectionBehavior);
       this.registerBehavior('viewport', viewportBehavior);
+      this.registerBehavior('menu', menuBehavior);
+      this.registerBehavior('serverConnection', serverConnectionBehavior);
+      this.registerBehavior('mapSelection', mapSelectionBehavior);
 
       // Initialize all behaviors
       await noteBehavior.initialize();
@@ -88,6 +99,20 @@ export class InteractionController {
 
       await connectionBehavior.initialize();
       console.log('InteractionController: ConnectionBehavior initialized');
+
+      await serverConnectionBehavior.initialize();
+      console.log(
+        'InteractionController: ServerConnectionBehavior initialized',
+      );
+
+      // MapSelectionBehavior can initialize immediately - sets up DOM event listeners
+      await mapSelectionBehavior.initialize();
+      console.log('InteractionController: MapSelectionBehavior initialized');
+
+      // MenuBehavior will be initialized later when DOM elements are available
+      console.log(
+        'InteractionController: MenuBehavior created, will initialize later',
+      );
 
       // ViewportBehavior needs canvas and zoomDisplay - will be initialized later during bootstrap
       console.log(
@@ -123,6 +148,44 @@ export class InteractionController {
    */
   getBehavior(name) {
     return this.behaviors.get(name);
+  }
+
+  /**
+   * Initialize MenuBehavior with canvas reference
+   * Called after canvas is available during bootstrap
+   */
+  async initializeMenuBehavior(canvas) {
+    const menuBehavior = this.getBehavior('menu');
+    if (menuBehavior) {
+      menuBehavior.canvas = canvas;
+      canvas.menuBehavior = menuBehavior; // Allow tests to access MenuBehavior from canvas
+      await menuBehavior.initialize(); // Initialize now that DOM elements are available
+      console.log(
+        'InteractionController: MenuBehavior initialized with canvas and DOM elements',
+      );
+    } else {
+      console.warn(
+        'InteractionController: MenuBehavior not found for canvas initialization',
+      );
+    }
+  }
+
+  /**
+   * Initialize MapSelectionBehavior after DOM elements are available
+   * Called after DOM is ready during bootstrap
+   */
+  async initializeMapSelectionBehavior() {
+    const mapSelectionBehavior = this.getBehavior('mapSelection');
+    if (mapSelectionBehavior) {
+      await mapSelectionBehavior.initialize(); // Initialize now that DOM elements are available
+      console.log(
+        'InteractionController: MapSelectionBehavior initialized with DOM elements',
+      );
+    } else {
+      console.warn(
+        'InteractionController: MapSelectionBehavior not found for initialization',
+      );
+    }
   }
 
   /**

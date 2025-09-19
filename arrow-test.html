@@ -1,153 +1,329 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arrow Marker Test - V1 Polish</title>
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #f9fafb;
-      padding: 20px;
-      margin: 0;
-    }
-    .test-section {
-      margin-bottom: 40px;
-      padding: 20px;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    h2 {
-      margin: 0 0 20px 0;
-      color: #374151;
-      font-size: 16px;
-    }
-    .arrow-demo {
-      margin: 20px 0;
-    }
-    .arrow-label {
-      font-size: 14px;
-      color: #6b7280;
-      margin-bottom: 10px;
-    }
-  </style>
-</head>
-<body>
-  <h1>Arrow Marker Refinement Test</h1>
-  
-  <div class="test-section">
-    <h2>Current (10×7px, #888, no effects)</h2>
-    <svg width="400" height="80">
-      <defs>
-        <marker id="current-end" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-          <path d="M0,0 L10,3.5 L0,7" fill="#888" />
-        </marker>
-      </defs>
-      <line x1="50" y1="40" x2="350" y2="40" stroke="#333" stroke-width="2" marker-end="url(#current-end)" />
-    </svg>
-  </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arrow Marker Test - V1 Polish</title>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        background: #f9fafb;
+        padding: 20px;
+        margin: 0;
+      }
+      .test-section {
+        margin-bottom: 40px;
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      h2 {
+        margin: 0 0 20px 0;
+        color: #374151;
+        font-size: 16px;
+      }
+      .arrow-demo {
+        margin: 20px 0;
+      }
+      .arrow-label {
+        font-size: 14px;
+        color: #6b7280;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Arrow Marker Refinement Test</h1>
 
-  <div class="test-section">
-    <h2>Option A: Smaller + Subtle Shadow (8×5px)</h2>
-    <svg width="400" height="80">
-      <defs>
-        <filter id="subtle-shadow">
-          <feDropShadow dx="0.5" dy="1" stdDeviation="1" flood-color="#000" flood-opacity="0.2"/>
-        </filter>
-        <marker id="small-shadow-end" markerWidth="8" markerHeight="5" refX="8" refY="2.5" orient="auto">
-          <path d="M0,0 L8,2.5 L0,5" fill="#888" filter="url(#subtle-shadow)" />
-        </marker>
-      </defs>
-      <line x1="50" y1="40" x2="350" y2="40" stroke="#333" stroke-width="2" marker-end="url(#small-shadow-end)" />
-    </svg>
-  </div>
-
-  <div class="test-section">
-    <h2>Option B: Smaller + Slightly Darker (8×5px, #666)</h2>
-    <svg width="400" height="80">
-      <defs>
-        <marker id="small-dark-end" markerWidth="8" markerHeight="5" refX="8" refY="2.5" orient="auto">
-          <path d="M0,0 L8,2.5 L0,5" fill="#666" />
-        </marker>
-      </defs>
-      <line x1="50" y1="40" x2="350" y2="40" stroke="#333" stroke-width="2" marker-end="url(#small-dark-end)" />
-    </svg>
-  </div>
-
-  <div class="test-section">
-    <h2>Option C: Rounded + Small (8×5px, rounded corners)</h2>
-    <svg width="400" height="80">
-      <defs>
-        <marker id="rounded-end" markerWidth="8" markerHeight="5" refX="8" refY="2.5" orient="auto">
-          <path d="M0,1 L7,2.5 L0,4 Z" fill="#888" stroke-linejoin="round" stroke-linecap="round" />
-        </marker>
-      </defs>
-      <line x1="50" y1="40" x2="350" y2="40" stroke="#333" stroke-width="2" marker-end="url(#rounded-end)" />
-    </svg>
-  </div>
-
-  <div class="test-section">
-    <h2>Option D: Mini + Clean (6×4px, crisp)</h2>
-    <svg width="400" height="80">
-      <defs>
-        <marker id="mini-end" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
-          <path d="M0,0 L6,2 L0,4" fill="#777" />
-        </marker>
-      </defs>
-      <line x1="50" y1="40" x2="350" y2="40" stroke="#333" stroke-width="2" marker-end="url(#mini-end)" />
-    </svg>
-  </div>
-
-  <div class="test-section">
-    <h2>Option E: Combination (8×5px, #666, subtle shadow, rounded)</h2>
-    <svg width="400" height="80">
-      <defs>
-        <filter id="refined-shadow">
-          <feDropShadow dx="0.5" dy="0.5" stdDeviation="0.8" flood-color="#000" flood-opacity="0.15"/>
-        </filter>
-        <marker id="refined-end" markerWidth="8" markerHeight="5" refX="8" refY="2.5" orient="auto">
-          <path d="M0,1 L7,2.5 L0,4 Z" fill="#666" filter="url(#refined-shadow)" stroke-linejoin="round" />
-        </marker>
-      </defs>
-      <line x1="50" y1="40" x2="350" y2="40" stroke="#333" stroke-width="2" marker-end="url(#refined-end)" />
-    </svg>
-  </div>
-
-  <div class="test-section">
-    <h2>Connection Types Demo (using Option E)</h2>
-    <div class="arrow-demo">
-      <div class="arrow-label">Unidirectional Forward</div>
-      <svg width="400" height="40">
+    <div class="test-section">
+      <h2>Current (10×7px, #888, no effects)</h2>
+      <svg width="400" height="80">
         <defs>
-          <filter id="demo-shadow">
-            <feDropShadow dx="0.5" dy="0.5" stdDeviation="0.8" flood-color="#000" flood-opacity="0.15"/>
+          <marker
+            id="current-end"
+            markerWidth="10"
+            markerHeight="7"
+            refX="10"
+            refY="3.5"
+            orient="auto"
+          >
+            <path d="M0,0 L10,3.5 L0,7" fill="#888" />
+          </marker>
+        </defs>
+        <line
+          x1="50"
+          y1="40"
+          x2="350"
+          y2="40"
+          stroke="#333"
+          stroke-width="2"
+          marker-end="url(#current-end)"
+        />
+      </svg>
+    </div>
+
+    <div class="test-section">
+      <h2>Option A: Smaller + Subtle Shadow (8×5px)</h2>
+      <svg width="400" height="80">
+        <defs>
+          <filter id="subtle-shadow">
+            <feDropShadow
+              dx="0.5"
+              dy="1"
+              stdDeviation="1"
+              flood-color="#000"
+              flood-opacity="0.2"
+            />
           </filter>
-          <marker id="demo-end" markerWidth="8" markerHeight="5" refX="8" refY="2.5" orient="auto">
-            <path d="M0,1 L7,2.5 L0,4 Z" fill="#666" filter="url(#demo-shadow)" stroke-linejoin="round" />
+          <marker
+            id="small-shadow-end"
+            markerWidth="8"
+            markerHeight="5"
+            refX="8"
+            refY="2.5"
+            orient="auto"
+          >
+            <path
+              d="M0,0 L8,2.5 L0,5"
+              fill="#888"
+              filter="url(#subtle-shadow)"
+            />
           </marker>
         </defs>
-        <line x1="50" y1="20" x2="350" y2="20" stroke="#4f46e5" stroke-width="2" marker-end="url(#demo-end)" />
+        <line
+          x1="50"
+          y1="40"
+          x2="350"
+          y2="40"
+          stroke="#333"
+          stroke-width="2"
+          marker-end="url(#small-shadow-end)"
+        />
       </svg>
     </div>
-    
-    <div class="arrow-demo">
-      <div class="arrow-label">Bidirectional</div>
-      <svg width="400" height="40">
-        <defs>
-          <marker id="demo-start" markerWidth="8" markerHeight="5" refX="0" refY="2.5" orient="auto">
-            <path d="M8,1 L1,2.5 L8,4 Z" fill="#666" filter="url(#demo-shadow)" stroke-linejoin="round" />
-          </marker>
-          <marker id="demo-end2" markerWidth="8" markerHeight="5" refX="8" refY="2.5" orient="auto">
-            <path d="M0,1 L7,2.5 L0,4 Z" fill="#666" filter="url(#demo-shadow)" stroke-linejoin="round" />
-          </marker>
-        </defs>
-        <line x1="50" y1="20" x2="350" y2="20" stroke="#059669" stroke-width="2" 
-              marker-start="url(#demo-start)" marker-end="url(#demo-end2)" />
-      </svg>
-    </div>
-  </div>
 
-  <p><em>Open this file in a browser to compare arrow styles side by side</em></p>
-</body>
+    <div class="test-section">
+      <h2>Option B: Smaller + Slightly Darker (8×5px, #666)</h2>
+      <svg width="400" height="80">
+        <defs>
+          <marker
+            id="small-dark-end"
+            markerWidth="8"
+            markerHeight="5"
+            refX="8"
+            refY="2.5"
+            orient="auto"
+          >
+            <path d="M0,0 L8,2.5 L0,5" fill="#666" />
+          </marker>
+        </defs>
+        <line
+          x1="50"
+          y1="40"
+          x2="350"
+          y2="40"
+          stroke="#333"
+          stroke-width="2"
+          marker-end="url(#small-dark-end)"
+        />
+      </svg>
+    </div>
+
+    <div class="test-section">
+      <h2>Option C: Rounded + Small (8×5px, rounded corners)</h2>
+      <svg width="400" height="80">
+        <defs>
+          <marker
+            id="rounded-end"
+            markerWidth="8"
+            markerHeight="5"
+            refX="8"
+            refY="2.5"
+            orient="auto"
+          >
+            <path
+              d="M0,1 L7,2.5 L0,4 Z"
+              fill="#888"
+              stroke-linejoin="round"
+              stroke-linecap="round"
+            />
+          </marker>
+        </defs>
+        <line
+          x1="50"
+          y1="40"
+          x2="350"
+          y2="40"
+          stroke="#333"
+          stroke-width="2"
+          marker-end="url(#rounded-end)"
+        />
+      </svg>
+    </div>
+
+    <div class="test-section">
+      <h2>Option D: Mini + Clean (6×4px, crisp)</h2>
+      <svg width="400" height="80">
+        <defs>
+          <marker
+            id="mini-end"
+            markerWidth="6"
+            markerHeight="4"
+            refX="6"
+            refY="2"
+            orient="auto"
+          >
+            <path d="M0,0 L6,2 L0,4" fill="#777" />
+          </marker>
+        </defs>
+        <line
+          x1="50"
+          y1="40"
+          x2="350"
+          y2="40"
+          stroke="#333"
+          stroke-width="2"
+          marker-end="url(#mini-end)"
+        />
+      </svg>
+    </div>
+
+    <div class="test-section">
+      <h2>Option E: Combination (8×5px, #666, subtle shadow, rounded)</h2>
+      <svg width="400" height="80">
+        <defs>
+          <filter id="refined-shadow">
+            <feDropShadow
+              dx="0.5"
+              dy="0.5"
+              stdDeviation="0.8"
+              flood-color="#000"
+              flood-opacity="0.15"
+            />
+          </filter>
+          <marker
+            id="refined-end"
+            markerWidth="8"
+            markerHeight="5"
+            refX="8"
+            refY="2.5"
+            orient="auto"
+          >
+            <path
+              d="M0,1 L7,2.5 L0,4 Z"
+              fill="#666"
+              filter="url(#refined-shadow)"
+              stroke-linejoin="round"
+            />
+          </marker>
+        </defs>
+        <line
+          x1="50"
+          y1="40"
+          x2="350"
+          y2="40"
+          stroke="#333"
+          stroke-width="2"
+          marker-end="url(#refined-end)"
+        />
+      </svg>
+    </div>
+
+    <div class="test-section">
+      <h2>Connection Types Demo (using Option E)</h2>
+      <div class="arrow-demo">
+        <div class="arrow-label">Unidirectional Forward</div>
+        <svg width="400" height="40">
+          <defs>
+            <filter id="demo-shadow">
+              <feDropShadow
+                dx="0.5"
+                dy="0.5"
+                stdDeviation="0.8"
+                flood-color="#000"
+                flood-opacity="0.15"
+              />
+            </filter>
+            <marker
+              id="demo-end"
+              markerWidth="8"
+              markerHeight="5"
+              refX="8"
+              refY="2.5"
+              orient="auto"
+            >
+              <path
+                d="M0,1 L7,2.5 L0,4 Z"
+                fill="#666"
+                filter="url(#demo-shadow)"
+                stroke-linejoin="round"
+              />
+            </marker>
+          </defs>
+          <line
+            x1="50"
+            y1="20"
+            x2="350"
+            y2="20"
+            stroke="#4f46e5"
+            stroke-width="2"
+            marker-end="url(#demo-end)"
+          />
+        </svg>
+      </div>
+
+      <div class="arrow-demo">
+        <div class="arrow-label">Bidirectional</div>
+        <svg width="400" height="40">
+          <defs>
+            <marker
+              id="demo-start"
+              markerWidth="8"
+              markerHeight="5"
+              refX="0"
+              refY="2.5"
+              orient="auto"
+            >
+              <path
+                d="M8,1 L1,2.5 L8,4 Z"
+                fill="#666"
+                filter="url(#demo-shadow)"
+                stroke-linejoin="round"
+              />
+            </marker>
+            <marker
+              id="demo-end2"
+              markerWidth="8"
+              markerHeight="5"
+              refX="8"
+              refY="2.5"
+              orient="auto"
+            >
+              <path
+                d="M0,1 L7,2.5 L0,4 Z"
+                fill="#666"
+                filter="url(#demo-shadow)"
+                stroke-linejoin="round"
+              />
+            </marker>
+          </defs>
+          <line
+            x1="50"
+            y1="20"
+            x2="350"
+            y2="20"
+            stroke="#059669"
+            stroke-width="2"
+            marker-start="url(#demo-start)"
+            marker-end="url(#demo-end2)"
+          />
+        </svg>
+      </div>
+    </div>
+
+    <p>
+      <em>Open this file in a browser to compare arrow styles side by side</em>
+    </p>
+  </body>
 </html>

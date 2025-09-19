@@ -12,6 +12,7 @@ import { CapabilityDetector } from '../../interactions/capabilities/detector.js'
 import { editModeController } from '../../features/note/EditModeController.js';
 import { eventBus } from '../eventBus.js';
 import { log } from '../../utils/utils.js';
+import { initializePageInteractions } from '../../interactions/pageInteractions.js';
 
 export class InteractionBootstrap extends BaseBootstrap {
   constructor() {
@@ -69,6 +70,29 @@ export class InteractionBootstrap extends BaseBootstrap {
         // Don't throw - continue with initialization
       }
 
+      // Initialize MenuBehavior with canvas reference
+      try {
+        await this.initializeMenuBehavior();
+        console.log(
+          'InteractionBootstrap: MenuBehavior initialization completed successfully',
+        );
+      } catch (error) {
+        console.error(
+          'InteractionBootstrap: MenuBehavior initialization failed:',
+          error,
+        );
+      }
+
+      // Initialize page interactions for menu UI
+      try {
+        initializePageInteractions(this.interactionController);
+        console.log(
+          'InteractionBootstrap: Page interactions initialized successfully',
+        );
+      } catch (error) {
+        console.error('InteractionBootstrap: Page interactions failed:', error);
+      }
+
       const capabilityDetector = new CapabilityDetector();
       this.inputController = new InputController(
         eventBus,
@@ -123,6 +147,39 @@ export class InteractionBootstrap extends BaseBootstrap {
     } catch (error) {
       console.error(
         'InteractionBootstrap: Failed to initialize ViewportBehavior:',
+        error,
+      );
+    }
+  }
+
+  async initializeMenuBehavior() {
+    try {
+      const canvas = document.getElementById('canvas');
+
+      if (!canvas) {
+        console.warn('InteractionBootstrap: Canvas not found for MenuBehavior');
+        return;
+      }
+
+      await this.interactionController.initializeMenuBehavior(canvas);
+      log('InteractionBootstrap: MenuBehavior initialized with canvas');
+    } catch (error) {
+      console.error(
+        'InteractionBootstrap: Failed to initialize MenuBehavior:',
+        error,
+      );
+    }
+  }
+
+  async initializeMapSelectionBehavior() {
+    try {
+      await this.interactionController.initializeMapSelectionBehavior();
+      log(
+        'InteractionBootstrap: MapSelectionBehavior initialized with DOM elements',
+      );
+    } catch (error) {
+      console.error(
+        'InteractionBootstrap: Failed to initialize MapSelectionBehavior:',
         error,
       );
     }

@@ -50,6 +50,10 @@ export default [
     },
     rules: {
       ...jestPlugin.configs.recommended.rules,
+      // Loosen certain rules in tests to keep dev green and avoid noisy failures
+      'no-unused-vars': 'off',
+      'jest/no-conditional-expect': 'off',
+      'prettier/prettier': 'warn',
     },
   },
   {

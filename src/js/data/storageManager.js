@@ -30,7 +30,7 @@ export function saveStateToStorage() {
 const debouncedSaveState = debounce(saveStateToStorage, 300);
 
 // Load state from localStorage
-export function loadStateFromStorage() {
+export async function loadStateFromStorage() {
   if (stateLoaded) {
     // log('State already loaded, skipping');
     return false;
@@ -41,6 +41,11 @@ export function loadStateFromStorage() {
     // log('Current state is not empty, skipping load from storage');
     return false;
   }
+
+  // Mute auto-save events during offline state loading to prevent ETag conflicts
+  const { ServerClient } = await import('../services/serverClient.js');
+  ServerClient.debouncedSave.cancel();
+  ServerClient.removeAutoSaveListeners();
 
   if (appState.loadFromLocalStorage()) {
     const loadedState = appState.getState();
@@ -56,8 +61,19 @@ export function loadStateFromStorage() {
 
     // log('State loaded from storage and applied');
     verifyLoadedState(loadedState);
+
+    // Re-enable auto-save listeners after offline loading completes
+    setTimeout(() => {
+      ServerClient.setupAutoSaveListeners();
+    }, 100);
+
     return true;
   }
+
+  // Re-enable auto-save listeners even if no state was loaded
+  setTimeout(() => {
+    ServerClient.setupAutoSaveListeners();
+  }, 100);
 
   log('No state found in storage or failed to load');
   return false;
@@ -130,7 +146,9 @@ export function initializeStateManagement() {
   // Only attempt to load state if it hasn't been loaded before
   // and the current state is empty
   if (!stateLoaded && appState.getState().notes.length === 0) {
-    loadStateFromStorage();
+    loadStateFromStorage().catch((error) => {
+      console.error('Error loading state from storage:', error);
+    });
   }
   setupStateListeners();
   log('State management initialized');

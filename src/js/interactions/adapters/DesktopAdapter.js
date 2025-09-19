@@ -31,6 +31,7 @@ export class DesktopAdapter extends BaseAdapter {
     this.canvasBehavior = null;
     this.connectionBehavior = null;
     this.viewportBehavior = null;
+    this.menuBehavior = null;
 
     // Canvas and container references
     this.canvas = null;
@@ -92,6 +93,7 @@ export class DesktopAdapter extends BaseAdapter {
         this.interactionController.getBehavior('connection');
       this.viewportBehavior =
         this.interactionController.getBehavior('viewport');
+      this.menuBehavior = this.interactionController.getBehavior('menu');
 
       console.log('DesktopAdapter: Behavior references initialized', {
         hasNoteBehavior: !!this.noteBehavior,
@@ -217,6 +219,8 @@ export class DesktopAdapter extends BaseAdapter {
   detectInteractionStart(event) {
     const target = event.target;
 
+    // Menu interactions are handled by pageInteractions.js since menu is outside canvas
+
     // Check for ghost connector interaction (CRITICAL - missing from refactor!)
     if (target.classList.contains('ghost-connector')) {
       console.log(
@@ -241,6 +245,8 @@ export class DesktopAdapter extends BaseAdapter {
 
     console.log('DesktopAdapter: No recognized interaction target');
   }
+
+  // Menu interaction methods removed - now handled by pageInteractions.js
 
   /**
    * Handle ghost connector interaction - delegate to ConnectionBehavior
@@ -624,6 +630,8 @@ export class DesktopAdapter extends BaseAdapter {
    * Handle keyboard events (KEEP - this is input-specific)
    */
   handleKeyDown(event) {
+    // Menu keyboard shortcuts are handled by pageInteractions.js
+
     // Handle keyboard shortcuts
     if (event.ctrlKey || event.metaKey) {
       switch (event.key) {

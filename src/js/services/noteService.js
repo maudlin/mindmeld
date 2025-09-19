@@ -14,6 +14,7 @@ export class NoteService {
     );
 
     note.id = noteData.id || noteData.i;
+    note.dataset.id = noteData.id || noteData.i; // Fix: Keep id and data-id in sync
     const noteContent = note.querySelector('.note-content');
     // Load stored markdown content and immediately render as HTML (view mode)
     const storedMarkdown = noteData.content || noteData.c || '';

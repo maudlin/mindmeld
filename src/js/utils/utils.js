@@ -15,7 +15,8 @@ import {
  */
 export function debounce(func, delay) {
   let timeoutId;
-  return function (...args) {
+
+  const debounced = function (...args) {
     // Clear the previous timeout
     clearTimeout(timeoutId);
     // Set a new timeout
@@ -23,6 +24,14 @@ export function debounce(func, delay) {
       func.apply(this, args);
     }, delay);
   };
+
+  // Add cancel method to clear pending execution
+  debounced.cancel = function () {
+    clearTimeout(timeoutId);
+    timeoutId = null;
+  };
+
+  return debounced;
 }
 
 /**

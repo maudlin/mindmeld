@@ -25,6 +25,7 @@ export class TouchAdapter extends BaseAdapter {
     this.canvasBehavior = null;
     this.connectionBehavior = null;
     this.viewportBehavior = null;
+    this.menuBehavior = null;
 
     // Core components
     this.canvas = null;
@@ -81,6 +82,7 @@ export class TouchAdapter extends BaseAdapter {
           this.interactionController.getBehavior('connection');
         this.viewportBehavior =
           this.interactionController.getBehavior('viewport');
+        this.menuBehavior = this.interactionController.getBehavior('menu');
 
         console.log('TouchAdapter: Behavior references initialized', {
           hasNoteBehavior: !!this.noteBehavior,
@@ -89,6 +91,7 @@ export class TouchAdapter extends BaseAdapter {
           hasCanvasBehavior: !!this.canvasBehavior,
           hasConnectionBehavior: !!this.connectionBehavior,
           hasViewportBehavior: !!this.viewportBehavior,
+          hasMenuBehavior: !!this.menuBehavior,
         });
       } else {
         console.warn('TouchAdapter: InteractionController not available');
@@ -508,6 +511,8 @@ export class TouchAdapter extends BaseAdapter {
 
     const target = this.expandTouchTarget(touch);
 
+    // Menu interactions are handled by pageInteractions.js since menu is outside canvas
+
     // Check for ghost connector interaction
     if (target.classList.contains('ghost-connector')) {
       this.handleGhostConnectorTap(touch, target);
@@ -655,6 +660,8 @@ export class TouchAdapter extends BaseAdapter {
     // Delegate to ConnectionBehavior for unified touch connection handling
     this.connectionBehavior.startTouchDrag(sourceNote, touchEvent, 'touch');
   }
+
+  // Menu interaction methods removed - now handled by pageInteractions.js
 
   /**
    * Handle note tap - check for connection mode first, then delegate to NoteBehavior
