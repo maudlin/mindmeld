@@ -59,11 +59,8 @@ export class ServiceBootstrap extends BaseBootstrap {
         },
       });
 
-      // Make service available globally for debugging in development
-      if (
-        typeof window !== 'undefined' &&
-        process.env.NODE_ENV === 'development'
-      ) {
+      // Make service available globally for debugging
+      if (typeof window !== 'undefined') {
         window.dataProviderServiceDebug = dataProviderService;
       }
 
