@@ -7,6 +7,7 @@ import {
   makeConnectionId,
 } from '../../../src/js/data/providers/DataProvider.js';
 import { YjsProvider } from '../../../src/js/data/providers/YjsProvider.js';
+import { LocalJSONProvider } from '../../../src/js/data/providers/LocalJSONProvider.js';
 
 class DummyProvider extends DataProvider {
   init() {
@@ -80,5 +81,86 @@ describe('DataProvider contract', () => {
     const snap2 = y.getSnapshot();
     expect(Array.isArray(snap2.data.c)).toBe(true);
     cleanup();
+  });
+
+  test('LocalJSONProvider implements DataProvider contract', () => {
+    // Mock DOM canvas element for LocalJSONProvider
+    document.body.innerHTML = '<div id="canvas"></div>';
+
+    const provider = new LocalJSONProvider();
+
+    // Test basic interface compliance
+    expect(provider).toBeInstanceOf(DataProvider);
+    expect(typeof provider.init).toBe('function');
+    expect(typeof provider.destroy).toBe('function');
+    expect(typeof provider.subscribe).toBe('function');
+    expect(typeof provider.getSnapshot).toBe('function');
+    expect(typeof provider.importJSON).toBe('function');
+    expect(typeof provider.exportJSON).toBe('function');
+    expect(typeof provider.upsertNote).toBe('function');
+    expect(typeof provider.deleteNote).toBe('function');
+    expect(typeof provider.upsertConnection).toBe('function');
+    expect(typeof provider.deleteConnection).toBe('function');
+    expect(typeof provider.setMeta).toBe('function');
+    expect(typeof provider.getMeta).toBe('function');
+
+    // Test initialization
+    const cleanup = provider.init('test-map', { onReady: () => {} });
+    expect(typeof cleanup).toBe('function');
+
+    // Test snapshot operations
+    const snapshot = provider.getSnapshot();
+    expect(typeof snapshot).toBe('object');
+    expect(snapshot.data).toBeDefined();
+
+    // Test meta operations
+    const initialMeta = provider.getMeta();
+    expect(typeof initialMeta.zoomLevel).toBe('number');
+    expect(typeof initialMeta.canvasType).toBe('string');
+
+    provider.setMeta({ mapName: 'Contract Test Map' });
+    const updatedMeta = provider.getMeta();
+    expect(updatedMeta.mapName).toBe('Contract Test Map');
+
+    // Test subscription system
+    let lastChange = null;
+    const unsubscribe = provider.subscribe((change) => {
+      lastChange = change;
+    });
+    expect(typeof unsubscribe).toBe('function');
+
+    // Test note operations trigger notifications
+    provider.upsertNote({
+      id: 'test-note',
+      content: 'test content',
+      pos: [100, 200],
+    });
+    expect(lastChange).toBeTruthy();
+    expect(lastChange.type).toBe('notes');
+    expect(lastChange.origin).toBe('user');
+
+    // Test connection operations
+    provider.upsertConnection({
+      from: 'test-note',
+      to: 'test-note-2',
+      type: 1,
+    });
+    expect(lastChange.type).toBe('connections');
+
+    // Test autosave control
+    expect(typeof provider.pauseAutosave).toBe('function');
+    expect(typeof provider.resumeAutosave).toBe('function');
+
+    // Test hydration control
+    expect(typeof provider.hydrationInProgress).toBe('boolean');
+    expect(provider.hydrationInProgress).toBe(false);
+
+    // Cleanup
+    unsubscribe();
+    cleanup();
+    provider.destroy();
+
+    // Clean up DOM
+    document.body.innerHTML = '';
   });
 });

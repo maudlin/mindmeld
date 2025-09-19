@@ -494,4 +494,274 @@ describe('MenuBehavior - Server Connection Integration', () => {
       });
     });
   });
+
+  describe('DataProvider Integration', () => {
+    let behavior;
+    let mockDataProviderService;
+
+    beforeEach(async () => {
+      // Mock DataProviderService
+      mockDataProviderService = {
+        exportJSON: jest.fn(() => '{"data":{"n":[{"id":"test"}],"c":[]}}'),
+        importJSON: jest.fn(),
+        getInstance: jest.fn(),
+      };
+
+      // Add DataProviderService to existing mocks
+      jest.doMock('../../../../src/js/services/DataProviderService.js', () => ({
+        DataProviderService: {
+          getInstance: () => mockDataProviderService,
+        },
+      }));
+
+      // Re-import MenuBehavior with DataProvider mock
+      jest.resetModules();
+      const module = await import(
+        '../../../../src/js/interactions/behaviors/MenuBehavior.js'
+      );
+      MenuBehavior = module.MenuBehavior;
+
+      behavior = new MenuBehavior(mockEventBus, mockCanvas);
+      await behavior.initialize();
+    });
+
+    describe('Export Operations via DataProvider', () => {
+      test('should use DataProviderService for file export', () => {
+        // Mock DOM methods for file download
+        global.URL = {
+          createObjectURL: jest.fn(() => 'blob:test-url'),
+          revokeObjectURL: jest.fn(),
+        };
+
+        const mockAnchor = {
+          href: '',
+          download: '',
+          click: jest.fn(),
+        };
+        jest.spyOn(document, 'createElement').mockReturnValue(mockAnchor);
+
+        global.Blob = jest
+          .fn()
+          .mockImplementation((content, options) => ({ content, options }));
+
+        behavior.handleExportFile('test');
+
+        expect(mockDataProviderService.exportJSON).toHaveBeenCalled();
+        expect(global.Blob).toHaveBeenCalledWith(
+          ['{"data":{"n":[{"id":"test"}],"c":[]}}'],
+          { type: 'application/json' },
+        );
+        expect(mockAnchor.download).toBe('mindmap_export.json');
+        expect(mockAnchor.click).toHaveBeenCalled();
+
+        // Cleanup
+        delete global.URL;
+        delete global.Blob;
+      });
+
+      test('should use DataProviderService for clipboard export', async () => {
+        const mockWriteText = jest.fn().mockResolvedValue();
+        Object.defineProperty(global, 'navigator', {
+          value: {
+            clipboard: {
+              writeText: mockWriteText,
+            },
+          },
+          configurable: true,
+        });
+
+        await behavior.handleCopyClipboard('test');
+
+        expect(mockDataProviderService.exportJSON).toHaveBeenCalled();
+        expect(mockWriteText).toHaveBeenCalledWith(
+          '{"data":{"n":[{"id":"test"}],"c":[]}}',
+        );
+
+        // Cleanup
+        delete global.navigator;
+      });
+    });
+
+    describe('Import Operations via DataProvider', () => {
+      test('should use DataProviderService for file import', async () => {
+        const testData = '{"data":{"n":[{"id":"imported"}],"c":[]}}';
+
+        // Mock Blob globally
+        global.Blob = jest.fn().mockImplementation((content, options) => ({
+          content,
+          options,
+        }));
+
+        // Mock FileReader
+        const mockFileReader = {
+          onload: null,
+          readAsText: jest.fn(),
+        };
+        jest
+          .spyOn(window, 'FileReader')
+          .mockImplementation(() => mockFileReader);
+
+        // Mock input element
+        const mockInput = {
+          type: '',
+          accept: '',
+          onchange: null,
+          click: jest.fn(),
+        };
+        jest.spyOn(document, 'createElement').mockReturnValue(mockInput);
+
+        behavior.handleImportFile('test');
+
+        // Simulate file selection
+        const mockFile = new global.Blob([testData], {
+          type: 'application/json',
+        });
+        const mockEvent = { target: { files: [mockFile] } };
+
+        mockInput.onchange(mockEvent);
+        expect(mockFileReader.readAsText).toHaveBeenCalledWith(mockFile);
+
+        // Simulate file read completion
+        await mockFileReader.onload({ target: { result: testData } });
+
+        expect(mockDataProviderService.importJSON).toHaveBeenCalledWith(
+          testData,
+        );
+
+        // Cleanup
+        delete global.Blob;
+      });
+
+      test('should use DataProviderService for clipboard import', async () => {
+        const testData = '{"data":{"n":[{"id":"imported"}],"c":[]}}';
+
+        const mockReadText = jest.fn().mockResolvedValue(testData);
+        Object.defineProperty(global, 'navigator', {
+          value: {
+            clipboard: {
+              readText: mockReadText,
+            },
+          },
+          configurable: true,
+        });
+
+        await behavior.handlePasteClipboard('test');
+
+        expect(mockReadText).toHaveBeenCalled();
+        expect(mockDataProviderService.importJSON).toHaveBeenCalledWith(
+          testData,
+        );
+
+        // Cleanup
+        delete global.navigator;
+      });
+    });
+
+    describe('Error Handling with DataProvider', () => {
+      test('should handle DataProvider export errors gracefully', () => {
+        mockDataProviderService.exportJSON.mockImplementation(() => {
+          throw new Error('Export failed');
+        });
+
+        global.URL = { createObjectURL: jest.fn(), revokeObjectURL: jest.fn() };
+
+        behavior.handleExportFile('test');
+
+        const notificationManager =
+          require('../../../../src/js/services/notificationManager.js').notificationManager;
+        expect(notificationManager.error).toHaveBeenCalledWith(
+          'Error exporting file. Please try again.',
+        );
+
+        delete global.URL;
+      });
+
+      test('should handle DataProvider import errors gracefully', async () => {
+        mockDataProviderService.importJSON.mockRejectedValue(
+          new Error('Import failed'),
+        );
+
+        global.navigator = {
+          clipboard: {
+            readText: jest.fn().mockResolvedValue('{"valid":"json"}'),
+          },
+        };
+
+        await behavior.handlePasteClipboard('test');
+
+        const notificationManager =
+          require('../../../../src/js/services/notificationManager.js').notificationManager;
+        expect(notificationManager.error).toHaveBeenCalledWith(
+          'Error importing from clipboard. Please make sure the clipboard contains valid JSON data.',
+        );
+
+        delete global.navigator;
+      });
+    });
+
+    describe('Integration Safety', () => {
+      test('should maintain same behavior for import/export operations', () => {
+        // Verify method signatures haven't changed
+        expect(typeof behavior.handleExportFile).toBe('function');
+        expect(typeof behavior.handleImportFile).toBe('function');
+        expect(typeof behavior.handleCopyClipboard).toBe('function');
+        expect(typeof behavior.handlePasteClipboard).toBe('function');
+
+        // Verify error handling paths still work
+        expect(() => {
+          mockDataProviderService.exportJSON.mockReturnValue('{}');
+          global.URL = {
+            createObjectURL: jest.fn(),
+            revokeObjectURL: jest.fn(),
+          };
+          global.Blob = jest.fn();
+          jest
+            .spyOn(document, 'createElement')
+            .mockReturnValue({ click: jest.fn() });
+
+          behavior.handleExportFile('test');
+
+          delete global.URL;
+          delete global.Blob;
+        }).not.toThrow();
+      });
+
+      test('should handle canvas reference consistently', async () => {
+        behavior.canvas = null;
+
+        // Mock Blob globally
+        global.Blob = jest.fn().mockImplementation((content, options) => ({
+          content,
+          options,
+        }));
+
+        // Mock FileReader setup
+        const mockFileReader = { onload: null, readAsText: jest.fn() };
+        jest
+          .spyOn(window, 'FileReader')
+          .mockImplementation(() => mockFileReader);
+
+        const mockInput = {
+          type: '',
+          accept: '',
+          onchange: null,
+          click: jest.fn(),
+        };
+        jest.spyOn(document, 'createElement').mockReturnValue(mockInput);
+
+        behavior.handleImportFile('test');
+
+        // Simulate file processing
+        const mockFile = new global.Blob(['{}'], { type: 'application/json' });
+        mockInput.onchange({ target: { files: [mockFile] } });
+        await mockFileReader.onload({ target: { result: '{}' } });
+
+        // Should not call importJSON if canvas is null
+        expect(mockDataProviderService.importJSON).not.toHaveBeenCalled();
+
+        // Cleanup
+        delete global.Blob;
+      });
+    });
+  });
 });

@@ -16,6 +16,7 @@ import { notificationManager } from '../../services/notificationManager.js';
 import { ZoomStateService } from '../../services/zoomStateService.js';
 import { CanvasStateService } from '../../services/canvasStateService.js';
 import { ServerClient } from '../../services/serverClient.js';
+import { DataProviderService } from '../../services/DataProviderService.js';
 import { log } from '../../utils/utils.js';
 
 export class ServiceBootstrap extends BaseBootstrap {
@@ -25,6 +26,7 @@ export class ServiceBootstrap extends BaseBootstrap {
 
   async initialize() {
     // Initialize services in dependency order
+    await this.initializeDataProviderService();
     await this.initializeNotificationServices();
     await this.initializeNoteServices();
     await this.initializeConnectionServices();
@@ -34,6 +36,7 @@ export class ServiceBootstrap extends BaseBootstrap {
     await this.initializeMenuServices();
 
     return {
+      dataProviderServiceReady: true,
       notificationServiceReady: true,
       noteServiceReady: true,
       connectionServiceReady: true,
@@ -42,6 +45,34 @@ export class ServiceBootstrap extends BaseBootstrap {
       serverServicesReady: true,
       menuServicesReady: true,
     };
+  }
+
+  async initializeDataProviderService() {
+    try {
+      // Initialize DataProviderService singleton
+      const dataProviderService = DataProviderService.getInstance();
+
+      // Initialize provider for default map
+      dataProviderService.init(null, {
+        onReady: () => {
+          log('ServiceBootstrap: DataProviderService ready');
+        },
+      });
+
+      // Make service available globally for debugging in development
+      if (
+        typeof window !== 'undefined' &&
+        process.env.NODE_ENV === 'development'
+      ) {
+        window.dataProviderServiceDebug = dataProviderService;
+      }
+
+      log('ServiceBootstrap: DataProviderService initialized');
+    } catch (error) {
+      throw new Error(
+        `DataProvider service initialization failed: ${error.message}`,
+      );
+    }
   }
 
   async initializeNotificationServices() {

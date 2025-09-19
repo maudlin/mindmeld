@@ -9,7 +9,7 @@
  */
 
 import { createMapsApi } from '../../services/mapsApi.js';
-import { exportToJSON, importFromJSON } from '../../data/dataStore.js';
+import { DataProviderService } from '../../services/DataProviderService.js';
 import { clearAllState } from '../../data/storageManager.js';
 import { notificationManager } from '../../services/notificationManager.js';
 import { ServerClient } from '../../services/serverClient.js';
@@ -546,10 +546,11 @@ export class MenuBehavior {
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         try {
           if (this.canvas) {
-            importFromJSON(e.target.result, this.canvas);
+            const dataProviderService = DataProviderService.getInstance();
+            await dataProviderService.importJSON(e.target.result);
             notificationManager.success('Mind map imported successfully!');
           }
         } catch (error) {
@@ -571,7 +572,8 @@ export class MenuBehavior {
     console.log('MenuBehavior: Exporting to file', { inputType });
 
     try {
-      const json = exportToJSON();
+      const dataProviderService = DataProviderService.getInstance();
+      const json = dataProviderService.exportJSON();
       const blob = new Blob([json], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -596,7 +598,8 @@ export class MenuBehavior {
     console.log('MenuBehavior: Copying to clipboard', { inputType });
 
     try {
-      const json = exportToJSON();
+      const dataProviderService = DataProviderService.getInstance();
+      const json = dataProviderService.exportJSON();
       await navigator.clipboard.writeText(json);
       notificationManager.success('Mind map exported to clipboard!');
     } catch (error) {
@@ -616,7 +619,8 @@ export class MenuBehavior {
     try {
       const text = await navigator.clipboard.readText();
       if (this.canvas) {
-        importFromJSON(text, this.canvas);
+        const dataProviderService = DataProviderService.getInstance();
+        await dataProviderService.importJSON(text);
         notificationManager.success('Mind map imported from clipboard!');
       }
     } catch (error) {
