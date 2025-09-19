@@ -163,8 +163,22 @@ describe('ServiceBootstrap - ServerClient Integration', () => {
         CanvasStateService: { initialize: jest.fn() },
       }));
 
+      jest.doMock('../../../../src/js/services/DataProviderService.js', () => ({
+        DataProviderService: {
+          getInstance: jest.fn(() => ({
+            init: jest.fn(() => jest.fn()),
+            isInitialized: jest.fn(() => true),
+          })),
+        },
+      }));
+
       jest.doMock('../../../../src/js/utils/utils.js', () => ({
         log: jest.fn(),
+        debounce: jest.fn((fn, delay) => {
+          const debouncedFn = fn;
+          debouncedFn._delay = delay;
+          return debouncedFn;
+        }),
       }));
 
       jest.doMock('../../../../src/js/core/bootstrap/BaseBootstrap.js', () => ({
