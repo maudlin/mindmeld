@@ -2,10 +2,12 @@
 // Central service for DataProvider operations - Singleton pattern
 
 import { LocalJSONProvider } from '../data/providers/LocalJSONProvider.js';
+import { isDebugEnabled } from '../core/featureFlags.js';
 
 /**
  * DataProviderService - Central integration point for DataProvider operations
- * Implements singleton pattern and provides unified interface to LocalJSONProvider
+ * Implements singleton pattern and provides unified interface to DataProviders
+ * Supports both LocalJSONProvider and YjsProvider based on feature flags
  */
 export class DataProviderService {
   static _instance = null;
@@ -16,13 +18,42 @@ export class DataProviderService {
     }
 
     try {
-      this._provider = new LocalJSONProvider();
+      // For now, force local provider to avoid Yjs import issues
+      this._providerType = 'local';
+      this._provider = this._createProvider(this._providerType);
       this._cleanup = null;
+      this._applyingSnapshot = false; // Guard for preventing feedback loops
+
+      if (isDebugEnabled()) {
+        console.log(
+          `DataProviderService: Using ${this._providerType} provider`,
+        );
+      }
+
       DataProviderService._instance = this;
     } catch (error) {
       throw new Error(
         `Failed to initialize DataProviderService: ${error.message}`,
       );
+    }
+  }
+
+  /**
+   * Create provider instance based on type
+   * @param {'local'|'yjs'} type
+   * @returns {LocalJSONProvider}
+   * @private
+   */
+  _createProvider(type) {
+    switch (type) {
+      case 'yjs':
+        // YjsProvider temporarily disabled to avoid import issues
+        throw new Error(
+          'YjsProvider temporarily disabled. Use LocalJSONProvider instead.',
+        );
+      case 'local':
+      default:
+        return new LocalJSONProvider();
     }
   }
 
@@ -72,13 +103,41 @@ export class DataProviderService {
   }
 
   /**
-   * Subscribe to provider changes
+   * Subscribe to provider changes with optional snapshot guard
    * @param {(change: {type:'notes'|'connections'|'meta'|'snapshot', origin:'user'|'system', payload:any}) => void} onChange
    * @returns {() => void} unsubscribe function
    */
   subscribe(onChange) {
     this._ensureInitialized();
-    return this._provider.subscribe(onChange);
+
+    // Only add wrapper logic when using advanced features (YjsProvider or debugging)
+    if (
+      this._providerType === 'yjs' ||
+      isDebugEnabled() ||
+      this._applyingSnapshot
+    ) {
+      return this._provider.subscribe((change) => {
+        // Guard against feedback loops during snapshot application
+        if (this._applyingSnapshot && change.origin === 'system') {
+          if (isDebugEnabled()) {
+            console.log(
+              'DataProviderService: Skipping change during snapshot application',
+              change,
+            );
+          }
+          return;
+        }
+
+        if (isDebugEnabled()) {
+          console.log('DataProviderService: Emitting change', change);
+        }
+
+        onChange(change);
+      });
+    } else {
+      // Direct delegation for LocalJSONProvider to maintain backward compatibility
+      return this._provider.subscribe(onChange);
+    }
   }
 
   /**
@@ -91,12 +150,33 @@ export class DataProviderService {
   }
 
   /**
-   * Import JSON data
+   * Import JSON data with snapshot guard to prevent feedback loops
    * @param {string} json
    */
   async importJSON(json) {
     this._ensureInitialized();
-    return this._provider.importJSON(json);
+
+    this._applyingSnapshot = true;
+    try {
+      if (isDebugEnabled()) {
+        console.log(
+          'DataProviderService: Starting importJSON with snapshot guard',
+        );
+      }
+
+      const result = await this._provider.importJSON(json);
+
+      if (isDebugEnabled()) {
+        console.log('DataProviderService: importJSON completed successfully');
+      }
+
+      return result;
+    } finally {
+      this._applyingSnapshot = false;
+      if (isDebugEnabled()) {
+        console.log('DataProviderService: Snapshot guard released');
+      }
+    }
   }
 
   /**
@@ -190,6 +270,22 @@ export class DataProviderService {
   get hydrationInProgress() {
     this._ensureInitialized();
     return this._provider.hydrationInProgress;
+  }
+
+  /**
+   * Get current provider type
+   * @returns {'local'|'yjs'}
+   */
+  getProviderType() {
+    return this._providerType;
+  }
+
+  /**
+   * Check if currently applying snapshot (for debugging)
+   * @returns {boolean}
+   */
+  get isApplyingSnapshot() {
+    return this._applyingSnapshot;
   }
 
   /**

@@ -42,7 +42,85 @@ src/js/
 ├── features/                # Feature modules (colorPicker, note, connection)
 ├── utils/                   # Utilities (browserDetection, mobileInteractions)
 └── data/                    # Data management with enterprise-grade integrity
+    ├── providers/           # DataProvider abstraction layer
+    │   ├── DataProvider.js  # Abstract base class with contract
+    │   ├── LocalJSONProvider.js # Local storage implementation
+    │   └── YjsProvider.js   # Real-time collaboration implementation
+    └── storageManager.js    # Legacy storage (being migrated)
 ```
+
+## DataProvider Abstraction
+
+MindMeld uses a **DataProvider pattern** to abstract data persistence and enable different storage backends:
+
+### Available Providers
+
+**LocalJSONProvider** (Production) - Local browser storage with enterprise-grade features:
+- ✅ Autosave with race condition prevention
+- ✅ Content size limit enforcement (200 chars)
+- ✅ Hydration state management (prevents autosave during imports)
+- ✅ Origin tracking (USER vs SYSTEM operations)
+- ✅ Comprehensive error handling
+
+**YjsProvider** (Foundation Ready) - Real-time collaboration foundation:
+- ✅ Yjs CRDT integration for conflict-free data structures
+- ✅ WebSocket support for real-time synchronization
+- ✅ Offline mode for testing and development
+- ✅ Content size limit enforcement
+- ✅ Full DataProvider contract compliance
+
+### DataProvider Contract
+
+All providers implement the same interface:
+
+```javascript
+class DataProvider {
+  init(mapId, options) { /* Setup and return cleanup function */ }
+  destroy() { /* Cleanup resources */ }
+  subscribe(onChange) { /* Subscribe to changes, return unsubscribe */ }
+
+  // CRUD Operations
+  upsertNote(note, {origin: 'user'|'system'}) { /* Create/update note */ }
+  deleteNote(id, {origin: 'user'|'system'}) { /* Delete note */ }
+  upsertConnection(conn, opts) { /* Create/update connection */ }
+  deleteConnection(id, opts) { /* Delete connection */ }
+
+  // Data Operations
+  getSnapshot() { /* Get current state */ }
+  importJSON(json) { /* Import data with validation */ }
+  exportJSON() { /* Export current state */ }
+
+  // Meta Operations
+  setMeta(meta, opts) { /* Update metadata */ }
+  getMeta() { /* Get metadata */ }
+}
+```
+
+### Using DataProviders
+
+Access through the singleton DataProviderService:
+
+```javascript
+import { DataProviderService } from './services/DataProviderService.js';
+
+const service = DataProviderService.getInstance();
+service.init('map-id', { onReady: () => console.log('Ready!') });
+
+// Subscribe to changes
+const unsubscribe = service.subscribe((change) => {
+  console.log('Data changed:', change.type, change.origin);
+});
+
+// Perform operations
+service.upsertNote({ id: 'note-1', content: 'Hello', pos: [100, 200] });
+service.exportJSON(); // Get current state as JSON
+```
+
+### Migration Status
+
+🎯 **Current (LocalJSONProvider)**: Production-ready with comprehensive features
+🔄 **In Progress**: YjsProvider foundation (MM-235 epic)
+📋 **Planned**: Complete migration of existing components to use DataProviderService
 
 ## Standards
 

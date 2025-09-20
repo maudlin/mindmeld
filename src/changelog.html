@@ -54,6 +54,13 @@
         <ul>
           
             <li>
+              Fixes browser compatibility issues (process is not defined resolved)
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/112" target="_blank">#112</a>, September 20, 2025)
+              </small>
+            </li>
+          
+            <li>
               Fixes continuous pinch zoom movement issue where zoom continues after fingers stop moving
               <small style="color: #666; margin-left: 1rem">
                 (<a href="https://github.com/maudlin/mindmeld/pull/111" target="_blank">#111</a>, September 5, 2025)
@@ -79,6 +86,34 @@
       <section>
         <h2>📝 Other Changes</h2>
         <ul>
+          
+            <li>
+              Eliminates autosave race conditions through DataProvider abstraction layer
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/112" target="_blank">#112</a>, September 20, 2025)
+              </small>
+            </li>
+          
+            <li>
+              Implements LocalJSONProvider with hydration state management
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/112" target="_blank">#112</a>, September 20, 2025)
+              </small>
+            </li>
+          
+            <li>
+              Achieves 100% test coverage with comprehensive TDD approach
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/112" target="_blank">#112</a>, September 20, 2025)
+              </small>
+            </li>
+          
+            <li>
+              Maintains backward compatibility with all existing functionality
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/112" target="_blank">#112</a>, September 20, 2025)
+              </small>
+            </li>
           
             <li>
               Replaces logarithmic scaling with linear scaling in ViewportBehavior for consistent zoom sensitivity
@@ -119,20 +154,6 @@
               Pan works perfectly, zoom now matches that immediate responsiveness
               <small style="color: #666; margin-left: 1rem">
                 (<a href="https://github.com/maudlin/mindmeld/pull/109" target="_blank">#109</a>, September 3, 2025)
-              </small>
-            </li>
-          
-            <li>
-              *Before:** 5x → 3x → 1x (discrete integer jumps)
-              <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/107" target="_blank">#107</a>, September 3, 2025)
-              </small>
-            </li>
-          
-            <li>
-              *After:** 5x → 2.2x → 1x (smooth decimal scaling)
-              <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/107" target="_blank">#107</a>, September 3, 2025)
               </small>
             </li>
           

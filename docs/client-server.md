@@ -155,10 +155,39 @@ Access your mind maps from different computers by connecting to the same server 
 - Try manual save/load to test server connectivity
 
 ### Data Not Synchronizing
-- Confirm you see "Connected" status  
+- Confirm you see "Connected" status
 - Make a change and wait 2-3 seconds for auto-save
 - Check for error notifications or status changes
 - Try manual save to test server communication
+
+## Real-time Collaboration Foundation
+
+MindMeld now includes **Yjs-based DataProvider infrastructure** that enables future real-time collaboration features:
+
+### Technical Foundation (Available Now)
+- **YjsProvider**: Complete implementation with conflict-free replicated data types (CRDTs)
+- **WebSocket support**: Ready for real-time synchronization via Yjs WebSocket provider
+- **Offline mode**: Full functionality when disconnected from collaboration server
+- **Content validation**: Automatic content size limit enforcement (200 characters)
+- **Error resilience**: Robust handling of network issues and malformed data
+
+### Architecture Benefits
+- **Conflict-free collaboration**: Yjs CRDTs ensure data consistency across multiple users
+- **Real-time updates**: Changes sync instantly between connected clients
+- **Seamless transitions**: Switch between online and offline modes transparently
+- **DataProvider abstraction**: Clean separation allows switching between storage backends
+
+### Current Status
+🔧 **Foundation Complete**: YjsProvider implementation with comprehensive test coverage
+🚧 **Integration Pending**: UI observers and real-time features (MM-246)
+📋 **Future**: Full multi-user collaboration interface
+
+### For Developers
+The DataProvider pattern ensures backward compatibility:
+- Current LocalJSONProvider handles local storage
+- Future YjsProvider enables real-time collaboration
+- Applications transparently use either provider
+- See [Developer Guide](developer-guide.md#dataprovider-abstraction) for implementation details
 
 ---
 

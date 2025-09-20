@@ -1,6 +1,7 @@
 // src/js/data/providers/YjsProvider.js
 // Real-time collaborative data provider using Yjs and WebSocket
 import { DataProvider, ORIGIN, makeConnectionId } from './DataProvider.js';
+import { truncateNoteContent } from '../../utils/utils.js';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 
@@ -114,45 +115,82 @@ export class YjsProvider extends DataProvider {
 
   /**
    * Set up observers for Y.Doc changes to emit DataProvider events
+   * Enhanced with origin tracking to prevent feedback loops
    */
   _setupObservers() {
     // Observe notes changes
-    this._yNotes.observe((event) => {
-      if (this._onChange) {
-        event.changes.keys.forEach((change, key) => {
-          this._onChange({
-            type: 'notes',
-            origin: ORIGIN.SYSTEM, // Server updates are always SYSTEM origin
-            payload: { id: key, action: change.action },
-          });
-        });
+    this._yNotes.observe((event, transaction) => {
+      if (!this._onChange) return;
+
+      // CRITICAL: Skip system transactions to prevent feedback loops
+      if (transaction.origin === ORIGIN.SYSTEM) {
+        console.log(
+          'YjsProvider: Skipping system transaction in notes observer',
+        );
+        return;
       }
+
+      // Determine origin: local USER transactions vs remote updates
+      const origin =
+        transaction.origin === ORIGIN.USER ? ORIGIN.USER : ORIGIN.SYSTEM;
+
+      event.changes.keys.forEach((change, key) => {
+        this._onChange({
+          type: 'notes',
+          origin, // Use determined origin instead of always SYSTEM
+          payload: { id: key, action: change.action },
+        });
+      });
     });
 
     // Observe connections changes
-    this._yConnections.observe((event) => {
-      if (this._onChange) {
-        event.changes.keys.forEach((change, key) => {
-          this._onChange({
-            type: 'connections',
-            origin: ORIGIN.SYSTEM,
-            payload: { id: key, action: change.action },
-          });
-        });
+    this._yConnections.observe((event, transaction) => {
+      if (!this._onChange) return;
+
+      // CRITICAL: Skip system transactions to prevent feedback loops
+      if (transaction.origin === ORIGIN.SYSTEM) {
+        console.log(
+          'YjsProvider: Skipping system transaction in connections observer',
+        );
+        return;
       }
+
+      // Determine origin: local USER transactions vs remote updates
+      const origin =
+        transaction.origin === ORIGIN.USER ? ORIGIN.USER : ORIGIN.SYSTEM;
+
+      event.changes.keys.forEach((change, key) => {
+        this._onChange({
+          type: 'connections',
+          origin, // Use determined origin instead of always SYSTEM
+          payload: { id: key, action: change.action },
+        });
+      });
     });
 
     // Observe metadata changes
-    this._yMeta.observe((event) => {
-      if (this._onChange) {
-        event.changes.keys.forEach((change, key) => {
-          this._onChange({
-            type: 'meta',
-            origin: ORIGIN.SYSTEM,
-            payload: { key, action: change.action },
-          });
-        });
+    this._yMeta.observe((event, transaction) => {
+      if (!this._onChange) return;
+
+      // CRITICAL: Skip system transactions to prevent feedback loops
+      if (transaction.origin === ORIGIN.SYSTEM) {
+        console.log(
+          'YjsProvider: Skipping system transaction in meta observer',
+        );
+        return;
       }
+
+      // Determine origin: local USER transactions vs remote updates
+      const origin =
+        transaction.origin === ORIGIN.USER ? ORIGIN.USER : ORIGIN.SYSTEM;
+
+      event.changes.keys.forEach((change, key) => {
+        this._onChange({
+          type: 'meta',
+          origin, // Use determined origin instead of always SYSTEM
+          payload: { key, action: change.action },
+        });
+      });
     });
   }
 
@@ -218,53 +256,80 @@ export class YjsProvider extends DataProvider {
       const parsed = JSON.parse(json);
       const data = parsed?.data || parsed;
 
-      // Use Y.Doc transaction for atomic updates
-      this._ydoc.transact(() => {
-        // Clear existing data
-        this._yNotes.clear();
-        this._yConnections.clear();
+      // Validate basic data structure
+      if (data && typeof data === 'object') {
+        // Use Y.Doc transaction for atomic updates
+        this._ydoc.transact(() => {
+          // Clear existing data
+          this._yNotes.clear();
+          this._yConnections.clear();
 
-        // Import notes
-        (data.n || []).forEach((note) => {
-          this._yNotes.set(String(note.i), {
-            id: String(note.i),
-            content: String(note.c || ''),
-            pos: note.p || [0, 0],
-            color: note.cl,
+          // Import notes with content size limit enforcement
+          if (Array.isArray(data.n)) {
+            data.n.forEach((note) => {
+              if (note && typeof note === 'object' && note.i) {
+                this._yNotes.set(String(note.i), {
+                  id: String(note.i),
+                  content: truncateNoteContent(String(note.c || '')),
+                  pos: Array.isArray(note.p) ? note.p : [0, 0],
+                  color: note.cl,
+                });
+              }
+            });
+          }
+
+          // Import connections
+          if (Array.isArray(data.c)) {
+            data.c.forEach((triple) => {
+              if (Array.isArray(triple) && triple.length >= 3) {
+                const [from, to, type] = triple;
+                const connId = makeConnectionId(
+                  String(from),
+                  String(to),
+                  Number(type) || 1,
+                );
+                this._yConnections.set(connId, {
+                  from: String(from),
+                  to: String(to),
+                  type: Number(type) || 1,
+                });
+              }
+            });
+          }
+        }, ORIGIN.SYSTEM); // Mark as system origin
+
+        if (this._onChange) {
+          this._onChange({
+            type: 'snapshot',
+            origin: ORIGIN.SYSTEM,
+            payload: null,
           });
-        });
-
-        // Import connections
-        (data.c || []).forEach((triple) => {
-          const [from, to, type] = triple;
-          const connId = makeConnectionId(
-            String(from),
-            String(to),
-            Number(type),
-          );
-          this._yConnections.set(connId, {
-            from: String(from),
-            to: String(to),
-            type: Number(type),
-          });
-        });
-      }, ORIGIN.SYSTEM); // Mark as system origin
-
-      if (this._onChange) {
-        this._onChange({
-          type: 'snapshot',
-          origin: ORIGIN.SYSTEM,
-          payload: null,
-        });
+        }
+      } else {
+        throw new Error(
+          'Invalid data structure: expected object with notes and connections',
+        );
       }
     } catch (e) {
-      console.error('YjsProvider.importJSON parse error:', e);
-      throw e;
+      if (e instanceof SyntaxError) {
+        throw new Error(`Invalid JSON format: ${e.message}`);
+      } else if (e.message.includes('Invalid data structure')) {
+        throw e;
+      } else {
+        console.error('YjsProvider.importJSON error:', e);
+        throw new Error(`Import failed: ${e.message}`);
+      }
     }
   }
 
   exportJSON() {
-    return JSON.stringify(this.getSnapshot());
+    try {
+      const snapshot = this.getSnapshot();
+      return JSON.stringify(snapshot);
+    } catch (e) {
+      console.error('YjsProvider.exportJSON error:', e);
+      throw new Error(`Export failed: ${e.message}`);
+    }
   }
 
   upsertNote(note, opts = {}) {
@@ -279,7 +344,10 @@ export class YjsProvider extends DataProvider {
     const prev = this._yNotes.get(id) || { id };
     const next = { ...prev };
 
-    if (note.content !== undefined) next.content = String(note.content);
+    if (note.content !== undefined) {
+      // Enforce content size limit
+      next.content = truncateNoteContent(String(note.content));
+    }
     if (note.pos !== undefined) next.pos = note.pos;
     if (note.color !== undefined) next.color = note.color;
 

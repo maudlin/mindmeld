@@ -301,6 +301,17 @@ export async function importFromJSON(jsonData, canvas) {
 
 // Initialize dataStore event listeners
 export function initializeDataStore() {
+  // Always use legacy handlers for now
+  // DataProvider architecture is handled by DataBootstrap
+  initializeLegacyHandlers();
+  log('DataStore: Initialized with legacy handlers');
+}
+
+/**
+ * Initialize legacy event handlers for backward compatibility
+ * @private
+ */
+function initializeLegacyHandlers() {
   eventBus.on('note.created', addNote);
   eventBus.on('note.updated', ({ id, content, left, top }) => {
     const updateData = {};
@@ -321,7 +332,7 @@ export function initializeDataStore() {
     log('Color removal detected, state will be saved automatically');
   });
 
-  log('DataStore event listeners initialized');
+  log('DataStore: Legacy event listeners initialized');
 }
 
 export function clearAllNotesAndConnections() {

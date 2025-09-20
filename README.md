@@ -53,6 +53,7 @@ See [User Guide](docs/user-guide.md) for complete interaction details.
 - **Multi-Canvas Templates**: Standard Canvas, Hero's Journey, and extensible template system
 - **Advanced Selection**: Multi-select with group operations and touch-optimized selection
 - **Data Management**: Export/import mind maps as JSON with full state preservation
+- **Real-time Ready**: DataProvider abstraction layer foundation for future collaboration features
 - **Modern Architecture**: Event-driven design with zero circular dependencies
 - **Enterprise-Grade Data Integrity**: Comprehensive corruption resistance and browser compatibility
 - **Secure Markdown System**: XSS-protected rendering with zero HTML injection
@@ -83,9 +84,10 @@ See the full documentation index in docs/README.md.
 
 ## Architecture
 
-**Bootstrap Architecture**: Clean application initialization with specialized modules  
-**Event-driven design**: Zero circular dependencies with central EventBus  
-**Cross-platform interactions**: Unified touch and desktop input handling  
+**Bootstrap Architecture**: Clean application initialization with specialized modules
+**Event-driven design**: Zero circular dependencies with central EventBus
+**Cross-platform interactions**: Unified touch and desktop input handling
+**DataProvider abstraction**: Pluggable data persistence layer with LocalJSON and Yjs providers
 **Modular bootstrap**: DataBootstrap → ServiceBootstrap → UIBootstrap → InteractionBootstrap
 
 **Health**: Run `npm run health-check` | **Tests**: Run `npm test`  
