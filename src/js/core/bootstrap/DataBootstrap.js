@@ -13,12 +13,16 @@ import {
 } from '../../data/dataStore.js';
 import { appState } from '../../data/observableState.js';
 import { ZoomStateService } from '../../services/zoomStateService.js';
+import { DataProviderService } from '../../services/DataProviderService.js';
+import { isDebugEnabled, isDebounceEnabled } from '../featureFlags.js';
 import { log } from '../../utils/utils.js';
 
 export class DataBootstrap extends BaseBootstrap {
   constructor() {
     super('DataBootstrap');
     this.stateRestored = false;
+    this._dataProviderUnsubscribe = null;
+    this._updatePending = false; // Guard for debouncing UI updates
   }
 
   async initialize() {
@@ -28,15 +32,19 @@ export class DataBootstrap extends BaseBootstrap {
     // 2. Initialize core data store
     await this.initializeDataStore();
 
-    // 3. Set up state management system
+    // 3. Initialize DataProvider and set up observers
+    await this.initializeDataProvider();
+
+    // 4. Set up state management system
     await this.initializeStateManagement();
 
-    // 4. Set up persistence handlers
+    // 5. Set up persistence handlers
     this.setupPersistence();
 
     return {
       eventBus,
       dataStoreInitialized: true,
+      dataProviderReady: true,
       stateManagementReady: true,
     };
   }
@@ -57,6 +65,41 @@ export class DataBootstrap extends BaseBootstrap {
       log('DataBootstrap: Data store initialized successfully');
     } catch (error) {
       throw new Error(`Data store initialization failed: ${error.message}`);
+    }
+  }
+
+  async initializeDataProvider() {
+    try {
+      // Get DataProviderService singleton
+      const dataProvider = DataProviderService.getInstance();
+
+      // Initialize provider - for now use null mapId (local mode)
+      const cleanup = dataProvider.init(null, {
+        onReady: () => {
+          if (isDebugEnabled()) {
+            console.log(
+              `DataBootstrap: DataProvider (${dataProvider.getProviderType()}) ready`,
+            );
+          }
+        },
+      });
+
+      // Subscribe to DataProvider changes and route them to existing event bus patterns
+      this._dataProviderUnsubscribe = dataProvider.subscribe((change) => {
+        this._handleProviderChange(change);
+      });
+
+      log(
+        `DataBootstrap: DataProvider (${dataProvider.getProviderType()}) initialized with observers`,
+      );
+
+      return cleanup;
+    } catch (error) {
+      console.error(
+        'DataBootstrap: DataProvider initialization failed:',
+        error,
+      );
+      throw new Error(`DataProvider initialization failed: ${error.message}`);
     }
   }
 
@@ -81,6 +124,136 @@ export class DataBootstrap extends BaseBootstrap {
   setupPersistence() {
     // observableState handles automatic persistence, no additional setup needed
     log('DataBootstrap: Persistence handlers configured');
+  }
+
+  /**
+   * Handle DataProvider changes and route them to existing event bus patterns
+   * This bridges the DataProvider observer system with the existing UI event system
+   * @param {Object} change - DataProvider change event
+   * @private
+   */
+  _handleProviderChange(change) {
+    if (isDebugEnabled()) {
+      console.log('DataBootstrap: Processing provider change', change);
+    }
+
+    // Debounce UI updates if enabled to prevent event storms
+    if (isDebounceEnabled() && this._updatePending) {
+      if (isDebugEnabled()) {
+        console.log('DataBootstrap: Debouncing change event', change.type);
+      }
+      return;
+    }
+
+    if (isDebounceEnabled()) {
+      this._updatePending = true;
+      requestAnimationFrame(() => {
+        this._processBatchedChanges(change);
+        this._updatePending = false;
+      });
+    } else {
+      this._processBatchedChanges(change);
+    }
+  }
+
+  /**
+   * Process batched changes and emit appropriate event bus events
+   * @param {Object} change - DataProvider change event
+   * @private
+   */
+  _processBatchedChanges(change) {
+    switch (change.type) {
+      case 'notes':
+        this._handleNoteChange(change);
+        break;
+      case 'connections':
+        this._handleConnectionChange(change);
+        break;
+      case 'meta':
+        this._handleMetaChange(change);
+        break;
+      case 'snapshot':
+        this._handleSnapshotChange(change);
+        break;
+      default:
+        if (isDebugEnabled()) {
+          console.log('DataBootstrap: Unknown change type', change.type);
+        }
+    }
+  }
+
+  /**
+   * Handle note changes from DataProvider
+   * @param {Object} change
+   * @private
+   */
+  _handleNoteChange(change) {
+    if (change.payload.deleted) {
+      eventBus.emit('note.deleted', {
+        id: change.payload.id,
+        origin: change.origin,
+      });
+    } else {
+      eventBus.emit('note.updated', {
+        id: change.payload.id,
+        origin: change.origin,
+      });
+    }
+
+    // Emit general notes changed event
+    eventBus.emit('notes.changed', {
+      origin: change.origin,
+      type: 'note',
+    });
+  }
+
+  /**
+   * Handle connection changes from DataProvider
+   * @param {Object} change
+   * @private
+   */
+  _handleConnectionChange(change) {
+    if (change.payload.deleted) {
+      eventBus.emit('connection.deleted', {
+        id: change.payload.id,
+        origin: change.origin,
+      });
+    } else {
+      eventBus.emit('connection.updated', {
+        id: change.payload.id,
+        origin: change.origin,
+      });
+    }
+
+    // Emit general notes changed event
+    eventBus.emit('notes.changed', {
+      origin: change.origin,
+      type: 'connection',
+    });
+  }
+
+  /**
+   * Handle metadata changes from DataProvider
+   * @param {Object} change
+   * @private
+   */
+  _handleMetaChange(change) {
+    eventBus.emit('meta.updated', {
+      meta: change.payload.meta,
+      origin: change.origin,
+    });
+  }
+
+  /**
+   * Handle snapshot changes (bulk import) from DataProvider
+   * @param {Object} change
+   * @private
+   */
+  _handleSnapshotChange(change) {
+    // For snapshot changes, trigger a full reload
+    eventBus.emit('notes.loaded', {
+      origin: change.origin,
+    });
   }
 
   async restoreState() {
@@ -135,7 +308,25 @@ export class DataBootstrap extends BaseBootstrap {
   }
 
   async cleanup() {
+    // Unsubscribe from DataProvider changes
+    if (this._dataProviderUnsubscribe) {
+      this._dataProviderUnsubscribe();
+      this._dataProviderUnsubscribe = null;
+    }
+
+    // Clean up DataProviderService
+    try {
+      const dataProvider = DataProviderService.getInstance();
+      dataProvider.destroy();
+    } catch (error) {
+      console.error(
+        'DataBootstrap: Error cleaning up DataProviderService:',
+        error,
+      );
+    }
+
     await super.cleanup();
     this.stateRestored = false;
+    this._updatePending = false;
   }
 }

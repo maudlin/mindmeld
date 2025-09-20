@@ -115,45 +115,82 @@ export class YjsProvider extends DataProvider {
 
   /**
    * Set up observers for Y.Doc changes to emit DataProvider events
+   * Enhanced with origin tracking to prevent feedback loops
    */
   _setupObservers() {
     // Observe notes changes
-    this._yNotes.observe((event) => {
-      if (this._onChange) {
-        event.changes.keys.forEach((change, key) => {
-          this._onChange({
-            type: 'notes',
-            origin: ORIGIN.SYSTEM, // Server updates are always SYSTEM origin
-            payload: { id: key, action: change.action },
-          });
-        });
+    this._yNotes.observe((event, transaction) => {
+      if (!this._onChange) return;
+
+      // CRITICAL: Skip system transactions to prevent feedback loops
+      if (transaction.origin === ORIGIN.SYSTEM) {
+        console.log(
+          'YjsProvider: Skipping system transaction in notes observer',
+        );
+        return;
       }
+
+      // Determine origin: local USER transactions vs remote updates
+      const origin =
+        transaction.origin === ORIGIN.USER ? ORIGIN.USER : ORIGIN.SYSTEM;
+
+      event.changes.keys.forEach((change, key) => {
+        this._onChange({
+          type: 'notes',
+          origin, // Use determined origin instead of always SYSTEM
+          payload: { id: key, action: change.action },
+        });
+      });
     });
 
     // Observe connections changes
-    this._yConnections.observe((event) => {
-      if (this._onChange) {
-        event.changes.keys.forEach((change, key) => {
-          this._onChange({
-            type: 'connections',
-            origin: ORIGIN.SYSTEM,
-            payload: { id: key, action: change.action },
-          });
-        });
+    this._yConnections.observe((event, transaction) => {
+      if (!this._onChange) return;
+
+      // CRITICAL: Skip system transactions to prevent feedback loops
+      if (transaction.origin === ORIGIN.SYSTEM) {
+        console.log(
+          'YjsProvider: Skipping system transaction in connections observer',
+        );
+        return;
       }
+
+      // Determine origin: local USER transactions vs remote updates
+      const origin =
+        transaction.origin === ORIGIN.USER ? ORIGIN.USER : ORIGIN.SYSTEM;
+
+      event.changes.keys.forEach((change, key) => {
+        this._onChange({
+          type: 'connections',
+          origin, // Use determined origin instead of always SYSTEM
+          payload: { id: key, action: change.action },
+        });
+      });
     });
 
     // Observe metadata changes
-    this._yMeta.observe((event) => {
-      if (this._onChange) {
-        event.changes.keys.forEach((change, key) => {
-          this._onChange({
-            type: 'meta',
-            origin: ORIGIN.SYSTEM,
-            payload: { key, action: change.action },
-          });
-        });
+    this._yMeta.observe((event, transaction) => {
+      if (!this._onChange) return;
+
+      // CRITICAL: Skip system transactions to prevent feedback loops
+      if (transaction.origin === ORIGIN.SYSTEM) {
+        console.log(
+          'YjsProvider: Skipping system transaction in meta observer',
+        );
+        return;
       }
+
+      // Determine origin: local USER transactions vs remote updates
+      const origin =
+        transaction.origin === ORIGIN.USER ? ORIGIN.USER : ORIGIN.SYSTEM;
+
+      event.changes.keys.forEach((change, key) => {
+        this._onChange({
+          type: 'meta',
+          origin, // Use determined origin instead of always SYSTEM
+          payload: { key, action: change.action },
+        });
+      });
     });
   }
 

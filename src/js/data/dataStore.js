@@ -13,6 +13,8 @@ import { ColorService } from '../services/colorService.js';
 import { CanvasStateService } from '../services/canvasStateService.js';
 import { eventBus } from '../core/eventBus.js';
 import { getCurrentMarkdownContent } from '../features/note/editViewMode.js';
+import { DataProviderCompatibility } from './DataProviderCompatibility.js';
+import { getProviderType } from '../core/featureFlags.js';
 
 export function addNote(note) {
   const currentNotes = appState.getState().notes;
@@ -301,6 +303,36 @@ export async function importFromJSON(jsonData, canvas) {
 
 // Initialize dataStore event listeners
 export function initializeDataStore() {
+  const providerType = getProviderType();
+
+  // Determine which handlers to install based on provider type
+  if (providerType === 'yjs') {
+    // Use DataProvider architecture
+    try {
+      DataProviderCompatibility.migrateToProvider();
+      log(
+        'DataStore: Initialized with DataProvider architecture (YjsProvider)',
+      );
+    } catch (error) {
+      console.error(
+        'DataStore: DataProvider migration failed, falling back to legacy:',
+        error,
+      );
+      // Fall back to legacy handlers on migration failure
+      initializeLegacyHandlers();
+    }
+  } else {
+    // Use legacy handlers for LocalJSONProvider
+    initializeLegacyHandlers();
+    log('DataStore: Initialized with legacy handlers (LocalJSONProvider)');
+  }
+}
+
+/**
+ * Initialize legacy event handlers for backward compatibility
+ * @private
+ */
+function initializeLegacyHandlers() {
   eventBus.on('note.created', addNote);
   eventBus.on('note.updated', ({ id, content, left, top }) => {
     const updateData = {};
@@ -321,7 +353,7 @@ export function initializeDataStore() {
     log('Color removal detected, state will be saved automatically');
   });
 
-  log('DataStore event listeners initialized');
+  log('DataStore: Legacy event listeners initialized');
 }
 
 export function clearAllNotesAndConnections() {
