@@ -14,7 +14,12 @@ import {
 import { appState } from '../../data/observableState.js';
 import { ZoomStateService } from '../../services/zoomStateService.js';
 import { DataProviderService } from '../../services/DataProviderService.js';
-import { isDebugEnabled, isDebounceEnabled } from '../featureFlags.js';
+import { DataProviderCompatibility } from '../../data/DataProviderCompatibility.js';
+import {
+  isDebugEnabled,
+  isDebounceEnabled,
+  getProviderType,
+} from '../featureFlags.js';
 import { log } from '../../utils/utils.js';
 
 export class DataBootstrap extends BaseBootstrap {
@@ -92,6 +97,21 @@ export class DataBootstrap extends BaseBootstrap {
       log(
         `DataBootstrap: DataProvider (${dataProvider.getProviderType()}) initialized with observers`,
       );
+
+      // Migrate to DataProvider architecture if using YjsProvider
+      if (getProviderType() === 'yjs') {
+        try {
+          DataProviderCompatibility.migrateToProvider();
+          log(
+            'DataBootstrap: Migrated to DataProvider architecture (YjsProvider)',
+          );
+        } catch (error) {
+          console.error(
+            'DataBootstrap: DataProvider migration failed, using legacy handlers:',
+            error,
+          );
+        }
+      }
 
       return cleanup;
     } catch (error) {
