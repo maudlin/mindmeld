@@ -1,75 +1,97 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>YjsProvider Browser Import Test</title>
-</head>
-<body>
+  </head>
+  <body>
     <h1>YjsProvider Browser Import Test</h1>
     <div id="results"></div>
 
     <script type="module">
-        const results = document.getElementById('results');
+      const results = document.getElementById('results');
 
-        function log(message, isError = false) {
-            const div = document.createElement('div');
-            div.textContent = message;
-            div.style.color = isError ? 'red' : 'green';
-            results.appendChild(div);
-            console.log(message);
-        }
+      function log(message, isError = false) {
+        const div = document.createElement('div');
+        div.textContent = message;
+        div.style.color = isError ? 'red' : 'green';
+        results.appendChild(div);
+        console.log(message);
+      }
 
-        // Test 1: YjsCompat layer import (our zero external dependencies approach)
-        try {
-            const Y = await import('./js/core/yjs-compatibility/yjs.js');
-            log('✅ YjsCompat layer import successful: ' + Object.keys(Y).slice(0, 5).join(', '));
-        } catch (error) {
-            log('❌ YjsCompat layer import failed: ' + error.message, true);
-        }
+      // Test 1: YjsCompat layer import (our zero external dependencies approach)
+      try {
+        const Y = await import('./js/core/yjs-compatibility/yjs.js');
+        log(
+          '✅ YjsCompat layer import successful: ' +
+            Object.keys(Y).slice(0, 5).join(', '),
+        );
+      } catch (error) {
+        log('❌ YjsCompat layer import failed: ' + error.message, true);
+      }
 
-        // Test 2: WebSocket compatibility layer import
-        try {
-            const ws = await import('./js/core/yjs-compatibility/y-websocket.js');
-            log('✅ WebSocket compatibility layer import successful: ' + Object.keys(ws).join(', '));
-        } catch (error) {
-            log('❌ WebSocket compatibility layer import failed: ' + error.message, true);
-        }
+      // Test 2: WebSocket compatibility layer import
+      try {
+        const ws = await import('./js/core/yjs-compatibility/y-websocket.js');
+        log(
+          '✅ WebSocket compatibility layer import successful: ' +
+            Object.keys(ws).join(', '),
+        );
+      } catch (error) {
+        log(
+          '❌ WebSocket compatibility layer import failed: ' + error.message,
+          true,
+        );
+      }
 
-        // Test 3: Direct imports should fail (expected with zero external dependencies)
-        try {
-            const Y = await import('yjs');
-            log('❌ Unexpected: Direct Yjs import should fail with zero dependencies approach', true);
-        } catch (error) {
-            log('✅ Expected: Direct Yjs import fails (zero external dependencies working): ' + error.message);
-        }
+      // Test 3: Direct imports should fail (expected with zero external dependencies)
+      try {
+        const Y = await import('yjs');
+        log(
+          '❌ Unexpected: Direct Yjs import should fail with zero dependencies approach',
+          true,
+        );
+      } catch (error) {
+        log(
+          '✅ Expected: Direct Yjs import fails (zero external dependencies working): ' +
+            error.message,
+        );
+      }
 
-        try {
-            const ws = await import('y-websocket');
-            log('❌ Unexpected: Direct y-websocket import should fail with zero dependencies approach', true);
-        } catch (error) {
-            log('✅ Expected: Direct y-websocket import fails (zero external dependencies working): ' + error.message);
-        }
+      try {
+        const ws = await import('y-websocket');
+        log(
+          '❌ Unexpected: Direct y-websocket import should fail with zero dependencies approach',
+          true,
+        );
+      } catch (error) {
+        log(
+          '✅ Expected: Direct y-websocket import fails (zero external dependencies working): ' +
+            error.message,
+        );
+      }
 
-        // Test 4: YjsProvider import
-        try {
-            const module = await import('./js/data/providers/YjsProvider.js');
-            log('✅ YjsProvider import successful: ' + Object.keys(module).join(', '));
+      // Test 4: YjsProvider import
+      try {
+        const module = await import('./js/data/providers/YjsProvider.js');
+        log(
+          '✅ YjsProvider import successful: ' + Object.keys(module).join(', '),
+        );
 
-            // Test 5: YjsProvider instantiation
-            const provider = new module.YjsProvider();
-            log('✅ YjsProvider instantiation successful');
+        // Test 5: YjsProvider instantiation
+        const provider = new module.YjsProvider();
+        log('✅ YjsProvider instantiation successful');
 
-            // Test 6: YjsProvider offline initialization
-            const cleanup = provider.init(null, {
-                onReady: () => log('✅ YjsProvider offline init successful')
-            });
+        // Test 6: YjsProvider offline initialization
+        const cleanup = provider.init(null, {
+          onReady: () => log('✅ YjsProvider offline init successful'),
+        });
 
-            provider.destroy();
-            log('✅ YjsProvider lifecycle test successful');
-
-        } catch (error) {
-            log('❌ YjsProvider test failed: ' + error.message, true);
-            log('Stack: ' + error.stack, true);
-        }
+        provider.destroy();
+        log('✅ YjsProvider lifecycle test successful');
+      } catch (error) {
+        log('❌ YjsProvider test failed: ' + error.message, true);
+        log('Stack: ' + error.stack, true);
+      }
     </script>
-</body>
+  </body>
 </html>
