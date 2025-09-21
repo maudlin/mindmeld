@@ -55,43 +55,158 @@ test.describe('Core User Workflows @smoke', () => {
     await expect(persistedContent).toContainText('My Important Test Note');
   });
 
-  test('Multi-Note and Color Workflow', async () => {
-    // User Journey: Create multiple notes → Apply colors → Verify persistence
+  test('Complete Note State Persistence - Color, Content, Position', async () => {
+    // User Journey: Create multiple notes with different colors → Edit content → Verify complete persistence
 
-    // 1. User creates first note
-    const note1 = await canvasPage.createNote(300, 250);
-    await canvasPage.editNoteContent('First Note', note1);
+    // === SETUP PHASE ===
+    // Create test notes with specific positions, colors, and content
+    const testNotes = [
+      { x: 200, y: 150, color: 'blue', content: 'Test Note 1' },
+      { x: 400, y: 250, color: 'pink', content: 'Test Note 2' },
+      { x: 600, y: 350, color: 'green', content: 'Test Note 3' },
+    ];
 
-    // 2. User creates second note
-    const note2 = await canvasPage.createNote(500, 350);
-    await canvasPage.editNoteContent('Second Note', note2);
+    const createdNotes = [];
 
-    // 3. User applies color to first note
-    await canvasPage.selectNote(note1);
-    await canvasPage.selectColor('blue');
-    await canvasPage.verifyNoteColor(note1, 'blue');
+    for (const noteSpec of testNotes) {
+      // Select color first
+      await canvasPage.selectColor(noteSpec.color);
 
-    // 4. User selects both notes using selection box
-    await canvasPage.createSelectionBox(250, 200, 550, 400);
-    await canvasPage.verifyNotesSelected(2);
+      // Create note at specific position
+      const note = await canvasPage.createNote(noteSpec.x, noteSpec.y);
 
-    // 5. Apply color to both selected notes
-    await canvasPage.selectColor('green');
-    await canvasPage.verifyNoteColor(note1, 'green');
-    await canvasPage.verifyNoteColor(note2, 'green');
+      // Add content
+      await canvasPage.editNote(note, noteSpec.content);
 
-    // 6. Verify persistence after reload
-    await canvasPage.page.reload();
+      // Verify color was applied
+      await canvasPage.verifyNoteColor(note, noteSpec.color);
+
+      // Store note info for later verification
+      const noteId = await note.getAttribute('id');
+      const position = await canvasPage.getNotePosition(note);
+
+      createdNotes.push({
+        id: noteId,
+        element: note,
+        expectedColor: noteSpec.color,
+        expectedContent: noteSpec.content,
+        expectedPosition: position,
+      });
+
+      console.log(
+        `Created note ${noteId} at (${position.x}, ${position.y}) with color ${noteSpec.color}`,
+      );
+    }
+
+    // === PERSISTENCE VERIFICATION ===
+    // Check that data exists in browser storage before refresh
+    const storageData = await canvasPage.page.evaluate(() => {
+      return {
+        localStorage: { ...localStorage },
+        sessionStorage: { ...sessionStorage },
+      };
+    });
+
+    console.log(
+      'Storage data before refresh:',
+      Object.keys(storageData.localStorage),
+    );
+
+    // Verify we have some data stored
+    expect(Object.keys(storageData.localStorage).length).toBeGreaterThan(0);
+
+    // === HARD REFRESH SIMULATION ===
+    console.log('=== SIMULATING HARD REFRESH ===');
+    await canvasPage.page.reload({ waitUntil: 'domcontentloaded' });
     await canvasPage.waitForAppReady();
 
-    const persistedNotes = canvasPage.page.locator('.note');
-    await expect(persistedNotes).toHaveCount(2);
+    // Wait for YjsProvider to fully restore data
+    await canvasPage.page.waitForTimeout(1000);
 
-    // Verify colors persisted
-    const persistedNote1 = persistedNotes.first();
-    const persistedNote2 = persistedNotes.last();
-    await canvasPage.verifyNoteColor(persistedNote1, 'green');
-    await canvasPage.verifyNoteColor(persistedNote2, 'green');
+    // === VALIDATION PHASE ===
+    console.log('=== VALIDATING RESTORED STATE ===');
+
+    // Verify all notes were restored
+    const restoredNotes = await canvasPage.notes.all();
+    expect(restoredNotes.length).toBe(testNotes.length);
+
+    // Verify each note's complete state
+    for (let i = 0; i < createdNotes.length; i++) {
+      const originalNote = createdNotes[i];
+      const restoredNote = restoredNotes[i];
+
+      console.log(`Validating note ${i + 1}:`);
+
+      // 1. Verify position persisted
+      const restoredPosition = await canvasPage.getNotePosition(restoredNote);
+      console.log(
+        `  Position: expected (${originalNote.expectedPosition.x}, ${originalNote.expectedPosition.y}), got (${restoredPosition.x}, ${restoredPosition.y})`,
+      );
+
+      expect(
+        Math.abs(restoredPosition.x - originalNote.expectedPosition.x),
+      ).toBeLessThan(10);
+      expect(
+        Math.abs(restoredPosition.y - originalNote.expectedPosition.y),
+      ).toBeLessThan(10);
+
+      // 2. Verify content persisted
+      const restoredContent = await canvasPage.getNoteContent(restoredNote);
+      console.log(
+        `  Content: expected "${originalNote.expectedContent}", got "${restoredContent}"`,
+      );
+
+      expect(restoredContent.trim()).toBe(originalNote.expectedContent);
+
+      // 3. CRITICAL: Verify color persisted
+      console.log(`  Color: expected "${originalNote.expectedColor}"`);
+
+      await canvasPage.verifyNoteColor(
+        restoredNote,
+        originalNote.expectedColor,
+      );
+    }
+
+    console.log('✅ ALL NOTE STATE SUCCESSFULLY PERSISTED AND RESTORED');
+  });
+
+  test('Note Modification and Color Changes Persist', async () => {
+    // User Journey: Create note → Modify content and color → Verify persistence
+
+    // Create initial note
+    await canvasPage.selectColor('yellow');
+    const note = await canvasPage.createNote(300, 200);
+    await canvasPage.editNote(note, 'Original content');
+
+    // Modify the note
+    await canvasPage.selectNote(note); // First select the note
+    await canvasPage.selectColor('pink'); // Then apply color
+    await canvasPage.verifyNoteColor(note, 'pink');
+    await canvasPage.editNote(note, 'Modified content');
+
+    // Move the note
+    await canvasPage.dragNote(note, 100, 100); // Move by offset
+    const modifiedPosition = await canvasPage.getNotePosition(note);
+
+    // Refresh and verify modifications persisted
+    await canvasPage.page.reload({ waitUntil: 'domcontentloaded' });
+    await canvasPage.waitForAppReady();
+    await canvasPage.page.waitForTimeout(1000);
+
+    const restoredNotes = await canvasPage.notes.all();
+    expect(restoredNotes.length).toBe(1);
+
+    const restoredNote = restoredNotes[0];
+
+    // Verify all modifications persisted
+    const restoredContent = await canvasPage.getNoteContent(restoredNote);
+    expect(restoredContent.trim()).toBe('Modified content');
+
+    await canvasPage.verifyNoteColor(restoredNote, 'pink');
+
+    const restoredPosition = await canvasPage.getNotePosition(restoredNote);
+    expect(Math.abs(restoredPosition.x - modifiedPosition.x)).toBeLessThan(10);
+    expect(Math.abs(restoredPosition.y - modifiedPosition.y)).toBeLessThan(10);
   });
 
   test('Basic Menu Functionality', async () => {
