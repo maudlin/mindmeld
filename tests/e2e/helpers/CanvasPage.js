@@ -1275,6 +1275,145 @@ export class CanvasPage {
     }, level);
   }
 
+  // ========================================
+  // COLLABORATION HELPER METHODS
+  // Methods for server connection and collaboration testing
+  // ========================================
+
+  /**
+   * Open the kebab menu
+   */
+  async openKebabMenu() {
+    await this.kebabMenuButton.click();
+    await expect(this.page.locator('#kebab-context-menu.open')).toBeVisible();
+  }
+
+  /**
+   * Click a menu item in the kebab menu
+   * @param {string} action - The data-action attribute value of the menu item
+   */
+  async clickMenuItem(action) {
+    const menuItem = this.page.locator(
+      `.kebab-menu-item[data-action="${action}"]`,
+    );
+    await expect(menuItem).toBeVisible();
+    await menuItem.click();
+  }
+
+  /**
+   * Connect to a mock server for testing
+   * @param {string} serverUrl - The server URL to connect to
+   */
+  async connectToMockServer(serverUrl) {
+    // Open kebab menu and click connect-server option
+    await this.openKebabMenu();
+    await this.clickMenuItem('connect-server');
+
+    // Fill in server URL input
+    const serverUrlInput = this.page.locator('#server-uri-input');
+    await expect(serverUrlInput).toBeVisible();
+    await serverUrlInput.fill(serverUrl);
+
+    // Click connect button
+    const connectButton = this.page.locator('#connect-server-button');
+    await expect(connectButton).toBeVisible();
+    await connectButton.click();
+
+    // Wait for connection to be established (or fail for testing)
+    await this.page.waitForTimeout(1000);
+  }
+
+  /**
+   * Verify server connection status
+   * @param {string} expectedStatus - Expected status ('connected', 'disconnected', 'error')
+   */
+  async verifyServerConnectionStatus(expectedStatus) {
+    const statusIndicator = this.page.locator('#server-connection-status');
+    await expect(statusIndicator).toHaveAttribute(
+      'data-status',
+      expectedStatus,
+    );
+  }
+
+  /**
+   * Disconnect from server
+   */
+  async disconnectFromServer() {
+    await this.openKebabMenu();
+    await this.clickMenuItem('disconnect-server');
+    await this.verifyServerConnectionStatus('disconnected');
+  }
+
+  /**
+   * Browse available maps on server
+   */
+  async browseServerMaps() {
+    await this.openKebabMenu();
+    await this.clickMenuItem('browse-maps');
+
+    // Wait for map browser to open
+    const mapBrowser = this.page.locator('#map-browser');
+    await expect(mapBrowser).toBeVisible();
+  }
+
+  /**
+   * Select a map from the map browser
+   * @param {string} mapId - The map ID to select
+   */
+  async selectMapFromBrowser(mapId) {
+    const mapItem = this.page.locator(`[data-map-id="${mapId}"]`);
+    await expect(mapItem).toBeVisible();
+    await mapItem.click();
+  }
+
+  /**
+   * Create a new map on server
+   * @param {string} mapName - Name for the new map
+   */
+  async createNewMapOnServer(mapName) {
+    await this.openKebabMenu();
+    await this.clickMenuItem('create-map');
+
+    const mapNameInput = this.page.locator('#map-name-input');
+    await expect(mapNameInput).toBeVisible();
+    await mapNameInput.fill(mapName);
+
+    const createButton = this.page.locator('#create-map-button');
+    await createButton.click();
+  }
+
+  /**
+   * Verify collaboration indicators are present
+   */
+  async verifyCollaborationIndicators() {
+    // Check for server connection indicator
+    const connectionIndicator = this.page.locator('#server-connection-status');
+    await expect(connectionIndicator).toBeVisible();
+
+    // Check for collaboration awareness (other users, if any)
+    const collaborationPanel = this.page.locator('#collaboration-panel');
+    await expect(collaborationPanel).toBeVisible();
+  }
+
+  /**
+   * Simulate collaborative editing by another user
+   * @param {string} noteContent - Content to add from another user
+   */
+  async simulateCollaborativeEdit(noteContent) {
+    // This would normally be handled by the WebSocket connection
+    // For testing, we can dispatch events directly
+    await this.page.evaluate((content) => {
+      const event = new CustomEvent('collaborative-update', {
+        detail: {
+          type: 'note-created',
+          content: content,
+          user: 'test-collaborator',
+        },
+      });
+      document.dispatchEvent(event);
+    }, noteContent);
+  }
+
   // TODO: Canvas template switching functionality has been removed from the application
   // Consider adding back if template system is re-implemented
 }

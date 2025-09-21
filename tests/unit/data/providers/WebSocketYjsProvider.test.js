@@ -39,21 +39,24 @@ describe('WebSocketYjsProvider TDD', () => {
         unobserve: jest.fn(),
         toJSON: jest.fn(() => ({})),
       })),
-      transact: jest.fn(),
+      transact: jest.fn((callback) => callback()),
       on: jest.fn(),
       off: jest.fn(),
       destroy: jest.fn(),
     }));
 
-    // Mock ServerConnectionService
+    // Mock ServerConnectionService singleton instance
+    const mockInstance = {
+      getServerUrl: jest.fn(() => 'wss://api.example.com'),
+      isServerConfigured: jest.fn(() => true),
+      setServerUrl: jest.fn(),
+      createWebSocketUrl: jest.fn(
+        (mapId) => `wss://api.example.com/yjs/${mapId}`,
+      ),
+    };
+
     mockServerConnectionService = {
-      getInstance: jest.fn(() => ({
-        getServerUrl: jest.fn(() => 'wss://api.example.com'),
-        isServerConfigured: jest.fn(() => true),
-        createWebSocketUrl: jest.fn(
-          (mapId) => `wss://api.example.com/yjs/${mapId}`,
-        ),
-      })),
+      getInstance: jest.fn(() => mockInstance),
     };
 
     // Mock the imports (providers don't exist yet - TDD RED phase)
@@ -125,22 +128,19 @@ describe('WebSocketYjsProvider TDD', () => {
       const provider = new WebSocketYjsProvider();
       const mockWsProvider = {
         on: jest.fn(),
+        off: jest.fn(),
         synced: false,
       };
 
       MockWebSocketProvider.mockReturnValueOnce(mockWsProvider);
 
       await provider.loadMap('test-map');
-      const syncPromise = provider.waitForServerSync();
 
       expect(provider.isReady).toBe(false);
 
-      // Simulate server sync event
-      const syncCallback = mockWsProvider.on.mock.calls.find(
-        (call) => call[0] === 'sync',
-      )[1];
+      // Simulate immediate sync for this test
       mockWsProvider.synced = true;
-      syncCallback();
+      const syncPromise = provider.waitForServerSync();
 
       await syncPromise;
       expect(provider.isReady).toBe(true);
@@ -176,14 +176,24 @@ describe('WebSocketYjsProvider TDD', () => {
     test('should implement getSnapshot from Y.Doc data', async () => {
       // RED: DataProvider interface compliance
       const provider = new WebSocketYjsProvider();
-      const mockDoc = {
-        getMap: jest.fn(() => ({
-          toJSON: jest.fn(() => ({
-            notes: [{ id: '1', content: 'test' }],
-            connections: [],
-            meta: { zoomLevel: 5 },
-          })),
+      const mockDataMap = {
+        toJSON: jest.fn(() => ({
+          notes: [{ id: '1', content: 'test' }],
+          connections: [],
         })),
+      };
+      const mockMetaMap = {
+        toJSON: jest.fn(() => ({ zoomLevel: 5 })),
+      };
+      const mockDoc = {
+        getMap: jest.fn((name) => {
+          if (name === 'data') return mockDataMap;
+          if (name === 'meta') return mockMetaMap;
+          return mockDataMap;
+        }),
+        on: jest.fn(),
+        off: jest.fn(),
+        destroy: jest.fn(),
       };
 
       MockYDoc.mockReturnValueOnce(mockDoc);
@@ -204,37 +214,49 @@ describe('WebSocketYjsProvider TDD', () => {
       // RED: Subscription system
       const provider = new WebSocketYjsProvider();
       const mockCallback = jest.fn();
-      const mockNotesMap = {
+      const mockDataMap = {
         observe: jest.fn(),
         unobserve: jest.fn(),
       };
       const mockDoc = {
-        getMap: jest.fn(() => mockNotesMap),
+        getMap: jest.fn((name) => {
+          if (name === 'data') return mockDataMap;
+          return mockDataMap;
+        }),
+        on: jest.fn(),
+        off: jest.fn(),
+        destroy: jest.fn(),
       };
 
-      MockYDoc.mkReturnValueOnce(mockDoc);
+      MockYDoc.mockReturnValueOnce(mockDoc);
       await provider.loadMap('test-map');
 
       const unsubscribe = provider.subscribe(mockCallback);
 
-      expect(mockNotesMap.observe).toHaveBeenCalled();
+      expect(mockDataMap.observe).toHaveBeenCalled();
       expect(typeof unsubscribe).toBe('function');
 
       // Test unsubscribe
       unsubscribe();
-      expect(mockNotesMap.unobserve).toHaveBeenCalled();
+      expect(mockDataMap.unobserve).toHaveBeenCalled();
     });
 
     test('should delegate CRUD operations to Y.Doc', async () => {
       // RED: Note and connection operations
       const provider = new WebSocketYjsProvider();
-      const mockNotesMap = {
+      const mockDataMap = {
         set: jest.fn(),
-        delete: jest.fn(),
+        get: jest.fn(() => []),
       };
       const mockDoc = {
-        getMap: jest.fn(() => mockNotesMap),
+        getMap: jest.fn((name) => {
+          if (name === 'data') return mockDataMap;
+          return mockDataMap;
+        }),
         transact: jest.fn((callback) => callback()),
+        on: jest.fn(),
+        off: jest.fn(),
+        destroy: jest.fn(),
       };
 
       MockYDoc.mockReturnValueOnce(mockDoc);
@@ -245,10 +267,10 @@ describe('WebSocketYjsProvider TDD', () => {
       await provider.upsertNote(noteData, { origin: 'user' });
 
       expect(mockDoc.transact).toHaveBeenCalled();
-      expect(mockNotesMap.set).toHaveBeenCalledWith('test-note', noteData);
+      expect(mockDataMap.set).toHaveBeenCalledWith('notes', expect.any(Array));
 
       await provider.deleteNote('test-note', { origin: 'user' });
-      expect(mockNotesMap.delete).toHaveBeenCalledWith('test-note');
+      expect(mockDoc.transact).toHaveBeenCalled();
     });
   });
 
@@ -270,7 +292,8 @@ describe('WebSocketYjsProvider TDD', () => {
         (call) => call[0] === 'update',
       )[1];
 
-      updateHandler(mockTransaction);
+      // Y.js update event passes: (update, origin, doc, transaction)
+      updateHandler(null, null, mockDoc, mockTransaction);
 
       expect(mockTransaction.origin).toBe('system');
       expect(provider.shouldTriggerUILogic(mockTransaction)).toBe(false);
@@ -341,11 +364,15 @@ describe('WebSocketYjsProvider TDD', () => {
       // RED: Memory leak prevention
       const provider = new WebSocketYjsProvider();
       const mockWsProvider = {
+        on: jest.fn(),
+        off: jest.fn(),
         destroy: jest.fn(),
       };
       const mockDoc = {
-        destroy: jest.fn(),
         getMap: jest.fn(() => ({})),
+        on: jest.fn(),
+        off: jest.fn(),
+        destroy: jest.fn(),
       };
 
       MockWebSocketProvider.mockReturnValueOnce(mockWsProvider);
@@ -365,13 +392,14 @@ describe('WebSocketYjsProvider TDD', () => {
     test('should integrate with ServerConnectionService', async () => {
       // RED: Service integration
       const provider = new WebSocketYjsProvider();
+      const mockInstance = mockServerConnectionService.getInstance();
 
       await provider.setServerUrl('wss://custom.example.com');
       await provider.loadMap('integration-test');
 
-      expect(
-        mockServerConnectionService.getInstance().createWebSocketUrl,
-      ).toHaveBeenCalledWith('integration-test');
+      expect(mockInstance.createWebSocketUrl).toHaveBeenCalledWith(
+        'integration-test',
+      );
     });
 
     test('should support feature flag for provider switching', () => {

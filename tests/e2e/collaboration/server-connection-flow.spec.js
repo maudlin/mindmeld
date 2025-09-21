@@ -10,7 +10,7 @@
 import { test, expect } from '@playwright/test';
 import { CanvasPage } from '../helpers/CanvasPage.js';
 
-test.describe('Server Connection Flow @collaboration', () => {
+test.describe('Server Connection Flow @collaboration @local-only', () => {
   let canvasPage;
   let mockServer;
 

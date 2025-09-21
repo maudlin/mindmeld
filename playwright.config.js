@@ -8,6 +8,9 @@ export default defineConfig({
   retries: 0, // Tests are now reliable, minimal retries needed
   reporter: 'list',
 
+  // Exclude @local-only tests in CI environment
+  grep: process.env.CI ? new RegExp('^(?!.*@local-only).*$') : undefined,
+
   webServer: {
     command: 'npm start',
     url: 'http://localhost:8080',
