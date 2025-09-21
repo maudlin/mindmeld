@@ -26,40 +26,63 @@ test.describe('YjsProvider Browser Import Diagnostics', () => {
     const results = await page.textContent('#results');
     console.log('Browser test results:', results);
 
-    // Check for specific error patterns
-    const hasYjsImportError = results.includes('❌ Direct Yjs import failed');
-    const hasWebSocketImportError = results.includes(
-      '❌ y-websocket import failed',
+    // Check for zero external dependencies behavior (direct imports should fail)
+    const hasExpectedYjsFailure = results.includes(
+      '✅ Expected: Direct Yjs import fails',
+    );
+    const hasExpectedWebSocketFailure = results.includes(
+      '✅ Expected: Direct y-websocket import fails',
+    );
+    const hasYjsCompatSuccess = results.includes(
+      '✅ YjsCompat layer import successful',
+    );
+    const hasWebSocketCompatSuccess = results.includes(
+      '✅ WebSocket compatibility layer import successful',
+    );
+    const hasYjsProviderSuccess = results.includes(
+      '✅ YjsProvider import successful',
     );
     const hasYjsProviderImportError = results.includes(
       '❌ YjsProvider test failed',
     );
 
-    console.log('Import diagnostics:', {
-      hasYjsImportError,
-      hasWebSocketImportError,
+    console.log('Zero External Dependencies Diagnostics:', {
+      hasExpectedYjsFailure,
+      hasExpectedWebSocketFailure,
+      hasYjsCompatSuccess,
+      hasWebSocketCompatSuccess,
+      hasYjsProviderSuccess,
       hasYjsProviderImportError,
       allLogs: logs,
     });
 
-    // Report findings - these are soft assertions for diagnostic purposes
-    expect.soft(hasYjsImportError).toBe(false);
-    expect.soft(hasWebSocketImportError).toBe(false);
+    // Expect zero external dependencies architecture to work correctly
+    expect.soft(hasExpectedYjsFailure).toBe(true);
+    expect.soft(hasExpectedWebSocketFailure).toBe(true);
+    expect.soft(hasYjsCompatSuccess).toBe(true);
+    expect.soft(hasWebSocketCompatSuccess).toBe(true);
+    expect.soft(hasYjsProviderSuccess).toBe(true);
     expect.soft(hasYjsProviderImportError).toBe(false);
 
     // Log diagnostic information
     if (
-      hasYjsImportError ||
-      hasWebSocketImportError ||
+      !hasExpectedYjsFailure ||
+      !hasExpectedWebSocketFailure ||
+      !hasYjsCompatSuccess ||
+      !hasWebSocketCompatSuccess ||
       hasYjsProviderImportError
     ) {
       console.log(
-        '❌ DIAGNOSTIC: Import failures detected in browser environment',
+        '❌ DIAGNOSTIC: Zero external dependencies architecture not working correctly',
       );
-      console.log('Next steps: Configure build system for proper Yjs bundling');
+      console.log('Next steps: Check YjsCompat layer implementation');
     } else {
-      console.log('✅ DIAGNOSTIC: All imports working in browser environment');
-      console.log('Next steps: Re-enable YjsProvider in DataProviderService');
+      console.log(
+        '✅ DIAGNOSTIC: Zero external dependencies architecture working correctly',
+      );
+      console.log(
+        'YjsProvider successfully uses compatibility layer instead of external dependencies',
+      );
     }
   });
 
@@ -136,24 +159,33 @@ test.describe('YjsProvider Browser Import Diagnostics', () => {
 
     console.log('Direct YjsProvider import test:', yjsProviderImportResult);
 
-    // Determine root cause
-    if (!yjsImportResult.success) {
-      console.log('🔍 ROOT CAUSE: Base Yjs library import fails in browser');
+    // Analyze zero external dependencies behavior
+    if (
+      !yjsImportResult.success &&
+      !websocketImportResult.success &&
+      yjsProviderImportResult.success
+    ) {
       console.log(
-        '🔧 SOLUTION: Need to configure module resolution for browser environment',
+        '✅ EXPECTED BEHAVIOR: Zero external dependencies architecture working correctly',
       );
-    } else if (!websocketImportResult.success) {
-      console.log('🔍 ROOT CAUSE: y-websocket import fails in browser');
-      console.log('🔧 SOLUTION: Need to configure WebSocket provider bundling');
+      console.log(
+        '🔧 Direct imports fail (expected), YjsProvider works via compatibility layer',
+      );
+    } else if (yjsImportResult.success || websocketImportResult.success) {
+      console.log(
+        '❌ UNEXPECTED: Direct imports should fail with zero dependencies approach',
+      );
+      console.log('🔧 SOLUTION: Check module resolution configuration');
     } else if (!yjsProviderImportResult.success) {
       console.log('🔍 ROOT CAUSE: YjsProvider implementation has issues');
       console.log('🔧 SOLUTION: Debug YjsProvider implementation');
     } else {
-      console.log('✅ ALL IMPORTS WORKING: Ready to re-enable YjsProvider');
+      console.log('✅ Zero external dependencies working correctly');
     }
 
-    // For now, expect this test to reveal the issue
-    // We'll update this once we fix the imports
-    expect.soft(yjsImportResult.success).toBe(true);
+    // Expect zero external dependencies behavior: direct imports fail, YjsProvider works
+    expect.soft(yjsImportResult.success).toBe(false); // Direct import should fail
+    expect.soft(websocketImportResult.success).toBe(false); // Direct import should fail
+    expect.soft(yjsProviderImportResult.success).toBe(true); // YjsProvider should work
   });
 });

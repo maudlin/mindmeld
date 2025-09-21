@@ -6,6 +6,7 @@ import { DataProviderService } from '../services/DataProviderService.js';
 import { createDeleteButton } from '../features/note/deleteButton.js';
 import { displayAsViewMode } from '../features/note/editViewMode.js';
 import { getCoordinateTransform } from '../core/coordinates/coordinateService.js';
+import { eventBus } from '../core/eventBus.js';
 
 let nextNoteId = 1;
 let handDrawn = false;
@@ -132,6 +133,9 @@ export function createNote(x, y, canvas, addEventListeners = null) {
   if (addEventListeners) {
     addEventListeners(note, canvas);
   }
+
+  // Emit note.created event for color application and other event listeners
+  eventBus.emit('note.created', { id: noteId, element: note });
 
   return note;
 }

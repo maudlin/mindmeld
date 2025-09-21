@@ -10,14 +10,14 @@ test.describe('YjsProvider Integration with Feature Flags', () => {
   }) => {
     const canvasPage = new CanvasPage(page);
 
-    // Navigate to the app
-    await page.goto('http://localhost:8080');
+    // Use the robust load method that includes proper initialization waiting
+    await canvasPage.load();
 
-    // Wait for app to load
-    await page.waitForLoadState('domcontentloaded');
+    // Wait for YjsProvider initialization to complete
+    await canvasPage.waitForAppReady();
 
-    // Check that the app loaded successfully (canvas should be visible)
-    await expect(canvasPage.canvas).toBeVisible();
+    // Additional wait for YjsProvider async initialization in test environment
+    await page.waitForTimeout(500);
 
     // Create a note to test basic functionality using proper helper with center position
     await canvasPage.createNote(640, 400);
@@ -42,11 +42,14 @@ test.describe('YjsProvider Integration with Feature Flags', () => {
       }
     });
 
-    await page.goto('http://localhost:8080');
-    await page.waitForLoadState('domcontentloaded');
+    // Use the robust load method that includes proper initialization waiting
+    await canvasPage.load();
 
-    // Wait a bit for any provider initialization
-    await page.waitForTimeout(1000);
+    // Wait for YjsProvider initialization to complete
+    await canvasPage.waitForAppReady();
+
+    // Additional wait for YjsProvider async initialization in test environment
+    await page.waitForTimeout(500);
 
     // Test basic functionality using proper helper with center position
     await canvasPage.createNote(640, 400);

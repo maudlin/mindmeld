@@ -18,32 +18,47 @@
             console.log(message);
         }
 
-        // Test 1: Direct Yjs import
+        // Test 1: YjsCompat layer import (our zero external dependencies approach)
+        try {
+            const Y = await import('./js/core/yjs-compatibility/yjs.js');
+            log('✅ YjsCompat layer import successful: ' + Object.keys(Y).slice(0, 5).join(', '));
+        } catch (error) {
+            log('❌ YjsCompat layer import failed: ' + error.message, true);
+        }
+
+        // Test 2: WebSocket compatibility layer import
+        try {
+            const ws = await import('./js/core/yjs-compatibility/y-websocket.js');
+            log('✅ WebSocket compatibility layer import successful: ' + Object.keys(ws).join(', '));
+        } catch (error) {
+            log('❌ WebSocket compatibility layer import failed: ' + error.message, true);
+        }
+
+        // Test 3: Direct imports should fail (expected with zero external dependencies)
         try {
             const Y = await import('yjs');
-            log('✅ Direct Yjs import successful: ' + Object.keys(Y).slice(0, 5).join(', '));
+            log('❌ Unexpected: Direct Yjs import should fail with zero dependencies approach', true);
         } catch (error) {
-            log('❌ Direct Yjs import failed: ' + error.message, true);
+            log('✅ Expected: Direct Yjs import fails (zero external dependencies working): ' + error.message);
         }
 
-        // Test 2: y-websocket import
         try {
             const ws = await import('y-websocket');
-            log('✅ y-websocket import successful: ' + Object.keys(ws).join(', '));
+            log('❌ Unexpected: Direct y-websocket import should fail with zero dependencies approach', true);
         } catch (error) {
-            log('❌ y-websocket import failed: ' + error.message, true);
+            log('✅ Expected: Direct y-websocket import fails (zero external dependencies working): ' + error.message);
         }
 
-        // Test 3: YjsProvider import
+        // Test 4: YjsProvider import
         try {
             const module = await import('./js/data/providers/YjsProvider.js');
             log('✅ YjsProvider import successful: ' + Object.keys(module).join(', '));
 
-            // Test 4: YjsProvider instantiation
+            // Test 5: YjsProvider instantiation
             const provider = new module.YjsProvider();
             log('✅ YjsProvider instantiation successful');
 
-            // Test 5: YjsProvider offline initialization
+            // Test 6: YjsProvider offline initialization
             const cleanup = provider.init(null, {
                 onReady: () => log('✅ YjsProvider offline init successful')
             });
