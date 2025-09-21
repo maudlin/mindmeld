@@ -72,44 +72,7 @@ describe('WebSocketYjsProvider TDD', () => {
       }),
     );
 
-    jest.doMock(
-      '../../../../src/js/data/providers/WebSocketYjsProvider.js',
-      () => ({
-        WebSocketYjsProvider: class MockWebSocketYjsProvider {
-          constructor() {
-            this.doc = null;
-            this.wsProvider = null;
-            this.mapId = null;
-            this.isReady = false;
-            this.subscribers = [];
-          }
-
-          async setServerUrl(url) {
-            throw new Error('setServerUrl not implemented');
-          }
-
-          async loadMap(mapId) {
-            throw new Error('loadMap not implemented');
-          }
-
-          waitForServerSync() {
-            throw new Error('waitForServerSync not implemented');
-          }
-
-          getSnapshot() {
-            throw new Error('getSnapshot not implemented');
-          }
-
-          subscribe(callback) {
-            throw new Error('subscribe not implemented');
-          }
-
-          destroy() {
-            throw new Error('destroy not implemented');
-          }
-        },
-      }),
-    );
+    // Import real implementation (GREEN phase)
 
     // Import after mocking
     const module = await import(

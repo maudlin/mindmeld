@@ -15,33 +15,7 @@ describe('ServerConnectionService TDD', () => {
     mockFetch = jest.fn();
     global.fetch = mockFetch;
 
-    // Mock the import (service doesn't exist yet - TDD RED phase)
-    jest.doMock('../../../src/js/services/ServerConnectionService.js', () => ({
-      ServerConnectionService: class MockServerConnectionService {
-        constructor() {
-          this.serverUrl = null;
-          this.wsProvider = null;
-          this.connected = false;
-        }
-
-        async testServerConnection(url) {
-          // Mock implementation for RED phase
-          throw new Error('testServerConnection not implemented');
-        }
-
-        setServerUrl(url) {
-          throw new Error('setServerUrl not implemented');
-        }
-
-        getConnectionStatus() {
-          throw new Error('getConnectionStatus not implemented');
-        }
-
-        disconnect() {
-          throw new Error('disconnect not implemented');
-        }
-      },
-    }));
+    // Import real implementation (GREEN phase - implementing to pass tests)
 
     // Import after mocking
     const module = await import(
@@ -87,17 +61,31 @@ describe('ServerConnectionService TDD', () => {
       // RED: URL validation
       const service = new ServerConnectionService();
 
-      await expect(service.testServerConnection('invalid-url')).rejects.toThrow(
-        'Invalid server URL',
+      const invalidResult = await service.testServerConnection('invalid-url');
+      expect(invalidResult.valid).toBe(false);
+      expect(invalidResult.error).toBe('Invalid server URL');
+
+      // Mock successful response for localhost
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            name: 'MindMeld Server',
+            version: '1.0.0',
+            websocket: true,
+          }),
+      });
+
+      const localhostResult = await service.testServerConnection(
+        'http://localhost:3000',
       );
+      expect(localhostResult.valid).toBe(true); // localhost HTTP should be allowed
 
-      await expect(
-        service.testServerConnection('http://localhost:3000'), // HTTP not allowed except localhost
-      ).resolves.toMatchObject({ valid: true }); // localhost HTTP should be allowed
-
-      await expect(
-        service.testServerConnection('http://remote-server.com'), // HTTP not allowed for remote
-      ).rejects.toThrow('HTTPS required for remote servers');
+      const remoteHttpResult = await service.testServerConnection(
+        'http://remote-server.com',
+      );
+      expect(remoteHttpResult.valid).toBe(false);
+      expect(remoteHttpResult.error).toBe('HTTPS required for remote servers');
     });
 
     test('should handle server connection failures', async () => {

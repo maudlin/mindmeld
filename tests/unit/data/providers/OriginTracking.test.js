@@ -28,34 +28,7 @@ describe('Origin Marking System TDD', () => {
       notifySubscribers: jest.fn(),
     };
 
-    // Mock the origin tracking system (doesn't exist yet - TDD RED phase)
-    jest.doMock('../../../../src/js/data/providers/OriginTracker.js', () => ({
-      OriginTracker: class MockOriginTracker {
-        constructor(provider) {
-          this.provider = provider;
-          this.updateQueue = [];
-        }
-
-        markOrigin(transaction, origin) {
-          throw new Error('markOrigin not implemented');
-        }
-
-        shouldTriggerUILogic(transaction) {
-          throw new Error('shouldTriggerUILogic not implemented');
-        }
-
-        processUpdate(transaction) {
-          throw new Error('processUpdate not implemented');
-        }
-
-        static ORIGINS = {
-          USER: 'user',
-          SYSTEM: 'system',
-          IMPORT: 'import',
-          COLLABORATION: 'collaboration',
-        };
-      },
-    }));
+    // Import real implementation (GREEN phase)
 
     // Import after mocking
     const module = await import(
@@ -327,6 +300,7 @@ describe('Origin Marking System TDD', () => {
         user: 1,
         system: 1,
         collaboration: 1,
+        import: 0,
         total: 3,
       });
     });
