@@ -2,8 +2,8 @@
 // Real-time collaborative data provider using Yjs and WebSocket
 import { DataProvider, ORIGIN, makeConnectionId } from './DataProvider.js';
 import { truncateNoteContent } from '../../utils/utils.js';
-import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
+import * as Y from '../../core/yjs-compatibility/yjs.js';
+import { WebsocketProvider } from '../../core/yjs-compatibility/y-websocket.js';
 
 export class YjsProvider extends DataProvider {
   constructor() {

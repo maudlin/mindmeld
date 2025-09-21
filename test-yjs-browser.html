@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>YjsProvider Browser Import Test</title>
+</head>
+<body>
+    <h1>YjsProvider Browser Import Test</h1>
+    <div id="results"></div>
+
+    <script type="module">
+        const results = document.getElementById('results');
+
+        function log(message, isError = false) {
+            const div = document.createElement('div');
+            div.textContent = message;
+            div.style.color = isError ? 'red' : 'green';
+            results.appendChild(div);
+            console.log(message);
+        }
+
+        // Test 1: Direct Yjs import
+        try {
+            const Y = await import('yjs');
+            log('✅ Direct Yjs import successful: ' + Object.keys(Y).slice(0, 5).join(', '));
+        } catch (error) {
+            log('❌ Direct Yjs import failed: ' + error.message, true);
+        }
+
+        // Test 2: y-websocket import
+        try {
+            const ws = await import('y-websocket');
+            log('✅ y-websocket import successful: ' + Object.keys(ws).join(', '));
+        } catch (error) {
+            log('❌ y-websocket import failed: ' + error.message, true);
+        }
+
+        // Test 3: YjsProvider import
+        try {
+            const module = await import('./js/data/providers/YjsProvider.js');
+            log('✅ YjsProvider import successful: ' + Object.keys(module).join(', '));
+
+            // Test 4: YjsProvider instantiation
+            const provider = new module.YjsProvider();
+            log('✅ YjsProvider instantiation successful');
+
+            // Test 5: YjsProvider offline initialization
+            const cleanup = provider.init(null, {
+                onReady: () => log('✅ YjsProvider offline init successful')
+            });
+
+            provider.destroy();
+            log('✅ YjsProvider lifecycle test successful');
+
+        } catch (error) {
+            log('❌ YjsProvider test failed: ' + error.message, true);
+            log('Stack: ' + error.stack, true);
+        }
+    </script>
+</body>
+</html>

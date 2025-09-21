@@ -6,9 +6,21 @@ import { displayAsViewMode } from '../features/note/editViewMode.js';
 
 export class NoteService {
   static createNoteFromData(noteData, canvas) {
+    // Handle both old format (left/top) and new format (p array)
+    const left = noteData.left
+      ? parseFloat(noteData.left)
+      : noteData.p && noteData.p[0] !== undefined
+        ? parseFloat(noteData.p[0])
+        : 100;
+    const top = noteData.top
+      ? parseFloat(noteData.top)
+      : noteData.p && noteData.p[1] !== undefined
+        ? parseFloat(noteData.p[1])
+        : 100;
+
     const note = createNote(
-      parseFloat(noteData.left || noteData.p[0]),
-      parseFloat(noteData.top || noteData.p[1]),
+      left,
+      top,
       canvas,
       null, // MM-171: Legacy event system disabled - adapter system handles events
     );

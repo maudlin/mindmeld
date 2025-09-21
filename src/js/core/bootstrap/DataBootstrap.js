@@ -10,11 +10,12 @@ import { eventBus } from '../eventBus.js';
 import {
   initializeDataStore,
   updateNotesAndConnections,
+  addNote,
+  updateNote,
 } from '../../data/dataStore.js';
 import { appState } from '../../data/observableState.js';
 import { ZoomStateService } from '../../services/zoomStateService.js';
 import { DataProviderService } from '../../services/DataProviderService.js';
-import { DataProviderCompatibility } from '../../data/DataProviderCompatibility.js';
 import {
   isDebugEnabled,
   isDebounceEnabled,
@@ -66,7 +67,7 @@ export class DataBootstrap extends BaseBootstrap {
 
   async initializeDataStore() {
     try {
-      initializeDataStore();
+      await initializeDataStore();
       log('DataBootstrap: Data store initialized successfully');
     } catch (error) {
       throw new Error(`Data store initialization failed: ${error.message}`);
@@ -79,7 +80,7 @@ export class DataBootstrap extends BaseBootstrap {
       const dataProvider = DataProviderService.getInstance();
 
       // Initialize provider - for now use null mapId (local mode)
-      const cleanup = dataProvider.init(null, {
+      const cleanup = await dataProvider.init(null, {
         onReady: () => {
           if (isDebugEnabled()) {
             console.log(
@@ -98,19 +99,9 @@ export class DataBootstrap extends BaseBootstrap {
         `DataBootstrap: DataProvider (${dataProvider.getProviderType()}) initialized with observers`,
       );
 
-      // Migrate to DataProvider architecture if using YjsProvider
+      // YjsProvider is now the primary architecture - no migration needed
       if (getProviderType() === 'yjs') {
-        try {
-          DataProviderCompatibility.migrateToProvider();
-          log(
-            'DataBootstrap: Migrated to DataProvider architecture (YjsProvider)',
-          );
-        } catch (error) {
-          console.error(
-            'DataBootstrap: DataProvider migration failed, using legacy handlers:',
-            error,
-          );
-        }
+        log('DataBootstrap: YjsProvider architecture active');
       }
 
       return cleanup;
@@ -209,18 +200,68 @@ export class DataBootstrap extends BaseBootstrap {
    */
   _handleNoteChange(change) {
     if (change.payload.deleted) {
+      // Direct appState update - no events
+      if (isDebugEnabled()) {
+        console.log(
+          'DataBootstrap: Handling note deletion in appState for:',
+          change.payload.id,
+        );
+      }
+      // Note: deleteNoteById would be needed here, but the DOM note was already removed by user action
       eventBus.emit('note.deleted', {
         id: change.payload.id,
         origin: change.origin,
       });
     } else {
-      eventBus.emit('note.updated', {
-        id: change.payload.id,
-        origin: change.origin,
-      });
+      // For note updates, fetch complete note data and sync directly to appState
+      try {
+        const dataProvider = DataProviderService.getInstance();
+        const snapshot = dataProvider.getSnapshot();
+        const note = snapshot.data.n.find((n) => n.i === change.payload.id);
+
+        if (note) {
+          if (isDebugEnabled()) {
+            console.log('DataBootstrap: Syncing note to appState:', note.i);
+          }
+
+          // Direct appState update - no events needed
+          const noteData = {
+            id: note.i,
+            content: note.c || '',
+            left: `${note.p[0]}px`,
+            top: `${note.p[1]}px`,
+            color: note.cl,
+          };
+
+          // Check if note exists in appState
+          const currentNotes = appState.getState().notes;
+          const existingNoteIndex = currentNotes.findIndex(
+            (n) => n.id === note.i,
+          );
+
+          if (existingNoteIndex >= 0) {
+            // Update existing note
+            updateNote(note.i, noteData);
+          } else {
+            // Add new note
+            addNote(noteData);
+          }
+        } else {
+          if (isDebugEnabled()) {
+            console.log(
+              `DataBootstrap: Note ${change.payload.id} not found in snapshot, skipping update`,
+            );
+          }
+        }
+      } catch (error) {
+        console.error(
+          'DataBootstrap: Failed to sync note data to appState:',
+          error,
+        );
+      }
     }
 
-    // Emit general notes changed event
+    // Only emit general change event for UI refresh
     eventBus.emit('notes.changed', {
       origin: change.origin,
       type: 'note',

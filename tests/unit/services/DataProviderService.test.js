@@ -8,6 +8,7 @@ describe('DataProviderService TDD Tests', () => {
   let LocalJSONProvider;
   let mockProvider;
   let mockServiceBootstrap;
+  let mockYjsProvider;
 
   beforeEach(async () => {
     // Reset modules to avoid cached imports
@@ -38,10 +39,42 @@ describe('DataProviderService TDD Tests', () => {
 
     LocalJSONProvider = jest.fn().mockImplementation(() => mockProvider);
 
+    // Mock YjsProvider for migration tests
+    mockYjsProvider = {
+      init: jest.fn(() => jest.fn()),
+      destroy: jest.fn(),
+      subscribe: jest.fn(() => jest.fn()),
+      getSnapshot: jest.fn(() => ({ data: { n: [], c: [] } })),
+      importJSON: jest.fn(),
+      exportJSON: jest.fn(() => '{"data":{"n":[],"c":[]}}'),
+      upsertNote: jest.fn(),
+      deleteNote: jest.fn(),
+      upsertConnection: jest.fn(),
+      deleteConnection: jest.fn(),
+      setMeta: jest.fn(),
+      getMeta: jest.fn(() => ({
+        zoomLevel: 5,
+        canvasType: 'Standard Canvas',
+        mapName: '',
+      })),
+      pauseAutosave: jest.fn(),
+      resumeAutosave: jest.fn(),
+      hydrationInProgress: false,
+    };
+
     // Mock ServiceBootstrap
     mockServiceBootstrap = {
       initializeDataProviderService: jest.fn(),
     };
+
+    // Mock feature flags
+    jest.doMock('../../../src/js/core/featureFlags.js', () => ({
+      isDebugEnabled: jest.fn(() => false),
+      getProviderType: jest.fn(() => 'yjs'),
+      initializeYjsProvider: jest.fn(() =>
+        Promise.resolve(jest.fn().mockImplementation(() => mockYjsProvider)),
+      ),
+    }));
 
     // Mock the imports
     jest.doMock('../../../src/js/data/providers/LocalJSONProvider.js', () => ({
@@ -100,21 +133,22 @@ describe('DataProviderService TDD Tests', () => {
       expect(service.isInitialized()).toBe(true);
     });
 
-    test('should call provider.init with mapId and options', () => {
+    test('should call provider.init with mapId and options after YjsProvider migration', async () => {
       const service = DataProviderService.getInstance();
       const options = { onReady: jest.fn() };
 
-      service.init('test-map', options);
+      await service.init('test-map', options);
 
-      expect(mockProvider.init).toHaveBeenCalledWith('test-map', options);
+      // After migration, the YjsProvider should be used
+      expect(mockYjsProvider.init).toHaveBeenCalledWith('test-map', options);
     });
 
-    test('should store cleanup function from provider.init', () => {
+    test('should store cleanup function from provider.init after migration', async () => {
       const cleanupFn = jest.fn();
-      mockProvider.init.mockReturnValue(cleanupFn);
+      mockYjsProvider.init.mockReturnValue(cleanupFn);
 
       const service = DataProviderService.getInstance();
-      service.init('test-map');
+      await service.init('test-map');
 
       // Cleanup should be called when service is destroyed
       service.destroy();
@@ -219,7 +253,9 @@ describe('DataProviderService TDD Tests', () => {
 
       const unsubscribe = service.subscribe(mockCallback);
 
-      expect(mockProvider.subscribe).toHaveBeenCalledWith(mockCallback);
+      // For YjsProvider, the callback is wrapped, so we check it was called
+      expect(mockProvider.subscribe).toHaveBeenCalledTimes(1);
+      expect(typeof mockProvider.subscribe.mock.calls[0][0]).toBe('function');
       expect(unsubscribe).toBe(mockUnsubscribe);
     });
 
@@ -231,8 +267,9 @@ describe('DataProviderService TDD Tests', () => {
       service.subscribe(callback2);
 
       expect(mockProvider.subscribe).toHaveBeenCalledTimes(2);
-      expect(mockProvider.subscribe).toHaveBeenCalledWith(callback1);
-      expect(mockProvider.subscribe).toHaveBeenCalledWith(callback2);
+      // Callbacks are wrapped for YjsProvider, so we just check they're functions
+      expect(typeof mockProvider.subscribe.mock.calls[0][0]).toBe('function');
+      expect(typeof mockProvider.subscribe.mock.calls[1][0]).toBe('function');
     });
   });
 
@@ -311,19 +348,20 @@ describe('DataProviderService TDD Tests', () => {
       service = DataProviderService.getInstance();
     });
 
-    test('should support destroy operation', () => {
+    test('should support destroy operation', async () => {
       const cleanupFn = jest.fn();
-      mockProvider.init.mockReturnValue(cleanupFn);
+      mockYjsProvider.init.mockReturnValue(cleanupFn);
 
-      service.init('test-map');
+      await service.init('test-map');
       service.destroy();
 
       expect(cleanupFn).toHaveBeenCalled();
-      expect(mockProvider.destroy).toHaveBeenCalled();
+      expect(mockYjsProvider.destroy).toHaveBeenCalled();
     });
 
     test('should handle destroy when no cleanup function exists', () => {
       expect(() => service.destroy()).not.toThrow();
+      // Initially it's LocalJSONProvider, but after init it becomes YjsProvider
       expect(mockProvider.destroy).toHaveBeenCalled();
     });
 

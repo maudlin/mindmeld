@@ -2,7 +2,7 @@
 // Central service for DataProvider operations - Singleton pattern
 
 import { LocalJSONProvider } from '../data/providers/LocalJSONProvider.js';
-import { isDebugEnabled } from '../core/featureFlags.js';
+import { isDebugEnabled, getProviderType } from '../core/featureFlags.js';
 
 /**
  * DataProviderService - Central integration point for DataProvider operations
@@ -18,9 +18,22 @@ export class DataProviderService {
     }
 
     try {
-      // For now, force local provider to avoid Yjs import issues
-      this._providerType = 'local';
-      this._provider = this._createProvider(this._providerType);
+      // Use feature flags to determine provider type
+      this._providerType = getProviderType();
+
+      // For YjsProvider, we need async initialization, so start with local provider
+      // and migrate to YjsProvider during init() if needed
+      if (this._providerType === 'yjs') {
+        console.log(
+          'DataProviderService: YjsProvider will be initialized during init()',
+        );
+        this._provider = new LocalJSONProvider(); // Temporary fallback
+        this._needsYjsMigration = true;
+      } else {
+        this._provider = new LocalJSONProvider();
+        this._needsYjsMigration = false;
+      }
+
       this._cleanup = null;
       this._applyingSnapshot = false; // Guard for preventing feedback loops
 
@@ -44,13 +57,19 @@ export class DataProviderService {
    * @returns {LocalJSONProvider}
    * @private
    */
-  _createProvider(type) {
+  async _createProvider(type) {
     switch (type) {
-      case 'yjs':
-        // YjsProvider temporarily disabled to avoid import issues
-        throw new Error(
-          'YjsProvider temporarily disabled. Use LocalJSONProvider instead.',
+      case 'yjs': {
+        // YjsProvider re-enabled with compatibility layer (zero external dependencies)
+        const { initializeYjsProvider } = await import(
+          '../core/featureFlags.js'
         );
+        const YjsProviderClass = await initializeYjsProvider();
+        if (!YjsProviderClass) {
+          throw new Error('YjsProvider not available');
+        }
+        return new YjsProviderClass();
+      }
       case 'local':
       default:
         return new LocalJSONProvider();
@@ -72,12 +91,49 @@ export class DataProviderService {
    * Initialize the provider
    * @param {string|null} mapId
    * @param {import('../data/providers/DataProvider.js').ProviderInitOptions} [options]
-   * @returns {() => void} cleanup function
+   * @returns {Promise<() => void>} cleanup function
    */
-  init(mapId = null, options = {}) {
+  async init(mapId = null, options = {}) {
+    // Migrate to YjsProvider if needed
+    if (this._needsYjsMigration) {
+      await this._migrateToYjsProvider();
+    }
+
     this._ensureInitialized();
     this._cleanup = this._provider.init(mapId, options);
     return this._cleanup;
+  }
+
+  /**
+   * Migrate from LocalJSONProvider to YjsProvider
+   * @private
+   */
+  async _migrateToYjsProvider() {
+    if (isDebugEnabled()) {
+      console.log('DataProviderService: Migrating to YjsProvider');
+    }
+
+    // Export current state from LocalJSONProvider
+    const currentState = this._provider.exportJSON();
+
+    // Create YjsProvider
+    const yjsProvider = await this._createProvider('yjs');
+
+    // Initialize YjsProvider in offline mode (no server connection for migration)
+    yjsProvider.init(null, {});
+
+    // Import state into YjsProvider
+    if (currentState && currentState !== '{"data":{"n":[],"c":[]}}') {
+      yjsProvider.importJSON(currentState);
+    }
+
+    // Replace provider
+    this._provider = yjsProvider;
+    this._needsYjsMigration = false;
+
+    if (isDebugEnabled()) {
+      console.log('DataProviderService: Migration to YjsProvider complete');
+    }
   }
 
   /**

@@ -300,28 +300,41 @@ export async function importFromJSON(jsonData, canvas) {
 }
 
 // Initialize dataStore event listeners
-export function initializeDataStore() {
-  // Always use legacy handlers for now
+export async function initializeDataStore() {
+  // Use provider-aware handler initialization
   // DataProvider architecture is handled by DataBootstrap
-  initializeLegacyHandlers();
-  log('DataStore: Initialized with legacy handlers');
+  await initializeLegacyHandlers();
+  log('DataStore: Initialized with handlers');
 }
 
 /**
  * Initialize legacy event handlers for backward compatibility
+ * When YjsProvider is enabled, these handlers are skipped in favor of DataProvider observers
  * @private
  */
-function initializeLegacyHandlers() {
-  eventBus.on('note.created', addNote);
-  eventBus.on('note.updated', ({ id, content, left, top }) => {
-    const updateData = {};
-    if (content !== undefined) updateData.content = content;
-    if (left !== undefined) updateData.left = left;
-    if (top !== undefined) updateData.top = top;
-    updateNote(id, updateData);
-  });
+async function initializeLegacyHandlers() {
+  // Import getProviderType to check if we should use legacy handlers
+  const { getProviderType } = await import('../core/featureFlags.js');
 
-  // Listen for color change events to trigger state saves
+  if (getProviderType() === 'local') {
+    // Only use legacy handlers when LocalJSONProvider is active
+    eventBus.on('note.created', addNote);
+    eventBus.on('note.updated', ({ id, content, left, top }) => {
+      const updateData = {};
+      if (content !== undefined) updateData.content = content;
+      if (left !== undefined) updateData.left = left;
+      if (top !== undefined) updateData.top = top;
+      updateNote(id, updateData);
+    });
+
+    log('DataStore: Legacy event listeners initialized');
+  } else {
+    log(
+      'DataStore: Skipping legacy handlers - DataProvider architecture in use',
+    );
+  }
+
+  // Listen for color change events to trigger state saves (always needed)
   eventBus.on('note.color.changed', () => {
     // observableState automatically saves when appState.setState is called
     // This listener ensures any additional color-related state is preserved

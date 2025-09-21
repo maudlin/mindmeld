@@ -22,7 +22,7 @@ export const FEATURE_FLAGS = {
    * - Local storage only, no real-time features
    * - Production-stable behavior
    */
-  USE_YJS_PROVIDER: false,
+  USE_YJS_PROVIDER: true,
 
   /**
    * Emergency disable flag for YjsProvider
@@ -44,7 +44,7 @@ export const FEATURE_FLAGS = {
    * - Origin tracking debug information
    * - Useful for debugging feedback loops
    */
-  DEBUG_PROVIDER_OPERATIONS: false,
+  DEBUG_PROVIDER_OPERATIONS: true,
 
   /**
    * Enable observer debouncing to prevent event storms

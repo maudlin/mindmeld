@@ -1,8 +1,8 @@
-// noteFactory.js - Pure factory for creating note DOM elements
+// noteFactory.js - Pure factory for creating note DOM elements with direct YjsProvider calls
 import { toBase62 } from '../utils/utils.js';
 import config from '../core/config.js';
 import { NOTE_CONTENT_LIMIT } from '../core/constants.js';
-import { eventBus } from '../core/eventBus.js';
+import { DataProviderService } from '../services/DataProviderService.js';
 import { createDeleteButton } from '../features/note/deleteButton.js';
 import { displayAsViewMode } from '../features/note/editViewMode.js';
 import { getCoordinateTransform } from '../core/coordinates/coordinateService.js';
@@ -57,13 +57,32 @@ export function createNote(x, y, canvas, addEventListeners = null) {
   note.id = noteId;
   note.dataset.id = noteId;
 
-  // Emit event instead of direct dataStore call
-  eventBus.emit('note.created', {
-    id: noteId,
-    content: '',
-    left: note.style.left,
-    top: note.style.top,
-  });
+  console.log(
+    'noteFactory: DOM note created with ID:',
+    noteId,
+    'at position:',
+    x,
+    y,
+  );
+
+  // Direct YjsProvider call - clean architecture without event indirection
+  try {
+    const dataProvider = DataProviderService.getInstance();
+    console.log('noteFactory: Calling DataProvider.upsertNote for:', noteId);
+    dataProvider.upsertNote(
+      {
+        id: noteId,
+        content: '',
+        pos: [x, y],
+        color: null, // Default color handled by YjsProvider
+      },
+      { origin: 'user' },
+    );
+    console.log('noteFactory: DataProvider.upsertNote completed for:', noteId);
+  } catch (error) {
+    console.error('noteFactory: Failed to create note in DataProvider:', error);
+    // Continue with DOM creation even if persistence fails
+  }
 
   // Prevent accidental note deletion with backspace/delete on empty content
   noteContent.addEventListener('keydown', function (event) {
