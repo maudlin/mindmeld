@@ -3,6 +3,8 @@
 import { eventBus } from '../../core/eventBus.js';
 import { ServerClient } from '../../services/serverClient.js';
 import { log } from '../../utils/utils.js';
+import { ServerConnectionService } from '../../services/ServerConnectionService.js';
+import { DataProviderService } from '../../services/DataProviderService.js';
 
 /**
  * Map Selection Behavior - Handles the Map Selection Modal UI
@@ -425,7 +427,7 @@ export class MapSelectionBehavior {
   }
 
   /**
-   * Handle map selection
+   * Handle map selection with collaboration support
    */
   async handleSelectMap(mapId, mapName) {
     if (this.isLoading) return;
@@ -433,28 +435,98 @@ export class MapSelectionBehavior {
     try {
       this.showLoading();
 
-      const result = await ServerClient.loadMap(mapId, { mapName });
+      // Check if server supports collaboration
+      const serverConnectionService = ServerConnectionService.getInstance();
+      const connectionStatus = serverConnectionService.getConnectionStatus();
 
-      // ServerClient.loadMap() returns the map object or false if cancelled
-      if (result && result !== false) {
-        this.hideModal();
+      let collaborationEnabled = false;
 
-        // Emit success event
-        this.eventBus.emit('map.loaded', {
-          mapId,
-          mapName,
-        });
+      // If server is configured and we have a WebSocket-capable server, try to enable collaboration
+      if (
+        connectionStatus.phase === 'server-configured' ||
+        connectionStatus.phase === 'websocket-connected'
+      ) {
+        const serverUrl = serverConnectionService.getServerUrl();
+        const dataProviderService = DataProviderService.getInstance();
 
-        log(`MapSelectionBehavior: Loaded map: ${mapName}`);
-      } else if (result === false) {
-        // User cancelled the operation
-        log(`MapSelectionBehavior: Map loading cancelled by user: ${mapName}`);
-      } else {
-        this.showError('Failed to load map');
+        log(
+          `MapSelectionBehavior: Attempting collaborative map loading for: ${mapName}`,
+        );
+
+        try {
+          collaborationEnabled = await dataProviderService.enableCollaboration(
+            serverUrl,
+            mapId,
+          );
+
+          if (collaborationEnabled) {
+            log(
+              `MapSelectionBehavior: Collaboration enabled for map: ${mapName}`,
+            );
+
+            // Initialize the collaborative provider with the map
+            await dataProviderService.init(mapId, {
+              onReady: () => {
+                log(
+                  `MapSelectionBehavior: Collaborative map ready: ${mapName}`,
+                );
+              },
+            });
+
+            // For collaborative loading, we don't use REST API - the map data comes via WebSocket
+            this.hideModal();
+
+            // Emit success event
+            this.eventBus.emit('map.loaded', {
+              mapId,
+              mapName,
+              collaborationEnabled: true,
+            });
+
+            log(`MapSelectionBehavior: Collaborative map loaded: ${mapName}`);
+            return;
+          }
+        } catch (error) {
+          log(
+            `MapSelectionBehavior: Collaboration failed, falling back to REST: ${error.message}`,
+          );
+          collaborationEnabled = false;
+        }
+      }
+
+      // Fallback to traditional REST-based loading
+      if (!collaborationEnabled) {
+        log(
+          `MapSelectionBehavior: Using traditional REST-based map loading for: ${mapName}`,
+        );
+        const result = await ServerClient.loadMap(mapId, { mapName });
+
+        // ServerClient.loadMap() returns the map object or false if cancelled
+        if (result && result !== false) {
+          this.hideModal();
+
+          // Emit success event
+          this.eventBus.emit('map.loaded', {
+            mapId,
+            mapName,
+            collaborationEnabled: false,
+          });
+
+          log(`MapSelectionBehavior: Loaded map via REST: ${mapName}`);
+        } else if (result === false) {
+          // User cancelled the operation
+          log(
+            `MapSelectionBehavior: Map loading cancelled by user: ${mapName}`,
+          );
+        } else {
+          this.showError('Failed to load map');
+        }
       }
     } catch (error) {
       console.error('MapSelectionBehavior: Error loading map:', error);
       this.showError(error.message || 'Failed to load map');
+    } finally {
+      this.hideLoading();
     }
   }
 

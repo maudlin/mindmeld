@@ -5,6 +5,7 @@ describe('MenuBehavior - Server Connection Integration', () => {
   let mockEventBus;
   let mockCanvas;
   let mockServerConnectionService;
+  let mockNewServerInstance;
 
   beforeEach(async () => {
     // Reset modules
@@ -91,6 +92,50 @@ describe('MenuBehavior - Server Connection Integration', () => {
       },
     }));
 
+    // Create a controllable mock instance for the new collaboration service
+    const newServiceConnectionState = {
+      phase: 'disconnected',
+      serverUrl: null,
+      connected: false,
+      wsProvider: null,
+    };
+
+    mockNewServerInstance = {
+      setEventBus: jest.fn(),
+      getConnectionStatus: jest.fn(() => ({ ...newServiceConnectionState })),
+      testServerConnection: jest.fn(() => Promise.resolve({ valid: true })),
+      setServerUrl: jest.fn((url) => {
+        newServiceConnectionState.serverUrl = url;
+        newServiceConnectionState.phase = url
+          ? 'server-configured'
+          : 'disconnected';
+      }),
+      disconnect: jest.fn(() => {
+        newServiceConnectionState.serverUrl = null;
+        newServiceConnectionState.phase = 'disconnected';
+        newServiceConnectionState.connected = false;
+        newServiceConnectionState.wsProvider = null;
+      }),
+      getServerUrl: jest.fn(() => newServiceConnectionState.serverUrl),
+      isServerConfigured: jest.fn(
+        () => newServiceConnectionState.serverUrl !== null,
+      ),
+      createWebSocketUrl: jest.fn((mapId) => `wss://example.com/yjs/${mapId}`),
+    };
+
+    // Mock the new ServerConnectionService (collaboration infrastructure)
+    const mockNewServerConnectionService = {
+      getInstance: jest.fn(() => mockNewServerInstance),
+    };
+
+    jest.doMock(
+      '../../../../src/js/services/ServerConnectionService.js',
+      () => ({
+        ServerConnectionService: mockNewServerConnectionService,
+      }),
+    );
+
+    // Keep the old mock for any legacy code that might still reference it
     jest.doMock(
       '../../../../src/js/services/serverConnectionService.js',
       () => ({
@@ -138,13 +183,14 @@ describe('MenuBehavior - Server Connection Integration', () => {
       });
 
       it('should handle disconnect-server action', () => {
-        // Setup connected state
-        behavior.serverConfig.url = 'https://test-server.com';
-        mockServerConnectionService.setConnectionStatus('connected');
+        // Setup connected state using new ServerConnectionService
+        mockNewServerInstance.setServerUrl('https://test-server.com');
 
         behavior.handleMenuAction('disconnect-server', 'click');
 
-        expect(behavior.serverConfig.url).toBe(null);
+        // Verify disconnection called on new service
+        expect(mockNewServerInstance.disconnect).toHaveBeenCalled();
+        expect(mockNewServerInstance.getServerUrl()).toBe(null);
         expect(behavior.getServerStatus().connected).toBe(false);
         expect(mockEventBus.emit).toHaveBeenCalledWith('server.disconnected', {
           behavior: behavior,

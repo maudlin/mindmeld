@@ -13,7 +13,7 @@ import { DataProviderService } from '../../services/DataProviderService.js';
 import { clearAllState } from '../../data/storageManager.js';
 import { notificationManager } from '../../services/notificationManager.js';
 import { ServerClient } from '../../services/serverClient.js';
-import { ServerConnectionService } from '../../services/serverConnectionService.js';
+import { ServerConnectionService } from '../../services/ServerConnectionService.js';
 
 export class MenuBehavior {
   constructor(eventBus, canvas = null) {
@@ -25,7 +25,10 @@ export class MenuBehavior {
     // Menu state
     this.isOpen = false;
 
-    // Server connection state (URL only - connection status managed by ServerConnectionService)
+    // Server connection service (new collaboration infrastructure)
+    this.serverConnectionService = ServerConnectionService.getInstance();
+
+    // Legacy server configuration (will be migrated to ServerConnectionService)
     this.serverConfig = {
       url: null,
     };
@@ -50,7 +53,10 @@ export class MenuBehavior {
       return;
     }
 
-    // Load server configuration from localStorage
+    // Initialize ServerConnectionService with event bus
+    this.serverConnectionService.setEventBus(this.eventBus);
+
+    // Load server configuration from localStorage (migration support)
     await this.loadServerConfig();
 
     // Set up event listeners for system integration
@@ -66,6 +72,7 @@ export class MenuBehavior {
     this.isInitialized = true;
     console.log('MenuBehavior: Initialized', {
       serverUrl: this.serverConfig.url,
+      newServiceConfigured: this.serverConnectionService.isServerConfigured(),
       hasConnection: !!this.mapsApi,
     });
   }
@@ -86,32 +93,72 @@ export class MenuBehavior {
       this.updateMenuUI();
     });
 
+    // NEW: Listen for collaboration infrastructure events
+    this.eventBus.on('server.configured', (data) => {
+      console.log(
+        'MenuBehavior: Server configured via collaboration service',
+        data,
+      );
+      this.updateMenuUI();
+    });
+
+    this.eventBus.on('server.disconnected', () => {
+      console.log(
+        'MenuBehavior: Server disconnected via collaboration service',
+      );
+      this.updateMenuUI();
+    });
+
     // Note: Menu actions now handled directly by adapters calling handleMenuAction
   }
 
   /**
-   * Load server configuration from ServerConnectionService
+   * Load server configuration from localStorage and migrate to new service
    */
   async loadServerConfig() {
     try {
-      // Load from ServerConnectionService which handles localStorage persistence
-      const storedUri = ServerConnectionService.loadServerUriFromStorage();
+      // Check if new service already has configuration
+      if (this.serverConnectionService.isServerConfigured()) {
+        const serverUrl = this.serverConnectionService.getServerUrl();
+        this.serverConfig.url = serverUrl;
+        this.initializeApiClient(serverUrl);
+        console.log(
+          'MenuBehavior: Loaded server URI from new service:',
+          serverUrl,
+        );
+        return;
+      }
+
+      // Try to migrate from old localStorage configuration
+      const storedUri = this.loadLegacyServerConfig();
 
       if (storedUri) {
-        // Update ServerConnectionService state with stored URI but mark as disconnected initially
-        ServerConnectionService.setServerUri(storedUri);
-        ServerConnectionService.setConnectionStatus('disconnected');
+        // Migrate to new service
+        console.log(
+          'MenuBehavior: Migrating server URI to new service:',
+          storedUri,
+        );
 
-        // Update our internal state
-        this.serverConfig.url = storedUri;
+        // Test connection first before migrating
+        const testResult =
+          await this.serverConnectionService.testServerConnection(storedUri);
 
-        // Initialize API client but don't mark as connected yet
-        this.initializeApiClient(storedUri);
+        if (testResult.valid) {
+          // Set up in new service
+          this.serverConnectionService.setServerUrl(storedUri);
+          this.serverConfig.url = storedUri;
+          this.initializeApiClient(storedUri);
 
-        console.log('MenuBehavior: Loaded server URI from storage:', storedUri);
-
-        // Test connection and wait for result to ensure UI updates properly
-        await this.testStoredConnection(storedUri);
+          console.log('MenuBehavior: Server migration successful:', {
+            url: storedUri,
+            hasWebSocketSupport: testResult.hasWebSocketSupport,
+          });
+        } else {
+          console.warn(
+            'MenuBehavior: Stored server URI invalid, not migrating:',
+            testResult.error,
+          );
+        }
       }
 
       // Migrate old localStorage data if it exists
@@ -122,76 +169,55 @@ export class MenuBehavior {
   }
 
   /**
-   * Test stored connection and update status
+   * Load server configuration from legacy localStorage
    * @private
    */
-  async testStoredConnection(uri) {
+  loadLegacyServerConfig() {
     try {
-      const testResult = await ServerConnectionService.testConnection(uri);
-      if (testResult.success) {
-        // Connection is valid - update status
-        ServerConnectionService.setConnectionStatus('connected');
-        console.log('MenuBehavior: Stored connection verified');
-      } else {
-        // Connection failed - keep URI but mark as disconnected
-        ServerConnectionService.setConnectionStatus('error');
-        console.log(
-          'MenuBehavior: Stored connection failed:',
-          testResult.error,
-        );
+      // Try old serverConnectionService storage first
+      const legacyStored = localStorage.getItem('mindmeld-server-uri');
+      if (legacyStored) {
+        return legacyStored;
       }
 
-      // Update UI after connection test
-      console.log(
-        'MenuBehavior: About to call updateMenuUI() after connection test',
-      );
-      this.updateMenuUI();
-      console.log('MenuBehavior: Called updateMenuUI() after connection test');
+      // Try even older storage format
+      const oldStored = localStorage.getItem('mindmeld-server-config');
+      if (oldStored) {
+        const config = JSON.parse(oldStored);
+        return config.url;
+      }
+
+      return null;
     } catch (error) {
-      console.warn('MenuBehavior: Failed to test stored connection:', error);
-      ServerConnectionService.setConnectionStatus('error');
-      this.updateMenuUI();
+      console.warn('MenuBehavior: Failed to load legacy server config:', error);
+      return null;
     }
   }
 
   /**
-   * Migrate old localStorage config to ServerConnectionService
+   * Cleanup old localStorage config after migration
    * @private
    */
   migrateOldServerConfig() {
     try {
-      const oldStored = localStorage.getItem('mindmeld-server-config');
-      if (oldStored) {
-        const config = JSON.parse(oldStored);
-        if (config.url && !ServerConnectionService.getServerUri()) {
-          console.log(
-            'MenuBehavior: Migrating old server config to ServerConnectionService',
-          );
-          ServerConnectionService.setServerUri(config.url);
-          this.serverConfig.url = config.url;
-          this.initializeApiClient(config.url);
-        }
-        // Remove old config after migration
-        localStorage.removeItem('mindmeld-server-config');
-      }
+      // Clean up old localStorage keys after successful migration
+      localStorage.removeItem('mindmeld-server-config');
+      localStorage.removeItem('mindmeld-server-uri');
+      console.log('MenuBehavior: Cleaned up old localStorage configuration');
     } catch (error) {
-      console.warn('MenuBehavior: Failed to migrate old server config:', error);
+      console.warn('MenuBehavior: Failed to cleanup old server config:', error);
     }
   }
 
   /**
-   * Save server configuration (now delegated to ServerConnectionService)
+   * Save server configuration (now handled by ServerConnectionService automatically)
    */
   saveServerConfig() {
-    try {
-      // ServerConnectionService now handles all persistence
-      // This method is kept for compatibility but delegates to ServerConnectionService
-      if (this.serverConfig.url) {
-        ServerConnectionService.setServerUri(this.serverConfig.url);
-      }
-    } catch (error) {
-      console.warn('MenuBehavior: Failed to save server config', error);
-    }
+    // The new ServerConnectionService handles persistence automatically
+    // This method is kept for backwards compatibility but is now a no-op
+    console.log(
+      'MenuBehavior: saveServerConfig called (handled by ServerConnectionService)',
+    );
   }
 
   /**
@@ -674,10 +700,14 @@ export class MenuBehavior {
    * Get server connection status for menu state
    */
   getServerConnectionStatus() {
-    const connectionState = ServerConnectionService.getConnectionState() || {};
+    const status = this.serverConnectionService.getConnectionStatus();
     return {
-      isConnected: connectionState.isConnected || false,
-      connectionStatus: connectionState.connectionStatus || 'disconnected',
+      isConnected:
+        status.phase === 'server-configured' ||
+        (status.phase === 'websocket-connected' && status.connected),
+      connectionStatus: status.phase || 'disconnected',
+      serverUrl: status.serverUrl,
+      wsProvider: status.wsProvider,
     };
   }
 
@@ -745,8 +775,7 @@ export class MenuBehavior {
       return;
     }
 
-    // Connection attempt starting (ServerConnectionService will manage the status)
-
+    // Connection attempt starting
     console.log('MenuBehavior: Attempting server connection', { url });
 
     this.eventBus.emit('server.connecting', {
@@ -755,39 +784,55 @@ export class MenuBehavior {
     });
 
     try {
-      // Initialize API client
-      this.initializeApiClient(url);
+      // Use new ServerConnectionService for validation and testing
+      const testResult =
+        await this.serverConnectionService.testServerConnection(url);
 
-      if (!this.mapsApi) {
-        throw new Error('Failed to initialize API client');
+      if (!testResult.valid) {
+        throw new Error(testResult.error || 'Server connection test failed');
       }
 
-      // Test connection with health check
-      await this.mapsApi.health();
+      // Connection test successful - configure the service
+      this.serverConnectionService.setServerUrl(url);
 
-      // Connection successful
+      // Maintain legacy API client for backwards compatibility
+      this.initializeApiClient(url);
       this.serverConfig.url = url;
 
-      // Save to localStorage
+      // Save to localStorage for migration support
       this.saveServerConfig();
 
       // Update menu UI to show connected state
       this.updateMenuUI();
 
-      console.log('MenuBehavior: Server connection successful', { url });
+      console.log('MenuBehavior: Server connection successful', {
+        url,
+        hasWebSocketSupport: testResult.hasWebSocketSupport,
+        serverInfo: testResult.serverInfo,
+      });
+
+      if (testResult.warning) {
+        notificationManager.warning(testResult.warning);
+      } else {
+        notificationManager.success('Connected to server successfully');
+      }
 
       this.eventBus.emit('server.connected', {
         behavior: this,
         url,
         status: 'connected',
+        collaborationReady: testResult.hasWebSocketSupport,
       });
     } catch (error) {
       console.error('MenuBehavior: Server connection failed', error);
-
       this.mapsApi = null;
 
       // Update menu UI to show disconnected state
       this.updateMenuUI();
+
+      notificationManager.error(
+        `Failed to connect to server: ${error.message}`,
+      );
 
       this.eventBus.emit('server.connectionFailed', {
         behavior: this,
@@ -804,31 +849,27 @@ export class MenuBehavior {
     console.log('MenuBehavior: Disconnecting from server', { inputType });
 
     try {
-      // Use ServerConnectionService to properly disconnect
-      const success = ServerConnectionService.setServerUri(null);
+      // Use new ServerConnectionService to properly disconnect
+      this.serverConnectionService.disconnect();
 
-      if (success) {
-        ServerConnectionService.setConnectionStatus('disconnected');
+      // Update local state to match
+      this.serverConfig.url = null;
+      this.mapsApi = null;
 
-        // Update local state to match
-        this.serverConfig.url = null;
-        this.mapsApi = null;
+      // Update menu UI to show disconnected state
+      this.updateMenuUI();
 
-        // Update menu UI to show disconnected state
-        this.updateMenuUI();
+      this.eventBus.emit('server.disconnected', {
+        behavior: this,
+        inputType,
+      });
 
-        this.eventBus.emit('server.disconnected', {
-          behavior: this,
-          inputType,
-        });
-
-        // Show success notification
-        notificationManager.success('Disconnected from server successfully');
-        console.log('MenuBehavior: Successfully disconnected from server');
-      } else {
-        console.error('MenuBehavior: Failed to disconnect from server');
-        notificationManager.error('Failed to disconnect from server');
-      }
+      // Show success notification
+      notificationManager.success('Disconnected from server successfully');
+      console.log('MenuBehavior: Successfully disconnected from server');
+    } catch (error) {
+      console.error('MenuBehavior: Failed to disconnect from server:', error);
+      notificationManager.error('Failed to disconnect from server');
     } finally {
       // Always clear loading state
       this.showMenuItemLoading('disconnect-server', false);
@@ -920,12 +961,15 @@ export class MenuBehavior {
    * Get current server status for UI updates
    */
   getServerStatus() {
-    const connectionState = ServerConnectionService.getConnectionState();
+    const status = this.serverConnectionService.getConnectionStatus();
     return {
-      url: this.serverConfig.url,
-      connected: connectionState?.isConnected || false,
-      connecting: connectionState?.connectionStatus === 'connecting',
+      url: status.serverUrl || this.serverConfig.url,
+      connected:
+        status.phase === 'server-configured' ||
+        (status.phase === 'websocket-connected' && status.connected),
+      connecting: false, // No connecting state in new service (immediate test)
       hasApi: !!this.mapsApi,
+      collaborationReady: status.wsProvider !== null,
     };
   }
 
@@ -983,8 +1027,26 @@ export class MenuBehavior {
     if (isConnected) {
       // Update main menu item to show connected state with map name (MM-228)
       const mapName = this.getCurrentMapName();
-      menuText.textContent = `Connected: ${mapName}`;
-      statusDot.className = 'server-status-dot connected';
+      const connectionStatus =
+        this.serverConnectionService.getConnectionStatus();
+
+      // Show more detailed status based on collaboration service state
+      if (
+        connectionStatus.phase === 'websocket-connected' &&
+        connectionStatus.connected
+      ) {
+        menuText.textContent = `Collaborating: ${mapName}`;
+        statusDot.className = 'server-status-dot connected';
+        statusDot.title = 'Active collaboration - real-time sync enabled';
+      } else if (connectionStatus.phase === 'server-configured') {
+        menuText.textContent = `Connected: ${mapName}`;
+        statusDot.className = 'server-status-dot connecting';
+        statusDot.title = 'Server connected - collaboration ready';
+      } else {
+        menuText.textContent = `Connected: ${mapName}`;
+        statusDot.className = 'server-status-dot connected';
+        statusDot.title = 'Connected to server';
+      }
       statusDot.style.display = 'inline-block';
 
       // Change action to show status instead of connect
@@ -998,8 +1060,19 @@ export class MenuBehavior {
       browseMapsItem.style.display = 'flex';
     } else {
       // Update main menu item to show disconnected state
-      menuText.textContent = 'Connect to Server...';
-      statusDot.style.display = 'none';
+      const connectionStatus =
+        this.serverConnectionService.getConnectionStatus();
+
+      if (connectionStatus.phase === 'disconnected') {
+        menuText.textContent = 'Connect to Server...';
+        statusDot.style.display = 'none';
+      } else {
+        // Show error state if there was a connection issue
+        menuText.textContent = 'Server Connection Issue';
+        statusDot.className = 'server-status-dot error';
+        statusDot.style.display = 'inline-block';
+        statusDot.title = 'Connection error - click to reconnect';
+      }
 
       // Change action back to connect
       connectItem.setAttribute('data-action', 'connect-server');
@@ -1081,7 +1154,6 @@ export class MenuBehavior {
    * Get the configured server URI
    */
   getServerUri() {
-    const connectionState = ServerConnectionService.getConnectionState();
-    return connectionState?.serverUri || null;
+    return this.serverConnectionService.getServerUrl();
   }
 }

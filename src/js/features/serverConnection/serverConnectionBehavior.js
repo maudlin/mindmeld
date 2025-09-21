@@ -9,7 +9,7 @@
  */
 
 import { eventBus } from '../../core/eventBus.js';
-import { ServerConnectionService } from '../../services/serverConnectionService.js';
+import { ServerConnectionService } from '../../services/ServerConnectionService.js';
 import { notificationManager } from '../../services/notificationManager.js';
 
 export class ServerConnectionBehavior {
@@ -31,6 +31,9 @@ export class ServerConnectionBehavior {
     this.uriInput = null;
     this.connectButton = null;
     this.statusElement = null;
+
+    // Get reference to new collaboration service
+    this.serverConnectionService = ServerConnectionService.getInstance();
 
     console.log('ServerConnectionBehavior: Created');
   }
@@ -100,7 +103,7 @@ export class ServerConnectionBehavior {
 
     // Populate current server URI
     const currentUri =
-      data.currentUrl || ServerConnectionService.getServerUri() || '';
+      data.currentUrl || this.serverConnectionService.getServerUrl() || '';
     if (this.uriInput) {
       this.uriInput.value = currentUri;
     }
@@ -129,9 +132,11 @@ export class ServerConnectionBehavior {
    */
   updateModalContent(data = {}) {
     const modalTitle = document.getElementById('server-modal-title');
-    const connectionState = ServerConnectionService.getConnectionState() || {};
+    const connectionStatus = this.serverConnectionService.getConnectionStatus();
     const isConnected =
-      data.isConnected || connectionState.isConnected || false;
+      data.isConnected ||
+      connectionStatus.phase === 'server-configured' ||
+      connectionStatus.phase === 'websocket-connected';
 
     if (!modalTitle) return;
 
@@ -372,8 +377,31 @@ export class ServerConnectionBehavior {
 
     const uri = this.uriInput.value.trim();
 
-    // Validate URI format
-    if (!ServerConnectionService.validateServerUri(uri)) {
+    // Validate URI format with same security requirements as new service
+    try {
+      const parsedUrl = new URL(uri);
+
+      // Check protocol requirements (same logic as ServerConnectionService._validateUrl)
+      if (parsedUrl.protocol === 'http:') {
+        // Only allow HTTP for localhost
+        if (
+          parsedUrl.hostname !== 'localhost' &&
+          parsedUrl.hostname !== '127.0.0.1'
+        ) {
+          this.showStatusMessage(
+            'HTTPS required for remote servers. Please use HTTPS or HTTP localhost (e.g., https://api.example.com or http://localhost:3000)',
+            'error',
+          );
+          return;
+        }
+      } else if (parsedUrl.protocol !== 'https:') {
+        this.showStatusMessage(
+          'Invalid protocol. Use HTTP (localhost only) or HTTPS (e.g., https://api.example.com or http://localhost:3000)',
+          'error',
+        );
+        return;
+      }
+    } catch {
       this.showStatusMessage(
         'Please enter a valid HTTPS URL or HTTP localhost (e.g., https://api.example.com or http://localhost:3000)',
         'error',
@@ -391,16 +419,15 @@ export class ServerConnectionBehavior {
     try {
       // Phase 1: Test Connection
       this.showStatusMessage('Testing connection to server...', 'info');
-      const testResult = await ServerConnectionService.testConnection(uri);
+      const testResult =
+        await this.serverConnectionService.testServerConnection(uri);
 
-      if (!testResult.success) {
+      if (!testResult.valid) {
         // Show detailed error from test
         const errorMessage =
           testResult.error ||
           'Connection test failed. Please check the server URL and try again.';
         this.showStatusMessage(errorMessage, 'error');
-
-        ServerConnectionService.setConnectionStatus('error');
 
         // Keep modal open on test failure
         this.isConnecting = false;
@@ -419,23 +446,15 @@ export class ServerConnectionBehavior {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Set server URI and update status
-      const success = ServerConnectionService.setServerUri(uri);
+      this.serverConnectionService.setServerUrl(uri);
+      this.showStatusMessage('Successfully connected to server!', 'success');
 
-      if (success) {
-        ServerConnectionService.setConnectionStatus('connected');
-        this.showStatusMessage('Successfully connected to server!', 'success');
-
-        // Show success for a moment before closing
-        setTimeout(() => {
-          this.hideModal();
-        }, 1000);
-      } else {
-        ServerConnectionService.setConnectionStatus('error');
-        this.showStatusMessage('Failed to save server configuration.', 'error');
-      }
+      // Show success for a moment before closing
+      setTimeout(() => {
+        this.hideModal();
+      }, 1000);
     } catch (error) {
       console.error('ServerConnectionBehavior: Connect error:', error);
-      ServerConnectionService.setConnectionStatus('error');
       this.showStatusMessage(
         'Failed to connect to server. Please check the URL and try again.',
         'error',
@@ -461,20 +480,14 @@ export class ServerConnectionBehavior {
 
     try {
       // Clear server URI and update status
-      const success = ServerConnectionService.setServerUri(null);
+      this.serverConnectionService.disconnect();
+      notificationManager.success('Disconnected from server successfully');
 
-      if (success) {
-        ServerConnectionService.setConnectionStatus('disconnected');
-        notificationManager.success('Disconnected from server successfully');
+      // Close modal after successful disconnection
+      this.hideModal();
 
-        // Close modal after successful disconnection
-        this.hideModal();
-
-        // Emit event to update other UI components
-        this.eventBus.emit('server.disconnected');
-      } else {
-        notificationManager.error('Failed to disconnect from server');
-      }
+      // Emit event to update other UI components
+      this.eventBus.emit('server.disconnected');
     } catch (error) {
       console.error('ServerConnectionBehavior: Disconnect error:', error);
       notificationManager.error('Failed to disconnect from server');
@@ -491,10 +504,13 @@ export class ServerConnectionBehavior {
    * Update connection UI based on current state
    */
   updateConnectionUI() {
-    const connectionState = ServerConnectionService.getConnectionState() || {
-      serverUri: null,
-      isConnected: false,
-      connectionStatus: 'disconnected',
+    const connectionStatus = this.serverConnectionService.getConnectionStatus();
+    const connectionState = {
+      serverUri: connectionStatus.serverUrl,
+      isConnected:
+        connectionStatus.phase === 'server-configured' ||
+        connectionStatus.phase === 'websocket-connected',
+      connectionStatus: connectionStatus.phase || 'disconnected',
     };
 
     if (this.uriInput && connectionState.serverUri) {
