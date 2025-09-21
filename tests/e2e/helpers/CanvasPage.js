@@ -1192,6 +1192,91 @@ export class CanvasPage {
     const content = await this.getRawNoteContent(noteContent);
     expect(content).not.toContain(unexpectedText);
   }
+
+  // ========================================
+  // STATE PERSISTENCE TEST HELPERS
+  // Methods for comprehensive state testing
+  // ========================================
+
+  /**
+   * Edit note content - combined approach for edit mode + content entry
+   * @param {Locator} note - The note element
+   * @param {string} text - Text to enter
+   */
+  async editNote(note, text) {
+    const noteContent = await this.enterEditMode(note);
+
+    // Use fill() for textarea - this should replace content completely
+    await noteContent.fill(text);
+
+    // Verify the content was set
+    await this.assertNoteContent(noteContent, text);
+
+    // Just click outside to save - don't force exit mode check
+    await this.page.click('#canvas');
+    await this.page.waitForTimeout(100);
+  }
+
+  /**
+   * Get note position
+   * @param {Locator} note - The note element
+   * @returns {Object} Position object with x, y coordinates
+   */
+  async getNotePosition(note) {
+    const box = await note.boundingBox();
+    return { x: Math.round(box.x), y: Math.round(box.y) };
+  }
+
+  /**
+   * Get note content text
+   * @param {Locator} note - The note element
+   * @returns {string} Note content
+   */
+  async getNoteContent(note) {
+    const noteContent = note.locator('.note-content');
+    return await this.getRawNoteContent(noteContent);
+  }
+
+  /**
+   * Drag note by offset
+   * @param {Locator} note - The note element
+   * @param {number} deltaX - X offset
+   * @param {number} deltaY - Y offset
+   */
+  async dragNote(note, deltaX, deltaY) {
+    await this.moveNote(note, deltaX, deltaY);
+  }
+
+  /**
+   * Get current zoom level
+   * @returns {number} Current zoom level
+   */
+  async getZoomLevel() {
+    return await this.page.evaluate(() => {
+      const canvas = document.getElementById('canvas');
+      if (!canvas) return 1;
+
+      const transform = canvas.style.transform;
+      const match = transform.match(/scale\(([^)]+)\)/);
+      return match ? parseFloat(match[1]) : 1;
+    });
+  }
+
+  /**
+   * Set zoom level
+   * @param {number} level - Zoom level to set
+   */
+  async setZoomLevel(level) {
+    await this.page.evaluate((zoomLevel) => {
+      const canvas = document.getElementById('canvas');
+      if (canvas) {
+        canvas.style.transform = `scale(${zoomLevel})`;
+      }
+    }, level);
+  }
+
+  // TODO: Canvas template switching functionality has been removed from the application
+  // Consider adding back if template system is re-implemented
 }
 
 // Common test coordinates for consistency
