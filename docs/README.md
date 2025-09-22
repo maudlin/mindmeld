@@ -87,15 +87,15 @@ This comprehensive index helps both end users and developers find the right docu
 
 | Task                           | Primary Document                             | Supporting Documents |
 | ------------------------------ | -------------------------------------------- | -------------------- |
-| **Learning to use MindMeld**   | User Guide                                   | -                    |
-| **Setting up for development** | Developer Guide                              | Scripts Reference    |
-| **Writing tests**              | Testing Guide                                | -                    |
-| **Debugging test failures**    | Testing Guide                                | -                    |
-| **Adding canvas templates**    | Canvas Templates                             | Developer Guide      |
-| **Touch/mobile features**      | User Guide (users)<br>Mobile Patterns (devs) | Accessibility        |
-| **Git workflow issues**        | Developer Guide - Git Workflow               | -                    |
-| **CI/CD configuration**        | CI/CD Guide                                  | Scripts Reference    |
-| **Architecture questions**     | Developer Guide                              | Architecture Health  |
+| **Learning to use MindMeld**   | [User Guide](user-guide.md)                                   | -                    |
+| **Setting up for development** | [Developer Guide](developer-guide.md)                              | [Scripts Reference](scripts.md)    |
+| **Writing tests**              | [Testing Guide](testing-guide.md)                                | -                    |
+| **Debugging test failures**    | [Testing Guide](testing-guide.md) + [CI E2E Troubleshooting](ci-e2e-troubleshooting.md)                                | -                    |
+| **Adding canvas templates**    | [Canvas Templates](canvas-templates.md)                             | [Developer Guide](developer-guide.md)      |
+| **Touch/mobile features**      | [User Guide](user-guide.md) (users)<br>[Mobile Patterns](mobile-interaction-patterns.md) (devs) | [Accessibility](accessibility.md)        |
+| **Git workflow issues**        | [Developer Guide - Git Workflow](developer-guide.md#troubleshooting--advanced-scenarios)               | -                    |
+| **CI/CD configuration**        | [CI/CD Guide](ci-cd.md)                                  | [Scripts Reference](scripts.md)    |
+| **Architecture questions**     | [Developer Guide](developer-guide.md)                              | [Architecture Health](architecture-health.md)  |
 
 ### By Audience
 

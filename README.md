@@ -60,27 +60,18 @@ See [User Guide](docs/user-guide.md) for complete interaction details.
 
 ## Documentation
 
-See the full documentation index in docs/README.md.
+Complete documentation is available in the **[docs/ directory](docs/README.md)** with organized guides for all audiences.
 
-### For Users
+### Quick Navigation
 
-- **[User Guide](docs/user-guide.md)** - Complete feature overview and usage instructions
+| **For Users** | **For Developers** | **Technical Reference** |
+|---------------|-------------------|------------------------|
+| [User Guide](docs/user-guide.md) | [Developer Guide](docs/developer-guide.md) | [CI/CD Guide](docs/ci-cd.md) |
+| | [Testing Guide](docs/testing-guide.md) | [Architecture Health](docs/architecture-health.md) |
+| | [Canvas Templates](docs/canvas-templates.md) | [Scripts Reference](docs/scripts.md) |
+| | [Contributing Guide](CONTRIBUTING.md) | [CI E2E Troubleshooting](docs/ci-e2e-troubleshooting.md) |
 
-### For Developers
-
-- **[Developer Guide](docs/developer-guide.md)** - Architecture, setup, and development workflow
-- **[Canvas Templates](docs/canvas-templates.md)** - How to implement new canvas template modules
-- **[Contributing Guide](CONTRIBUTING.md)** - Code standards, testing, and contribution process
-- **[Testing Guide](docs/testing-guide.md)** - Comprehensive testing documentation, patterns, and best practices
-- **[Testing Environments](docs/testing-environments.md)** - Suites, commands, tags, and when to run which
-- **[Scripts Reference](docs/scripts.md)** - Complete npm scripts documentation
-
-### Technical Documentation
-
-- **[CI/CD Guide](docs/ci-cd.md)** - GitHub Actions workflows and deployment
-- **[CI vs Local E2E Troubleshooting](docs/ci-e2e-troubleshooting.md)** - Stabilizing tests across environments
-- **[Developer Guide - Git Workflow](docs/developer-guide.md#troubleshooting--advanced-scenarios)** - Rebases, branch protection, dependency handling
-- **[Architecture Health](docs/architecture-health.md)** - Code quality monitoring and metrics
+Full documentation index: **[docs/README.md](docs/README.md)**
 
 ## Architecture
 
