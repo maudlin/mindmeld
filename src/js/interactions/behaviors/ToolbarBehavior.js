@@ -29,7 +29,7 @@ export class ToolbarBehavior {
     }
 
     // Subscribe to selection changes to update context
-    this.eventBus.on('selection.changed', (data) => {
+    this.eventBus.on('note.selection.changed', (data) => {
       this.updateContext(this.mapSelectionToContext(data));
     });
 
@@ -40,6 +40,25 @@ export class ToolbarBehavior {
 
     this.eventBus.on('connector.unhovered', () => {
       this.updateContext({ type: 'canvas', data: null });
+    });
+
+    // Subscribe to connector deselection
+    this.eventBus.on('connector.deselected', () => {
+      this.updateContext({ type: 'canvas', data: null });
+    });
+
+    // TODO: Temporary - listen for connector selection to test click detection
+    this.eventBus.on('connector.selected', (data) => {
+      console.log('🔗 ToolbarBehavior: Connector selected!', data);
+      this.updateContext({
+        type: 'connectorActive',
+        data: {
+          startId: data.startId,
+          endId: data.endId,
+          currentType: data.connectionType,
+          connectionId: `${data.startId}-${data.endId}`, // Temporary ID format
+        },
+      });
     });
 
     // Initialize context state
@@ -74,7 +93,8 @@ export class ToolbarBehavior {
    * Handle delete action from toolbar
    */
   handleDeleteAction(inputType) {
-    log(`ToolbarBehavior: Delete action via ${inputType}`);
+    console.log(`🗑️ ToolbarBehavior: Delete action via ${inputType}`);
+    console.log('🗑️ ToolbarBehavior: Current context:', this.currentContext);
 
     const context = this.currentContext;
 
@@ -84,25 +104,56 @@ export class ToolbarBehavior {
     ) {
       // Delete selected notes
       const selectedNotes = noteManager.getSelectedNotes();
+      console.log('🗑️ ToolbarBehavior: Selected notes:', selectedNotes);
 
       if (selectedNotes.length > 1) {
         // Multiple notes selected
+        console.log('🗑️ ToolbarBehavior: Emitting notes.deleteSelected');
         this.eventBus.emit('notes.deleteSelected');
         this.announceMultiDelete(selectedNotes.length);
       } else if (selectedNotes.length === 1) {
         // Single note selected
         const canvas = document.getElementById('canvas');
+        console.log(
+          '🗑️ ToolbarBehavior: Emitting note.deleteWithConnections for:',
+          selectedNotes[0],
+        );
         this.eventBus.emit('note.deleteWithConnections', {
           note: selectedNotes[0],
           canvas: canvas,
         });
         this.announceDelete();
+      } else {
+        console.log(
+          '🗑️ ToolbarBehavior: No notes selected, length:',
+          selectedNotes.length,
+        );
       }
     } else if (context.type === 'connectorActive' && context.data) {
       // Delete connector
       const { connectionId, startId, endId } = context.data;
-      this.eventBus.emit('connection.delete', { startId, endId, connectionId });
-      this.announceDelete();
+      console.log('🗑️ ToolbarBehavior: Deleting connector:', {
+        startId,
+        endId,
+        connectionId,
+      });
+
+      // Remove the connector element from DOM
+      const connectorGroup = document.querySelector(
+        `g[data-start="${startId}"][data-end="${endId}"]`,
+      );
+      if (connectorGroup) {
+        connectorGroup.remove();
+        console.log('🗑️ ToolbarBehavior: Connector removed from DOM');
+
+        // Emit the standard connection.deleted event for data persistence
+        this.eventBus.emit('connection.deleted', { startId, endId });
+        this.announceDelete();
+      } else {
+        console.warn(
+          '🗑️ ToolbarBehavior: Connector group not found for deletion',
+        );
+      }
     }
   }
 
@@ -118,10 +169,28 @@ export class ToolbarBehavior {
       const { startId, endId, currentType } = context.data;
       const newType = this.getNextConnectionType(currentType);
 
-      this.eventBus.emit('connection.typeChange', { startId, endId, newType });
-      log(
-        `ToolbarBehavior: Switched connector from ${currentType} to ${newType}`,
+      // Find the connector group and update it directly
+      const connectorGroup = document.querySelector(
+        `g[data-start="${startId}"][data-end="${endId}"]`,
       );
+      if (connectorGroup) {
+        // Import the connectionManager to update the connection type
+        import('../../features/connection/connectionManager.js').then(
+          ({ connectionManager }) => {
+            connectionManager.updateConnectionType(connectorGroup, newType);
+            log(
+              `ToolbarBehavior: Switched connector from ${currentType} to ${newType}`,
+            );
+
+            // Update our context with the new type
+            this.currentContext.data.currentType = newType;
+          },
+        );
+      } else {
+        console.warn(
+          'ToolbarBehavior: Connector group not found for type change',
+        );
+      }
     }
   }
 
@@ -189,23 +258,25 @@ export class ToolbarBehavior {
    * Map selection state to context state
    */
   mapSelectionToContext(selectionData) {
-    if (!selectionData || !selectionData.selectedNotes) {
+    // For note.selection.changed events, we get the selectedCount directly
+    // Event data format: { type: 'selected'|'deselected'|'cleared', note: HTMLElement, selectedCount: number }
+    if (!selectionData || typeof selectionData.selectedCount !== 'number') {
       return { type: 'canvas', data: null };
     }
 
-    const selectedCount = selectionData.selectedNotes.length;
+    const selectedCount = selectionData.selectedCount;
 
     if (selectedCount === 0) {
       return { type: 'canvas', data: null };
     } else if (selectedCount === 1) {
       return {
         type: 'noteSelected',
-        data: { noteIds: selectionData.selectedNotes, count: 1 },
+        data: { noteIds: [selectionData.note], count: 1 },
       };
     } else {
       return {
         type: 'multiNoteSelected',
-        data: { noteIds: selectionData.selectedNotes, count: selectedCount },
+        data: { noteIds: [], count: selectedCount }, // We don't have full array, just count
       };
     }
   }
@@ -227,13 +298,19 @@ export class ToolbarBehavior {
   }
 
   /**
-   * Get next connection type in sequence
+   * Get next connection type in sequence using CONNECTION_TYPES constants
    */
   getNextConnectionType(currentType) {
-    // Import connection types from connection service if available
-    // For now, use basic cycling: 0 -> 1 -> 2 -> 3 -> 0
-    const types = [0, 1, 2, 3]; // none, from->to, to->from, bidirectional
-    const currentIndex = types.indexOf(parseInt(currentType));
+    // Use the same logic as the context menu
+    const CONNECTION_TYPES = {
+      NONE: 'none',
+      UNI_FORWARD: 'uni-forward',
+      UNI_BACKWARD: 'uni-backward',
+      BI: 'bi',
+    };
+
+    const types = Object.values(CONNECTION_TYPES);
+    const currentIndex = types.indexOf(currentType);
     const nextIndex = (currentIndex + 1) % types.length;
     // eslint-disable-next-line security/detect-object-injection
     return types[nextIndex];
@@ -330,9 +407,11 @@ export class ToolbarBehavior {
    */
   cleanup() {
     // Remove event bus listeners
-    this.eventBus.off('selection.changed');
+    this.eventBus.off('note.selection.changed');
     this.eventBus.off('connector.hovered');
     this.eventBus.off('connector.unhovered');
+    this.eventBus.off('connector.deselected');
+    this.eventBus.off('connector.selected');
 
     this.isInitialized = false;
     console.log('ToolbarBehavior: Cleaned up');

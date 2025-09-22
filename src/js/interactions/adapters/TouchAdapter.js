@@ -26,6 +26,7 @@ export class TouchAdapter extends BaseAdapter {
     this.connectionBehavior = null;
     this.viewportBehavior = null;
     this.menuBehavior = null;
+    this.toolbarBehavior = null;
 
     // Core components
     this.canvas = null;
@@ -83,6 +84,8 @@ export class TouchAdapter extends BaseAdapter {
         this.viewportBehavior =
           this.interactionController.getBehavior('viewport');
         this.menuBehavior = this.interactionController.getBehavior('menu');
+        this.toolbarBehavior =
+          this.interactionController.getBehavior('toolbar');
 
         console.log('TouchAdapter: Behavior references initialized', {
           hasNoteBehavior: !!this.noteBehavior,
@@ -92,6 +95,7 @@ export class TouchAdapter extends BaseAdapter {
           hasConnectionBehavior: !!this.connectionBehavior,
           hasViewportBehavior: !!this.viewportBehavior,
           hasMenuBehavior: !!this.menuBehavior,
+          hasToolbarBehavior: !!this.toolbarBehavior,
         });
       } else {
         console.warn('TouchAdapter: InteractionController not available');
@@ -211,6 +215,22 @@ export class TouchAdapter extends BaseAdapter {
         if (event.touches.length === 1) {
           const touch = event.touches[0];
           const now = Date.now();
+
+          // Check for toolbar button interactions first
+          if (
+            touch.target &&
+            touch.target.dataset &&
+            touch.target.dataset.toolbarAction
+          ) {
+            console.log(
+              `TouchAdapter: Toolbar button touch detected: ${touch.target.dataset.toolbarAction}`,
+            );
+            this.handleToolbarButtonInteraction(
+              event,
+              touch.target.dataset.toolbarAction,
+            );
+            return;
+          }
 
           // Store touch start data for gesture detection
           touchStartData = {
@@ -936,6 +956,33 @@ export class TouchAdapter extends BaseAdapter {
     }
 
     return null;
+  }
+
+  /**
+   * Handle toolbar button interactions - delegate to ToolbarBehavior
+   */
+  handleToolbarButtonInteraction(event, action) {
+    console.log(`TouchAdapter: Handling toolbar button action: ${action}`);
+
+    if (!this.toolbarBehavior) {
+      console.warn('TouchAdapter: ToolbarBehavior not available');
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Delegate to ToolbarBehavior based on action type
+    switch (action) {
+      case 'delete':
+        this.toolbarBehavior.handleDeleteAction('touch');
+        break;
+      case 'switch-type':
+        this.toolbarBehavior.handleConnectorTypeSwitch('touch');
+        break;
+      default:
+        console.warn(`TouchAdapter: Unknown toolbar action: ${action}`);
+    }
   }
 
   /**

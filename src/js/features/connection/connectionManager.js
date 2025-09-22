@@ -188,19 +188,20 @@ export class ConnectionManager {
     }
   }
 
-  handleSvgMouseMove(event) {
-    const hotspot = event.target.closest('.connector-hotspot');
-    const contextMenuElement = event.target.closest('.context-menu');
-
-    if (hotspot) {
-      // Only show context menu for permanent connections (not temporary drag connections)
-      const connectionGroup = hotspot.closest('g[data-start][data-end]');
-      if (connectionGroup) {
-        this.contextMenu.show(hotspot);
-      }
-    } else if (!contextMenuElement && !this.contextMenu.isMouseOver) {
-      this.contextMenu.hide();
-    }
+  handleSvgMouseMove() {
+    // Temporarily disable context menu for connector selection implementation
+    // TODO: Re-enable or integrate with new connector selection system
+    // const hotspot = event.target.closest('.connector-hotspot');
+    // const contextMenuElement = event.target.closest('.context-menu');
+    // if (hotspot) {
+    //   // Only show context menu for permanent connections (not temporary drag connections)
+    //   const connectionGroup = hotspot.closest('g[data-start][data-end]');
+    //   if (connectionGroup) {
+    //     this.contextMenu.show(hotspot);
+    //   }
+    // } else if (!contextMenuElement && !this.contextMenu.isMouseOver) {
+    //   this.contextMenu.hide();
+    // }
   }
 
   handleSvgMouseLeave() {

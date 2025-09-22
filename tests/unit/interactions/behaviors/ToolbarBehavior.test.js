@@ -82,7 +82,7 @@ describe('ToolbarBehavior', () => {
 
       expect(toolbarBehavior.isInitialized).toBe(true);
       expect(mockEventBus.on).toHaveBeenCalledWith(
-        'selection.changed',
+        'note.selection.changed',
         expect.any(Function),
       );
       expect(mockEventBus.on).toHaveBeenCalledWith(
@@ -168,7 +168,11 @@ describe('ToolbarBehavior', () => {
     });
 
     test('should map single note selection to noteSelected context', () => {
-      const selectionData = { selectedNotes: ['note-1'] };
+      const selectionData = {
+        type: 'selected',
+        note: 'note-1',
+        selectedCount: 1,
+      };
       const context = toolbarBehavior.mapSelectionToContext(selectionData);
 
       expect(context.type).toBe('noteSelected');
@@ -177,12 +181,16 @@ describe('ToolbarBehavior', () => {
     });
 
     test('should map multiple note selection to multiNoteSelected context', () => {
-      const selectionData = { selectedNotes: ['note-1', 'note-2', 'note-3'] };
+      const selectionData = {
+        type: 'selected',
+        note: 'note-3',
+        selectedCount: 3,
+      };
       const context = toolbarBehavior.mapSelectionToContext(selectionData);
 
       expect(context.type).toBe('multiNoteSelected');
       expect(context.data.count).toBe(3);
-      expect(context.data.noteIds).toEqual(['note-1', 'note-2', 'note-3']);
+      expect(context.data.noteIds).toEqual([]); // We don't have full array, just count
     });
 
     test('should update context when selection changes', () => {
@@ -423,7 +431,7 @@ describe('ToolbarBehavior', () => {
 
       toolbarBehavior.cleanup();
 
-      expect(mockEventBus.off).toHaveBeenCalledWith('selection.changed');
+      expect(mockEventBus.off).toHaveBeenCalledWith('note.selection.changed');
       expect(mockEventBus.off).toHaveBeenCalledWith('connector.hovered');
       expect(mockEventBus.off).toHaveBeenCalledWith('connector.unhovered');
       expect(toolbarBehavior.isInitialized).toBe(false);

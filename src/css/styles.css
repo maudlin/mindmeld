@@ -720,6 +720,7 @@ body.dragging .confirmation-dialog * {
 /* Delete Action Button Position */
 .toolbar-action.delete-action {
   left: 147px; /* Between first separator and switch button */
+  background: #ffffff; /* White background to match switch button */
 }
 
 /* Switch Action Button Position */
@@ -752,17 +753,24 @@ body.dragging .confirmation-dialog * {
   pointer-events: none;
 }
 
-/* Delete button SVG styling */
-.toolbar-action.delete-action svg line {
-  stroke: #ff4444;
-  stroke-width: 2;
-  stroke-linecap: round;
+/* Delete button - using the working multi-property approach */
+button.toolbar-action.delete-action svg {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
 }
 
-/* Switch button inherits existing mm-arrow styles */
-.toolbar-action.switch-action svg {
-  width: 16px;
-  height: 16px;
+/* Switch button - using the working multi-property approach */
+button.toolbar-action.switch-action svg {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
 }
 
 /* Kebab Menu Button - Updated position */
@@ -783,8 +791,8 @@ body.dragging .confirmation-dialog * {
 }
 
 .kebab-menu-button svg {
-  width: 12px;
-  height: 12px;
+  width: 20px !important;
+  height: 20px !important;
   fill: rgba(124, 124, 124, 0.6);
 }
 
@@ -929,6 +937,29 @@ line.connection-line {
   stroke: #5a6f86;
   stroke-width: 2;
   cursor: pointer;
+  transition:
+    fill 0.2s ease,
+    stroke 0.2s ease,
+    filter 0.2s ease;
+}
+
+/* Hover effect for connector hotspots */
+.connector-hotspot:hover {
+  fill: #ffeb3b;
+  filter: drop-shadow(0 0 8px rgba(255, 235, 59, 0.6));
+  stroke: #f57f17;
+}
+
+/* Selected state for connector hotspots */
+.connector-hotspot.selected {
+  fill: #ffeb3b;
+  filter: drop-shadow(0 0 8px rgba(255, 235, 59, 0.8));
+  stroke: #f57f17;
+}
+
+/* Selected state for connection paths - subtle drop shadow, keep dotted line */
+path.selected {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
 #svg-container line,

@@ -236,6 +236,106 @@ describe('TouchAdapter - Native Gesture Detection', () => {
       expect(mockInteractionController.getBehavior).toHaveBeenCalledWith(
         'selectionBox',
       );
+      expect(mockInteractionController.getBehavior).toHaveBeenCalledWith(
+        'toolbar',
+      );
+    });
+
+    test('should get ToolbarBehavior reference during initialization', async () => {
+      // Create a fresh adapter for this test to avoid initialization conflicts
+      const mockToolbarBehavior = {
+        handleColorSelection: jest.fn(),
+        handleDeleteAction: jest.fn(),
+        handleConnectorTypeSwitch: jest.fn(),
+        isInitialized: true,
+      };
+
+      const mockInteractionController = {
+        getBehavior: jest.fn((name) => {
+          if (name === 'toolbar') return mockToolbarBehavior;
+          return mockBehaviors[`${name}Behavior`];
+        }),
+      };
+
+      const testAdapter = new TouchAdapter(mockInteractionController);
+      await testAdapter.initialize(mockEventBus);
+
+      expect(testAdapter.toolbarBehavior).toBeDefined();
+      expect(testAdapter.toolbarBehavior).toBe(mockToolbarBehavior);
+    });
+
+    test('should handle delete button touches and delegate to ToolbarBehavior', async () => {
+      // Create mock delete button
+      const mockDeleteButton = {
+        id: 'delete-button',
+        dataset: { toolbarAction: 'delete' },
+        tagName: 'DIV',
+        classList: { contains: jest.fn(() => true) },
+        closest: jest.fn(() => null),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      };
+
+      const mockToolbarBehavior = {
+        handleDeleteAction: jest.fn(),
+      };
+
+      const mockInteractionController = {
+        getBehavior: jest.fn((name) => {
+          if (name === 'toolbar') return mockToolbarBehavior;
+          return mockBehaviors[`${name}Behavior`];
+        }),
+      };
+
+      const testAdapter = new TouchAdapter(mockInteractionController);
+      await testAdapter.initialize(mockEventBus);
+
+      // Simulate touch on delete button
+      const touch = createMockTouch(1, 100, 100, mockDeleteButton);
+      const touchEvent = createTouchEvent('touchstart', [touch]);
+
+      testAdapter.boundHandlers.touchStart(touchEvent);
+
+      expect(mockToolbarBehavior.handleDeleteAction).toHaveBeenCalledWith(
+        'touch',
+      );
+    });
+
+    test('should handle connector switch button touches and delegate to ToolbarBehavior', async () => {
+      // Create mock switch button
+      const mockSwitchButton = {
+        id: 'switch-button',
+        dataset: { toolbarAction: 'switch-type' },
+        tagName: 'DIV',
+        classList: { contains: jest.fn(() => true) },
+        closest: jest.fn(() => null),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      };
+
+      const mockToolbarBehavior = {
+        handleConnectorTypeSwitch: jest.fn(),
+      };
+
+      const mockInteractionController = {
+        getBehavior: jest.fn((name) => {
+          if (name === 'toolbar') return mockToolbarBehavior;
+          return mockBehaviors[`${name}Behavior`];
+        }),
+      };
+
+      const testAdapter = new TouchAdapter(mockInteractionController);
+      await testAdapter.initialize(mockEventBus);
+
+      // Simulate touch on switch button
+      const touch = createMockTouch(1, 100, 100, mockSwitchButton);
+      const touchEvent = createTouchEvent('touchstart', [touch]);
+
+      testAdapter.boundHandlers.touchStart(touchEvent);
+
+      expect(
+        mockToolbarBehavior.handleConnectorTypeSwitch,
+      ).toHaveBeenCalledWith('touch');
     });
   });
 
