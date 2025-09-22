@@ -32,7 +32,7 @@
       media="(prefers-color-scheme: dark)"
     />
     <meta name="app-version" content="1.0.1" />
-    <meta name="build-date" content="2025-09-21" />
+    <meta name="build-date" content="2025-09-22" />
   </head>
   <body>
     <nav id="navbar">
@@ -87,6 +87,88 @@
           tabindex="0"
           aria-label="Select blue color"
         ></div>
+
+        <!-- Context Actions -->
+        <button
+          class="toolbar-action delete-action"
+          data-toolbar-action="delete"
+          role="button"
+          tabindex="0"
+          aria-label="Delete selected items"
+          disabled
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <g>
+              <circle
+                cx="12"
+                cy="12"
+                r="9"
+                fill="rgba(255, 58, 48, 0.9)"
+                stroke="transparent"
+                stroke-width="1"
+              />
+              <line
+                x1="8"
+                y1="8"
+                x2="16"
+                y2="16"
+                stroke="white"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+              <line
+                x1="16"
+                y1="8"
+                x2="8"
+                y2="16"
+                stroke="white"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+              <circle cx="12" cy="12" r="2" fill="rgba(255,255,255,0.3)" />
+            </g>
+          </svg>
+        </button>
+
+        <button
+          class="toolbar-action switch-action"
+          data-toolbar-action="switch-type"
+          role="button"
+          tabindex="0"
+          aria-label="Switch connector type"
+          disabled
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <g>
+              <circle
+                cx="12"
+                cy="12"
+                r="9"
+                fill="var(--mm-arrow-fill, #8585ecff)"
+                stroke="transparent"
+                stroke-width="1"
+              />
+              <polyline
+                points="9,9 6,12 9,15"
+                fill="none"
+                stroke="white"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <polyline
+                points="15,9 18,12 15,15"
+                fill="none"
+                stroke="white"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="12" cy="12" r="2" fill="rgba(255,255,255,0.5)" />
+            </g>
+          </svg>
+        </button>
+
         <div
           class="kebab-menu-button"
           id="kebab-menu-button"
@@ -98,9 +180,35 @@
           tabindex="0"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M12 7a1.75 1.75 0 110-3.5A1.75 1.75 0 0112 7zm0 6a1.75 1.75 0 110-3.5A1.75 1.75 0 0112 13zm0 6a1.75 1.75 0 110-3.5A1.75 1.75 0 0112 19z"
-            />
+            <g>
+              <line
+                x1="5"
+                y1="7"
+                x2="19"
+                y2="7"
+                stroke="#aaa"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+              <line
+                x1="5"
+                y1="12"
+                x2="19"
+                y2="12"
+                stroke="#aaa"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+              <line
+                x1="5"
+                y1="17"
+                x2="19"
+                y2="17"
+                stroke="#aaa"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </g>
           </svg>
         </div>
       </div>

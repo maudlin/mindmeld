@@ -81,10 +81,19 @@ describe('DesktopAdapter - Unit Tests', () => {
       resetZoom: jest.fn(),
     };
 
+    // Mock ToolbarBehavior
+    const mockToolbarBehavior = {
+      handleColorSelection: jest.fn(),
+      handleDeleteAction: jest.fn(),
+      handleConnectorTypeSwitch: jest.fn(),
+      isInitialized: true,
+    };
+
     // Mock InteractionController
     const mockInteractionController = {
       getBehavior: jest.fn((name) => {
         if (name === 'viewport') return mockViewportBehavior;
+        if (name === 'toolbar') return mockToolbarBehavior;
         return null;
       }),
     };
@@ -98,8 +107,9 @@ describe('DesktopAdapter - Unit Tests', () => {
     // Create fresh adapter instance for each test
     desktopAdapter = new DesktopAdapter(mockInteractionController);
 
-    // Store mock for test access
+    // Store mocks for test access
     desktopAdapter._mockViewportBehavior = mockViewportBehavior;
+    desktopAdapter._mockToolbarBehavior = mockToolbarBehavior;
 
     // Store original for cleanup
     global.originalGetElementById = originalGetElementById;
@@ -346,6 +356,133 @@ describe('DesktopAdapter - Unit Tests', () => {
         'notes.deleteSelected',
         expect.anything(),
       );
+    });
+
+    it('should get ToolbarBehavior reference during initialization', async () => {
+      // Create a fresh adapter for this test to avoid initialization conflicts
+      const mockToolbarBehavior = {
+        handleColorSelection: jest.fn(),
+        handleDeleteAction: jest.fn(),
+        handleConnectorTypeSwitch: jest.fn(),
+        isInitialized: true,
+      };
+
+      const mockInteractionController = {
+        getBehavior: jest.fn((name) => {
+          if (name === 'toolbar') return mockToolbarBehavior;
+          return null;
+        }),
+      };
+
+      const testAdapter = new DesktopAdapter(mockInteractionController);
+      await testAdapter.initialize(mockEventBus);
+
+      expect(testAdapter.toolbarBehavior).toBeDefined();
+      expect(testAdapter.toolbarBehavior).toBe(mockToolbarBehavior);
+    });
+
+    it('should handle delete button clicks and delegate to ToolbarBehavior', async () => {
+      // Create mock delete button
+      const mockDeleteButton = {
+        id: 'delete-button',
+        dataset: { toolbarAction: 'delete' },
+        tagName: 'DIV',
+        classList: { contains: jest.fn(() => true) },
+        closest: jest.fn(() => null),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      };
+
+      // Mock document.querySelector to return delete button
+      const originalQuerySelector = global.document.querySelector;
+      global.document.querySelector = jest.fn((selector) => {
+        if (selector === '[data-toolbar-action="delete"]')
+          return mockDeleteButton;
+        return null;
+      });
+
+      const mockToolbarBehavior = {
+        handleDeleteAction: jest.fn(),
+      };
+
+      const mockInteractionController = {
+        getBehavior: jest.fn((name) => {
+          if (name === 'toolbar') return mockToolbarBehavior;
+          return null;
+        }),
+      };
+
+      const testAdapter = new DesktopAdapter(mockInteractionController);
+      await testAdapter.initialize(mockEventBus);
+
+      // Simulate click on delete button
+      const clickEvent = {
+        target: mockDeleteButton,
+        button: 0,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      };
+
+      testAdapter.handlePointerDown(clickEvent);
+
+      expect(mockToolbarBehavior.handleDeleteAction).toHaveBeenCalledWith(
+        'desktop',
+      );
+
+      // Restore
+      global.document.querySelector = originalQuerySelector;
+    });
+
+    it('should handle connector switch button clicks and delegate to ToolbarBehavior', async () => {
+      // Create mock switch button
+      const mockSwitchButton = {
+        id: 'switch-button',
+        dataset: { toolbarAction: 'switch-type' },
+        tagName: 'DIV',
+        classList: { contains: jest.fn(() => true) },
+        closest: jest.fn(() => null),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      };
+
+      // Mock document.querySelector to return switch button
+      const originalQuerySelector = global.document.querySelector;
+      global.document.querySelector = jest.fn((selector) => {
+        if (selector === '[data-toolbar-action="switch-type"]')
+          return mockSwitchButton;
+        return null;
+      });
+
+      const mockToolbarBehavior = {
+        handleConnectorTypeSwitch: jest.fn(),
+      };
+
+      const mockInteractionController = {
+        getBehavior: jest.fn((name) => {
+          if (name === 'toolbar') return mockToolbarBehavior;
+          return null;
+        }),
+      };
+
+      const testAdapter = new DesktopAdapter(mockInteractionController);
+      await testAdapter.initialize(mockEventBus);
+
+      // Simulate click on switch button
+      const clickEvent = {
+        target: mockSwitchButton,
+        button: 0,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      };
+
+      testAdapter.handlePointerDown(clickEvent);
+
+      expect(
+        mockToolbarBehavior.handleConnectorTypeSwitch,
+      ).toHaveBeenCalledWith('desktop');
+
+      // Restore
+      global.document.querySelector = originalQuerySelector;
     });
   });
 

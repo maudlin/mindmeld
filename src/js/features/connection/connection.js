@@ -53,8 +53,9 @@ export function initializeConnectionDrawing(canvas) {
   svgContainer.addEventListener('mouseleave', handleSvgMouseLeave);
   document.addEventListener('keydown', handleKeyDown);
 
-  // Attach context menu click handler
-  connectionManager.contextMenu.attachClickHandler(svgContainer);
+  // Temporarily disable context menu for connector selection implementation
+  // TODO: Re-enable or integrate with new connector selection system
+  // connectionManager.contextMenu.attachClickHandler(svgContainer);
 
   return svgContainer;
 }

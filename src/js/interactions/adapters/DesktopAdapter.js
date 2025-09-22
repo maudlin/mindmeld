@@ -32,6 +32,7 @@ export class DesktopAdapter extends BaseAdapter {
     this.connectionBehavior = null;
     this.viewportBehavior = null;
     this.menuBehavior = null;
+    this.toolbarBehavior = null;
 
     // Canvas and container references
     this.canvas = null;
@@ -94,6 +95,7 @@ export class DesktopAdapter extends BaseAdapter {
       this.viewportBehavior =
         this.interactionController.getBehavior('viewport');
       this.menuBehavior = this.interactionController.getBehavior('menu');
+      this.toolbarBehavior = this.interactionController.getBehavior('toolbar');
 
       console.log('DesktopAdapter: Behavior references initialized', {
         hasNoteBehavior: !!this.noteBehavior,
@@ -102,6 +104,7 @@ export class DesktopAdapter extends BaseAdapter {
         hasCanvasBehavior: !!this.canvasBehavior,
         hasConnectionBehavior: !!this.connectionBehavior,
         hasViewportBehavior: !!this.viewportBehavior,
+        hasToolbarBehavior: !!this.toolbarBehavior,
       });
     } else {
       console.warn('DesktopAdapter: No InteractionController provided!');
@@ -143,7 +146,60 @@ export class DesktopAdapter extends BaseAdapter {
     document.addEventListener('keydown', this.boundHandlers.keyDown, true); // Use capture phase for priority
     // Note: contextmenu prevention is handled by ViewportBehavior.setupZoomAndPan on canvasContainer
 
+    // Add toolbar button event listeners
+    this.setupToolbarEventListeners();
+
     console.log('DesktopAdapter: Event listeners initialized successfully');
+  }
+
+  /**
+   * Set up toolbar button event listeners
+   */
+  setupToolbarEventListeners() {
+    // Find all toolbar action buttons
+    const toolbarButtons = document.querySelectorAll('[data-toolbar-action]');
+
+    toolbarButtons.forEach((button) => {
+      // Store bound handler for cleanup
+      const boundHandler = (event) => {
+        console.log(
+          '🔧 DesktopAdapter: Toolbar button clicked:',
+          button.dataset.toolbarAction,
+        );
+        this.handleToolbarButtonInteraction(
+          event,
+          button.dataset.toolbarAction,
+        );
+      };
+
+      // Store for cleanup
+      button._desktopAdapterHandler = boundHandler;
+
+      // Add click listener
+      button.addEventListener('click', boundHandler);
+    });
+
+    console.log(
+      'DesktopAdapter: Toolbar button listeners added for',
+      toolbarButtons.length,
+      'buttons',
+    );
+  }
+
+  /**
+   * Clean up toolbar button event listeners
+   */
+  cleanupToolbarEventListeners() {
+    const toolbarButtons = document.querySelectorAll('[data-toolbar-action]');
+
+    toolbarButtons.forEach((button) => {
+      if (button._desktopAdapterHandler) {
+        button.removeEventListener('click', button._desktopAdapterHandler);
+        delete button._desktopAdapterHandler;
+      }
+    });
+
+    console.log('DesktopAdapter: Toolbar button listeners cleaned up');
   }
 
   /**
@@ -166,6 +222,9 @@ export class DesktopAdapter extends BaseAdapter {
     document.removeEventListener('pointermove', this.boundHandlers.pointerMove);
     document.removeEventListener('pointerup', this.boundHandlers.pointerUp);
     document.removeEventListener('keydown', this.boundHandlers.keyDown, true);
+
+    // Remove toolbar button listeners
+    this.cleanupToolbarEventListeners();
 
     // Reset state
     this.canvas = null;
@@ -220,6 +279,22 @@ export class DesktopAdapter extends BaseAdapter {
     const target = event.target;
 
     // Menu interactions are handled by pageInteractions.js since menu is outside canvas
+
+    // Check for toolbar button interactions
+    if (target.dataset && target.dataset.toolbarAction) {
+      console.log(
+        `DesktopAdapter: Toolbar button click detected: ${target.dataset.toolbarAction}`,
+      );
+      this.handleToolbarButtonInteraction(event, target.dataset.toolbarAction);
+      return;
+    }
+
+    // Check for connector central circle (hotspot) interactions
+    if (target.classList && target.classList.contains('connector-hotspot')) {
+      console.log('🔗 DesktopAdapter: Connector hotspot clicked');
+      this.handleConnectorSelection(event, target);
+      return;
+    }
 
     // Check for ghost connector interaction (CRITICAL - missing from refactor!)
     if (target.classList.contains('ghost-connector')) {
@@ -276,6 +351,121 @@ export class DesktopAdapter extends BaseAdapter {
   }
 
   /**
+   * Handle toolbar button interactions - delegate to ToolbarBehavior
+   */
+  handleToolbarButtonInteraction(event, action) {
+    console.log(`DesktopAdapter: Handling toolbar button action: ${action}`);
+
+    if (!this.toolbarBehavior) {
+      console.warn('DesktopAdapter: ToolbarBehavior not available');
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Delegate to ToolbarBehavior based on action type
+    switch (action) {
+      case 'delete':
+        this.toolbarBehavior.handleDeleteAction('desktop');
+        break;
+      case 'switch-type':
+        this.toolbarBehavior.handleConnectorTypeSwitch('desktop');
+        break;
+      default:
+        console.warn(`DesktopAdapter: Unknown toolbar action: ${action}`);
+    }
+  }
+
+  /**
+   * Handle connector hotspot selection - placeholder for unified selection system
+   */
+  handleConnectorSelection(event, hotspotElement) {
+    console.log('🔗 DesktopAdapter: Handling connector selection');
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Get the connector group element (parent of the hotspot circle)
+    const connectorGroup = hotspotElement.closest('g[data-start][data-end]');
+    if (!connectorGroup) {
+      console.warn('DesktopAdapter: Could not find connector group');
+      return;
+    }
+
+    const startId = connectorGroup.dataset.start;
+    const endId = connectorGroup.dataset.end;
+    const connectionType = connectorGroup.dataset.type;
+
+    console.log('🔗 DesktopAdapter: Connector selected:', {
+      startId,
+      endId,
+      connectionType,
+    });
+
+    // Clear previous connector selections
+    this.clearConnectorSelections();
+
+    // Apply visual selection state
+    this.applyConnectorSelection(connectorGroup);
+
+    // Emit selection event
+    if (this.eventBus) {
+      this.eventBus.emit('connector.selected', {
+        startId,
+        endId,
+        connectionType,
+        connectorGroup,
+        inputType: 'desktop',
+      });
+    }
+  }
+
+  /**
+   * Clear all connector selections
+   */
+  clearConnectorSelections() {
+    const hadSelection =
+      document.querySelector('.connector-hotspot.selected') !== null;
+
+    // Remove selected class from all connector hotspots
+    document
+      .querySelectorAll('.connector-hotspot.selected')
+      .forEach((hotspot) => {
+        hotspot.classList.remove('selected');
+      });
+
+    // Remove selected class from all connection paths
+    document.querySelectorAll('path.selected').forEach((path) => {
+      path.classList.remove('selected');
+    });
+
+    // Emit deselection event if there was a selection
+    if (hadSelection && this.eventBus) {
+      this.eventBus.emit('connector.deselected', { inputType: 'desktop' });
+    }
+  }
+
+  /**
+   * Apply visual selection state to a connector
+   */
+  applyConnectorSelection(connectorGroup) {
+    // Add selected class to the hotspot (central circle)
+    const hotspot = connectorGroup.querySelector('.connector-hotspot');
+    if (hotspot) {
+      hotspot.classList.add('selected');
+    }
+
+    // Add selected class to the connection path
+    const connectionPath = connectorGroup.querySelector('path');
+    if (connectionPath) {
+      connectionPath.classList.add('selected');
+    }
+
+    console.log('🔗 DesktopAdapter: Applied selection visual state');
+  }
+
+  /**
    * Handle note interaction start - delegate to NoteBehavior
    */
   handleNoteInteractionStart(noteElement, event) {
@@ -309,11 +499,15 @@ export class DesktopAdapter extends BaseAdapter {
         if (isSelected) {
           noteManager.deselectNote(noteElement);
         } else {
+          // Clear connector selections when selecting notes
+          this.clearConnectorSelections();
           noteManager.selectNote(noteElement);
         }
       } else {
         // Single select mode
         if (!isSelected) {
+          // Clear connector selections when selecting notes
+          this.clearConnectorSelections();
           noteManager.clearSelections();
           noteManager.selectNote(noteElement);
         }
@@ -344,6 +538,7 @@ export class DesktopAdapter extends BaseAdapter {
 
     // Clear existing selections immediately on canvas click (like working implementation)
     noteManager.clearSelections();
+    this.clearConnectorSelections();
 
     // Emit canvas.clicked for edit mode handling
     this.emit('canvas.clicked');

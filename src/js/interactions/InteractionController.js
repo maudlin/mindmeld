@@ -13,6 +13,7 @@ import { CanvasBehavior } from './behaviors/CanvasBehavior.js';
 import { ConnectionBehavior } from './behaviors/ConnectionBehavior.js';
 import { ViewportBehavior } from './behaviors/ViewportBehavior.js';
 import { MenuBehavior } from './behaviors/MenuBehavior.js';
+import { ToolbarBehavior } from './behaviors/ToolbarBehavior.js';
 import { ServerConnectionBehavior } from '../features/serverConnection/serverConnectionBehavior.js';
 import { MapSelectionBehavior } from '../features/mapSelection/mapSelectionBehavior.js';
 
@@ -68,6 +69,7 @@ export class InteractionController {
       const connectionBehavior = new ConnectionBehavior(this.eventBus);
       const viewportBehavior = new ViewportBehavior(this.eventBus);
       const menuBehavior = new MenuBehavior(this.eventBus);
+      const toolbarBehavior = new ToolbarBehavior(this.eventBus);
       const serverConnectionBehavior = new ServerConnectionBehavior(
         this.eventBus,
       );
@@ -81,6 +83,7 @@ export class InteractionController {
       this.registerBehavior('connection', connectionBehavior);
       this.registerBehavior('viewport', viewportBehavior);
       this.registerBehavior('menu', menuBehavior);
+      this.registerBehavior('toolbar', toolbarBehavior);
       this.registerBehavior('serverConnection', serverConnectionBehavior);
       this.registerBehavior('mapSelection', mapSelectionBehavior);
 
@@ -99,6 +102,9 @@ export class InteractionController {
 
       await connectionBehavior.initialize();
       console.log('InteractionController: ConnectionBehavior initialized');
+
+      await toolbarBehavior.initialize();
+      console.log('InteractionController: ToolbarBehavior initialized');
 
       await serverConnectionBehavior.initialize();
       console.log(

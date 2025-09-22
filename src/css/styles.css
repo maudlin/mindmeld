@@ -579,10 +579,10 @@ body.dragging .confirmation-dialog * {
   pointer-events: auto;
 }
 
-/* Color Picker Container */
+/* Color Picker Container - Expanded for context actions */
 .color-picker-palette {
   position: relative;
-  width: 174px;
+  width: 242px; /* Expanded from 174px to accommodate new buttons + separators */
   height: 37px;
   background: rgba(255, 255, 255, 0.582);
   border: 1px solid rgba(103, 103, 103, 0.25);
@@ -593,11 +593,22 @@ body.dragging .confirmation-dialog * {
   align-items: center;
 }
 
-/* Separator line between colors and kebab menu */
-.color-picker-palette::after {
+/* First separator line between colors and context actions */
+.color-picker-palette::before {
   content: '';
   position: absolute;
   left: 135px;
+  top: 10px;
+  width: 1px;
+  height: 16px;
+  background: rgba(177, 177, 177, 0.4);
+}
+
+/* Second separator line between context actions and kebab menu */
+.color-picker-palette::after {
+  content: '';
+  position: absolute;
+  left: 203px; /* Moved right to account for new buttons */
   top: 10px;
   width: 1px;
   height: 16px;
@@ -689,7 +700,80 @@ body.dragging .confirmation-dialog * {
   outline: none;
 }
 
-/* Kebab Menu Button */
+/* Context Action Buttons - Match color swatch styling */
+.toolbar-action {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  top: 5px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+
+/* Delete Action Button Position */
+.toolbar-action.delete-action {
+  left: 147px; /* Between first separator and switch button */
+  background: #ffffff; /* White background to match switch button */
+}
+
+/* Switch Action Button Position */
+.toolbar-action.switch-action {
+  left: 175px; /* Between delete button and second separator */
+}
+
+/* Disabled state - ghosted appearance */
+.toolbar-action:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+}
+
+/* Enabled state hover effects */
+.toolbar-action:not(:disabled):hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  opacity: 1;
+}
+
+/* Focus styles consistent with color swatches */
+.toolbar-action:focus {
+  outline: 2px solid #4a90e2;
+  outline-offset: 2px;
+}
+
+/* SVG styling for toolbar actions */
+.toolbar-action svg {
+  width: 12px;
+  height: 12px;
+  pointer-events: none;
+}
+
+/* Delete button - using the working multi-property approach */
+button.toolbar-action.delete-action svg {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+}
+
+/* Switch button - using the working multi-property approach */
+button.toolbar-action.switch-action svg {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+}
+
+/* Kebab Menu Button - Updated position */
 .kebab-menu-button {
   position: absolute;
   width: 24px;
@@ -698,7 +782,7 @@ body.dragging .confirmation-dialog * {
   cursor: pointer;
   transition: box-shadow 0.2s ease;
   top: 5px;
-  left: 140px;
+  left: 208px; /* Moved right to account for new buttons */
   border: 1px solid rgba(0, 0, 0, 0.1);
   background: #ffffff;
   display: flex;
@@ -707,8 +791,8 @@ body.dragging .confirmation-dialog * {
 }
 
 .kebab-menu-button svg {
-  width: 12px;
-  height: 12px;
+  width: 20px !important;
+  height: 20px !important;
   fill: rgba(124, 124, 124, 0.6);
 }
 
@@ -853,6 +937,29 @@ line.connection-line {
   stroke: #5a6f86;
   stroke-width: 2;
   cursor: pointer;
+  transition:
+    fill 0.2s ease,
+    stroke 0.2s ease,
+    filter 0.2s ease;
+}
+
+/* Hover effect for connector hotspots */
+.connector-hotspot:hover {
+  fill: #ffeb3b;
+  filter: drop-shadow(0 0 8px rgba(255, 235, 59, 0.6));
+  stroke: #f57f17;
+}
+
+/* Selected state for connector hotspots */
+.connector-hotspot.selected {
+  fill: #ffeb3b;
+  filter: drop-shadow(0 0 8px rgba(255, 235, 59, 0.8));
+  stroke: #f57f17;
+}
+
+/* Selected state for connection paths - subtle drop shadow, keep dotted line */
+path.selected {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
 #svg-container line,
