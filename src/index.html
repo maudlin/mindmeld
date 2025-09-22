@@ -31,8 +31,8 @@
       href="img/icon16.png"
       media="(prefers-color-scheme: dark)"
     />
-    <meta name="app-version" content="1.0.1" />
-    <meta name="build-date" content="2025-09-21" />
+    <meta name="app-version" content="1.0.1">
+    <meta name="build-date" content="2025-09-22">
   </head>
   <body>
     <nav id="navbar">
@@ -87,6 +87,40 @@
           tabindex="0"
           aria-label="Select blue color"
         ></div>
+
+        <!-- Context Actions -->
+        <button
+          class="toolbar-action delete-action"
+          data-toolbar-action="delete"
+          role="button"
+          tabindex="0"
+          aria-label="Delete selected items"
+          disabled
+        >
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <line x1="3" y1="3" x2="17" y2="17" />
+            <line x1="17" y1="3" x2="3" y2="17" />
+          </svg>
+        </button>
+
+        <button
+          class="toolbar-action switch-action"
+          data-toolbar-action="switch-type"
+          role="button"
+          tabindex="0"
+          aria-label="Switch connector type"
+          disabled
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <g>
+              <circle cx="12" cy="12" r="9" fill="var(--mm-arrow-fill, #8585ecff)" stroke="transparent" stroke-width="1"/>
+              <polyline points="6,9 9,12 6,15" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="18,9 15,12 18,15" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="12" cy="12" r="2" fill="rgba(255,255,255,0.5)"/>
+            </g>
+          </svg>
+        </button>
+
         <div
           class="kebab-menu-button"
           id="kebab-menu-button"
