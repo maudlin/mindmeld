@@ -32,6 +32,7 @@ export class DesktopAdapter extends BaseAdapter {
     this.connectionBehavior = null;
     this.viewportBehavior = null;
     this.menuBehavior = null;
+    this.toolbarBehavior = null;
 
     // Canvas and container references
     this.canvas = null;
@@ -94,6 +95,7 @@ export class DesktopAdapter extends BaseAdapter {
       this.viewportBehavior =
         this.interactionController.getBehavior('viewport');
       this.menuBehavior = this.interactionController.getBehavior('menu');
+      this.toolbarBehavior = this.interactionController.getBehavior('toolbar');
 
       console.log('DesktopAdapter: Behavior references initialized', {
         hasNoteBehavior: !!this.noteBehavior,
@@ -102,6 +104,7 @@ export class DesktopAdapter extends BaseAdapter {
         hasCanvasBehavior: !!this.canvasBehavior,
         hasConnectionBehavior: !!this.connectionBehavior,
         hasViewportBehavior: !!this.viewportBehavior,
+        hasToolbarBehavior: !!this.toolbarBehavior,
       });
     } else {
       console.warn('DesktopAdapter: No InteractionController provided!');

@@ -81,10 +81,19 @@ describe('DesktopAdapter - Unit Tests', () => {
       resetZoom: jest.fn(),
     };
 
+    // Mock ToolbarBehavior
+    const mockToolbarBehavior = {
+      handleColorSelection: jest.fn(),
+      handleDeleteAction: jest.fn(),
+      handleConnectorTypeSwitch: jest.fn(),
+      isInitialized: true,
+    };
+
     // Mock InteractionController
     const mockInteractionController = {
       getBehavior: jest.fn((name) => {
         if (name === 'viewport') return mockViewportBehavior;
+        if (name === 'toolbar') return mockToolbarBehavior;
         return null;
       }),
     };
@@ -98,8 +107,9 @@ describe('DesktopAdapter - Unit Tests', () => {
     // Create fresh adapter instance for each test
     desktopAdapter = new DesktopAdapter(mockInteractionController);
 
-    // Store mock for test access
+    // Store mocks for test access
     desktopAdapter._mockViewportBehavior = mockViewportBehavior;
+    desktopAdapter._mockToolbarBehavior = mockToolbarBehavior;
 
     // Store original for cleanup
     global.originalGetElementById = originalGetElementById;
@@ -346,6 +356,29 @@ describe('DesktopAdapter - Unit Tests', () => {
         'notes.deleteSelected',
         expect.anything(),
       );
+    });
+
+    it('should get ToolbarBehavior reference during initialization', async () => {
+      // Create a fresh adapter for this test to avoid initialization conflicts
+      const mockToolbarBehavior = {
+        handleColorSelection: jest.fn(),
+        handleDeleteAction: jest.fn(),
+        handleConnectorTypeSwitch: jest.fn(),
+        isInitialized: true,
+      };
+
+      const mockInteractionController = {
+        getBehavior: jest.fn((name) => {
+          if (name === 'toolbar') return mockToolbarBehavior;
+          return null;
+        }),
+      };
+
+      const testAdapter = new DesktopAdapter(mockInteractionController);
+      await testAdapter.initialize(mockEventBus);
+
+      expect(testAdapter.toolbarBehavior).toBeDefined();
+      expect(testAdapter.toolbarBehavior).toBe(mockToolbarBehavior);
     });
   });
 
