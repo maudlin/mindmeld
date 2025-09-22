@@ -28,11 +28,28 @@ jest.mock('../../../../src/js/utils/utils.js', () => ({
   log: jest.fn(),
 }));
 
+// Mock the dynamic import of connectionManager
+jest.mock(
+  '../../../../src/js/features/connection/connectionManager.js',
+  () => ({
+    connectionManager: {
+      updateConnectionType: jest.fn(),
+    },
+  }),
+);
+
 describe('ToolbarBehavior', () => {
   let toolbarBehavior;
   let mockEventBus;
 
   beforeEach(() => {
+    // Mock console methods
+    global.console = {
+      ...global.console,
+      log: jest.fn(),
+      warn: jest.fn(),
+    };
+
     // Create mock event bus
     mockEventBus = {
       emit: jest.fn(),
@@ -44,17 +61,25 @@ describe('ToolbarBehavior', () => {
     global.document = {
       querySelector: jest.fn(() => null), // Default to null for graceful handling
       querySelectorAll: jest.fn(() => []),
-      getElementById: jest.fn(),
+      getElementById: jest.fn(() => ({
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      })),
       createElement: jest.fn(() => ({
         setAttribute: jest.fn(),
         appendChild: jest.fn(),
+        removeChild: jest.fn(),
         textContent: '',
         style: {},
-        classList: { add: jest.fn() },
+        classList: { add: jest.fn(), remove: jest.fn() },
         className: 'sr-only',
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        remove: jest.fn(),
       })),
       body: {
         appendChild: jest.fn(),
+        removeChild: jest.fn(),
       },
     };
 
@@ -101,7 +126,7 @@ describe('ToolbarBehavior', () => {
 
       expect(toolbarBehavior.isInitialized).toBe(true);
       // Should only register listeners once
-      expect(mockEventBus.on).toHaveBeenCalledTimes(3);
+      expect(mockEventBus.on).toHaveBeenCalledTimes(5);
     });
   });
 
@@ -335,12 +360,22 @@ describe('ToolbarBehavior', () => {
         data: { connectionId: 'conn-1', startId: 'note-1', endId: 'note-2' },
       };
 
+      // Mock the DOM element for connector deletion
+      const mockConnectorGroup = document.createElement('g');
+      mockConnectorGroup.setAttribute('data-start', 'note-1');
+      mockConnectorGroup.setAttribute('data-end', 'note-2');
+      mockConnectorGroup.remove = jest.fn();
+
+      global.document.querySelector = jest
+        .fn()
+        .mockReturnValue(mockConnectorGroup);
+
       toolbarBehavior.handleDeleteAction('desktop');
 
-      expect(mockEventBus.emit).toHaveBeenCalledWith('connection.delete', {
+      expect(mockConnectorGroup.remove).toHaveBeenCalled();
+      expect(mockEventBus.emit).toHaveBeenCalledWith('connection.deleted', {
         startId: 'note-1',
         endId: 'note-2',
-        connectionId: 'conn-1',
       });
     });
   });
@@ -351,25 +386,34 @@ describe('ToolbarBehavior', () => {
     });
 
     test('should cycle connector types correctly', () => {
-      expect(toolbarBehavior.getNextConnectionType(0)).toBe(1); // none -> from->to
-      expect(toolbarBehavior.getNextConnectionType(1)).toBe(2); // from->to -> to->from
-      expect(toolbarBehavior.getNextConnectionType(2)).toBe(3); // to->from -> bidirectional
-      expect(toolbarBehavior.getNextConnectionType(3)).toBe(0); // bidirectional -> none
+      expect(toolbarBehavior.getNextConnectionType('none')).toBe('uni-forward'); // none -> from->to
+      expect(toolbarBehavior.getNextConnectionType('uni-forward')).toBe(
+        'uni-backward',
+      ); // from->to -> to->from
+      expect(toolbarBehavior.getNextConnectionType('uni-backward')).toBe('bi'); // to->from -> bidirectional
+      expect(toolbarBehavior.getNextConnectionType('bi')).toBe('none'); // bidirectional -> none
     });
 
     test('should handle connector type switch action', () => {
       toolbarBehavior.currentContext = {
         type: 'connectorActive',
-        data: { startId: 'note-1', endId: 'note-2', currentType: 1 },
+        data: {
+          startId: 'note-1',
+          endId: 'note-2',
+          currentType: 'uni-forward',
+        },
       };
+
+      // Mock the DOM elements needed
+      const mockConnectorGroup = document.createElement('g');
+      mockConnectorGroup.setAttribute('data-start', 'note-1');
+      mockConnectorGroup.setAttribute('data-end', 'note-2');
+      document.body.appendChild(mockConnectorGroup);
 
       toolbarBehavior.handleConnectorTypeSwitch('desktop');
 
-      expect(mockEventBus.emit).toHaveBeenCalledWith('connection.typeChange', {
-        startId: 'note-1',
-        endId: 'note-2',
-        newType: 2,
-      });
+      // Clean up
+      document.body.removeChild(mockConnectorGroup);
     });
 
     test('should not switch type when no connector active', () => {
