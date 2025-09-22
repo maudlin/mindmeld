@@ -29,6 +29,11 @@ This comprehensive index helps both end users and developers find the right docu
   - Advanced features (multi-select, templates)
   - Mobile and touch interactions
   - Tips and best practices
+- **[Real-Time Collaboration Guide](client-server.md)** - WebSocket collaboration and server synchronization
+  - Multi-user real-time editing
+  - Server connection setup
+  - Collaboration vs. synchronization modes
+  - Troubleshooting connection issues
 
 ### 🛠️ Developer Documentation
 
@@ -85,23 +90,25 @@ This comprehensive index helps both end users and developers find the right docu
 
 ### By Task Type
 
-| Task                           | Primary Document                             | Supporting Documents |
-| ------------------------------ | -------------------------------------------- | -------------------- |
-| **Learning to use MindMeld**   | User Guide                                   | -                    |
-| **Setting up for development** | Developer Guide                              | Scripts Reference    |
-| **Writing tests**              | Testing Guide                                | -                    |
-| **Debugging test failures**    | Testing Guide                                | -                    |
-| **Adding canvas templates**    | Canvas Templates                             | Developer Guide      |
-| **Touch/mobile features**      | User Guide (users)<br>Mobile Patterns (devs) | Accessibility        |
-| **Git workflow issues**        | Developer Guide - Git Workflow               | -                    |
-| **CI/CD configuration**        | CI/CD Guide                                  | Scripts Reference    |
-| **Architecture questions**     | Developer Guide                              | Architecture Health  |
+| Task                               | Primary Document                             | Supporting Documents |
+| ---------------------------------- | -------------------------------------------- | -------------------- |
+| **Learning to use MindMeld**       | User Guide                                   | -                    |
+| **Setting up collaboration**       | Real-Time Collaboration Guide               | User Guide           |
+| **Connecting to servers**          | Real-Time Collaboration Guide               | -                    |
+| **Setting up for development**     | Developer Guide                              | Scripts Reference    |
+| **Writing tests**                  | Testing Guide                                | -                    |
+| **Debugging test failures**       | Testing Guide                                | -                    |
+| **Adding canvas templates**        | Canvas Templates                             | Developer Guide      |
+| **Touch/mobile features**          | User Guide (users)<br>Mobile Patterns (devs) | Accessibility        |
+| **Git workflow issues**           | Developer Guide - Git Workflow               | -                    |
+| **CI/CD configuration**           | CI/CD Guide                                  | Scripts Reference    |
+| **Architecture questions**        | Developer Guide                              | Architecture Health  |
 
 ### By Audience
 
-**End Users**: User Guide covers everything needed  
-**New Developers**: Developer Guide → Testing Guide → Scripts Reference  
-**Experienced Contributors**: Testing Guide + specific technical docs as needed  
+**End Users**: User Guide + Real-Time Collaboration Guide
+**New Developers**: Developer Guide → Testing Guide → Scripts Reference
+**Experienced Contributors**: Testing Guide + specific technical docs as needed
 **DevOps/Maintainers**: CI/CD Guide + Architecture Health
 
 ## 📈 Recent Documentation Improvements

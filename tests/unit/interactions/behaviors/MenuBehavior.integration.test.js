@@ -253,16 +253,20 @@ describe('MenuBehavior - Server Connection Integration', () => {
       });
 
       it('should get server connection status for menu state', () => {
-        mockServerConnectionService.getConnectionState.mockReturnValue({
-          isConnected: true,
-          connectionStatus: 'connected',
+        mockNewServerInstance.getConnectionStatus.mockReturnValue({
+          phase: 'server-configured',
+          serverUrl: 'https://test-server.com',
+          connected: true,
+          wsProvider: null,
         });
 
         const status = behavior.getServerConnectionStatus();
 
         expect(status).toEqual({
           isConnected: true,
-          connectionStatus: 'connected',
+          connectionStatus: 'server-configured',
+          serverUrl: 'https://test-server.com',
+          wsProvider: null,
         });
       });
 
@@ -295,7 +299,12 @@ describe('MenuBehavior - Server Connection Integration', () => {
           url: 'https://test-server.com',
         };
         behavior.mapsApi = { health: jest.fn() };
-        mockServerConnectionService.setConnectionStatus('connected');
+        mockNewServerInstance.getConnectionStatus.mockReturnValue({
+          phase: 'server-configured',
+          serverUrl: 'https://test-server.com',
+          connected: true,
+          wsProvider: null,
+        });
 
         const status = behavior.getServerStatus();
 
@@ -304,6 +313,7 @@ describe('MenuBehavior - Server Connection Integration', () => {
           connected: true,
           connecting: false,
           hasApi: true,
+          collaborationReady: false,
         });
       });
 
@@ -322,6 +332,7 @@ describe('MenuBehavior - Server Connection Integration', () => {
           connected: false,
           connecting: false,
           hasApi: false,
+          collaborationReady: false,
         });
       });
     });
@@ -366,7 +377,6 @@ describe('MenuBehavior - Server Connection Integration', () => {
           url: 'https://test-server.com',
         };
         behavior.mapsApi = { health: jest.fn() };
-        mockServerConnectionService.setConnectionStatus('connected');
 
         // Call the disconnect method directly since the event handler calls it
         behavior.handleServerDisconnect('test');
@@ -374,12 +384,7 @@ describe('MenuBehavior - Server Connection Integration', () => {
         expect(behavior.serverConfig.url).toBe(null);
         expect(behavior.getServerStatus().connected).toBe(false);
         expect(behavior.mapsApi).toBe(null);
-        expect(mockServerConnectionService.setServerUri).toHaveBeenCalledWith(
-          null,
-        );
-        expect(
-          mockServerConnectionService.setConnectionStatus,
-        ).toHaveBeenCalledWith('disconnected');
+        expect(mockNewServerInstance.disconnect).toHaveBeenCalled();
         expect(mockEventBus.emit).toHaveBeenCalledWith('server.disconnected', {
           behavior: behavior,
           inputType: 'test',
@@ -409,16 +414,15 @@ describe('MenuBehavior - Server Connection Integration', () => {
     });
 
     describe('server configuration persistence', () => {
-      it('should load server config from ServerConnectionService', () => {
-        mockServerConnectionService.loadServerUriFromStorage.mockReturnValue(
+      it('should load server config from ServerConnectionService', async () => {
+        // Mock that new service already has configuration
+        mockNewServerInstance.isServerConfigured.mockReturnValue(true);
+        mockNewServerInstance.getServerUrl.mockReturnValue(
           'https://stored-server.com',
         );
 
-        behavior.loadServerConfig();
+        await behavior.loadServerConfig();
 
-        expect(mockServerConnectionService.setServerUri).toHaveBeenCalledWith(
-          'https://stored-server.com',
-        );
         expect(behavior.serverConfig.url).toBe('https://stored-server.com');
       });
 
@@ -435,9 +439,9 @@ describe('MenuBehavior - Server Connection Integration', () => {
 
         behavior.saveServerConfig();
 
-        expect(mockServerConnectionService.setServerUri).toHaveBeenCalledWith(
-          'https://save-test.com',
-        );
+        // New service handles persistence automatically - this is now a no-op
+        // Just verify it doesn't throw
+        expect(() => behavior.saveServerConfig()).not.toThrow();
       });
     });
 
@@ -451,15 +455,18 @@ describe('MenuBehavior - Server Connection Integration', () => {
         behavior.isOpen = true;
         behavior.modalOpen = false;
 
-        // Mock both services for this test
+        // Mock the new service connection status
+        mockNewServerInstance.getConnectionStatus.mockReturnValue({
+          phase: 'server-configured',
+          serverUrl: 'https://test-server.com',
+          connected: true,
+          wsProvider: null,
+        });
+
+        // Mock ServerClient for getAvailableServerActions
         const ServerClientModule = require('../../../../src/js/services/serverClient.js');
         const mockServerClient = ServerClientModule.ServerClient;
         mockServerClient.getConnectionStatus.mockReturnValue({
-          isConnected: true,
-          connectionStatus: 'connected',
-        });
-
-        mockServerConnectionService.getConnectionState.mockReturnValue({
           isConnected: true,
           connectionStatus: 'connected',
         });
@@ -474,10 +481,13 @@ describe('MenuBehavior - Server Connection Integration', () => {
             connected: true,
             connecting: false,
             hasApi: false,
+            collaborationReady: false,
           },
           serverConnection: {
             isConnected: true,
-            connectionStatus: 'connected',
+            connectionStatus: 'server-configured',
+            serverUrl: 'https://test-server.com',
+            wsProvider: null,
           },
           availableActions: {
             loadFromServer: true,
@@ -489,7 +499,13 @@ describe('MenuBehavior - Server Connection Integration', () => {
         behavior.serverConfig = {
           url: 'https://test-server.com',
         };
-        mockServerConnectionService.setConnectionStatus('connected');
+        // Mock connection status for new service
+        mockNewServerInstance.getConnectionStatus.mockReturnValue({
+          phase: 'server-configured',
+          serverUrl: 'https://test-server.com',
+          connected: true,
+          wsProvider: null,
+        });
 
         behavior.openMenu('click');
 
@@ -501,6 +517,7 @@ describe('MenuBehavior - Server Connection Integration', () => {
             connected: true,
             connecting: false,
             hasApi: false,
+            collaborationReady: false,
           },
         });
       });
@@ -508,12 +525,13 @@ describe('MenuBehavior - Server Connection Integration', () => {
 
     describe('error handling', () => {
       it('should handle server connection failure', async () => {
-        const mockApi = {
-          health: jest.fn().mockRejectedValue(new Error('Connection failed')),
-        };
-        const createMapsApi =
-          require('../../../../src/js/services/mapsApi.js').createMapsApi;
-        createMapsApi.mockReturnValue(mockApi);
+        // Mock the new service to return a failed test result
+        mockNewServerInstance.testServerConnection.mockReturnValue(
+          Promise.resolve({
+            valid: false,
+            error: 'Connection failed',
+          }),
+        );
 
         const connectData = { url: 'https://failing-server.com' };
 

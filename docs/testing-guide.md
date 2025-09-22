@@ -13,6 +13,7 @@ For commands and test structure, see **[tests/README.md](../tests/README.md)**.
 - **User workflows**: See [tests/e2e/smoke/core-workflows.spec.js](../tests/e2e/smoke/core-workflows.spec.js)
 - **Cross-platform**: See [tests/e2e/integration/cross-platform.spec.js](../tests/e2e/integration/cross-platform.spec.js)
 - **Accessibility**: See [tests/e2e/critical/accessibility-and-regression.spec.js](../tests/e2e/critical/accessibility-and-regression.spec.js)
+- **Real-time collaboration**: See [tests/e2e/collaboration/server-connection-flow.spec.js](../tests/e2e/collaboration/server-connection-flow.spec.js)
 - **Page Object Model**: See [tests/e2e/helpers/CanvasPage.js](../tests/e2e/helpers/CanvasPage.js)
 
 ### Unit Testing Patterns
@@ -21,6 +22,8 @@ For commands and test structure, see **[tests/README.md](../tests/README.md)**.
 - **Data management**: See [tests/unit/data/](../tests/unit/data/) directory
 - **User interactions**: See [tests/unit/interactions/](../tests/unit/interactions/) directory
 - **Feature logic**: See [tests/unit/features/](../tests/unit/features/) directory
+- **Collaboration services**: See [tests/unit/services/ServerConnectionService.test.js](../tests/unit/services/ServerConnectionService.test.js)
+- **Data providers**: See [tests/unit/services/DataProviderService.test.js](../tests/unit/services/DataProviderService.test.js)
 
 ## Critical Information
 

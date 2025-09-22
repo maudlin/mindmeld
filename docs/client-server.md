@@ -1,20 +1,31 @@
-# MindMeld Server Synchronization
+# MindMeld Real-Time Collaboration & Server Synchronization
 
-## What is Server Synchronization?
+## What is Real-Time Collaboration?
 
-MindMeld can connect to a remote server to automatically save and load your mind maps. This provides data backup, persistence across devices, and enables future collaboration features. The application works completely offline - server connection is an optional enhancement that adds cloud storage capabilities to your local mind mapping.
+MindMeld features **full real-time collaboration** with WebSocket connectivity and conflict-free replicated data types (CRDTs). Multiple users can simultaneously edit the same mind map with changes syncing instantly across all connected clients. The application works completely offline - server connection is an optional enhancement that adds collaborative capabilities to your local mind mapping.
+
+### Collaboration vs. Synchronization
+
+- **Real-Time Collaboration**: Live editing with multiple users via WebSocket (Y.js CRDTs)
+- **Server Synchronization**: Backup and cross-device access via REST API (legacy)
 
 ## How It Works
 
-### Automatic Background Saving
+### Real-Time Collaboration Mode
 
-When connected to a server, MindMeld automatically saves your work in the background. Every time you:
-- Create, edit, or delete a note
-- Add or modify connections between notes  
-- Change note colors
-- Adjust the canvas view
+When connected to a collaboration server, MindMeld uses **WebSocket connectivity with Y.js CRDTs** for instant synchronization:
 
-Your changes are automatically saved to the server after a brief 2-second delay. This prevents excessive server requests while ensuring your work is always backed up. The app continues to work normally even if the server becomes unavailable.
+- **Instant Updates**: Changes appear immediately on all connected clients
+- **Conflict-Free Editing**: Multiple users can edit simultaneously without conflicts
+- **Offline Resilience**: Local changes are preserved and sync when reconnecting
+- **Zero Data Loss**: Y.js ensures mathematical consistency across all clients
+
+### Legacy REST Synchronization
+
+For non-collaborative servers, MindMeld falls back to REST-based synchronization with automatic background saving every 2 seconds. This legacy mode provides:
+- Backup and cross-device access
+- Manual save/load operations
+- Single-user data persistence
 
 ### Manual Save and Load
 
@@ -54,8 +65,9 @@ If you encounter CORS errors when connecting to localhost servers, this is usual
 ### Connection Status
 
 The application shows your connection status:
-- **Connected** (🟢) - Server is reachable, auto-save is active
-- **Connecting** (🟡) - Attempting to establish connection  
+- **Collaborating** (🟢) - WebSocket connected, real-time sync active with other users
+- **Connected** (🟢) - Server reachable, REST-based backup sync active
+- **Connecting** (🟡) - Attempting to establish connection
 - **Disconnected** (🔴) - No server connection, local-only mode
 - **Error** (⚠️) - Connection failed with error details
 
@@ -160,35 +172,51 @@ Access your mind maps from different computers by connecting to the same server 
 - Check for error notifications or status changes
 - Try manual save to test server communication
 
-## Real-time Collaboration Foundation
+## Real-Time Collaboration (Production Ready)
 
-MindMeld now includes **Yjs-based DataProvider infrastructure** that enables future real-time collaboration features:
+MindMeld includes **full real-time collaboration** powered by Y.js CRDTs and WebSocket connectivity:
 
-### Technical Foundation (Available Now)
-- **YjsProvider**: Complete implementation with conflict-free replicated data types (CRDTs)
-- **WebSocket support**: Ready for real-time synchronization via Yjs WebSocket provider
-- **Offline mode**: Full functionality when disconnected from collaboration server
-- **Content validation**: Automatic content size limit enforcement (200 characters)
-- **Error resilience**: Robust handling of network issues and malformed data
+### ✅ Available Features
+- **Multi-User Editing**: Multiple users can simultaneously edit the same mind map
+- **Instant Synchronization**: Changes appear immediately across all connected clients
+- **Conflict-Free Operations**: Y.js CRDTs mathematically guarantee consistency
+- **Offline Resilience**: Local changes preserved and synced when reconnecting
+- **Graceful Fallback**: Automatic switching between collaborative and local modes
+- **Content Validation**: Automatic enforcement of content size limits (200 characters)
+- **Error Recovery**: Robust handling of network issues and connection failures
 
-### Architecture Benefits
-- **Conflict-free collaboration**: Yjs CRDTs ensure data consistency across multiple users
-- **Real-time updates**: Changes sync instantly between connected clients
-- **Seamless transitions**: Switch between online and offline modes transparently
-- **DataProvider abstraction**: Clean separation allows switching between storage backends
+### 🛠 Technical Implementation
+- **YjsProvider**: Production-ready implementation with WebSocket connectivity
+- **ServerConnectionService**: Centralized collaboration infrastructure
+- **DataProviderService**: Dynamic switching between local and collaborative modes
+- **UI Integration**: Kebab menu server connection with real-time status indicators
+- **Map Loading**: Collaborative map loading with graceful REST fallback
 
-### Current Status
-🔧 **Foundation Complete**: YjsProvider implementation with comprehensive test coverage
-🚧 **Integration Pending**: UI observers and real-time features (MM-246)
-📋 **Future**: Full multi-user collaboration interface
+### 🎯 User Experience
+- **Easy Setup**: Connect via kebab menu → "Connect to Server" → Enter server URL
+- **Status Awareness**: Clear "Collaborating" vs "Connected" indicators
+- **Seamless Operation**: No learning curve - mind mapping works exactly the same
+- **Multi-Device**: Access and collaborate across phones, tablets, and desktops
 
-### For Developers
-The DataProvider pattern ensures backward compatibility:
-- Current LocalJSONProvider handles local storage
-- Future YjsProvider enables real-time collaboration
-- Applications transparently use either provider
-- See [Developer Guide](developer-guide.md#dataprovider-abstraction) for implementation details
+### 🏗 Architecture Benefits
+- **DataProvider Abstraction**: Clean separation between UI and storage backends
+- **Backward Compatibility**: Existing workflows continue working unchanged
+- **Server Flexibility**: Works with any Y.js WebSocket server implementation
+- **Local-First**: Always maintains local state for offline operation
+
+### 📊 Current Status
+✅ **Real-Time Collaboration**: Full production implementation (MM-237, MM-249)
+✅ **UI Integration**: Complete server connection and status system
+✅ **Testing**: Comprehensive unit and E2E test coverage
+🎯 **Ready for Use**: Connect to any Y.js WebSocket server and start collaborating
+
+### 🧑‍💻 For Developers
+The collaboration system is built on proven patterns:
+- **Y.js CRDTs**: Industry-standard conflict-free data structures
+- **WebSocket Provider**: Standard y-websocket implementation
+- **Event-Driven Architecture**: Clean separation of concerns with zero circular dependencies
+- **See [Developer Guide](developer-guide.md#collaboration-architecture)** for implementation details
 
 ---
 
-*Server synchronization is an optional feature that enhances MindMeld with cloud backup and future collaboration capabilities. The application works perfectly without any server connection.*
+*Real-time collaboration and server synchronization are optional features that enhance MindMeld with multi-user editing and cloud backup capabilities. The application works perfectly without any server connection.*

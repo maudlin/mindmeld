@@ -2,10 +2,11 @@
 
 [![CI Tests](https://github.com/maudlin/mindmeld/actions/workflows/ci.yml/badge.svg)](https://github.com/maudlin/mindmeld/actions/workflows/ci.yml)
 
-MindMeld is a web-based mind mapping tool that allows users to create, organize, and connect notes in a flexible, freeform manner. Built with modern event-driven architecture, it provides an intuitive interface for visualizing ideas and their relationships on both desktop and mobile devices.
+MindMeld is a web-based mind mapping tool that allows users to create, organize, and connect notes in a flexible, freeform manner. Built with modern event-driven architecture, it provides an intuitive interface for visualizing ideas and their relationships on both desktop and mobile devices. **Now with real-time collaboration support** via WebSocket connectivity and Y.js CRDTs.
 
-**🌐 Live Demo**: [mind-meld.co](https://mind-meld.co/)  
+**🌐 Live Demo**: [mind-meld.co](https://mind-meld.co/)
 **📱 Status**: V1.0 - Production Ready with Full Touch Support
+**🤝 Collaboration**: Real-time sync with WebSocket server support
 
 ## Prerequisites
 
@@ -32,6 +33,17 @@ npm install && npm start
 
 Visit `http://localhost:8080` to begin mind mapping.
 
+### 🤝 Collaboration Setup (Optional)
+
+For real-time collaboration, connect to a WebSocket server:
+
+1. **Open kebab menu** (⋮) in the top-right corner
+2. **Select "Connect to Server"**
+3. **Enter server URL** (e.g., `https://your-collaboration-server.com`)
+4. **Start collaborating** - Changes sync automatically across all connected users
+
+The app automatically falls back to local storage when no server is connected.
+
 ### Mobile & Touch Support ✨
 
 MindMeld features a **fully optimized touch interface** with:
@@ -45,6 +57,13 @@ See [User Guide](docs/user-guide.md) for complete interaction details.
 
 ## Key Features
 
+### 🤝 Real-Time Collaboration
+- **WebSocket Connectivity**: Connect to collaboration servers for real-time synchronization
+- **Y.js CRDTs**: Conflict-free replicated data types for seamless multi-user editing
+- **Graceful Fallback**: Automatic switching between collaborative and local storage modes
+- **Server Configuration**: Easy server connection via kebab menu with status indicators
+
+### 🎨 Core Mind Mapping
 - **Cross-Platform Design**: Optimized for desktop mouse, trackpad, and mobile touch interactions
 - **Dynamic Note Creation**: Double-click (desktop) or tap (mobile) to create notes anywhere
 - **Fine-Grained Zoom**: Smooth pinch-to-zoom with decimal precision (1.0x to 5.0x)
@@ -52,8 +71,10 @@ See [User Guide](docs/user-guide.md) for complete interaction details.
 - **Smart Connections**: Directional arrows with context menus for easy type switching
 - **Multi-Canvas Templates**: Standard Canvas, Hero's Journey, and extensible template system
 - **Advanced Selection**: Multi-select with group operations and touch-optimized selection
+
+### 🔧 Data & Architecture
 - **Data Management**: Export/import mind maps as JSON with full state preservation
-- **Real-time Ready**: DataProvider abstraction layer foundation for future collaboration features
+- **DataProvider Architecture**: Pluggable storage layer supporting local and collaborative backends
 - **Modern Architecture**: Event-driven design with zero circular dependencies
 - **Enterprise-Grade Data Integrity**: Comprehensive corruption resistance and browser compatibility
 - **Secure Markdown System**: XSS-protected rendering with zero HTML injection
@@ -88,6 +109,8 @@ See the full documentation index in docs/README.md.
 **Event-driven design**: Zero circular dependencies with central EventBus
 **Cross-platform interactions**: Unified touch and desktop input handling
 **DataProvider abstraction**: Pluggable data persistence layer with LocalJSON and Yjs providers
+**Real-time collaboration**: WebSocket connectivity with Y.js CRDTs for conflict-free editing
+**ServerConnectionService**: Centralized collaboration infrastructure with automatic fallback
 **Modular bootstrap**: DataBootstrap → ServiceBootstrap → UIBootstrap → InteractionBootstrap
 
 **Health**: Run `npm run health-check` | **Tests**: Run `npm test`  
