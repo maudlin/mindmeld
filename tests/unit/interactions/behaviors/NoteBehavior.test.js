@@ -7,6 +7,7 @@
  */
 
 import { NoteBehavior } from '../../../../src/js/interactions/behaviors/NoteBehavior.js';
+import { NoteIdService } from '../../../../src/js/services/noteIdService.js';
 
 describe('NoteBehavior', () => {
   let noteBehavior;
@@ -433,6 +434,290 @@ describe('NoteBehavior', () => {
         behavior: noteBehavior,
         inputType: 'desktop',
         noteId: 'note-123',
+      });
+    });
+  });
+
+  // MM-256: Note Creation Methods (Behavior Refactor)
+  describe('Note Creation (MM-256 Behavior Refactor)', () => {
+    let mockCanvas;
+
+    beforeEach(async () => {
+      await noteBehavior.initialize();
+
+      // Reset ID service for each test
+      NoteIdService.reset();
+
+      // Create mock canvas element
+      mockCanvas = {
+        tagName: 'DIV',
+        id: 'canvas',
+        appendChild: jest.fn(),
+        querySelector: jest.fn(),
+        querySelectorAll: jest.fn(() => []),
+      };
+
+      // Mock document.createElement
+      global.document = {
+        createElement: jest.fn((tagName) => {
+          if (tagName === 'div') {
+            return {
+              tagName: 'DIV',
+              className: '',
+              appendChild: jest.fn(),
+              querySelector: jest.fn(),
+              style: {},
+              dataset: {},
+              classList: {
+                add: jest.fn(),
+                remove: jest.fn(),
+                contains: jest.fn(() => false),
+              },
+              addEventListener: jest.fn(),
+            };
+          }
+          return {};
+        }),
+        querySelectorAll: jest.fn(() => []),
+      };
+    });
+
+    describe('createNoteAtPosition', () => {
+      test('should create note at specified position with unique ID', () => {
+        const mockEvent = {
+          clientX: 150,
+          clientY: 200,
+        };
+
+        const note = noteBehavior.createNoteAtPosition(mockCanvas, mockEvent);
+
+        expect(note).toBeDefined();
+        expect(note.id).toBe('1'); // First ID from NoteIdService
+        expect(note.dataset.id).toBe('1');
+        expect(mockCanvas.appendChild).toHaveBeenCalledWith(note);
+        expect(mockEventBus.emit).toHaveBeenCalledWith('note.created', {
+          id: '1',
+          content: '',
+          left: expect.any(String),
+          top: expect.any(String),
+        });
+      });
+
+      test('should generate sequential unique IDs for multiple notes', () => {
+        const mockEvent = { clientX: 100, clientY: 100 };
+
+        const note1 = noteBehavior.createNoteAtPosition(mockCanvas, mockEvent);
+        const note2 = noteBehavior.createNoteAtPosition(mockCanvas, mockEvent);
+        const note3 = noteBehavior.createNoteAtPosition(mockCanvas, mockEvent);
+
+        expect(note1.id).toBe('1');
+        expect(note2.id).toBe('2');
+        expect(note3.id).toBe('3');
+
+        // Ensure all IDs are unique
+        const ids = [note1.id, note2.id, note3.id];
+        expect(new Set(ids).size).toBe(3);
+      });
+
+      test('should prevent ID collisions with existing notes', () => {
+        // Simulate existing notes with IDs 1, 2, 5
+        const existingNotes = [{ id: '1' }, { id: '2' }, { id: '5' }];
+
+        noteBehavior.ensureUniqueIds(existingNotes);
+
+        const mockEvent = { clientX: 100, clientY: 100 };
+        const newNote = noteBehavior.createNoteAtPosition(
+          mockCanvas,
+          mockEvent,
+        );
+
+        expect(newNote.id).toBe('6'); // Should skip to 6, avoiding collision with 5
+      });
+
+      test('should handle null/undefined event gracefully', () => {
+        expect(() => {
+          noteBehavior.createNoteAtPosition(mockCanvas, null);
+        }).not.toThrow();
+      });
+
+      test('should handle null/undefined canvas gracefully', () => {
+        const mockEvent = { clientX: 100, clientY: 100 };
+
+        expect(() => {
+          noteBehavior.createNoteAtPosition(null, mockEvent);
+        }).not.toThrow();
+      });
+    });
+
+    describe('createNoteFromData', () => {
+      test('should create note from data with specified ID', () => {
+        const noteData = {
+          id: '7',
+          content: 'Test note content',
+          left: '100px',
+          top: '200px',
+        };
+
+        const note = noteBehavior.createNoteFromData(noteData, mockCanvas);
+
+        expect(note.id).toBe('7');
+        expect(note.dataset.id).toBe('7');
+        expect(mockCanvas.appendChild).toHaveBeenCalledWith(note);
+      });
+
+      test('should handle compressed data format (import/export)', () => {
+        const noteData = {
+          i: 'a', // ID in compressed format
+          c: 'Compressed note', // Content in compressed format
+          p: [150, 250], // Position in compressed format
+        };
+
+        const note = noteBehavior.createNoteFromData(noteData, mockCanvas);
+
+        expect(note.id).toBe('a');
+        expect(note.dataset.id).toBe('a');
+      });
+
+      test('should not affect ID counter when creating from data', () => {
+        const noteData = { id: 'z', content: 'High ID note' };
+
+        noteBehavior.createNoteFromData(noteData, mockCanvas);
+
+        // Next generated ID should still be sequential from counter
+        const mockEvent = { clientX: 100, clientY: 100 };
+        const newNote = noteBehavior.createNoteAtPosition(
+          mockCanvas,
+          mockEvent,
+        );
+
+        expect(newNote.id).toBe('1'); // Counter unaffected by createNoteFromData
+      });
+
+      test('should handle invalid note data gracefully', () => {
+        expect(() => {
+          noteBehavior.createNoteFromData(null, mockCanvas);
+        }).not.toThrow();
+
+        expect(() => {
+          noteBehavior.createNoteFromData({}, mockCanvas);
+        }).not.toThrow();
+      });
+    });
+
+    describe('ensureUniqueIds', () => {
+      test('should update ID service counter to prevent collisions', () => {
+        const existingNotes = [
+          { id: '1' },
+          { id: '5' },
+          { id: 'a' }, // 10 in decimal
+        ];
+
+        noteBehavior.ensureUniqueIds(existingNotes);
+
+        const mockEvent = { clientX: 100, clientY: 100 };
+        const newNote = noteBehavior.createNoteAtPosition(
+          mockCanvas,
+          mockEvent,
+        );
+
+        expect(newNote.id).toBe('b'); // 11 in decimal, avoiding collision with 'a'
+      });
+
+      test('should handle DOM elements from querySelectorAll', () => {
+        const existingElements = [
+          { id: '3', querySelector: jest.fn() },
+          { id: '7', querySelector: jest.fn() },
+        ];
+
+        noteBehavior.ensureUniqueIds(existingElements);
+
+        const mockEvent = { clientX: 100, clientY: 100 };
+        const newNote = noteBehavior.createNoteAtPosition(
+          mockCanvas,
+          mockEvent,
+        );
+
+        expect(newNote.id).toBe('8'); // Next after 7
+      });
+
+      test('should handle empty array', () => {
+        noteBehavior.ensureUniqueIds([]);
+
+        const mockEvent = { clientX: 100, clientY: 100 };
+        const newNote = noteBehavior.createNoteAtPosition(
+          mockCanvas,
+          mockEvent,
+        );
+
+        expect(newNote.id).toBe('1'); // Should start from 1
+      });
+
+      test('should handle invalid/null array', () => {
+        expect(() => {
+          noteBehavior.ensureUniqueIds(null);
+        }).not.toThrow();
+
+        expect(() => {
+          noteBehavior.ensureUniqueIds(undefined);
+        }).not.toThrow();
+      });
+    });
+
+    describe('Integration with Legacy Factory', () => {
+      test('should emit same events as legacy factory', () => {
+        const mockEvent = { clientX: 100, clientY: 100 };
+
+        noteBehavior.createNoteAtPosition(mockCanvas, mockEvent);
+
+        expect(mockEventBus.emit).toHaveBeenCalledWith('note.created', {
+          id: '1',
+          content: '',
+          left: expect.any(String),
+          top: expect.any(String),
+        });
+      });
+
+      test('should create DOM structure compatible with legacy system', () => {
+        const mockEvent = { clientX: 100, clientY: 100 };
+
+        const note = noteBehavior.createNoteAtPosition(mockCanvas, mockEvent);
+
+        // Should have same structure as legacy factory
+        expect(note.className).toContain('note');
+        expect(typeof note.querySelector).toBe('function');
+        expect(note.style.left).toBeDefined();
+        expect(note.style.top).toBeDefined();
+      });
+    });
+
+    describe('Error Handling', () => {
+      test('should handle ID service errors gracefully', () => {
+        // Mock ID service to throw error
+        jest.spyOn(NoteIdService, 'generateNextId').mockImplementation(() => {
+          throw new Error('ID generation failed');
+        });
+
+        const mockEvent = { clientX: 100, clientY: 100 };
+
+        expect(() => {
+          noteBehavior.createNoteAtPosition(mockCanvas, mockEvent);
+        }).not.toThrow();
+
+        // Restore original implementation
+        NoteIdService.generateNextId.mockRestore();
+      });
+
+      test('should handle DOM creation errors gracefully', () => {
+        // Mock document.createElement to fail
+        document.createElement = jest.fn(() => {
+          throw new Error('DOM creation failed');
+        });
+
+        const mockEvent = { clientX: 100, clientY: 100 };
+
+        expect(() => {
+          noteBehavior.createNoteAtPosition(mockCanvas, mockEvent);
+        }).not.toThrow();
       });
     });
   });
