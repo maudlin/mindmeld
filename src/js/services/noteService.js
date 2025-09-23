@@ -6,7 +6,9 @@ import { displayAsViewMode } from '../features/note/editViewMode.js';
 
 export class NoteService {
   static createNoteFromData(noteData, canvas) {
-    console.warn('DEPRECATED: NoteService.createNoteFromData() - Use NoteBehavior.createNoteFromData() instead. This service method will be removed in future versions for better ID collision prevention.');
+    console.warn(
+      'DEPRECATED: NoteService.createNoteFromData() - Use NoteBehavior.createNoteFromData() instead. This service method will be removed in future versions for better ID collision prevention.',
+    );
     const note = createNote(
       parseFloat(noteData.left || noteData.p[0]),
       parseFloat(noteData.top || noteData.p[1]),
