@@ -54,3 +54,4 @@ coverage/
 /playwright/.cache/
 /.jscpd-report/
 /test-results.json
+reports/

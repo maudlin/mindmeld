@@ -234,6 +234,9 @@ export async function importFromJSON(jsonData, canvas) {
     // Import colors if any exist
     if (Object.keys(noteColors).length > 0) {
       ColorService.setAllNoteColors(noteColors);
+      // Trigger immediate save via event system for cross-tab consistency
+      eventBus.emit('state.save');
+      log('Triggered state save for imported color cross-tab persistence');
     }
 
     // V1 Simplification: Always use Standard Canvas regardless of imported canvas type
@@ -278,8 +281,14 @@ export async function importFromJSON(jsonData, canvas) {
       return { from: fromId, to: toId, type };
     });
 
-    // Update appState with imported canvas type
-    appState.setState({ notes, connections, canvasType: importedCanvasType });
+    // Update appState with imported canvas type, preserving colorState
+    const currentState = appState.getState();
+    appState.setState({
+      notes,
+      connections,
+      canvasType: importedCanvasType,
+      colorState: currentState.colorState, // Preserve the colorState we set earlier
+    });
 
     // Apply imported canvas type to the canvas
     await CanvasStateService.setCanvasType(importedCanvasType, canvas);
