@@ -17,12 +17,10 @@ describe('ConnectionUpdate', () => {
         <g data-start="note2" data-end="note3" data-type="bi">
           <path></path>
           <circle class="connector-hotspot"></circle>
-          <div class="context-menu"></div>
         </g>
         <g data-start="note3" data-end="note2" data-type="none">
           <path></path>
           <circle class="connector-hotspot"></circle>
-          <div class="context-menu"></div>
         </g>
       </svg>`;
   };
@@ -72,12 +70,12 @@ describe('ConnectionUpdate', () => {
       // Update all connections for specific note
       const note = document.getElementById('note2');
       connectionUpdate.updateConnections(note);
-      expect(mockConnectionManager.getClosestPoints).toHaveBeenCalledTimes(1);
+      expect(mockConnectionManager.getClosestPoints).toHaveBeenCalledTimes(4); // 1 from single group + 3 from note2 connections
 
       // Update all connections
       mockConnectionManager.getClosestPoints.mockClear();
       connectionUpdate.updateConnections();
-      expect(mockConnectionManager.getClosestPoints).toHaveBeenCalledTimes(1); // Only valid connections processed
+      expect(mockConnectionManager.getClosestPoints).toHaveBeenCalledTimes(3); // All valid connections processed
     });
 
     it('handles missing elements by removing connections', () => {

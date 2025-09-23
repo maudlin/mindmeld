@@ -539,6 +539,16 @@ export class TouchAdapter extends BaseAdapter {
       return;
     }
 
+    // Check for SVG connection line interaction
+    const svgContainer = document.getElementById('svg-container');
+    if (
+      svgContainer &&
+      (target === svgContainer || svgContainer.contains(target))
+    ) {
+      this.handleSvgTap(touch, target);
+      return;
+    }
+
     // Check for note interaction
     const noteElement = target.closest('.note');
     if (noteElement) {
@@ -682,6 +692,33 @@ export class TouchAdapter extends BaseAdapter {
   }
 
   // Menu interaction methods removed - now handled by pageInteractions.js
+
+  /**
+   * Handle SVG tap for connection line selection
+   */
+  handleSvgTap(touch, target) {
+    if (!this.connectionBehavior) {
+      console.warn(
+        'TouchAdapter: ConnectionBehavior not available for line selection',
+      );
+      return;
+    }
+
+    console.log(
+      'TouchAdapter: SVG tap detected, delegating to ConnectionBehavior',
+    );
+
+    // Convert touch to event-like object for ConnectionBehavior
+    const syntheticEvent = {
+      target: target,
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      preventDefault: () => {},
+      stopPropagation: () => {},
+    };
+
+    this.connectionBehavior.handleLineSelection(syntheticEvent, 'touch');
+  }
 
   /**
    * Handle note tap - check for connection mode first, then delegate to NoteBehavior

@@ -1,6 +1,6 @@
 // src/js/interactions/InputController.js
 
-import { initializeConnectionDrawing } from '../features/connection/connection.js';
+import { connectionManager } from '../features/connection/connectionManager.js';
 
 /**
  * Central controller for input adapters
@@ -68,7 +68,7 @@ export class InputController {
       // Initialize connection drawing system (required for ghost connector interactions)
       const canvas = document.getElementById('canvas');
       if (canvas) {
-        initializeConnectionDrawing(canvas);
+        connectionManager.initializeSVGContainer(canvas);
       }
 
       // Only destroy old adapter after new one is successfully initialized

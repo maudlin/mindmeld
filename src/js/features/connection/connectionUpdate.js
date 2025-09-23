@@ -12,15 +12,14 @@ export class ConnectionUpdate {
 
   updateConnections(noteOrGroup) {
     const updateSingle = (group) => {
-      const [startNote, endNote, path, hotspot, contextMenuElement] = [
+      const [startNote, endNote, path, hotspot] = [
         document.getElementById(group.dataset.start),
         document.getElementById(group.dataset.end),
         group.querySelector('path'),
         group.querySelector('circle'),
-        group.querySelector('.context-menu'),
       ];
 
-      if (startNote && endNote && path && hotspot && contextMenuElement) {
+      if (startNote && endNote && path && hotspot) {
         const points = this.connectionManager.getClosestPoints(
           startNote,
           endNote,
@@ -41,10 +40,6 @@ export class ConnectionUpdate {
         const updateDOM = () => {
           hotspot.setAttribute('cx', hotspotX);
           hotspot.setAttribute('cy', hotspotY);
-          contextMenuElement.setAttribute(
-            'transform',
-            `translate(${hotspotX}, ${hotspotY})`,
-          );
 
           const backgroundLine = group.querySelector(
             '.connector-background-line',
@@ -64,8 +59,6 @@ export class ConnectionUpdate {
         } else {
           requestAnimationFrame(updateDOM);
         }
-
-        group.appendChild(contextMenuElement);
       } else {
         if (group.parentNode) {
           group.remove();
