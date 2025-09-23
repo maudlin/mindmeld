@@ -234,6 +234,21 @@ export async function importFromJSON(jsonData, canvas) {
     // Import colors if any exist
     if (Object.keys(noteColors).length > 0) {
       ColorService.setAllNoteColors(noteColors);
+      // Immediately save color state to localStorage for cross-tab consistency
+      // This ensures imported colors are persistent before DOM creation and color application
+      try {
+        const { saveStateToStorage } = await import('./storageManager.js');
+        saveStateToStorage();
+        log(
+          'Saved imported color state to localStorage for cross-tab persistence',
+        );
+      } catch (error) {
+        // Don't fail the entire import if storage save fails
+        console.warn(
+          'Failed to save color state to localStorage:',
+          error.message,
+        );
+      }
     }
 
     // V1 Simplification: Always use Standard Canvas regardless of imported canvas type
@@ -278,8 +293,14 @@ export async function importFromJSON(jsonData, canvas) {
       return { from: fromId, to: toId, type };
     });
 
-    // Update appState with imported canvas type
-    appState.setState({ notes, connections, canvasType: importedCanvasType });
+    // Update appState with imported canvas type, preserving colorState
+    const currentState = appState.getState();
+    appState.setState({
+      notes,
+      connections,
+      canvasType: importedCanvasType,
+      colorState: currentState.colorState, // Preserve the colorState we set earlier
+    });
 
     // Apply imported canvas type to the canvas
     await CanvasStateService.setCanvasType(importedCanvasType, canvas);
