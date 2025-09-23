@@ -14,6 +14,24 @@ import { CanvasStateService } from '../services/canvasStateService.js';
 import { eventBus } from '../core/eventBus.js';
 import { getCurrentMarkdownContent } from '../features/note/editViewMode.js';
 
+/**
+ * Get NoteBehavior instance from InteractionController
+ * Unified note creation through behavior system
+ */
+function getNoteBehavior() {
+  try {
+    if (
+      typeof window !== 'undefined' &&
+      window.mindMeldDebug?.interactionController
+    ) {
+      return window.mindMeldDebug.interactionController.getBehavior('note');
+    }
+  } catch (error) {
+    console.warn('dataStore: Failed to get NoteBehavior:', error);
+  }
+  return null;
+}
+
 export function addNote(note) {
   const currentNotes = appState.getState().notes;
 
@@ -65,10 +83,23 @@ export function updateNotesAndConnections(state) {
   // Temporarily disable color application during restoration
   window.noteRestorationInProgress = true;
 
-  // Create notes
-  state.notes.forEach((noteData) => {
-    NoteService.createNoteFromData(noteData, canvas);
-  });
+  // Create notes using NoteBehavior for unified creation path
+  const noteBehavior = getNoteBehavior();
+  if (noteBehavior) {
+    // First, ensure unique IDs to prevent collisions
+    noteBehavior.ensureUniqueIds(state.notes);
+
+    state.notes.forEach((noteData) => {
+      noteBehavior.createNoteFromData(noteData, canvas);
+    });
+  } else {
+    console.warn(
+      'dataStore: NoteBehavior not available, falling back to NoteService',
+    );
+    state.notes.forEach((noteData) => {
+      NoteService.createNoteFromData(noteData, canvas);
+    });
+  }
 
   // Re-enable color application
   window.noteRestorationInProgress = false;
@@ -245,16 +276,29 @@ export async function importFromJSON(jsonData, canvas) {
       log('V1: Ignoring non-standard canvas type from import:', data.ct);
     }
 
-    // Create notes
+    // Create notes using NoteBehavior for unified creation path
+    const noteBehavior = getNoteBehavior();
+    if (noteBehavior) {
+      // First, ensure unique IDs to prevent collisions
+      noteBehavior.ensureUniqueIds(data.n);
+    }
+
     const notes = data.n.map((noteData) => {
-      const note = NoteService.createNoteFromData(
-        {
-          i: noteData.i,
-          c: noteData.c,
-          p: noteData.p,
-        },
-        canvas,
-      );
+      const noteCreateData = {
+        i: noteData.i,
+        c: noteData.c,
+        p: noteData.p,
+      };
+
+      let note;
+      if (noteBehavior) {
+        note = noteBehavior.createNoteFromData(noteCreateData, canvas);
+      } else {
+        console.warn(
+          'dataStore: NoteBehavior not available, falling back to NoteService',
+        );
+        note = NoteService.createNoteFromData(noteCreateData, canvas);
+      }
       return {
         id: note.id,
         content: truncateNoteContent(noteData.c, NOTE_CONTENT_LIMIT),

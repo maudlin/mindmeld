@@ -26,6 +26,7 @@ Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven s
 - **CI Stability**: Some tests need `await page.waitForTimeout(1000)` after page load
 - **Browser Issues**: Use helper methods, avoid direct DOM manipulation in tests
 - **DO NOT** skip failing tests for convenience, or refactor tests to pass. Quality is queen.
+- Always run npm run ci:local before pushing a branch to remote - this prevents discovering failures in CI.
 
 ## Code Style
 

@@ -11,6 +11,10 @@ let nextNoteId = 1;
 let handDrawn = false;
 
 export function createNoteAtPosition(canvas, event, addEventListeners = null) {
+  console.warn(
+    'DEPRECATED: createNoteAtPosition() - Use NoteBehavior.createNoteAtPosition() instead. This factory approach will be removed in future versions for better ID collision prevention.',
+  );
+
   // Use shared coordinate transform service for position calculation
   const coordinateTransform = getCoordinateTransform();
   const { x, y } = coordinateTransform.viewportToCanvas(
@@ -28,6 +32,9 @@ export function createNoteAtPosition(canvas, event, addEventListeners = null) {
 }
 
 export function createNote(x, y, canvas, addEventListeners = null) {
+  console.warn(
+    'DEPRECATED: createNote() - Use NoteBehavior.createNote() instead. This factory approach will be removed in future versions for better ID collision prevention.',
+  );
   const note = document.createElement('div');
   note.className = 'note';
 
