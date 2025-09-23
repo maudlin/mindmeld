@@ -4,6 +4,13 @@
 
 Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven system with clean separation between services, features, and UI components.
 
+## General rules
+- This is linked to Jira project MM
+- All work should have a ticket unless it is a minor fix. Branches should be named as feat/fix/doc/test-[ticket-id]-[name] for tracking
+- Refer to tickets in commits and PRs
+- Prefer TDD where possible - review existing tests and code before starting to create. ALWAYS red/green/refactor
+- You cannot merge to main without a PR. Always create a branch, push to remote, create a PR, then request the merge from the user.
+
 ## Essential Commands
 
 - `npm start`: Start development server (http://localhost:8080)
@@ -15,7 +22,6 @@ Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven s
 
 ## Testing Guidelines
 
-- **E2E Tests**: Always use `createNote()` from CanvasPage helper
 - **Throttling**: The app enforces a 500ms note-creation throttle. Use ~600ms between creations locally and 800–1000ms in CI.
 - **CI Stability**: Some tests need `await page.waitForTimeout(1000)` after page load
 - **Browser Issues**: Use helper methods, avoid direct DOM manipulation in tests
@@ -27,8 +33,8 @@ Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven s
 - camelCase for files/functions, PascalCase for classes
 - Events named as `noun.verb` (e.g., `note.created`)
 - Clean dependency injection patterns
-- Prefer TDD where possible - review existing tests and code before starting to create
 - Document in code, but avoid parenthetical comments (like this that add uneccessary detail)
+- Don't use ticket IDs (eg MM-2xx) in code comments UNLESS they're temporary and to be removed
 
 ## Architecture
 

@@ -172,11 +172,9 @@ describe('Clipboard Color Consistency (MM-255)', () => {
         'copied-note-2': { colorScheme: 'green' },
       });
 
-      // ASSERT: State should be saved to localStorage immediately for cross-tab consistency
-      const { saveStateToStorage } = await import(
-        '../../../../src/js/data/storageManager.js'
-      );
-      expect(saveStateToStorage).toHaveBeenCalled();
+      // ASSERT: State save should be triggered via event system for cross-tab consistency
+      const { eventBus } = await import('../../../../src/js/core/eventBus.js');
+      expect(eventBus.emit).toHaveBeenCalledWith('state.save');
     });
 
     it('should handle clipboard import atomically to prevent race conditions', async () => {
@@ -240,15 +238,8 @@ describe('Clipboard Color Consistency (MM-255)', () => {
   });
 
   describe('State Persistence Edge Cases', () => {
-    it('should handle localStorage save failures gracefully', async () => {
-      // ARRANGE: Mock localStorage save failure
-      const { saveStateToStorage } = await import(
-        '../../../../src/js/data/storageManager.js'
-      );
-      saveStateToStorage.mockImplementation(() => {
-        throw new Error('LocalStorage quota exceeded');
-      });
-
+    it('should trigger state save via event system for imported colors', async () => {
+      // ARRANGE: Clipboard data with colors
       const clipboardData = JSON.stringify({
         data: {
           n: [{ i: 'note-1', c: 'Note 1', p: [10, 20], cl: 'blue' }],
@@ -262,16 +253,17 @@ describe('Clipboard Color Consistency (MM-255)', () => {
         connections: [],
       });
 
-      // ACT & ASSERT: Should not throw error even if save fails
+      // ACT: Import clipboard data
       const dataProviderService = DataProviderService.getInstance();
-      await expect(
-        dataProviderService.importJSON(clipboardData),
-      ).resolves.not.toThrow();
+      await dataProviderService.importJSON(clipboardData);
 
-      // ASSERT: Colors should still be set in memory
+      // ASSERT: Colors should be set and state save triggered
       expect(ColorService.setAllNoteColors).toHaveBeenCalledWith({
         'note-1': { colorScheme: 'blue' },
       });
+
+      const { eventBus } = await import('../../../../src/js/core/eventBus.js');
+      expect(eventBus.emit).toHaveBeenCalledWith('state.save');
     });
   });
 });
