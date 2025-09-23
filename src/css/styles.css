@@ -496,15 +496,6 @@ body.dragging * {
   user-select: none !important;
 }
 
-/* Allow delete button to remain clickable even during dragging */
-body.dragging .shared-delete-button--note {
-  pointer-events: auto !important;
-  -webkit-user-select: auto !important;
-  -moz-user-select: auto !important;
-  -ms-user-select: auto !important;
-  user-select: auto !important;
-}
-
 /* Allow modal/notification dialogs to remain interactive during dragging */
 body.dragging .notification,
 body.dragging .modal,
@@ -968,30 +959,6 @@ path.selected {
   pointer-events: all;
 }
 
-/* Context Menu Capsule Styles - SVG Implementation */
-.context-menu .capsule-background {
-  /* Ensure proper z-ordering - background should be behind buttons */
-  z-index: 1;
-}
-
-/* Blue Switch Button Animation (MM-148) */
-.mm-arrow-toggle circle {
-  transition: fill 120ms ease-out; /* Match delete button animation timing */
-}
-
-@media (hover: hover) {
-  .mm-arrow-toggle:hover circle {
-    fill: var(
-      --mm-arrow-fill-hover,
-      #6d6dffff
-    ); /* Slightly brighter blue on hover */
-  }
-}
-
-.mm-arrow-toggle:active circle {
-  fill: var(--mm-arrow-fill-active, #5555ddff); /* Darker blue when pressed */
-}
-
 /* Hidden utility class (still used by other components) */
 .hidden {
   display: none !important;
@@ -1158,131 +1125,6 @@ path.selected {
   right: -5px; /* Adjust for circle size */
   top: 50%;
   transform: translateY(-50%);
-}
-
-/* ==========================================================================
-   SHARED DELETE BUTTON COMPONENT
-   ========================================================================== */
-
-/* Base delete button styling - shared by note and connection delete buttons */
-.shared-delete-button {
-  cursor: pointer;
-  transition: all 120ms ease-out;
-  border: none;
-  outline: none;
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-/* HTML button context (notes) */
-.shared-delete-button--note {
-  position: absolute;
-  top: -9px;
-  right: 9px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background-color: rgba(255, 58, 48, 0.5);
-  border: none;
-  color: #ffffff;
-  display: none;
-  z-index: 10;
-  justify-content: center;
-  align-items: center;
-}
-
-/* Touch target - removed as it may be blocking clicks
-.shared-delete-button--note::before {
-  content: '';
-  position: absolute;
-  top: -13px;
-  left: -13px;
-  right: -13px;
-  bottom: -13px;
-  z-index: -1;
-}
-*/
-
-.shared-delete-button--note svg {
-  width: 8px;
-  height: 8px;
-  stroke: currentColor;
-  stroke-width: 5;
-  stroke-linecap: round;
-  opacity: 0.9;
-  margin: 0;
-  padding: 0;
-  border: none;
-  display: block;
-  pointer-events: none;
-}
-
-.shared-delete-button--note svg * {
-  pointer-events: none;
-}
-
-/* Show note delete button when note is selected */
-.note.selected .shared-delete-button--note {
-  display: flex;
-  animation: deleteButtonAppear 120ms ease-out;
-}
-
-/* SVG context (connections) */
-.shared-delete-button--connection .shared-delete-button-background {
-  fill: rgba(255, 58, 48, 0.5);
-  stroke: none;
-  transition: fill 120ms ease-out; /* Match note button animations */
-}
-
-.shared-delete-button--connection .shared-delete-button-cross,
-.shared-delete-button--connection svg line {
-  stroke: #ffffff;
-  stroke-width: 5; /* Match note button stroke width */
-  stroke-linecap: round;
-}
-
-/* Hover states */
-@media (hover: hover) {
-  .shared-delete-button--note:hover {
-    background-color: rgba(255, 59, 48, 0.9);
-    transform: scale(1.1);
-  }
-
-  .shared-delete-button--note:hover svg {
-    opacity: 1;
-  }
-
-  .shared-delete-button--connection:hover .shared-delete-button-background {
-    fill: rgba(255, 59, 48, 0.9);
-  }
-}
-
-/* Active states */
-.shared-delete-button--note:active {
-  transform: scale(0.95);
-}
-
-.shared-delete-button--connection:active .shared-delete-button-background {
-  fill: rgba(255, 59, 48, 0.7);
-}
-
-/* Focus state for accessibility */
-.shared-delete-button--note:focus {
-  outline: 2px solid #2684ff;
-  outline-offset: 2px;
-}
-
-/* Appear animation */
-@keyframes deleteButtonAppear {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
 }
 
 /* ==========================================================================

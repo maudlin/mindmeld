@@ -61,7 +61,9 @@ export class DesktopAdapter extends BaseAdapter {
       dblclick: this.handleDoubleClick.bind(this),
       wheel: this.handleWheel.bind(this),
       keyDown: this.handleKeyDown.bind(this),
-      contextMenu: this.preventContextMenu.bind(this),
+      svgClick: this.handleSvgClick.bind(this),
+      svgMouseMove: this.handleSvgMouseMove.bind(this),
+      svgMouseLeave: this.handleSvgMouseLeave.bind(this),
     };
   }
 
@@ -139,6 +141,20 @@ export class DesktopAdapter extends BaseAdapter {
     // Canvas-specific events
     this.canvas.addEventListener('dblclick', this.boundHandlers.dblclick);
     this.canvas.addEventListener('wheel', this.boundHandlers.wheel);
+
+    // SVG container events for connection line interaction
+    const svgContainer = document.getElementById('svg-container');
+    if (svgContainer) {
+      svgContainer.addEventListener('click', this.boundHandlers.svgClick);
+      svgContainer.addEventListener(
+        'mousemove',
+        this.boundHandlers.svgMouseMove,
+      );
+      svgContainer.addEventListener(
+        'mouseleave',
+        this.boundHandlers.svgMouseLeave,
+      );
+    }
 
     // Document-level events for dragging and keyboard
     document.addEventListener('pointermove', this.boundHandlers.pointerMove);
@@ -775,10 +791,10 @@ export class DesktopAdapter extends BaseAdapter {
         this.noteBehavior.handleNoteDoubleClick(noteElement, event, 'desktop');
       }
     } else if (
-      (event.target === this.canvas || event.target.closest('#canvas')) &&
-      !event.target.closest('.context-menu')
+      event.target === this.canvas ||
+      event.target.closest('#canvas')
     ) {
-      // Canvas double-click → CanvasBehavior for note creation (but not on context menus)
+      // Canvas double-click → CanvasBehavior for note creation
       if (this.canvasBehavior) {
         console.log(
           'DesktopAdapter: Canvas double-click detected, delegating to CanvasBehavior',
@@ -870,6 +886,10 @@ export class DesktopAdapter extends BaseAdapter {
       case 'Backspace':
         // Only delete if not in edit mode
         if (!document.querySelector('.note-content.edit-mode')) {
+          // Check for connection deletion first, then note deletion
+          if (this.connectionBehavior) {
+            this.connectionBehavior.handleConnectionDeletion();
+          }
           this.emit('notes.deleteSelected');
         }
         break;
@@ -882,10 +902,42 @@ export class DesktopAdapter extends BaseAdapter {
   }
 
   /**
-   * Prevent context menu (KEEP - this is input-specific)
+   * Handle SVG click events for connection line selection
    */
-  preventContextMenu(event) {
-    event.preventDefault();
+  handleSvgClick(event) {
+    if (!this.connectionBehavior) {
+      console.warn(
+        'DesktopAdapter: ConnectionBehavior not available for line selection',
+      );
+      return;
+    }
+
+    console.log(
+      'DesktopAdapter: SVG click detected, delegating to ConnectionBehavior',
+    );
+    this.connectionBehavior.handleLineSelection(event, 'desktop');
+  }
+
+  /**
+   * Handle SVG mousemove events for connection line hover effects
+   */
+  handleSvgMouseMove(event) {
+    if (!this.connectionBehavior) {
+      return;
+    }
+
+    this.connectionBehavior.handleLineHover(event, 'desktop');
+  }
+
+  /**
+   * Handle SVG mouseleave events for connection line cleanup
+   */
+  handleSvgMouseLeave(event) {
+    if (!this.connectionBehavior) {
+      return;
+    }
+
+    this.connectionBehavior.handleLineHoverEnd(event, 'desktop');
   }
 
   /**

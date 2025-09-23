@@ -307,4 +307,61 @@ export class ConnectionBehavior {
       hasActiveConnection: !!this.activeConnectionGroup,
     };
   }
+
+  /**
+   * Handle connection line selection from adapter click/tap events
+   */
+  handleLineSelection(event, inputType) {
+    if (!connectionManager) {
+      console.warn('ConnectionBehavior: connectionManager not available');
+      return;
+    }
+
+    console.log(`ConnectionBehavior: Line selection from ${inputType}`, {
+      target: event.target?.tagName,
+      className: event.target?.className,
+    });
+
+    // Delegate to connectionManager's existing logic
+    connectionManager.handleLineSelection(event);
+  }
+
+  /**
+   * Handle connection line hover effects (desktop only)
+   */
+  handleLineHover(event, inputType) {
+    if (inputType !== 'desktop' || !connectionManager) {
+      return;
+    }
+
+    // Delegate to connectionManager's existing hover logic
+    connectionManager.handleSvgMouseMove(event);
+  }
+
+  /**
+   * Handle connection line hover end cleanup (desktop only)
+   */
+  handleLineHoverEnd(event, inputType) {
+    if (inputType !== 'desktop' || !connectionManager) {
+      return;
+    }
+
+    // Delegate to connectionManager's existing cleanup logic
+    connectionManager.handleSvgMouseLeave();
+  }
+
+  /**
+   * Handle connection deletion from keyboard or toolbar
+   */
+  handleConnectionDeletion() {
+    if (!connectionManager) {
+      console.warn('ConnectionBehavior: connectionManager not available');
+      return;
+    }
+
+    console.log('ConnectionBehavior: Connection deletion requested');
+
+    // Delegate to connectionManager's existing deletion logic
+    connectionManager.handleLineDeletion();
+  }
 }

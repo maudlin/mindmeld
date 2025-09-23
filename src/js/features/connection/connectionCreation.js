@@ -60,12 +60,8 @@ export class ConnectionCreation {
       class: 'connector-hotspot',
     });
 
-    const contextMenuElement = this.connectionManager.contextMenu.createMenu();
-    contextMenuElement.style.display = 'none';
-
     group.appendChild(path);
     group.appendChild(hotspot);
-    group.appendChild(contextMenuElement);
     svgContainer.appendChild(group);
 
     this.connectionManager.throttledUpdateConnections(group);
@@ -112,24 +108,14 @@ export class ConnectionCreation {
       class: 'connector-hotspot',
     });
 
-    const contextMenuElement =
-      this.connectionManager.contextMenu.createMenu(group);
-    contextMenuElement.style.display = 'none';
-    contextMenuElement.setAttribute(
-      'transform',
-      `translate(${startX}, ${startY})`,
-    );
-
     group.appendChild(backgroundLine);
     group.appendChild(path);
     group.appendChild(hotspot);
-    group.appendChild(contextMenuElement);
     svgContainer.appendChild(group);
 
     return {
       path,
       hotspot,
-      contextMenu: contextMenuElement,
       group,
       startX,
       startY,

@@ -10,6 +10,8 @@ import { noteManager } from '../../services/noteManager.js';
 import { NoteIdService } from '../../services/noteIdService.js';
 import { displayAsViewMode } from '../../features/note/editViewMode.js';
 import { getCoordinateTransform } from '../../core/coordinates/coordinateService.js';
+import { connectionManager } from '../../features/connection/connectionManager.js';
+import { DataProviderService } from '../../services/DataProviderService.js';
 import config from '../../core/config.js';
 
 export class NoteBehavior {
@@ -346,6 +348,65 @@ export class NoteBehavior {
       connector.className = `ghost-connector ${position}`;
       note.appendChild(connector);
     });
+  }
+
+  /**
+   * Delete note with connection cleanup
+   * Integrated deletion through behavior system
+   */
+  deleteNoteWithConnections(note, canvas) {
+    if (!note) {
+      console.warn('NoteBehavior: No note provided for deletion');
+      return;
+    }
+
+    // Clean up connections first
+    connectionManager.deleteConnectionsByNote(note);
+
+    // Delete note from data provider
+    try {
+      const dataProviderService = DataProviderService.getInstance();
+      dataProviderService.deleteNote(note.id, { origin: 'user' });
+    } catch (error) {
+      console.error(
+        'NoteBehavior: Failed to delete note from data provider:',
+        error,
+      );
+      // Continue with DOM cleanup even if provider deletion fails
+    }
+
+    // Remove note from DOM
+    note.remove();
+
+    // Update connection visualizations
+    if (canvas) {
+      connectionManager.updateConnections(note, canvas);
+    }
+
+    console.log('NoteBehavior: Deleted note with connections:', note.id);
+  }
+
+  /**
+   * Delete all selected notes
+   * Moved from noteDeletion.js to consolidate behavior
+   */
+  deleteSelectedNotes() {
+    const selectedNotes = noteManager.getSelectedNotes();
+    if (selectedNotes.length > 0) {
+      const canvas = document.getElementById('canvas');
+
+      // Delete all selected notes
+      selectedNotes.forEach((note) => {
+        this.deleteNoteWithConnections(note, canvas);
+      });
+
+      console.log(
+        'NoteBehavior: Deleted selected notes:',
+        selectedNotes.length,
+      );
+    } else {
+      console.log('NoteBehavior: No selected notes to delete');
+    }
   }
 
   /**

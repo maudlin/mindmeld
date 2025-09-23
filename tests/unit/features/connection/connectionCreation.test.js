@@ -35,9 +35,6 @@ describe('ConnectionCreation', () => {
       STROKE_COLOR: '#888',
       STROKE_WIDTH: '2',
       STROKE_DASHARRAY: '5,5',
-      contextMenu: {
-        createMenu: jest.fn().mockReturnValue(document.createElement('div')),
-      },
     };
     mockUtils = { log: jest.fn() };
   };
@@ -172,10 +169,6 @@ describe('ConnectionCreation', () => {
         expect(hotspot.getAttribute('fill')).toBe('#fff');
         expect(hotspot.getAttribute('stroke')).toBe('#888');
 
-        // Context menu
-        const contextMenu = group.querySelector('div');
-        expect(contextMenu.style.display).toBe('none');
-
         // DOM integration
         expect(svgContainer.children.length).toBe(initialChildren + 1);
         expect(
@@ -229,7 +222,6 @@ describe('ConnectionCreation', () => {
       expect(result.group).toBeTruthy();
       expect(result.path).toBeTruthy();
       expect(result.hotspot).toBeTruthy();
-      expect(result.contextMenu).toBeTruthy();
       expect(result.backgroundLine).toBeTruthy();
       expect(typeof result.startX).toBe('number');
       expect(typeof result.startY).toBe('number');
@@ -244,11 +236,10 @@ describe('ConnectionCreation', () => {
       // DOM integration and structure
       expect(mockSvgContainer.children.length).toBe(initialChildren + 1);
       expect(mockSvgContainer.contains(result.group)).toBe(true);
-      expect(result.group.children).toHaveLength(4);
+      expect(result.group.children).toHaveLength(3);
       expect(result.group.children[0]).toBe(result.backgroundLine);
       expect(result.group.children[1]).toBe(result.path);
       expect(result.group.children[2]).toBe(result.hotspot);
-      expect(result.group.children[3]).toBe(result.contextMenu);
     });
 
     it('creates elements with correct attributes and styling', () => {
@@ -279,12 +270,6 @@ describe('ConnectionCreation', () => {
       expect(result.hotspot.getAttribute('cy')).toBe('100');
       expect(result.hotspot.getAttribute('r')).toBe('4');
       expect(result.hotspot.classList.contains('connector-hotspot')).toBe(true);
-
-      // Context menu setup
-      expect(result.contextMenu.style.display).toBe('none');
-      expect(result.contextMenu.getAttribute('transform')).toBe(
-        'translate(100, 100)',
-      );
     });
   });
 

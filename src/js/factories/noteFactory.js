@@ -3,7 +3,6 @@ import { toBase62 } from '../utils/utils.js';
 import config from '../core/config.js';
 import { NOTE_CONTENT_LIMIT } from '../core/constants.js';
 import { eventBus } from '../core/eventBus.js';
-import { createDeleteButton } from '../features/note/deleteButton.js';
 import { displayAsViewMode } from '../features/note/editViewMode.js';
 import { getCoordinateTransform } from '../core/coordinates/coordinateService.js';
 
@@ -48,7 +47,6 @@ export function createNote(x, y, canvas, addEventListeners = null) {
 
   note.appendChild(noteContent);
   createGhostConnectors(note);
-  createDeleteButton(note);
 
   // Initialize in view mode with empty content
   displayAsViewMode(noteContent, '');
