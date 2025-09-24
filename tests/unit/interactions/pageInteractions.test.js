@@ -384,7 +384,7 @@ describe('PageInteractions Menu Integration', () => {
       }).not.toThrow();
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        'PageInteractions: Menu elements not found',
+        expect.stringMatching(/\[.*\] WARN: Menu elements not found/),
       );
 
       consoleSpy.mockRestore();

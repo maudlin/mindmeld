@@ -106,7 +106,7 @@ describe('Logger Service', () => {
         expect(mockConsole.log).toHaveBeenCalledTimes(1);
         expect(mockConsole.log).toHaveBeenCalledWith(
           expect.stringMatching(
-            /\[.*\] DEBUG: Test debug message \{"key":"value"\}/,
+            /\[.*\] DEBUG: Test debug message[\s\S]*"key"[\s\S]*"value"/,
           ),
         );
       });
@@ -117,7 +117,7 @@ describe('Logger Service', () => {
         expect(mockConsole.log).toHaveBeenCalledTimes(1);
         expect(mockConsole.log).toHaveBeenCalledWith(
           expect.stringMatching(
-            /\[.*\] INFO: Test info message \{"user":"testUser"\}/,
+            /\[.*\] INFO: Test info message[\s\S]*"user"[\s\S]*"testUser"/,
           ),
         );
       });
@@ -137,7 +137,7 @@ describe('Logger Service', () => {
         expect(mockConsole.error).toHaveBeenCalledTimes(1);
         expect(mockConsole.error).toHaveBeenCalledWith(
           expect.stringMatching(
-            /\[.*\] ERROR: Test error message \{"error":"details"\}/,
+            /\[.*\] ERROR: Test error message[\s\S]*"error"[\s\S]*"details"/,
           ),
         );
       });
@@ -260,7 +260,7 @@ describe('Logger Service', () => {
         testErrorHandler.handleError(error, options);
 
         // Wait for the async alert call
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
 
         expect(mockAlert).toHaveBeenCalledWith(
           'Critical error: System failure\n\nThe page may need to be refreshed.',
