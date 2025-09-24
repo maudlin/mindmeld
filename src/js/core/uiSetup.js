@@ -8,13 +8,11 @@ import {
   setFixedZoom,
 } from '../features/zoom/viewportAdapter.js';
 import { notificationManager } from '../services/notificationManager.js';
-import { setupMobileDropdown } from '../utils/mobileInteractions.js';
-
 export function setupUI(elements) {
   populateCanvasStyleDropdown(elements);
   setupExportImport(elements.menu, elements.canvas);
   setupClearCanvas(elements.menu, elements.canvas);
-  setupMobileDropdownBehavior();
+  // Note: Mobile dropdown behavior is now handled by MenuBehavior via adapter-behavior pattern
 }
 
 function populateCanvasStyleDropdown(elements) {
@@ -196,17 +194,5 @@ function setupClearCanvas(menu, canvas) {
   }
 }
 
-function setupMobileDropdownBehavior() {
-  // Use shared mobile dropdown utility for consistent behavior
-  setupMobileDropdown('.menu-item', {
-    dropdownSelector: '.dropdown',
-    preventDefaultClick: true,
-    singleDropdown: true,
-    onOpen: (dropdown) => {
-      log('Dropdown opened:', dropdown);
-    },
-    onClose: (dropdown) => {
-      log('Dropdown closed:', dropdown);
-    },
-  });
-}
+// Note: setupMobileDropdownBehavior() removed - mobile dropdown behavior
+// is now handled by MenuBehavior via the proper adapter-behavior pattern
