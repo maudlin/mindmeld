@@ -95,7 +95,9 @@ describe('PageInteractions Menu Integration', () => {
         'menu',
       );
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringMatching(/\[.*\] INFO: PageInteractions: Initialized with MenuBehavior, ServerConnectionBehavior, and UI elements/),
+        expect.stringMatching(
+          /\[.*\] INFO: PageInteractions: Initialized with MenuBehavior, ServerConnectionBehavior, and UI elements/,
+        ),
       );
 
       consoleSpy.mockRestore();

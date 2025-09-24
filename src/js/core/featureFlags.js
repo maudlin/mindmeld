@@ -1,7 +1,7 @@
 // src/js/core/featureFlags.js
 // Feature flags for controlling experimental features and provider selection
 
-import { logger, errorHandler } from '../services/logger.js';
+import { logger } from '../services/logger.js';
 
 /**
  * Feature flags configuration for MindMeld

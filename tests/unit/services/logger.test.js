@@ -105,7 +105,9 @@ describe('Logger Service', () => {
 
         expect(mockConsole.log).toHaveBeenCalledTimes(1);
         expect(mockConsole.log).toHaveBeenCalledWith(
-          expect.stringMatching(/\[.*\] DEBUG: Test debug message \{"key":"value"\}/),
+          expect.stringMatching(
+            /\[.*\] DEBUG: Test debug message \{"key":"value"\}/,
+          ),
         );
       });
 
@@ -114,7 +116,9 @@ describe('Logger Service', () => {
 
         expect(mockConsole.log).toHaveBeenCalledTimes(1);
         expect(mockConsole.log).toHaveBeenCalledWith(
-          expect.stringMatching(/\[.*\] INFO: Test info message \{"user":"testUser"\}/),
+          expect.stringMatching(
+            /\[.*\] INFO: Test info message \{"user":"testUser"\}/,
+          ),
         );
       });
 
@@ -132,7 +136,9 @@ describe('Logger Service', () => {
 
         expect(mockConsole.error).toHaveBeenCalledTimes(1);
         expect(mockConsole.error).toHaveBeenCalledWith(
-          expect.stringMatching(/\[.*\] ERROR: Test error message \{"error":"details"\}/),
+          expect.stringMatching(
+            /\[.*\] ERROR: Test error message \{"error":"details"\}/,
+          ),
         );
       });
 
@@ -227,7 +233,9 @@ describe('Logger Service', () => {
         expect(result.userMessage).toBe('Custom error message');
 
         expect(mockConsole.error).toHaveBeenCalledWith(
-          expect.stringMatching(/\[.*\] ERROR: TestComponent error in testOperation/),
+          expect.stringMatching(
+            /\[.*\] ERROR: TestComponent error in testOperation/,
+          ),
         );
       });
 
@@ -242,7 +250,7 @@ describe('Logger Service', () => {
         expect(stats['TestComp:testOp']).toBe(2);
       });
 
-      test('should handle critical errors with alert', (done) => {
+      test('should handle critical errors with alert', async () => {
         const error = new Error('Critical error');
         const options = {
           severity: ERROR_SEVERITY.CRITICAL,
@@ -251,18 +259,20 @@ describe('Logger Service', () => {
 
         testErrorHandler.handleError(error, options);
 
-        // Use setTimeout to test the async alert call
-        setTimeout(() => {
-          expect(mockAlert).toHaveBeenCalledWith(
-            'Critical error: System failure\n\nThe page may need to be refreshed.',
-          );
-          done();
-        }, 10);
+        // Wait for the async alert call
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        expect(mockAlert).toHaveBeenCalledWith(
+          'Critical error: System failure\n\nThe page may need to be refreshed.',
+        );
       });
 
       test('should clear error statistics', () => {
         const error = new Error('Test error');
-        testErrorHandler.handleError(error, { component: 'Test', operation: 'test' });
+        testErrorHandler.handleError(error, {
+          component: 'Test',
+          operation: 'test',
+        });
 
         expect(testErrorHandler.getErrorStats()['Test:test']).toBe(1);
 
@@ -276,7 +286,10 @@ describe('Logger Service', () => {
         const operation = jest.fn().mockReturnValue('success');
         const fallback = jest.fn();
 
-        const result = testErrorHandler.withGracefulDegradation(operation, fallback);
+        const result = testErrorHandler.withGracefulDegradation(
+          operation,
+          fallback,
+        );
 
         expect(result).toBe('success');
         expect(operation).toHaveBeenCalled();
@@ -289,7 +302,10 @@ describe('Logger Service', () => {
         });
         const fallback = 'fallback value';
 
-        const result = testErrorHandler.withGracefulDegradation(operation, fallback);
+        const result = testErrorHandler.withGracefulDegradation(
+          operation,
+          fallback,
+        );
 
         expect(result).toBe('fallback value');
         expect(operation).toHaveBeenCalled();
@@ -301,7 +317,10 @@ describe('Logger Service', () => {
         });
         const fallback = jest.fn().mockReturnValue('fallback result');
 
-        const result = testErrorHandler.withGracefulDegradation(operation, fallback);
+        const result = testErrorHandler.withGracefulDegradation(
+          operation,
+          fallback,
+        );
 
         expect(result).toBe('fallback result');
         expect(fallback).toHaveBeenCalled();
@@ -315,7 +334,10 @@ describe('Logger Service', () => {
           throw new Error('Fallback failed');
         });
 
-        const result = testErrorHandler.withGracefulDegradation(operation, fallback);
+        const result = testErrorHandler.withGracefulDegradation(
+          operation,
+          fallback,
+        );
 
         expect(result).toBeNull();
         expect(mockConsole.error).toHaveBeenCalledTimes(2); // Both errors logged
