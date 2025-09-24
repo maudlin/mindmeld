@@ -372,5 +372,5 @@ npm run test:e2e -- --workers=4
 ```
 
 For development setup details, see [Developer Guide](developer-guide.md).
-For testing specifics, see [Testing Guide](testing.md).
-For CI/CD automation, see [CI/CD Guide](ci-cd.md).
+For testing specifics, see [Testing Patterns](development/testing-patterns.md).
+For CI/CD automation, see [CI/CD Guide](operations/ci-cd.md).

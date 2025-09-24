@@ -187,7 +187,7 @@ The DataProvider pattern ensures backward compatibility:
 - Current LocalJSONProvider handles local storage
 - Future YjsProvider enables real-time collaboration
 - Applications transparently use either provider
-- See [Developer Guide](developer-guide.md#dataprovider-abstraction) for implementation details
+- See [Data Providers](architecture/data-providers.md) for implementation details
 
 ---
 
