@@ -3,7 +3,7 @@
 
 import { DataProvider, ORIGIN } from './DataProvider.js';
 import * as dataStore from '../dataStore.js';
-import * as storageManager from '../storageManager.js';
+import { getCurrentState } from '../dataStore.js';
 import { appState } from '../observableState.js';
 import { logger } from '../../services/logger.js';
 
@@ -98,7 +98,10 @@ export class LocalJSONProvider extends DataProvider {
       return;
     }
 
-    storageManager.saveStateToStorage();
+    // Internal autosave implementation - no dependency on storageManager
+    const currentState = getCurrentState();
+    appState.setState(currentState, true); // Update appState silently
+    appState.saveToLocalStorage();
   }
 
   /**

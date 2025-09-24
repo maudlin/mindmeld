@@ -47,6 +47,8 @@ describe('LocalJSONProvider TDD Tests', () => {
         canvasType: 'Standard Canvas',
       })),
       setState: jest.fn(),
+      saveToLocalStorage: jest.fn(),
+      clearLocalStorage: jest.fn(),
       subscribe: jest.fn(() => jest.fn()), // returns unsubscribe function
     };
 
@@ -134,7 +136,7 @@ describe('LocalJSONProvider TDD Tests', () => {
       provider.upsertNote({ id: 'test', content: 'test' }, { origin: 'user' });
 
       // Should trigger autosave when not hydrating
-      expect(mockStorageManager.saveStateToStorage).toHaveBeenCalled();
+      expect(mockAppState.saveToLocalStorage).toHaveBeenCalled();
     });
   });
 
@@ -151,13 +153,13 @@ describe('LocalJSONProvider TDD Tests', () => {
     test('should trigger autosave for USER origin operations', () => {
       provider.upsertNote({ id: 'test', content: 'test' }, { origin: 'user' });
 
-      expect(mockStorageManager.saveStateToStorage).toHaveBeenCalled();
+      expect(mockAppState.saveToLocalStorage).toHaveBeenCalled();
     });
 
     test('should default to USER origin when not specified', () => {
       provider.upsertNote({ id: 'test', content: 'test' });
 
-      expect(mockStorageManager.saveStateToStorage).toHaveBeenCalled();
+      expect(mockAppState.saveToLocalStorage).toHaveBeenCalled();
     });
 
     test('should respect autosaveEnabled flag', () => {

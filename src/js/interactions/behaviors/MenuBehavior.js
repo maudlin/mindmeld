@@ -10,7 +10,8 @@
 
 import { createMapsApi } from '../../services/mapsApi.js';
 import { DataProviderService } from '../../services/DataProviderService.js';
-import { clearAllState } from '../../data/storageManager.js';
+import { clearAllNotesAndConnections } from '../../data/dataStore.js';
+import { appState } from '../../data/observableState.js';
 import { notificationManager } from '../../services/notificationManager.js';
 import { ServerClient } from '../../services/serverClient.js';
 import { ServerConnectionService } from '../../services/serverConnectionService.js';
@@ -528,8 +529,22 @@ export class MenuBehavior {
     );
 
     if (confirmed) {
-      clearAllState(this.canvas);
+      // Clear localStorage and reset state
+      appState.clearLocalStorage();
+      appState.setState({
+        notes: [],
+        connections: [],
+        zoomLevel: 5,
+        colorState: {
+          currentColor: 'yellow',
+          notes: {},
+        },
+      });
+      // Clear DOM elements
+      clearAllNotesAndConnections();
+
       notificationManager.success('Canvas cleared successfully!');
+      logger.info('All state cleared, local storage cleared, and UI reset');
     }
   }
 
@@ -1024,7 +1039,7 @@ export class MenuBehavior {
       'load-from-server': '.server-load-item',
     };
 
-    if (!Object.prototype.hasOwnProperty.call(actionMap, action)) return;
+    if (!(action in actionMap)) return;
     const selector = actionMap[action];
 
     const menuItem = document.querySelector(selector);
