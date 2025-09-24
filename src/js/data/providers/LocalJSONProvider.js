@@ -3,9 +3,10 @@
 
 import { DataProvider, ORIGIN } from './DataProvider.js';
 import * as dataStore from '../dataStore.js';
-import { getCurrentState } from '../dataStore.js';
 import { appState } from '../observableState.js';
+import { debounce } from '../../utils/utils.js';
 import { logger } from '../../services/logger.js';
+import { eventBus } from '../../core/eventBus.js';
 
 /**
  * LocalJSONProvider implements DataProvider interface by wrapping existing
@@ -25,6 +26,9 @@ export class LocalJSONProvider extends DataProvider {
 
     // Canvas reference for DOM operations
     this.canvas = null;
+
+    // Create debounced autosave function (300ms delay like original storageManager)
+    this._debouncedAutosave = debounce(this._performAutosave.bind(this), 300);
   }
 
   /**
@@ -98,9 +102,17 @@ export class LocalJSONProvider extends DataProvider {
       return;
     }
 
-    // Internal autosave implementation - no dependency on storageManager
-    const currentState = getCurrentState();
-    appState.setState(currentState, true); // Update appState silently
+    // Use debounced autosave to prevent race conditions
+    this._debouncedAutosave();
+  }
+
+  /**
+   * Perform the actual autosave operation.
+   * @private
+   */
+  _performAutosave() {
+    // Use maintained state instead of expensive DOM scraping
+    // This is faster and works consistently for local/remote saves
     appState.saveToLocalStorage();
   }
 
@@ -193,6 +205,16 @@ export class LocalJSONProvider extends DataProvider {
       dataStore.addNote(newNote);
     }
 
+    // Emit event to EventBus for other components to react
+    eventBus.emit('note.updated', {
+      id: note.id,
+      content: note.content,
+      left: note.pos ? `${note.pos[0]}px` : undefined,
+      top: note.pos ? `${note.pos[1]}px` : undefined,
+      color: note.color,
+      origin,
+    });
+
     // Notify subscribers
     this._notifySubscribers({
       type: 'notes',
@@ -213,6 +235,12 @@ export class LocalJSONProvider extends DataProvider {
     const origin = opts.origin || ORIGIN.USER;
 
     dataStore.deleteNoteById(id);
+
+    // Emit event to EventBus for other components to react
+    eventBus.emit('note.deleted', {
+      id,
+      origin,
+    });
 
     // Notify subscribers
     this._notifySubscribers({

@@ -12,6 +12,7 @@ import { displayAsViewMode } from '../../features/note/editViewMode.js';
 import { getCoordinateTransform } from '../../core/coordinates/coordinateService.js';
 import { connectionManager } from '../../features/connection/connectionManager.js';
 import { DataProviderService } from '../../services/DataProviderService.js';
+import { ColorService } from '../../services/colorService.js';
 import config from '../../core/config.js';
 import { logger } from '../../services/logger.js';
 
@@ -252,15 +253,33 @@ export class NoteBehavior {
       note.id = noteId;
       note.dataset.id = noteId;
 
-      // Emit event for state management
-      this.eventBus.emit('note.created', {
-        id: noteId,
-        content: '',
-        left: note.style.left,
-        top: note.style.top,
-      });
+      // Get current color and apply visual styling immediately
+      const currentColor = ColorService.getCurrentColor();
 
-      logger.info('NoteBehavior: Created note with ID:', noteId);
+      // Apply color class to DOM element
+      note.classList.add(`color-${currentColor}`);
+
+      // Save note with color to DataProvider
+      const dataProvider = DataProviderService.getInstance();
+      const left = parseInt(note.style.left.replace('px', ''), 10);
+      const top = parseInt(note.style.top.replace('px', ''), 10);
+
+      dataProvider.upsertNote(
+        {
+          id: noteId,
+          content: '',
+          pos: [left, top],
+          color: currentColor,
+        },
+        { origin: 'user' },
+      );
+
+      // Update ColorService state silently (no events, no duplicate saves)
+      ColorService._setNoteColorSilent(noteId, currentColor);
+
+      logger.info(
+        `NoteBehavior: Created note ${noteId} with color ${currentColor}`,
+      );
       return note;
     } catch (error) {
       logger.error('Error creating note:', { error: error });

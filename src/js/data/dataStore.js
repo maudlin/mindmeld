@@ -226,21 +226,25 @@ export async function importFromJSON(jsonData, canvas) {
     NoteService.clearAllNotes();
     document.querySelectorAll('g[data-start]').forEach((conn) => conn.remove());
 
-    // Extract color data for import
+    // Extract color data for import and ensure default colors for notes without explicit colors
     const noteColors = {};
     data.n.forEach((noteData) => {
       if (noteData.cl && ColorService.isValidColor(noteData.cl)) {
+        // Use explicit color from import data
         noteColors[noteData.i] = { colorScheme: noteData.cl };
+      } else {
+        // Use default yellow for notes without color data (not current color picker setting)
+        noteColors[noteData.i] = { colorScheme: 'yellow' };
       }
     });
 
-    // Import colors if any exist
+    // Import all colors (both explicit and defaults)
     if (Object.keys(noteColors).length > 0) {
       ColorService.setAllNoteColors(noteColors);
       // Trigger immediate save via event system for cross-tab consistency
       eventBus.emit('state.save');
       logger.info(
-        'Triggered state save for imported color cross-tab persistence',
+        'Applied colors to imported notes (explicit colors + yellow defaults)',
       );
     }
 

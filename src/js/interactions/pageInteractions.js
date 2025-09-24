@@ -121,14 +121,18 @@ function setupMenuInteractions() {
       return;
     }
 
-    if (!menuElement.contains(e.target) && !menuButton.contains(e.target)) {
+    if (
+      !menuElement.contains(e.target) &&
+      !menuButton.contains(e.target) &&
+      isMenuOpen
+    ) {
       closeMenu();
     }
   });
 
   // Escape key to close
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
+    if (e.key === 'Escape' && isMenuOpen) {
       closeMenu();
     }
   });

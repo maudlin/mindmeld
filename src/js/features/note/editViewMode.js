@@ -194,12 +194,7 @@ export function getCurrentMarkdownContent(noteContent) {
     // Get from stored markdown attribute ONLY - never fall back to textContent (corrupted HTML-derived)
     const storedMarkdown = noteContent.getAttribute('data-markdown') || '';
 
-    if (!storedMarkdown) {
-      logger.warn(
-        'getCurrentMarkdownContent: No data-markdown found in view mode. Content may be lost.',
-      );
-    }
-
+    // Note: Empty content is normal for new notes, no need to warn
     return storedMarkdown;
   }
 }

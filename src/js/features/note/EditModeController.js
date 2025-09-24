@@ -13,6 +13,7 @@ import {
   getCurrentMarkdownContent,
 } from './editViewMode.js';
 import { logger } from '../../services/logger.js';
+import { DataProviderService } from '../../services/DataProviderService.js';
 
 class EditModeController {
   constructor() {
@@ -211,12 +212,15 @@ class EditModeController {
     // Blur handling is now done through adapters
     // this.removeBlurHandler(noteElement);
 
-    // Save the updated content
-    eventBus.emit('note.updated', {
-      id: noteElement.id,
-      content: rawText,
-    });
-    eventBus.emit('state.save');
+    // Save the updated content directly to DataProvider
+    const dataProvider = DataProviderService.getInstance();
+    dataProvider.upsertNote(
+      {
+        id: noteElement.id,
+        content: rawText,
+      },
+      { origin: 'user' },
+    );
 
     // Emit edit mode exited event
     eventBus.emit('note.editModeExited', {

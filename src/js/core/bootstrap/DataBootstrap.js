@@ -15,18 +15,12 @@ import { logger } from '../../services/logger.js';
 import { appState } from '../../data/observableState.js';
 import { ZoomStateService } from '../../services/zoomStateService.js';
 import { DataProviderService } from '../../services/DataProviderService.js';
-import { DataProviderCompatibility } from '../../data/DataProviderCompatibility.js';
-import {
-  isDebugEnabled,
-  isDebounceEnabled,
-  getProviderType,
-} from '../featureFlags.js';
+import { isDebugEnabled, getProviderType } from '../featureFlags.js';
 export class DataBootstrap extends BaseBootstrap {
   constructor() {
     super('DataBootstrap');
     this.stateRestored = false;
     this._dataProviderUnsubscribe = null;
-    this._updatePending = false; // Guard for debouncing UI updates
   }
 
   async initialize() {
@@ -88,29 +82,26 @@ export class DataBootstrap extends BaseBootstrap {
         },
       });
 
-      // Subscribe to DataProvider changes and route them to existing event bus patterns
+      // Subscribe to DataProvider changes for debugging/monitoring only
+      // Note: LocalJSONProvider now emits events directly, so no routing needed
       this._dataProviderUnsubscribe = dataProvider.subscribe((change) => {
-        this._handleProviderChange(change);
+        if (isDebugEnabled()) {
+          logger.info(
+            'DataBootstrap: DataProvider change (monitoring only)',
+            change,
+          );
+        }
       });
 
       logger.info(
         `DataBootstrap: DataProvider (${dataProvider.getProviderType()}) initialized with observers`,
       );
 
-      // Migrate to DataProvider architecture if using YjsProvider
-      if (getProviderType() === 'yjs') {
-        try {
-          DataProviderCompatibility.migrateToProvider();
-          logger.info(
-            'DataBootstrap: Migrated to DataProvider architecture (YjsProvider)',
-          );
-        } catch (error) {
-          logger.error(
-            'DataBootstrap: DataProvider migration failed, using legacy handlers:',
-            error,
-          );
-        }
-      }
+      // DataProvider architecture is now the primary system
+      // UI components call DataProvider directly, which emits events for coordination
+      logger.info(
+        `DataBootstrap: DataProvider architecture active (${getProviderType()}Provider)`,
+      );
 
       return cleanup;
     } catch (error) {
@@ -140,136 +131,6 @@ export class DataBootstrap extends BaseBootstrap {
   setupPersistence() {
     // observableState handles automatic persistence, no additional setup needed
     logger.info('DataBootstrap: Persistence handlers configured');
-  }
-
-  /**
-   * Handle DataProvider changes and route them to existing event bus patterns
-   * This bridges the DataProvider observer system with the existing UI event system
-   * @param {Object} change - DataProvider change event
-   * @private
-   */
-  _handleProviderChange(change) {
-    if (isDebugEnabled()) {
-      logger.info('DataBootstrap: Processing provider change', change);
-    }
-
-    // Debounce UI updates if enabled to prevent event storms
-    if (isDebounceEnabled() && this._updatePending) {
-      if (isDebugEnabled()) {
-        logger.info('DataBootstrap: Debouncing change event', change.type);
-      }
-      return;
-    }
-
-    if (isDebounceEnabled()) {
-      this._updatePending = true;
-      requestAnimationFrame(() => {
-        this._processBatchedChanges(change);
-        this._updatePending = false;
-      });
-    } else {
-      this._processBatchedChanges(change);
-    }
-  }
-
-  /**
-   * Process batched changes and emit appropriate event bus events
-   * @param {Object} change - DataProvider change event
-   * @private
-   */
-  _processBatchedChanges(change) {
-    switch (change.type) {
-      case 'notes':
-        this._handleNoteChange(change);
-        break;
-      case 'connections':
-        this._handleConnectionChange(change);
-        break;
-      case 'meta':
-        this._handleMetaChange(change);
-        break;
-      case 'snapshot':
-        this._handleSnapshotChange(change);
-        break;
-      default:
-        if (isDebugEnabled()) {
-          logger.info('DataBootstrap: Unknown change type', change.type);
-        }
-    }
-  }
-
-  /**
-   * Handle note changes from DataProvider
-   * @param {Object} change
-   * @private
-   */
-  _handleNoteChange(change) {
-    if (change.payload.deleted) {
-      eventBus.emit('note.deleted', {
-        id: change.payload.id,
-        origin: change.origin,
-      });
-    } else {
-      eventBus.emit('note.updated', {
-        id: change.payload.id,
-        origin: change.origin,
-      });
-    }
-
-    // Emit general notes changed event
-    eventBus.emit('notes.changed', {
-      origin: change.origin,
-      type: 'note',
-    });
-  }
-
-  /**
-   * Handle connection changes from DataProvider
-   * @param {Object} change
-   * @private
-   */
-  _handleConnectionChange(change) {
-    if (change.payload.deleted) {
-      eventBus.emit('connection.deleted', {
-        id: change.payload.id,
-        origin: change.origin,
-      });
-    } else {
-      eventBus.emit('connection.updated', {
-        id: change.payload.id,
-        origin: change.origin,
-      });
-    }
-
-    // Emit general notes changed event
-    eventBus.emit('notes.changed', {
-      origin: change.origin,
-      type: 'connection',
-    });
-  }
-
-  /**
-   * Handle metadata changes from DataProvider
-   * @param {Object} change
-   * @private
-   */
-  _handleMetaChange(change) {
-    eventBus.emit('meta.updated', {
-      meta: change.payload.meta,
-      origin: change.origin,
-    });
-  }
-
-  /**
-   * Handle snapshot changes (bulk import) from DataProvider
-   * @param {Object} change
-   * @private
-   */
-  _handleSnapshotChange(change) {
-    // For snapshot changes, trigger a full reload
-    eventBus.emit('notes.loaded', {
-      origin: change.origin,
-    });
   }
 
   async restoreState() {

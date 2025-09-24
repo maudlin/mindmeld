@@ -70,6 +70,14 @@ describe('LocalJSONProvider TDD Tests', () => {
     jest.doMock('../../../../src/js/core/eventBus.js', () => ({
       eventBus: mockEventBus,
     }));
+    jest.doMock('../../../../src/js/utils/utils.js', () => ({
+      debounce: jest.fn().mockImplementation((fn) => {
+        // Return a debounced function that executes immediately for testing
+        const debouncedFn = jest.fn((...args) => fn(...args));
+        debouncedFn.cancel = jest.fn();
+        return debouncedFn;
+      }),
+    }));
 
     // Import after mocking
     const module = await import(

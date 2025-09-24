@@ -86,7 +86,40 @@ export class ColorService {
     appState.setState(newState);
 
     eventBus.emit('note.color.changed', { noteIds: ids, color });
-    logger.info(`Color ${color} applied to notes:`, ids);
+    logger.debug(`Color ${color} applied to notes:`, ids);
+    return true;
+  }
+
+  /**
+   * Set color for specific note(s) without triggering events (for internal state updates)
+   * @param {string|string[]} noteIds - Single note ID or array of note IDs
+   * @param {string} color - Color scheme name
+   * @private
+   */
+  static _setNoteColorSilent(noteIds, color) {
+    if (!this.VALID_COLORS.includes(color)) {
+      return false;
+    }
+
+    const ids = Array.isArray(noteIds) ? noteIds : [noteIds];
+    const currentState = appState.getState();
+    const currentColorState = currentState.colorState || {
+      currentColor: 'yellow',
+      notes: {},
+    };
+    const updatedNoteColors = { ...currentColorState.notes };
+
+    ids.forEach((noteId) => {
+      updatedNoteColors[noteId] = { colorScheme: color };
+    });
+
+    appState.setState({
+      colorState: {
+        ...currentColorState,
+        notes: updatedNoteColors,
+      },
+    });
+
     return true;
   }
 

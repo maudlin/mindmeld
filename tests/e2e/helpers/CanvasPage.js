@@ -889,12 +889,20 @@ export class CanvasPage {
   }
 
   /**
-   * Verify that a note has a specific color
+   * Verify that a note has a specific color in the application state
    * @param {Locator} note - The note element
    * @param {string} color - Expected color name
    */
   async verifyNoteColor(note, color) {
-    await expect(note).toHaveClass(new RegExp(`color-${color}`));
+    const noteId = await note.getAttribute('id');
+
+    // Check the actual application state for color data
+    const colorState = await this.page.evaluate((id) => {
+      const appState = window.mindMeldDebug?.appState?.getState?.();
+      return appState?.colorState?.notes?.[id]?.colorScheme;
+    }, noteId);
+
+    expect(colorState).toBe(color);
   }
 
   /**

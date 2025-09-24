@@ -168,7 +168,21 @@ export class DataProviderCompatibility {
    */
   static _handleNoteCreated(noteData) {
     try {
+      // Prevent feedback loop: ignore events from DataProvider system
+      if (noteData.origin === ORIGIN.SYSTEM || noteData.origin === 'system') {
+        return;
+      }
+
       const dataProvider = DataProviderService.getInstance();
+
+      // Validate required data
+      if (!noteData.id) {
+        logger.warn(
+          'DataProviderCompatibility: Note creation event missing id, skipping',
+          noteData,
+        );
+        return;
+      }
 
       // Convert position strings to numbers for DataProvider
       const left =
@@ -211,7 +225,21 @@ export class DataProviderCompatibility {
    */
   static _handleNoteUpdated(noteData) {
     try {
+      // Prevent feedback loop: ignore events from DataProvider system
+      if (noteData.origin === ORIGIN.SYSTEM || noteData.origin === 'system') {
+        return;
+      }
+
       const dataProvider = DataProviderService.getInstance();
+
+      // Validate required data
+      if (!noteData.id) {
+        logger.warn(
+          'DataProviderCompatibility: Note update event missing id, skipping',
+          noteData,
+        );
+        return;
+      }
 
       const updateData = { id: noteData.id };
 
