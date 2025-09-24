@@ -138,7 +138,7 @@ test.describe('Viewport Touch Interactions @integration', () => {
 
     // Check that ViewportBehavior initialized properly
     const viewportLogs = logs.filter(
-      (log) => log.includes('ViewportBehavior') && log.includes('Initialized'),
+      (log) => log.includes('ViewportBehavior') && log.includes('initialized'),
     );
 
     expect(viewportLogs.length).toBeGreaterThan(0);
