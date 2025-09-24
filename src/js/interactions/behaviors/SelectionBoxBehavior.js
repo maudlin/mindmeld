@@ -9,6 +9,7 @@ import { throttle } from '../../utils/utils.js';
 import { noteManager } from '../../services/noteManager.js';
 import { getZoomLevel } from '../../features/zoom/viewportAdapter.js';
 import { CoordinateTransform } from '../../core/coordinates/CoordinateTransform.js';
+import { logger } from '../../services/logger.js';
 
 export class SelectionBoxBehavior {
   constructor(eventBus) {
@@ -36,7 +37,7 @@ export class SelectionBoxBehavior {
       32, // 30fps for note selection checking - less frequent than visual updates
     );
 
-    console.log('SelectionBoxBehavior: Created');
+    logger.debug('SelectionBoxBehavior created');
   }
 
   /**
@@ -62,7 +63,7 @@ export class SelectionBoxBehavior {
     // Each adapter will call our methods directly based on input detection
 
     this.isInitialized = true;
-    console.log('SelectionBoxBehavior: Initialized');
+    logger.debug('SelectionBoxBehavior initialized');
   }
 
   /**
@@ -123,7 +124,7 @@ export class SelectionBoxBehavior {
       inputType,
     });
 
-    console.log(`SelectionBoxBehavior: Selection started from ${inputType}`, {
+    logger.info(`SelectionBoxBehavior: Selection started from ${inputType}`, {
       startX,
       startY,
     });
@@ -158,7 +159,7 @@ export class SelectionBoxBehavior {
     // CRITICAL: Use throttled version to prevent lag
     this.throttledSelectNotesWithinBox();
 
-    console.log(`SelectionBoxBehavior: Selection updated from ${inputType}`, {
+    logger.info(`SelectionBoxBehavior: Selection updated from ${inputType}`, {
       currentX,
       currentY,
     });
@@ -202,14 +203,14 @@ export class SelectionBoxBehavior {
       type: 'selection',
     });
 
-    console.log(`SelectionBoxBehavior: Selection ended from ${inputType}`);
+    logger.info(`SelectionBoxBehavior: Selection ended from ${inputType}`);
   }
 
   /**
    * Cancel selection box operation
    */
   cancel() {
-    console.log('SelectionBoxBehavior: Selection cancelled');
+    logger.info('SelectionBoxBehavior: Selection cancelled');
 
     // If we're currently drawing a selection box, clean it up
     if (this.isDrawingSelectionBox) {
@@ -290,13 +291,13 @@ export class SelectionBoxBehavior {
     const boxRect = this.selectionBox.getBoundingClientRect();
 
     // Performance: Only log box bounds, not every note check
-    // console.log('SelectionBoxBehavior: Selection box bounds:', boxRect);
+    // logger.info('SelectionBoxBehavior: Selection box bounds:', boxRect);
 
     notes.forEach((note) => {
       const noteRect = note.getBoundingClientRect();
 
       // Performance: Removed per-note logging to prevent lag
-      // console.log('SelectionBoxBehavior: Checking note', { noteId: note.id, noteRect });
+      // logger.info('Checking note', { noteId: note.id, noteRect });
 
       // Use intersection-based selection instead of containment
       // This is more user-friendly and matches typical selection behavior
@@ -310,7 +311,7 @@ export class SelectionBoxBehavior {
         // Use noteManager to properly handle selection
         noteManager.selectNote(note);
         // Performance: Reduced logging frequency
-        // console.log('SelectionBoxBehavior: Note intersects - selected:', note.id);
+        // logger.info('SelectionBoxBehavior: Note intersects - selected:', note.id);
       } else {
         // Deselect notes that don't intersect
         noteManager.deselectNote(note);
@@ -325,6 +326,6 @@ export class SelectionBoxBehavior {
     this.cancel();
     this.isInitialized = false;
     this.eventBus = null;
-    console.log('SelectionBoxBehavior: Destroyed');
+    logger.info('SelectionBoxBehavior: Destroyed');
   }
 }

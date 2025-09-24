@@ -1,6 +1,7 @@
 // src/js/data/dataStore.js
-import { debounce, log, truncateNoteContent } from '../utils/utils.js';
+import { debounce, truncateNoteContent } from '../utils/utils.js';
 import { appState } from './observableState.js';
+import { logger } from '../services/logger.js';
 import {
   NOTE_CONTENT_LIMIT,
   CONNECTION_TYPE_MAP,
@@ -27,7 +28,7 @@ function getNoteBehavior() {
       return window.mindMeldDebug.interactionController.getBehavior('note');
     }
   } catch (error) {
-    console.warn('dataStore: Failed to get NoteBehavior:', error);
+    logger.warn('dataStore: Failed to get NoteBehavior:', error);
   }
   return null;
 }
@@ -38,7 +39,9 @@ export function addNote(note) {
   // Prevent duplicate notes during state restoration
   const existingNote = currentNotes.find((n) => n.id === note.id);
   if (existingNote) {
-    log(`Note ${note.id} already exists in state, skipping duplicate addition`);
+    logger.info(
+      `Note ${note.id} already exists in state, skipping duplicate addition`,
+    );
     return note;
   }
 
@@ -93,7 +96,7 @@ export function updateNotesAndConnections(state) {
       noteBehavior.createNoteFromData(noteData, canvas);
     });
   } else {
-    console.warn(
+    logger.warn(
       'dataStore: NoteBehavior not available, falling back to NoteService',
     );
     state.notes.forEach((noteData) => {
@@ -122,12 +125,12 @@ export function updateNotesAndConnections(state) {
 
   // Emit notes.loaded event for color application (same as import process)
   eventBus.emit('notes.loaded');
-  console.log(
+  logger.info(
     'Emitted notes.loaded event for color application with colorState:',
     loadedColorState,
   );
 
-  log(
+  logger.info(
     `Updated ${state.notes.length} notes and ${state.connections.length} connections`,
   );
 }
@@ -146,9 +149,9 @@ const debouncedUpdateConnection = debounce((startId, endId, type) => {
     // Remove connection
     if (existingConnectionIndex !== -1) {
       updatedConnections.splice(existingConnectionIndex, 1);
-      log(`Removed connection: ${startId} - ${endId}`);
+      logger.info(`Removed connection: ${startId} - ${endId}`);
     } else {
-      log(`No connection found to remove: ${startId} - ${endId}`);
+      logger.info(`No connection found to remove: ${startId} - ${endId}`);
     }
   } else {
     // Ensure type is valid
@@ -167,11 +170,11 @@ const debouncedUpdateConnection = debounce((startId, endId, type) => {
   }
 
   appState.setState({ connections: updatedConnections });
-  log('Updated connections:', updatedConnections);
+  logger.info('Updated connections:', updatedConnections);
 }, 300);
 
 export function updateConnectionInDataStore(startId, endId, type) {
-  log('Queueing connection update:', { startId, endId, type });
+  logger.info('Queueing connection update:', { startId, endId, type });
   debouncedUpdateConnection(startId, endId, type);
 }
 
@@ -245,7 +248,7 @@ export function exportToJSON() {
 export async function importFromJSON(jsonData, canvas) {
   try {
     const { data } = JSON.parse(jsonData);
-    log('Parsed JSON data:', {
+    logger.info('Parsed JSON data:', {
       noteCount: data.n.length,
       connectionCount: data.c.length,
     });
@@ -267,13 +270,18 @@ export async function importFromJSON(jsonData, canvas) {
       ColorService.setAllNoteColors(noteColors);
       // Trigger immediate save via event system for cross-tab consistency
       eventBus.emit('state.save');
-      log('Triggered state save for imported color cross-tab persistence');
+      logger.info(
+        'Triggered state save for imported color cross-tab persistence',
+      );
     }
 
     // V1 Simplification: Always use Standard Canvas regardless of imported canvas type
     const importedCanvasType = 'Standard Canvas';
     if (data.ct && data.ct !== 'Standard Canvas') {
-      log('V1: Ignoring non-standard canvas type from import:', data.ct);
+      logger.info(
+        'V1: Ignoring non-standard canvas type from import:',
+        data.ct,
+      );
     }
 
     // Create notes using NoteBehavior for unified creation path
@@ -294,7 +302,7 @@ export async function importFromJSON(jsonData, canvas) {
       if (noteBehavior) {
         note = noteBehavior.createNoteFromData(noteCreateData, canvas);
       } else {
-        console.warn(
+        logger.warn(
           'dataStore: NoteBehavior not available, falling back to NoteService',
         );
         note = NoteService.createNoteFromData(noteCreateData, canvas);
@@ -307,12 +315,12 @@ export async function importFromJSON(jsonData, canvas) {
       };
     });
 
-    log('Notes created:', notes.length);
+    logger.info('Notes created:', notes.length);
 
     // Ensure SVG container exists
     let svgContainer = document.getElementById('svg-container');
     if (!svgContainer) {
-      log('SVG container not found, initializing connection drawing');
+      logger.info('SVG container not found, initializing connection drawing');
       svgContainer = ConnectionService.initializeConnectionDrawing(canvas);
     }
 
@@ -338,16 +346,16 @@ export async function importFromJSON(jsonData, canvas) {
     await CanvasStateService.setCanvasType(importedCanvasType, canvas);
 
     // Update all connections
-    log('Updating all connections');
+    logger.info('Updating all connections');
     ConnectionService.updateConnections();
 
     // Apply imported colors to notes
     eventBus.emit('notes.loaded');
-    log('Emitted notes.loaded event for color application');
+    logger.info('Emitted notes.loaded event for color application');
 
-    log('Import complete');
+    logger.info('Import complete');
   } catch (error) {
-    console.error('Error importing data:', error);
+    logger.error('Error importing data:', error);
     throw new Error('Invalid JSON data');
   }
 }
@@ -357,7 +365,7 @@ export function initializeDataStore() {
   // Always use legacy handlers for now
   // DataProvider architecture is handled by DataBootstrap
   initializeLegacyHandlers();
-  log('DataStore: Initialized with legacy handlers');
+  logger.info('DataStore: Initialized with legacy handlers');
 }
 
 /**
@@ -378,14 +386,14 @@ function initializeLegacyHandlers() {
   eventBus.on('note.color.changed', () => {
     // observableState automatically saves when appState.setState is called
     // This listener ensures any additional color-related state is preserved
-    log('Color change detected, state will be saved automatically');
+    logger.info('Color change detected, state will be saved automatically');
   });
 
   eventBus.on('note.color.removed', () => {
-    log('Color removal detected, state will be saved automatically');
+    logger.info('Color removal detected, state will be saved automatically');
   });
 
-  log('DataStore: Legacy event listeners initialized');
+  logger.info('DataStore: Legacy event listeners initialized');
 }
 
 export function clearAllNotesAndConnections() {
@@ -409,5 +417,5 @@ export function clearAllNotesAndConnections() {
     },
   });
 
-  log('All notes and connections cleared, colorState preserved');
+  logger.info('All notes and connections cleared, colorState preserved');
 }

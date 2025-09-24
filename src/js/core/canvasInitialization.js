@@ -1,16 +1,16 @@
 // canvasInitialization.js - Handles canvas initialization
-import { log } from '../utils/utils.js';
 import { canvasManager } from './canvasManager.js';
 import { setupZoomAndPan } from '../features/zoom/viewportAdapter.js';
 import config from './config.js';
+import { logger } from '../services/logger.js';
 
 export async function initializeCanvas(elements) {
-  log('Initializing canvas...');
+  logger.info('Initializing canvas...');
   const initialModule = canvasManager.setCurrentModule(
     config.defaultCanvasType,
   );
   if (initialModule) {
-    log(`Initial module set: ${initialModule.name}`);
+    logger.info(`Initial module set: ${initialModule.name}`);
 
     // Ensure background layout is fully switched before proceeding to avoid duplicates
     await canvasManager.switchBackgroundLayout(
@@ -24,6 +24,6 @@ export async function initializeCanvas(elements) {
       elements.zoomDisplay,
     );
   } else {
-    log('Failed to initialize canvas. No default module found.');
+    logger.info('Failed to initialize canvas. No default module found.');
   }
 }

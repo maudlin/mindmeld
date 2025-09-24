@@ -1,5 +1,5 @@
 // src/js/features/connection/connectionCreation.js
-import { log } from '../../utils/utils.js';
+import { logger } from '../../services/logger.js';
 
 export class ConnectionCreation {
   constructor(connectionManager) {
@@ -9,16 +9,16 @@ export class ConnectionCreation {
   initializeSVGContainer(canvas) {
     let svgContainer = document.getElementById('svg-container');
     if (!svgContainer) {
-      console.log('🏗️ Creating SVG container');
+      logger.info('🏗️ Creating SVG container');
       svgContainer = this.connectionManager.createSVGElement('svg', {
         id: 'svg-container',
         style:
           'position:absolute; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none;',
       });
       canvas.appendChild(svgContainer);
-      console.log('✅ SVG container created and added to canvas');
+      logger.info('✅ SVG container created and added to canvas');
     } else {
-      console.log('♻️ SVG container already exists');
+      logger.info('♻️ SVG container already exists');
     }
 
     // Clear existing content
@@ -65,7 +65,7 @@ export class ConnectionCreation {
     svgContainer.appendChild(group);
 
     this.connectionManager.throttledUpdateConnections(group);
-    log('Connection created:', { fromId, toId, type });
+    logger.info('Connection created:', { fromId, toId, type });
 
     return group;
   }

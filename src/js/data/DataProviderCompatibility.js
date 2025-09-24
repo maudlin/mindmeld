@@ -5,7 +5,7 @@ import { DataProviderService } from '../services/DataProviderService.js';
 import { eventBus } from '../core/eventBus.js';
 import { ORIGIN } from './providers/DataProvider.js';
 import { getProviderType, isDebugEnabled } from '../core/featureFlags.js';
-import { log } from '../utils/utils.js';
+import { logger } from '../services/logger.js';
 
 /**
  * DataProviderCompatibility - Manages the gradual migration from legacy dataStore
@@ -21,7 +21,7 @@ export class DataProviderCompatibility {
    */
   static migrateToProvider() {
     if (this._migrationActive) {
-      log('DataProviderCompatibility: Migration already active');
+      logger.info('DataProviderCompatibility: Migration already active');
       return;
     }
 
@@ -36,17 +36,17 @@ export class DataProviderCompatibility {
       this._installProviderHandlers();
 
       this._migrationActive = true;
-      log(
+      logger.info(
         'DataProviderCompatibility: Successfully migrated to DataProvider handlers',
       );
 
       if (isDebugEnabled()) {
-        console.log(
+        logger.info(
           `DataProviderCompatibility: Using ${getProviderType()} provider`,
         );
       }
     } catch (error) {
-      console.error('DataProviderCompatibility: Migration failed:', error);
+      logger.error('Migration failed:', { error: error });
       // Attempt rollback on failure
       this.revertToLegacy();
       throw error;
@@ -59,7 +59,7 @@ export class DataProviderCompatibility {
    */
   static revertToLegacy() {
     if (!this._migrationActive) {
-      log('DataProviderCompatibility: Already using legacy handlers');
+      logger.info('DataProviderCompatibility: Already using legacy handlers');
       return;
     }
 
@@ -71,11 +71,11 @@ export class DataProviderCompatibility {
       this._restoreLegacyHandlers();
 
       this._migrationActive = false;
-      log(
+      logger.info(
         'DataProviderCompatibility: Successfully reverted to legacy handlers',
       );
     } catch (error) {
-      console.error('DataProviderCompatibility: Rollback failed:', error);
+      logger.error('Rollback failed:', { error: error });
       throw error;
     }
   }
@@ -107,7 +107,7 @@ export class DataProviderCompatibility {
   static _removeLegacyHandlers() {
     // Since we can't selectively remove specific handlers from eventBus,
     // we'll modify the dataStore initialization to be migration-aware instead
-    log(
+    logger.info(
       'DataProviderCompatibility: Legacy handlers management delegated to dataStore',
     );
   }
@@ -132,7 +132,7 @@ export class DataProviderCompatibility {
     eventBus.on('connection.deleted', this._handleConnectionDeleted.bind(this));
 
     if (isDebugEnabled()) {
-      console.log('DataProviderCompatibility: DataProvider handlers installed');
+      logger.info('DataProviderCompatibility: DataProvider handlers installed');
     }
   }
 
@@ -156,7 +156,7 @@ export class DataProviderCompatibility {
   static _restoreLegacyHandlers() {
     // This would restore the original handlers
     // For now, we'll rely on dataStore re-initialization
-    log(
+    logger.info(
       'DataProviderCompatibility: Legacy handlers restoration delegated to dataStore',
     );
   }
@@ -191,12 +191,12 @@ export class DataProviderCompatibility {
       );
 
       if (isDebugEnabled()) {
-        console.log(
+        logger.info(
           `DataProviderCompatibility: Routed note.created through DataProvider: ${noteData.id}`,
         );
       }
     } catch (error) {
-      console.error(
+      logger.error(
         'DataProviderCompatibility: Failed to handle note.created:',
         error,
       );
@@ -238,12 +238,12 @@ export class DataProviderCompatibility {
       dataProvider.upsertNote(updateData, { origin: ORIGIN.USER });
 
       if (isDebugEnabled()) {
-        console.log(
+        logger.info(
           `DataProviderCompatibility: Routed note.updated through DataProvider: ${noteData.id}`,
         );
       }
     } catch (error) {
-      console.error(
+      logger.error(
         'DataProviderCompatibility: Failed to handle note.updated:',
         error,
       );
@@ -263,12 +263,12 @@ export class DataProviderCompatibility {
       dataProvider.deleteNote(noteData.id, { origin: ORIGIN.USER });
 
       if (isDebugEnabled()) {
-        console.log(
+        logger.info(
           `DataProviderCompatibility: Routed note.deleted through DataProvider: ${noteData.id}`,
         );
       }
     } catch (error) {
-      console.error(
+      logger.error(
         'DataProviderCompatibility: Failed to handle note.deleted:',
         error,
       );
@@ -295,12 +295,12 @@ export class DataProviderCompatibility {
       );
 
       if (isDebugEnabled()) {
-        console.log(
+        logger.info(
           `DataProviderCompatibility: Routed connection.created through DataProvider`,
         );
       }
     } catch (error) {
-      console.error(
+      logger.error(
         'DataProviderCompatibility: Failed to handle connection.created:',
         error,
       );
@@ -328,12 +328,12 @@ export class DataProviderCompatibility {
       );
 
       if (isDebugEnabled()) {
-        console.log(
+        logger.info(
           `DataProviderCompatibility: Routed connection.updated through DataProvider`,
         );
       }
     } catch (error) {
-      console.error(
+      logger.error(
         'DataProviderCompatibility: Failed to handle connection.updated:',
         error,
       );
@@ -353,12 +353,12 @@ export class DataProviderCompatibility {
       dataProvider.deleteConnection(connData.id, { origin: ORIGIN.USER });
 
       if (isDebugEnabled()) {
-        console.log(
+        logger.info(
           `DataProviderCompatibility: Routed connection.deleted through DataProvider`,
         );
       }
     } catch (error) {
-      console.error(
+      logger.error(
         'DataProviderCompatibility: Failed to handle connection.deleted:',
         error,
       );

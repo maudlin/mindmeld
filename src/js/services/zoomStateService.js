@@ -7,7 +7,7 @@ import {
   getZoomLevel as getZoomManagerLevel,
 } from '../features/zoom/viewportAdapter.js';
 import config from '../core/config.js';
-import { log } from '../utils/utils.js';
+import { logger } from './logger.js';
 
 /**
  * ZoomStateService
@@ -25,7 +25,7 @@ export class ZoomStateService {
   static setZoomLevel(zoomLevel) {
     // Validate zoom level
     if (typeof zoomLevel !== 'number' || isNaN(zoomLevel)) {
-      log('ZoomStateService: Invalid zoom level', zoomLevel);
+      logger.info('ZoomStateService: Invalid zoom level', zoomLevel);
       return false;
     }
 
@@ -34,7 +34,7 @@ export class ZoomStateService {
       zoomLevel < config.zoomLevels.min ||
       zoomLevel > config.zoomLevels.max
     ) {
-      log('ZoomStateService: Zoom level out of bounds', zoomLevel);
+      logger.info('ZoomStateService: Zoom level out of bounds', zoomLevel);
       return false;
     }
 
@@ -51,7 +51,7 @@ export class ZoomStateService {
       zoomLevel: zoomLevel,
     });
 
-    log('ZoomStateService: Set zoom level', zoomLevel);
+    logger.info('ZoomStateService: Set zoom level', zoomLevel);
     return true;
   }
 
@@ -70,7 +70,7 @@ export class ZoomStateService {
   static restoreZoomLevel() {
     const zoomLevel = this.getZoomLevel();
     setZoomManagerLevel(zoomLevel);
-    log('ZoomStateService: Restored zoom level', zoomLevel);
+    logger.info('ZoomStateService: Restored zoom level', zoomLevel);
   }
 
   /**
@@ -88,9 +88,12 @@ export class ZoomStateService {
         zoomLevel: actualZoomLevel,
       });
 
-      log('ZoomStateService: Zoom changed via interaction', actualZoomLevel);
+      logger.info(
+        'ZoomStateService: Zoom changed via interaction',
+        actualZoomLevel,
+      );
     });
 
-    log('ZoomStateService: Initialized');
+    logger.info('ZoomStateService: Initialized');
   }
 }

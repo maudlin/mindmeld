@@ -14,6 +14,7 @@ import { clearAllState } from '../../data/storageManager.js';
 import { notificationManager } from '../../services/notificationManager.js';
 import { ServerClient } from '../../services/serverClient.js';
 import { ServerConnectionService } from '../../services/serverConnectionService.js';
+import { logger } from '../../services/logger.js';
 
 export class MenuBehavior {
   constructor(eventBus, canvas = null) {
@@ -39,7 +40,7 @@ export class MenuBehavior {
     // Map state tracking (MM-228)
     this.currentMapName = 'Untitled Map';
 
-    console.log('MenuBehavior: Created');
+    logger.debug('MenuBehavior created');
   }
 
   /**
@@ -64,7 +65,7 @@ export class MenuBehavior {
     }, 0);
 
     this.isInitialized = true;
-    console.log('MenuBehavior: Initialized', {
+    logger.info('Initialized', {
       serverUrl: this.serverConfig.url,
       hasConnection: !!this.mapsApi,
     });
@@ -108,7 +109,7 @@ export class MenuBehavior {
         // Initialize API client but don't mark as connected yet
         this.initializeApiClient(storedUri);
 
-        console.log('MenuBehavior: Loaded server URI from storage:', storedUri);
+        logger.info('MenuBehavior: Loaded server URI from storage:', storedUri);
 
         // Test connection and wait for result to ensure UI updates properly
         await this.testStoredConnection(storedUri);
@@ -117,7 +118,7 @@ export class MenuBehavior {
       // Migrate old localStorage data if it exists
       this.migrateOldServerConfig();
     } catch (error) {
-      console.warn('MenuBehavior: Failed to load server config', error);
+      logger.warn('MenuBehavior: Failed to load server config', error);
     }
   }
 
@@ -131,24 +132,24 @@ export class MenuBehavior {
       if (testResult.success) {
         // Connection is valid - update status
         ServerConnectionService.setConnectionStatus('connected');
-        console.log('MenuBehavior: Stored connection verified');
+        logger.info('MenuBehavior: Stored connection verified');
       } else {
         // Connection failed - keep URI but mark as disconnected
         ServerConnectionService.setConnectionStatus('error');
-        console.log(
+        logger.info(
           'MenuBehavior: Stored connection failed:',
           testResult.error,
         );
       }
 
       // Update UI after connection test
-      console.log(
+      logger.info(
         'MenuBehavior: About to call updateMenuUI() after connection test',
       );
       this.updateMenuUI();
-      console.log('MenuBehavior: Called updateMenuUI() after connection test');
+      logger.info('MenuBehavior: Called updateMenuUI() after connection test');
     } catch (error) {
-      console.warn('MenuBehavior: Failed to test stored connection:', error);
+      logger.warn('MenuBehavior: Failed to test stored connection:', error);
       ServerConnectionService.setConnectionStatus('error');
       this.updateMenuUI();
     }
@@ -164,7 +165,7 @@ export class MenuBehavior {
       if (oldStored) {
         const config = JSON.parse(oldStored);
         if (config.url && !ServerConnectionService.getServerUri()) {
-          console.log(
+          logger.info(
             'MenuBehavior: Migrating old server config to ServerConnectionService',
           );
           ServerConnectionService.setServerUri(config.url);
@@ -175,7 +176,7 @@ export class MenuBehavior {
         localStorage.removeItem('mindmeld-server-config');
       }
     } catch (error) {
-      console.warn('MenuBehavior: Failed to migrate old server config:', error);
+      logger.warn('MenuBehavior: Failed to migrate old server config:', error);
     }
   }
 
@@ -190,7 +191,7 @@ export class MenuBehavior {
         ServerConnectionService.setServerUri(this.serverConfig.url);
       }
     } catch (error) {
-      console.warn('MenuBehavior: Failed to save server config', error);
+      logger.warn('MenuBehavior: Failed to save server config', error);
     }
   }
 
@@ -200,9 +201,9 @@ export class MenuBehavior {
   initializeApiClient(url) {
     try {
       this.mapsApi = createMapsApi({ baseUrl: url });
-      console.log('MenuBehavior: API client initialized', { url });
+      logger.info('API client initialized', { url });
     } catch (error) {
-      console.error('MenuBehavior: Failed to initialize API client', error);
+      logger.error('Failed to initialize API client', { error: error });
       this.mapsApi = null;
     }
   }
@@ -211,7 +212,7 @@ export class MenuBehavior {
    * Handle menu button click/tap from pageInteractions
    */
   handleMenuButtonAction(inputType) {
-    console.log('MenuBehavior: Menu button action', {
+    logger.info('Menu button action', {
       inputType,
       isOpen: this.isOpen,
     });
@@ -325,7 +326,7 @@ export class MenuBehavior {
    */
   openMenu(inputType) {
     this.isOpen = true;
-    console.log('MenuBehavior: Opening menu', { inputType });
+    logger.info('Opening menu', { inputType });
 
     // Emit event for any other systems that need to know
     this.eventBus.emit('menu.opened', {
@@ -342,7 +343,7 @@ export class MenuBehavior {
    */
   closeMenu(inputType) {
     this.isOpen = false;
-    console.log('MenuBehavior: Closing menu', { inputType });
+    logger.info('Closing menu', { inputType });
 
     // Emit event for any other systems that need to know
     this.eventBus.emit('menu.closed', {
@@ -434,7 +435,7 @@ export class MenuBehavior {
    * Handle menu item selection from adapters
    */
   handleMenuAction(action, inputType) {
-    console.log('MenuBehavior: Menu action selected', { action, inputType });
+    logger.info('Menu action selected', { action, inputType });
 
     // Show loading indicator for server operations
     if (
@@ -449,10 +450,10 @@ export class MenuBehavior {
     // Note: We don't await these since menu should close immediately
     switch (action) {
       case 'clear-canvas':
-        console.log('MenuBehavior: About to call handleClearCanvas');
+        logger.info('MenuBehavior: About to call handleClearCanvas');
         this.handleClearCanvas(inputType).catch((error) => {
-          console.error('MenuBehavior: Error in clear canvas:', error);
-          console.error('MenuBehavior: Error stack:', error.stack);
+          logger.error('Error in clear canvas:', { error: error });
+          logger.error('Error stack:', { error: error.stack });
         });
         break;
       case 'import-file':
@@ -466,13 +467,13 @@ export class MenuBehavior {
       case 'copy-clipboard':
       case 'export-to-clipboard':
         this.handleCopyClipboard(inputType).catch((error) =>
-          console.error('MenuBehavior: Error in copy clipboard:', error),
+          logger.error('MenuBehavior: Error in copy clipboard:', error),
         );
         break;
       case 'paste-clipboard':
       case 'import-from-clipboard':
         this.handlePasteClipboard(inputType).catch((error) =>
-          console.error('MenuBehavior: Error in paste clipboard:', error),
+          logger.error('MenuBehavior: Error in paste clipboard:', error),
         );
         break;
       case 'connect-server':
@@ -486,7 +487,7 @@ export class MenuBehavior {
         break;
       case 'load-from-server':
         this.handleLoadFromServer(inputType).catch((error) =>
-          console.error('MenuBehavior: Error in load from server:', error),
+          logger.error('MenuBehavior: Error in load from server:', error),
         );
         break;
       case 'new-map':
@@ -496,7 +497,7 @@ export class MenuBehavior {
         this.handleBrowseMaps(inputType);
         break;
       default:
-        console.warn('MenuBehavior: Unknown menu action', { action });
+        logger.warn('MenuBehavior: Unknown menu action', { action });
     }
 
     // Close menu after action
@@ -507,13 +508,13 @@ export class MenuBehavior {
    * Handle clear canvas action
    */
   async handleClearCanvas(inputType) {
-    console.log('MenuBehavior: Clearing canvas', {
+    logger.info('Clearing canvas', {
       inputType,
       canvas: this.canvas,
     });
 
     if (!this.canvas) {
-      console.error(
+      logger.error(
         'MenuBehavior: Canvas reference is null! Cannot clear canvas.',
       );
       notificationManager.error(
@@ -536,7 +537,7 @@ export class MenuBehavior {
    * Handle import file action
    */
   handleImportFile(inputType) {
-    console.log('MenuBehavior: Importing from file', { inputType });
+    logger.info('Importing from file', { inputType });
 
     const input = document.createElement('input');
     input.type = 'file';
@@ -554,7 +555,7 @@ export class MenuBehavior {
             notificationManager.success('Mind map imported successfully!');
           }
         } catch (error) {
-          console.error('Error importing file:', error);
+          logger.error('Error importing file:', error);
           notificationManager.error(
             "Error importing file. Please make sure it's a valid JSON file.",
           );
@@ -569,7 +570,7 @@ export class MenuBehavior {
    * Handle export file action
    */
   handleExportFile(inputType) {
-    console.log('MenuBehavior: Exporting to file', { inputType });
+    logger.info('Exporting to file', { inputType });
 
     try {
       const dataProviderService = DataProviderService.getInstance();
@@ -586,7 +587,7 @@ export class MenuBehavior {
         "Download started - check your browser's download area",
       );
     } catch (error) {
-      console.error('Error exporting file:', error);
+      logger.error('Error exporting file:', error);
       notificationManager.error('Error exporting file. Please try again.');
     }
   }
@@ -595,7 +596,7 @@ export class MenuBehavior {
    * Handle copy to clipboard action
    */
   async handleCopyClipboard(inputType) {
-    console.log('MenuBehavior: Copying to clipboard', { inputType });
+    logger.info('Copying to clipboard', { inputType });
 
     try {
       const dataProviderService = DataProviderService.getInstance();
@@ -603,7 +604,7 @@ export class MenuBehavior {
       await navigator.clipboard.writeText(json);
       notificationManager.success('Mind map exported to clipboard!');
     } catch (error) {
-      console.error('Error copying to clipboard:', error);
+      logger.error('Error copying to clipboard:', error);
       notificationManager.error(
         'Failed to copy to clipboard. Please try again.',
       );
@@ -614,7 +615,7 @@ export class MenuBehavior {
    * Handle paste from clipboard action
    */
   async handlePasteClipboard(inputType) {
-    console.log('MenuBehavior: Pasting from clipboard', { inputType });
+    logger.info('Pasting from clipboard', { inputType });
 
     try {
       const text = await navigator.clipboard.readText();
@@ -624,7 +625,7 @@ export class MenuBehavior {
         notificationManager.success('Mind map imported from clipboard!');
       }
     } catch (error) {
-      console.error('Error importing from clipboard:', error);
+      logger.error('Error importing from clipboard:', error);
       notificationManager.error(
         'Error importing from clipboard. Please make sure the clipboard contains valid JSON data.',
       );
@@ -635,7 +636,7 @@ export class MenuBehavior {
    * Handle load from server action (MM-106)
    */
   async handleLoadFromServer(inputType) {
-    console.log('MenuBehavior: Loading from server', { inputType });
+    logger.info('Loading from server', { inputType });
 
     try {
       const status = ServerClient.getConnectionStatus();
@@ -646,7 +647,7 @@ export class MenuBehavior {
       }
 
       if (!this.canvas) {
-        console.error(
+        logger.error(
           'MenuBehavior: Canvas reference is null! Cannot load from server.',
         );
         notificationManager.error(
@@ -662,7 +663,7 @@ export class MenuBehavior {
         notificationManager.error('Failed to load data from server');
       }
     } catch (error) {
-      console.error('MenuBehavior: Error loading from server:', error);
+      logger.error('Error loading from server:', { error: error });
       notificationManager.error('Failed to load data from server');
     } finally {
       // Always clear loading state
@@ -700,7 +701,7 @@ export class MenuBehavior {
     // Clear loading state since we're just opening a modal
     this.showMenuItemLoading('connect-server', false);
 
-    console.log('MenuBehavior: Opening server connection modal', { inputType });
+    logger.info('Opening server connection modal', { inputType });
 
     this.eventBus.emit('modal.serverConnection.open', {
       behavior: this,
@@ -713,7 +714,7 @@ export class MenuBehavior {
    * Handle server status when connected - show status modal
    */
   handleServerStatus(inputType) {
-    console.log('MenuBehavior: Show server status', { inputType });
+    logger.info('Show server status', { inputType });
 
     const serverConnectionStatus = this.getServerConnectionStatus();
     const serverUri = this.getServerUri() || 'Unknown server';
@@ -741,13 +742,13 @@ export class MenuBehavior {
     const { url } = data;
 
     if (!url) {
-      console.warn('MenuBehavior: No URL provided for server connection');
+      logger.warn('No URL provided for server connection');
       return;
     }
 
     // Connection attempt starting (ServerConnectionService will manage the status)
 
-    console.log('MenuBehavior: Attempting server connection', { url });
+    logger.info('Attempting server connection', { url });
 
     this.eventBus.emit('server.connecting', {
       behavior: this,
@@ -774,7 +775,7 @@ export class MenuBehavior {
       // Update menu UI to show connected state
       this.updateMenuUI();
 
-      console.log('MenuBehavior: Server connection successful', { url });
+      logger.info('Server connection successful', { url });
 
       this.eventBus.emit('server.connected', {
         behavior: this,
@@ -782,7 +783,7 @@ export class MenuBehavior {
         status: 'connected',
       });
     } catch (error) {
-      console.error('MenuBehavior: Server connection failed', error);
+      logger.error('Server connection failed', { error: error });
 
       this.mapsApi = null;
 
@@ -801,7 +802,7 @@ export class MenuBehavior {
    * Handle server disconnection
    */
   handleServerDisconnect(inputType = 'system-event') {
-    console.log('MenuBehavior: Disconnecting from server', { inputType });
+    logger.info('Disconnecting from server', { inputType });
 
     try {
       // Use ServerConnectionService to properly disconnect
@@ -824,9 +825,9 @@ export class MenuBehavior {
 
         // Show success notification
         notificationManager.success('Disconnected from server successfully');
-        console.log('MenuBehavior: Successfully disconnected from server');
+        logger.info('MenuBehavior: Successfully disconnected from server');
       } else {
-        console.error('MenuBehavior: Failed to disconnect from server');
+        logger.error('MenuBehavior: Failed to disconnect from server');
         notificationManager.error('Failed to disconnect from server');
       }
     } finally {
@@ -859,14 +860,14 @@ export class MenuBehavior {
   setCurrentMapName(name) {
     this.currentMapName = name || 'Untitled Map';
     this.updateMenuUI(); // Trigger menu refresh
-    console.log('MenuBehavior: Map name updated to:', this.currentMapName);
+    logger.info('MenuBehavior: Map name updated to:', this.currentMapName);
   }
 
   /**
    * Handle new map creation request (MM-228)
    */
   handleNewMap(inputType) {
-    console.log('MenuBehavior: New Map requested', { inputType });
+    logger.info('New Map requested', { inputType });
 
     // Check if we're connected to a server
     const serverStatus = this.getServerConnectionStatus();
@@ -884,7 +885,7 @@ export class MenuBehavior {
       inputType,
     });
 
-    console.log(
+    logger.info(
       'MenuBehavior: Map selection modal requested for new map creation',
     );
   }
@@ -893,7 +894,7 @@ export class MenuBehavior {
    * Handle browse maps request (MM-228)
    */
   handleBrowseMaps(inputType) {
-    console.log('MenuBehavior: Browse Maps requested', { inputType });
+    logger.info('Browse Maps requested', { inputType });
 
     // Check if we're connected to a server
     const serverStatus = this.getServerConnectionStatus();
@@ -911,7 +912,7 @@ export class MenuBehavior {
       inputType,
     });
 
-    console.log(
+    logger.info(
       'MenuBehavior: Map selection modal requested for browsing maps',
     );
   }
@@ -1074,7 +1075,7 @@ export class MenuBehavior {
     this.eventBus = null;
     this.mapsApi = null;
 
-    console.log('MenuBehavior: Destroyed');
+    logger.info('MenuBehavior: Destroyed');
   }
 
   /**

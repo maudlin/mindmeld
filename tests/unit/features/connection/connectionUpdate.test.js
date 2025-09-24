@@ -228,8 +228,7 @@ describe('ConnectionUpdate', () => {
       invalidCases.forEach(({ coords, expected }) => {
         connectionUpdate.updateConnectionPath(mockPath, ...coords, 'none');
         expect(console.log).toHaveBeenCalledWith(
-          'Invalid coordinates for path:',
-          expected,
+          expect.stringMatching(/\[.*\] INFO: Invalid coordinates for path:/),
         );
         expect(mockPath.setAttribute).not.toHaveBeenCalledWith(
           'd',

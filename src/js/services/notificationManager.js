@@ -5,7 +5,7 @@
  * Replaces browser alert() and confirm() with consistent, styled UI components
  */
 
-import { log } from '../utils/utils.js';
+import { logger } from './logger.js';
 
 export class NotificationManager {
   constructor() {
@@ -25,7 +25,7 @@ export class NotificationManager {
     this.createModalOverlay();
     this.setupEventListeners();
     this.isInitialized = true;
-    log('NotificationManager initialized');
+    logger.info('NotificationManager initialized');
   }
 
   /**

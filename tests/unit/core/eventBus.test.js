@@ -177,10 +177,9 @@ describe('Event Bus Behavior', () => {
       expect(errorCallback).toHaveBeenCalledWith('data');
       expect(successCallback).toHaveBeenCalledWith('data');
 
-      // Error should have been logged
+      // Error should have been logged with structured format
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Event listener error for "error.test":',
-        expect.any(Error),
+        expect.stringMatching(/\[.*\] ERROR: Event listener error for "error.test":/),
       );
 
       consoleSpy.mockRestore();

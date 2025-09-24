@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 /**
  * Page Interactions - Simple DOM event handling for page UI elements
  *
@@ -43,12 +44,12 @@ export function initializePageInteractions(interactionController) {
     interactionController.getBehavior('serverConnection');
 
   if (!menuBehavior) {
-    console.warn('PageInteractions: MenuBehavior not available');
+    logger.warn('MenuBehavior not available');
     return;
   }
 
   if (!serverConnectionBehavior) {
-    console.warn('PageInteractions: ServerConnectionBehavior not available');
+    logger.warn('ServerConnectionBehavior not available');
     return;
   }
 
@@ -57,7 +58,7 @@ export function initializePageInteractions(interactionController) {
   menuElement = document.getElementById('kebab-context-menu');
 
   if (!menuButton || !menuElement) {
-    console.warn('PageInteractions: Menu elements not found');
+    logger.warn('Menu elements not found');
     return;
   }
 
@@ -67,7 +68,7 @@ export function initializePageInteractions(interactionController) {
   // Set up server connection modal interactions
   setupServerConnectionModalInteractions();
 
-  console.log(
+  logger.info(
     'PageInteractions: Initialized with MenuBehavior, ServerConnectionBehavior, and UI elements',
   );
 }
@@ -142,7 +143,7 @@ function setupMenuInteractions() {
   // Mobile swipe-to-close functionality
   setupMobileInteractions();
 
-  console.log('PageInteractions: Menu event listeners set up');
+  logger.info('PageInteractions: Menu event listeners set up');
 }
 
 /**
@@ -161,7 +162,7 @@ function openMenu() {
     firstMenuItem.focus();
   }
 
-  console.log('PageInteractions: Menu opened');
+  logger.info('PageInteractions: Menu opened');
 }
 
 /**
@@ -177,7 +178,7 @@ function closeMenu() {
   // Return focus to button for keyboard accessibility
   menuButton.focus();
 
-  console.log('PageInteractions: Menu closed');
+  logger.info('PageInteractions: Menu closed');
 }
 
 /**
@@ -290,9 +291,9 @@ function setupServerConnectionModalInteractions() {
   // Verify server connection modal elements exist (they should be in index.html)
   const modal = document.getElementById('server-connection-modal');
   if (!modal) {
-    console.warn('PageInteractions: Server connection modal not found in HTML');
+    logger.warn('Server connection modal not found in HTML');
     return;
   }
 
-  console.log('PageInteractions: Server connection modal interactions set up');
+  logger.info('PageInteractions: Server connection modal interactions set up');
 }

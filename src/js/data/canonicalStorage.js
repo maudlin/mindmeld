@@ -15,6 +15,7 @@
  */
 
 import { defangToPlainText } from '../features/markdown/defangPipeline.js';
+import { logger } from '../services/logger.js';
 import {
   detectBrowser,
   getStorageErrorMessage,
@@ -162,7 +163,7 @@ export function saveNotesToStorage(notes) {
       browserInfo,
       isPrivateMode,
     );
-    console.warn('Failed to save to localStorage:', userFriendlyMessage);
+    logger.warn('Failed to save to localStorage:', userFriendlyMessage);
     return false;
   }
 }
@@ -213,7 +214,7 @@ export function loadNotesFromStorage() {
       browserInfo,
       isPrivateMode,
     );
-    console.warn('Failed to load from localStorage:', userFriendlyMessage);
+    logger.warn('Failed to load from localStorage:', userFriendlyMessage);
     return { notes: [], recovered: false };
   }
 }
@@ -294,7 +295,7 @@ export function clearStorage() {
       browserInfo,
       false,
     );
-    console.warn('Failed to clear localStorage:', userFriendlyMessage);
+    logger.warn('Failed to clear localStorage:', userFriendlyMessage);
     return false;
   }
 }

@@ -2,6 +2,7 @@
 
 import { BaseAdapter } from './BaseAdapter.js';
 import { noteManager } from '../../services/noteManager.js';
+import { logger } from '../../services/logger.js';
 
 /**
  * Desktop input adapter for mouse, keyboard, and trackpad interactions
@@ -17,7 +18,7 @@ export class DesktopAdapter extends BaseAdapter {
     // Behavior references
     this.interactionController = interactionController;
 
-    console.log(
+    logger.info(
       'DesktopAdapter: Constructor called with interactionController:',
       {
         hasInteractionController: !!interactionController,
@@ -71,15 +72,15 @@ export class DesktopAdapter extends BaseAdapter {
    * Initialize adapter with behavior references and event listeners
    */
   async initialize(eventBus) {
-    console.log('DesktopAdapter: initialize() called');
+    logger.info('DesktopAdapter: initialize() called');
     await super.initialize(eventBus);
 
-    console.log(
+    logger.info(
       'DesktopAdapter: About to get behavior references from interaction controller',
     );
     // Get behavior references from interaction controller
     if (this.interactionController) {
-      console.log('DesktopAdapter: InteractionController state:', {
+      logger.info('InteractionController state:', {
         isInitialized: this.interactionController.isInitialized,
         behaviorCount: this.interactionController.behaviors?.size,
         availableBehaviors: Array.from(
@@ -99,7 +100,7 @@ export class DesktopAdapter extends BaseAdapter {
       this.menuBehavior = this.interactionController.getBehavior('menu');
       this.toolbarBehavior = this.interactionController.getBehavior('toolbar');
 
-      console.log('DesktopAdapter: Behavior references initialized', {
+      logger.info('Behavior references initialized', {
         hasNoteBehavior: !!this.noteBehavior,
         hasDragBehavior: !!this.dragBehavior,
         hasSelectionBoxBehavior: !!this.selectionBoxBehavior,
@@ -109,7 +110,7 @@ export class DesktopAdapter extends BaseAdapter {
         hasToolbarBehavior: !!this.toolbarBehavior,
       });
     } else {
-      console.warn('DesktopAdapter: No InteractionController provided!');
+      logger.warn('No InteractionController provided!');
     }
 
     await this.initializeEventListeners();
@@ -127,7 +128,7 @@ export class DesktopAdapter extends BaseAdapter {
       throw new Error('Canvas or canvas-container element not found');
     }
 
-    console.log(
+    logger.info(
       'DesktopAdapter: Initializing event listeners for canvas:',
       this.canvas.id,
     );
@@ -165,7 +166,7 @@ export class DesktopAdapter extends BaseAdapter {
     // Add toolbar button event listeners
     this.setupToolbarEventListeners();
 
-    console.log('DesktopAdapter: Event listeners initialized successfully');
+    logger.info('DesktopAdapter: Event listeners initialized successfully');
   }
 
   /**
@@ -178,7 +179,7 @@ export class DesktopAdapter extends BaseAdapter {
     toolbarButtons.forEach((button) => {
       // Store bound handler for cleanup
       const boundHandler = (event) => {
-        console.log(
+        logger.info(
           '🔧 DesktopAdapter: Toolbar button clicked:',
           button.dataset.toolbarAction,
         );
@@ -195,7 +196,7 @@ export class DesktopAdapter extends BaseAdapter {
       button.addEventListener('click', boundHandler);
     });
 
-    console.log(
+    logger.info(
       'DesktopAdapter: Toolbar button listeners added for',
       toolbarButtons.length,
       'buttons',
@@ -215,7 +216,7 @@ export class DesktopAdapter extends BaseAdapter {
       }
     });
 
-    console.log('DesktopAdapter: Toolbar button listeners cleaned up');
+    logger.info('DesktopAdapter: Toolbar button listeners cleaned up');
   }
 
   /**
@@ -246,7 +247,7 @@ export class DesktopAdapter extends BaseAdapter {
     this.canvas = null;
     this.canvasContainer = null;
 
-    console.log('DesktopAdapter: Event listeners destroyed');
+    logger.info('DesktopAdapter: Event listeners destroyed');
   }
 
   /**
@@ -264,7 +265,7 @@ export class DesktopAdapter extends BaseAdapter {
         y: event.clientY,
       };
 
-      console.log('DesktopAdapter: Right-click pan started');
+      logger.info('DesktopAdapter: Right-click pan started');
       return;
     }
 
@@ -277,7 +278,7 @@ export class DesktopAdapter extends BaseAdapter {
     this.pointerDownPosition = { x: event.clientX, y: event.clientY };
 
     const target = event.target;
-    console.log('DesktopAdapter: Pointer down detected', {
+    logger.info('Pointer down detected', {
       target: target.tagName,
       targetClass: target.className,
       x: event.clientX,
@@ -298,7 +299,7 @@ export class DesktopAdapter extends BaseAdapter {
 
     // Check for toolbar button interactions
     if (target.dataset && target.dataset.toolbarAction) {
-      console.log(
+      logger.info(
         `DesktopAdapter: Toolbar button click detected: ${target.dataset.toolbarAction}`,
       );
       this.handleToolbarButtonInteraction(event, target.dataset.toolbarAction);
@@ -307,14 +308,14 @@ export class DesktopAdapter extends BaseAdapter {
 
     // Check for connector central circle (hotspot) interactions
     if (target.classList && target.classList.contains('connector-hotspot')) {
-      console.log('🔗 DesktopAdapter: Connector hotspot clicked');
+      logger.info('🔗 DesktopAdapter: Connector hotspot clicked');
       this.handleConnectorSelection(event, target);
       return;
     }
 
     // Check for ghost connector interaction (CRITICAL - missing from refactor!)
     if (target.classList.contains('ghost-connector')) {
-      console.log(
+      logger.info(
         'DesktopAdapter: Ghost connector click detected, delegating to connection system',
       );
       this.handleGhostConnectorInteraction(event);
@@ -334,7 +335,7 @@ export class DesktopAdapter extends BaseAdapter {
       return;
     }
 
-    console.log('DesktopAdapter: No recognized interaction target');
+    logger.info('DesktopAdapter: No recognized interaction target');
   }
 
   // Menu interaction methods removed - now handled by pageInteractions.js
@@ -343,18 +344,18 @@ export class DesktopAdapter extends BaseAdapter {
    * Handle ghost connector interaction - delegate to ConnectionBehavior
    */
   handleGhostConnectorInteraction(event) {
-    console.log(
+    logger.info(
       'DesktopAdapter: Ghost connector click detected - delegating to ConnectionBehavior',
     );
 
     if (!this.connectionBehavior) {
-      console.warn('DesktopAdapter: ConnectionBehavior not available');
+      logger.warn('ConnectionBehavior not available');
       return;
     }
 
     const sourceNote = event.target.closest('.note');
     if (!sourceNote) {
-      console.warn('DesktopAdapter: No source note found for ghost connector');
+      logger.warn('No source note found for ghost connector');
       return;
     }
 
@@ -370,10 +371,10 @@ export class DesktopAdapter extends BaseAdapter {
    * Handle toolbar button interactions - delegate to ToolbarBehavior
    */
   handleToolbarButtonInteraction(event, action) {
-    console.log(`DesktopAdapter: Handling toolbar button action: ${action}`);
+    logger.info(`DesktopAdapter: Handling toolbar button action: ${action}`);
 
     if (!this.toolbarBehavior) {
-      console.warn('DesktopAdapter: ToolbarBehavior not available');
+      logger.warn('ToolbarBehavior not available');
       return;
     }
 
@@ -389,7 +390,7 @@ export class DesktopAdapter extends BaseAdapter {
         this.toolbarBehavior.handleConnectorTypeSwitch('desktop');
         break;
       default:
-        console.warn(`DesktopAdapter: Unknown toolbar action: ${action}`);
+        logger.warn(`DesktopAdapter: Unknown toolbar action: ${action}`);
     }
   }
 
@@ -397,7 +398,7 @@ export class DesktopAdapter extends BaseAdapter {
    * Handle connector hotspot selection - placeholder for unified selection system
    */
   handleConnectorSelection(event, hotspotElement) {
-    console.log('🔗 DesktopAdapter: Handling connector selection');
+    logger.info('🔗 DesktopAdapter: Handling connector selection');
 
     event.preventDefault();
     event.stopPropagation();
@@ -405,7 +406,7 @@ export class DesktopAdapter extends BaseAdapter {
     // Get the connector group element (parent of the hotspot circle)
     const connectorGroup = hotspotElement.closest('g[data-start][data-end]');
     if (!connectorGroup) {
-      console.warn('DesktopAdapter: Could not find connector group');
+      logger.warn('Could not find connector group');
       return;
     }
 
@@ -413,7 +414,7 @@ export class DesktopAdapter extends BaseAdapter {
     const endId = connectorGroup.dataset.end;
     const connectionType = connectorGroup.dataset.type;
 
-    console.log('🔗 DesktopAdapter: Connector selected:', {
+    logger.info('Connector selected:', {
       startId,
       endId,
       connectionType,
@@ -478,7 +479,7 @@ export class DesktopAdapter extends BaseAdapter {
       connectionPath.classList.add('selected');
     }
 
-    console.log('🔗 DesktopAdapter: Applied selection visual state');
+    logger.info('🔗 DesktopAdapter: Applied selection visual state');
   }
 
   /**
@@ -486,7 +487,7 @@ export class DesktopAdapter extends BaseAdapter {
    */
   handleNoteInteractionStart(noteElement, event) {
     if (!this.noteBehavior) {
-      console.warn('DesktopAdapter: NoteBehavior not available');
+      logger.warn('NoteBehavior not available');
       return;
     }
 
@@ -499,13 +500,13 @@ export class DesktopAdapter extends BaseAdapter {
       target.closest('.note-content')
     ) {
       // Handle as note click for edit mode
-      console.log(
+      logger.info(
         'DesktopAdapter: Note content click detected, delegating to NoteBehavior for edit mode',
       );
       this.noteBehavior.handleNoteClick(noteElement, event, 'desktop');
     } else {
       // Handle as note border/non-content click for selection (like working implementation)
-      console.log(
+      logger.info(
         'DesktopAdapter: Note border click detected, handling selection',
       );
 
@@ -537,18 +538,18 @@ export class DesktopAdapter extends BaseAdapter {
   handleCanvasInteractionStart() {
     // Don't start selection during double-click
     if (this.isDoubleClickInProgress) {
-      console.log(
+      logger.info(
         'DesktopAdapter: Skipping selection box - double-click in progress',
       );
       return;
     }
 
     if (!this.selectionBoxBehavior) {
-      console.warn('DesktopAdapter: SelectionBoxBehavior not available');
+      logger.warn('SelectionBoxBehavior not available');
       return;
     }
 
-    console.log(
+    logger.info(
       'DesktopAdapter: Canvas click detected, preparing selection box',
     );
 
@@ -642,11 +643,11 @@ export class DesktopAdapter extends BaseAdapter {
    */
   handleNoteDragStart(noteElement, event) {
     if (!this.dragBehavior) {
-      console.warn('DesktopAdapter: DragBehavior not available');
+      logger.warn('DragBehavior not available');
       return;
     }
 
-    console.log(
+    logger.info(
       'DesktopAdapter: Note drag detected, delegating to DragBehavior',
     );
 
@@ -670,18 +671,18 @@ export class DesktopAdapter extends BaseAdapter {
   handleSelectionBoxStart(event) {
     // Don't start selection during double-click
     if (this.isDoubleClickInProgress) {
-      console.log(
+      logger.info(
         'DesktopAdapter: Skipping selection box start - double-click in progress',
       );
       return;
     }
 
     if (!this.selectionBoxBehavior) {
-      console.warn('DesktopAdapter: SelectionBoxBehavior not available');
+      logger.warn('SelectionBoxBehavior not available');
       return;
     }
 
-    console.log(
+    logger.info(
       'DesktopAdapter: Selection box detected, delegating to SelectionBoxBehavior',
     );
 
@@ -705,7 +706,7 @@ export class DesktopAdapter extends BaseAdapter {
   handlePointerUp(event) {
     // Handle right-click pan end
     if (this.isPanning) {
-      console.log('DesktopAdapter: Right-click pan ended');
+      logger.info('DesktopAdapter: Right-click pan ended');
       this.isPanning = false;
       this.panStartPosition = null;
       return;
@@ -713,7 +714,7 @@ export class DesktopAdapter extends BaseAdapter {
 
     if (!this.isPointerDown) return;
 
-    console.log('DesktopAdapter: Pointer up detected');
+    logger.info('DesktopAdapter: Pointer up detected');
 
     // End any active interactions
     this.handleInteractionEnd(event);
@@ -730,7 +731,7 @@ export class DesktopAdapter extends BaseAdapter {
   handleInteractionEnd(event) {
     // Check if we're ending a connection drag (desktop behavior)
     if (this.isConnectionDragging && this.connectionBehavior) {
-      console.log('DesktopAdapter: Connection drag ended');
+      logger.info('DesktopAdapter: Connection drag ended');
       // Delegate to ConnectionBehavior to complete/cancel connection
       this.connectionBehavior.endDrag(event, 'desktop');
       // Reset our state
@@ -741,7 +742,7 @@ export class DesktopAdapter extends BaseAdapter {
 
     // Check if we have an active drag behavior
     if (this.dragBehavior && this.dragBehavior.isDragging) {
-      console.log('DesktopAdapter: Ending drag interaction');
+      logger.info('DesktopAdapter: Ending drag interaction');
       this.dragBehavior.endDrag(event, 'desktop');
       return;
     }
@@ -751,7 +752,7 @@ export class DesktopAdapter extends BaseAdapter {
       this.selectionBoxBehavior &&
       this.selectionBoxBehavior.isDrawingSelectionBox
     ) {
-      console.log('DesktopAdapter: Ending selection box interaction');
+      logger.info('DesktopAdapter: Ending selection box interaction');
       this.selectionBoxBehavior.endSelectionBox(event, 'desktop');
       return;
     }
@@ -765,7 +766,7 @@ export class DesktopAdapter extends BaseAdapter {
   handleDoubleClick(event) {
     event.preventDefault();
 
-    console.log('DesktopAdapter: Double-click detected', {
+    logger.info('Double-click detected', {
       x: event.clientX,
       y: event.clientY,
       target: event.target?.id,
@@ -785,7 +786,7 @@ export class DesktopAdapter extends BaseAdapter {
     if (noteElement) {
       // Note double-click → NoteBehavior for edit mode
       if (this.noteBehavior) {
-        console.log(
+        logger.info(
           'DesktopAdapter: Note double-click detected, delegating to NoteBehavior',
         );
         this.noteBehavior.handleNoteDoubleClick(noteElement, event, 'desktop');
@@ -796,12 +797,12 @@ export class DesktopAdapter extends BaseAdapter {
     ) {
       // Canvas double-click → CanvasBehavior for note creation
       if (this.canvasBehavior) {
-        console.log(
+        logger.info(
           'DesktopAdapter: Canvas double-click detected, delegating to CanvasBehavior',
         );
         this.canvasBehavior.handleCanvasDoubleClick(event, 'desktop');
       } else {
-        console.warn(
+        logger.warn(
           'DesktopAdapter: CanvasBehavior not available for note creation',
         );
       }
@@ -815,7 +816,7 @@ export class DesktopAdapter extends BaseAdapter {
     event.preventDefault();
 
     if (!this.viewportBehavior) {
-      console.warn(
+      logger.warn(
         'DesktopAdapter: ViewportBehavior not available for wheel zoom',
       );
       return;
@@ -823,7 +824,7 @@ export class DesktopAdapter extends BaseAdapter {
 
     const direction = event.deltaY > 0 ? 'out' : 'in';
 
-    console.log(
+    logger.info(
       'DesktopAdapter: Wheel zoom detected, delegating to ViewportBehavior',
       { direction },
     );
@@ -906,13 +907,13 @@ export class DesktopAdapter extends BaseAdapter {
    */
   handleSvgClick(event) {
     if (!this.connectionBehavior) {
-      console.warn(
+      logger.warn(
         'DesktopAdapter: ConnectionBehavior not available for line selection',
       );
       return;
     }
 
-    console.log(
+    logger.info(
       'DesktopAdapter: SVG click detected, delegating to ConnectionBehavior',
     );
     this.connectionBehavior.handleLineSelection(event, 'desktop');

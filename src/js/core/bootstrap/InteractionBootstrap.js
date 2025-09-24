@@ -11,8 +11,8 @@ import { InteractionController } from '../../interactions/InteractionController.
 import { CapabilityDetector } from '../../interactions/capabilities/detector.js';
 import { editModeController } from '../../features/note/EditModeController.js';
 import { eventBus } from '../eventBus.js';
-import { log } from '../../utils/utils.js';
 import { initializePageInteractions } from '../../interactions/pageInteractions.js';
+import { logger } from '../../services/logger.js';
 
 export class InteractionBootstrap extends BaseBootstrap {
   constructor() {
@@ -48,9 +48,7 @@ export class InteractionBootstrap extends BaseBootstrap {
 
   async initializeInputSystem() {
     try {
-      console.log(
-        'InteractionBootstrap: Starting modern input system initialization',
-      );
+      logger.info('Starting modern input system initialization');
 
       // Initialize InteractionController for behavior management
       this.interactionController = new InteractionController();
@@ -59,12 +57,10 @@ export class InteractionBootstrap extends BaseBootstrap {
       // Initialize ViewportBehavior with canvas references
       try {
         await this.initializeViewportBehavior();
-        console.log(
-          'InteractionBootstrap: ViewportBehavior initialization completed successfully',
-        );
+        logger.info('ViewportBehavior initialization completed successfully');
       } catch (error) {
-        console.error(
-          'InteractionBootstrap: CRITICAL - ViewportBehavior initialization failed:',
+        logger.error(
+          'CRITICAL - ViewportBehavior initialization failed:',
           error,
         );
         // Don't throw - continue with initialization
@@ -73,11 +69,9 @@ export class InteractionBootstrap extends BaseBootstrap {
       // Initialize MenuBehavior with canvas reference
       try {
         await this.initializeMenuBehavior();
-        console.log(
-          'InteractionBootstrap: MenuBehavior initialization completed successfully',
-        );
+        logger.info('MenuBehavior initialization completed successfully');
       } catch (error) {
-        console.error(
+        logger.error(
           'InteractionBootstrap: MenuBehavior initialization failed:',
           error,
         );
@@ -86,11 +80,9 @@ export class InteractionBootstrap extends BaseBootstrap {
       // Initialize page interactions for menu UI
       try {
         initializePageInteractions(this.interactionController);
-        console.log(
-          'InteractionBootstrap: Page interactions initialized successfully',
-        );
+        logger.info('Page interactions initialized successfully');
       } catch (error) {
-        console.error('InteractionBootstrap: Page interactions failed:', error);
+        logger.error('Page interactions failed:', { error: error });
       }
 
       const capabilityDetector = new CapabilityDetector();
@@ -102,10 +94,10 @@ export class InteractionBootstrap extends BaseBootstrap {
 
       await this.inputController.initialize();
 
-      console.log(
+      logger.info('Modern input system initialized successfully');
+      logger.info(
         'InteractionBootstrap: Modern input system initialized successfully',
       );
-      log('InteractionBootstrap: Modern input system initialized successfully');
 
       // Global debug flag for E2E tests
       if (typeof window !== 'undefined') {
@@ -119,10 +111,7 @@ export class InteractionBootstrap extends BaseBootstrap {
 
       return true;
     } catch (error) {
-      console.error(
-        'InteractionBootstrap: Failed to initialize modern input system:',
-        error,
-      );
+      logger.error('Failed to initialize modern input system:', error);
       return false;
     }
   }
@@ -133,9 +122,7 @@ export class InteractionBootstrap extends BaseBootstrap {
       const zoomDisplay = document.getElementById('zoom-display');
 
       if (!canvas || !zoomDisplay) {
-        console.warn(
-          'InteractionBootstrap: Canvas or zoomDisplay not found for ViewportBehavior',
-        );
+        logger.warn('Canvas or zoomDisplay not found for ViewportBehavior');
         return;
       }
 
@@ -143,12 +130,11 @@ export class InteractionBootstrap extends BaseBootstrap {
         canvas,
         zoomDisplay,
       );
-      log('InteractionBootstrap: ViewportBehavior initialized with canvas');
-    } catch (error) {
-      console.error(
-        'InteractionBootstrap: Failed to initialize ViewportBehavior:',
-        error,
+      logger.info(
+        'InteractionBootstrap: ViewportBehavior initialized with canvas',
       );
+    } catch (error) {
+      logger.error('Failed to initialize ViewportBehavior:', error);
     }
   }
 
@@ -157,14 +143,14 @@ export class InteractionBootstrap extends BaseBootstrap {
       const canvas = document.getElementById('canvas');
 
       if (!canvas) {
-        console.warn('InteractionBootstrap: Canvas not found for MenuBehavior');
+        logger.warn('Canvas not found for MenuBehavior');
         return;
       }
 
       await this.interactionController.initializeMenuBehavior(canvas);
-      log('InteractionBootstrap: MenuBehavior initialized with canvas');
+      logger.info('InteractionBootstrap: MenuBehavior initialized with canvas');
     } catch (error) {
-      console.error(
+      logger.error(
         'InteractionBootstrap: Failed to initialize MenuBehavior:',
         error,
       );
@@ -174,11 +160,11 @@ export class InteractionBootstrap extends BaseBootstrap {
   async initializeMapSelectionBehavior() {
     try {
       await this.interactionController.initializeMapSelectionBehavior();
-      log(
+      logger.info(
         'InteractionBootstrap: MapSelectionBehavior initialized with DOM elements',
       );
     } catch (error) {
-      console.error(
+      logger.error(
         'InteractionBootstrap: Failed to initialize MapSelectionBehavior:',
         error,
       );
@@ -188,9 +174,11 @@ export class InteractionBootstrap extends BaseBootstrap {
   initializeEditModeController() {
     try {
       editModeController.initialize();
-      log('InteractionBootstrap: EditModeController initialized successfully');
+      logger.info(
+        'InteractionBootstrap: EditModeController initialized successfully',
+      );
     } catch (error) {
-      console.error(
+      logger.error(
         'InteractionBootstrap: Failed to initialize EditModeController:',
         error,
       );
@@ -201,7 +189,7 @@ export class InteractionBootstrap extends BaseBootstrap {
   setupContextMenuPrevention() {
     // Prevent context menu across the application
     document.addEventListener('contextmenu', (event) => event.preventDefault());
-    log('InteractionBootstrap: Context menu prevention configured');
+    logger.info('InteractionBootstrap: Context menu prevention configured');
   }
 
   async cleanup() {
@@ -220,9 +208,9 @@ export class InteractionBootstrap extends BaseBootstrap {
     // Cleanup EditModeController
     try {
       editModeController.cleanup();
-      log('InteractionBootstrap: EditModeController cleaned up');
+      logger.info('InteractionBootstrap: EditModeController cleaned up');
     } catch (error) {
-      console.error(
+      logger.error(
         'InteractionBootstrap: Failed to cleanup EditModeController:',
         error,
       );
@@ -234,6 +222,6 @@ export class InteractionBootstrap extends BaseBootstrap {
     );
 
     this.usingLegacyEvents = false;
-    log('InteractionBootstrap: Interaction systems cleaned up');
+    logger.info('InteractionBootstrap: Interaction systems cleaned up');
   }
 }

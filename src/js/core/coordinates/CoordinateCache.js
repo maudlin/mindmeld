@@ -7,6 +7,7 @@
  */
 
 import { COORDINATE_CONFIG } from './CoordinateConfig.js';
+import { logger } from '../../services/logger.js';
 
 export class CoordinateCache {
   constructor(canvas) {
@@ -91,7 +92,7 @@ export class CoordinateCache {
     this.statistics.invalidations++;
 
     if (this.config.debug?.logTransformations) {
-      console.log('CoordinateCache: Cache invalidated', {
+      logger.info('Cache invalidated', {
         statistics: this.statistics,
       });
     }
@@ -118,7 +119,7 @@ export class CoordinateCache {
     );
 
     if (this.config.debug?.cacheStatistics) {
-      console.log('CoordinateCache: Activity updated', {
+      logger.info('Activity updated', {
         level: this.activityLevel,
         duration: this.cacheDuration,
       });
@@ -260,7 +261,7 @@ export class CoordinateCache {
    */
   handleCacheError(method, error) {
     if (this.config.debug?.logTransformations) {
-      console.error(`CoordinateCache.${method}: ${error.message}`, {
+      logger.error(`CoordinateCache.${method}: ${error.message}`, {
         error,
         statistics: this.statistics,
         cacheState: {
@@ -280,7 +281,7 @@ export class CoordinateCache {
     this.canvas = null;
 
     if (this.config.debug?.cacheStatistics) {
-      console.log(
+      logger.info(
         'CoordinateCache: Destroyed with final statistics:',
         this.getStatistics(),
       );
@@ -310,7 +311,7 @@ export function createCoordinateCache(canvas) {
       return cache;
     }
   } catch (error) {
-    console.warn(
+    logger.warn(
       'CoordinateCache: Initial validation failed, disabling cache:',
       error,
     );

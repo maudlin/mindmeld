@@ -10,8 +10,7 @@ import {
   clearAllNotesAndConnections,
   getCurrentState,
 } from './dataStore.js';
-import { log } from '../utils/utils.js';
-
+import { logger } from '../services/logger.js';
 // Function to check if we're in a browser environment
 const isBrowser =
   typeof window !== 'undefined' && typeof window.document !== 'undefined';
@@ -21,10 +20,10 @@ let stateLoaded = false;
 // Save state to localStorage
 export function saveStateToStorage() {
   const currentState = getCurrentState(); // Get the most up-to-date state
-  // log('Saving state:', JSON.stringify(currentState, null, 2));
+  // logger.info('Saving state:', JSON.stringify(currentState, null, 2));
   appState.setState(currentState, true); // Update appState silently
   appState.saveToLocalStorage();
-  // log('State saved to storage');
+  // logger.info('State saved to storage');
 }
 
 const debouncedSaveState = debounce(saveStateToStorage, 300);
@@ -32,13 +31,13 @@ const debouncedSaveState = debounce(saveStateToStorage, 300);
 // Load state from localStorage
 export async function loadStateFromStorage() {
   if (stateLoaded) {
-    // log('State already loaded, skipping');
+    // logger.info('State already loaded, skipping');
     return false;
   }
 
   const currentState = appState.getState();
   if (currentState.notes.length > 0 || currentState.connections.length > 0) {
-    // log('Current state is not empty, skipping load from storage');
+    // logger.info('Current state is not empty, skipping load from storage');
     return false;
   }
 
@@ -49,7 +48,7 @@ export async function loadStateFromStorage() {
 
   if (appState.loadFromLocalStorage()) {
     const loadedState = appState.getState();
-    // log('Loaded state:', JSON.stringify(loadedState, null, 2));
+    // logger.info('Loaded state:', JSON.stringify(loadedState, null, 2));
 
     clearAllNotesAndConnections(); // Clear existing notes and connections before applying loaded state
     updateNotesAndConnections(loadedState);
@@ -57,9 +56,9 @@ export async function loadStateFromStorage() {
 
     // Emit notes.loaded event for color application (same as import process)
     eventBus.emit('notes.loaded');
-    log('Emitted notes.loaded event for color restoration');
+    logger.info('Emitted notes.loaded event for color restoration');
 
-    // log('State loaded from storage and applied');
+    // logger.info('State loaded from storage and applied');
     verifyLoadedState(loadedState);
 
     // Re-enable auto-save listeners after offline loading completes
@@ -75,19 +74,19 @@ export async function loadStateFromStorage() {
     ServerClient.setupAutoSaveListeners();
   }, 100);
 
-  log('No state found in storage or failed to load');
+  logger.info('No state found in storage or failed to load');
   return false;
 }
 
 function verifyLoadedState(loadedState) {
   const currentState = getCurrentState();
-  // log('Verifying loaded state...');
-  // log('Loaded state:', JSON.stringify(loadedState, null, 2));
-  // log('Current state after loading:', JSON.stringify(currentState, null, 2));
+  // logger.info('Verifying loaded state...');
+  // logger.info('Loaded state:', JSON.stringify(loadedState, null, 2));
+  // logger.info('Current state after loading:', JSON.stringify(currentState, null, 2));
   if (JSON.stringify(loadedState) !== JSON.stringify(currentState)) {
-    console.warn('Loaded state does not match current state after loading!');
+    logger.warn('Loaded state does not match current state after loading!');
   } else {
-    log('Loaded state verified successfully');
+    logger.info('Loaded state verified successfully');
   }
 }
 
@@ -104,7 +103,7 @@ export function clearStateFromStorage() {
     },
   });
   clearAllNotesAndConnections();
-  log('State cleared from storage and reset');
+  logger.info('State cleared from storage and reset');
 }
 
 // Setup state listeners
@@ -127,7 +126,7 @@ export function setupStateListeners() {
   // Backup save
   setInterval(saveStateToStorage, BACKUP_INTERVAL);
 
-  log('State listeners set up');
+  logger.info('State listeners set up');
 }
 
 // Initialize state management
@@ -147,11 +146,11 @@ export function initializeStateManagement() {
   // and the current state is empty
   if (!stateLoaded && appState.getState().notes.length === 0) {
     loadStateFromStorage().catch((error) => {
-      console.error('Error loading state from storage:', error);
+      logger.error('Error loading state from storage:', error);
     });
   }
   setupStateListeners();
-  log('State management initialized');
+  logger.info('State management initialized');
 }
 
 // Function to check if we should restore state (e.g., after a page refresh)
@@ -165,7 +164,7 @@ export function shouldRestoreState() {
 
 export function clearAllState() {
   clearStateFromStorage();
-  log('All state cleared, local storage cleared, and UI reset');
+  logger.info('All state cleared, local storage cleared, and UI reset');
 }
 
 // Event listener for before unload to save state

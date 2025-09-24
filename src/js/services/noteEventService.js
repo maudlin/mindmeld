@@ -1,5 +1,6 @@
 // noteEventService.js - Handles note-related events from the event bus
 import { createNoteAtPosition } from '../factories/noteFactory.js';
+import { logger } from './logger.js';
 // MM-171: Legacy event system disabled - using adapter architecture
 // import { addNoteEventListeners } from '../features/note/noteEvents.js';
 import { eventBus } from '../core/eventBus.js';
@@ -17,18 +18,18 @@ function getNoteBehavior() {
       return window.mindMeldDebug.interactionController.getBehavior('note');
     }
   } catch (error) {
-    console.warn('noteEventService: Failed to get NoteBehavior:', error);
+    logger.warn('noteEventService: Failed to get NoteBehavior:', error);
   }
   return null;
 }
 
 export class NoteEventService {
   static initialize() {
-    console.log('NoteEventService: Initializing event listeners');
+    logger.info('NoteEventService: Initializing event listeners');
 
     // Handle note creation from events using NoteBehavior for unified creation path
     eventBus.on('note.createAtPosition', ({ canvas, event }) => {
-      console.log('NoteEventService: Received note.createAtPosition event', {
+      logger.info('Received note.createAtPosition event', {
         canvas: canvas?.id,
         event: event?.type,
       });
@@ -37,7 +38,7 @@ export class NoteEventService {
       if (noteBehavior) {
         noteBehavior.createNoteAtPosition(canvas, event);
       } else {
-        console.warn(
+        logger.warn(
           'NoteEventService: NoteBehavior not available, falling back to factory',
         );
         createNoteAtPosition(canvas, event, null); // MM-171: Legacy disabled
@@ -46,14 +47,14 @@ export class NoteEventService {
 
     // Handle note deletion from events using NoteBehavior
     eventBus.on('note.deleteWithConnections', ({ note, canvas }) => {
-      console.log(
+      logger.info(
         'NoteEventService: Received note.deleteWithConnections event',
       );
       const noteBehavior = getNoteBehavior();
       if (noteBehavior) {
         noteBehavior.deleteNoteWithConnections(note, canvas);
       } else {
-        console.warn(
+        logger.warn(
           'NoteEventService: NoteBehavior not available for deletion',
         );
       }
@@ -61,17 +62,17 @@ export class NoteEventService {
 
     // Handle selected note deletion from keyboard shortcuts using NoteBehavior
     eventBus.on('notes.deleteSelected', () => {
-      console.log('NoteEventService: Received notes.deleteSelected event');
+      logger.info('NoteEventService: Received notes.deleteSelected event');
       const noteBehavior = getNoteBehavior();
       if (noteBehavior) {
         noteBehavior.deleteSelectedNotes();
       } else {
-        console.warn(
+        logger.warn(
           'NoteEventService: NoteBehavior not available for selected deletion',
         );
       }
     });
 
-    console.log('NoteEventService: Event listeners initialized');
+    logger.info('NoteEventService: Event listeners initialized');
   }
 }

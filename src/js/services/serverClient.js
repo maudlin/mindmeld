@@ -3,7 +3,8 @@ import { ServerConnectionService } from './serverConnectionService.js';
 import { ConnectionService } from './connectionService.js';
 import { exportToJSON, importFromJSON } from '../data/dataStore.js';
 import { eventBus } from '../core/eventBus.js';
-import { log, debounce } from '../utils/utils.js';
+import { debounce } from '../utils/utils.js';
+import { logger } from './logger.js';
 
 /**
  * Server Client Service
@@ -98,7 +99,11 @@ export class ServerClient {
         totalCount: result.totalCount || 0,
       });
 
-      log('Maps loaded successfully:', result.maps?.length || 0, 'maps');
+      logger.info(
+        'Maps loaded successfully:',
+        result.maps?.length || 0,
+        'maps',
+      );
 
       return result;
     } catch (error) {
@@ -106,7 +111,7 @@ export class ServerClient {
         error: error.message,
       });
 
-      log('Error loading maps from server:', error);
+      logger.info('Error loading maps from server:', error);
       throw error;
     }
   }
@@ -144,7 +149,7 @@ export class ServerClient {
       eventBus.emit('server.save.error', {
         error: error.message,
       });
-      log('Error saving state to server:', error);
+      logger.info('Error saving state to server:', error);
       return false;
     }
   }
@@ -263,7 +268,7 @@ export class ServerClient {
         version: result.version,
       });
 
-      log('New map created successfully:', result.id, result.name);
+      logger.info('New map created successfully:', result.id, result.name);
 
       // Update timestamp for successful save
       this.lastSaveTime = Date.now();
@@ -274,7 +279,7 @@ export class ServerClient {
         error: error.message,
       });
 
-      log('Error creating new map:', error);
+      logger.info('Error creating new map:', error);
       throw error;
     }
   }
@@ -407,7 +412,7 @@ export class ServerClient {
         version: mapData.version,
       });
 
-      log('Map loaded successfully:', mapData.id, mapData.name);
+      logger.info('Map loaded successfully:', mapData.id, mapData.name);
 
       return mapData;
     } catch (error) {
@@ -415,7 +420,7 @@ export class ServerClient {
         error: error.message,
       });
 
-      log('Error loading map:', error);
+      logger.info('Error loading map:', error);
       throw error;
     } finally {
       // Re-enable auto-save listeners and clear loading flag
@@ -464,21 +469,21 @@ export class ServerClient {
           this.currentMapName = null;
         }
 
-        log('Map deleted successfully:', mapId);
+        logger.info('Map deleted successfully:', mapId);
         return true;
       } else {
         const errorText = await response.text();
         eventBus.emit('server.delete.error', {
           error: `Server responded with ${response.status}: ${errorText}`,
         });
-        log('Failed to delete map:', response.status, errorText);
+        logger.info('Failed to delete map:', response.status, errorText);
         return false;
       }
     } catch (error) {
       eventBus.emit('server.delete.error', {
         error: error.message,
       });
-      log('Error deleting map:', error);
+      logger.info('Error deleting map:', error);
       return false;
     }
   }
@@ -522,7 +527,7 @@ export class ServerClient {
       mapId: result.id,
       version: result.version,
     });
-    log('New map created on server successfully:', result.id);
+    logger.info('New map created on server successfully:', result.id);
 
     // Update timestamp for successful save
     this.lastSaveTime = Date.now();
@@ -554,13 +559,13 @@ export class ServerClient {
 
       if (retryCount >= MAX_RETRIES) {
         const error = `ETag conflict: Maximum retries (${MAX_RETRIES}) exceeded. Please refresh and try again.`;
-        log('ServerClient:', error);
+        logger.info('ServerClient:', error);
         ServerConnectionService.setConnectionStatus('error');
         eventBus.emit('server.save.error', { error });
         throw new Error(error);
       }
 
-      log(
+      logger.info(
         `ServerClient: ETag conflict detected (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), auto-resolving by fetching latest version`,
       );
 
@@ -569,7 +574,7 @@ export class ServerClient {
         await this.loadState(document.getElementById('canvas'));
 
         // Try saving again with the updated ETag - increment retry count to prevent infinite recursion
-        log(
+        logger.info(
           `ServerClient: Retrying save after ETag refresh (attempt ${retryCount + 1})...`,
         );
         return await this.updateExistingMap(
@@ -578,7 +583,7 @@ export class ServerClient {
           retryCount + 1,
         );
       } catch (retryError) {
-        log(
+        logger.info(
           'ServerClient: Failed to resolve ETag conflict:',
           retryError.message,
         );
@@ -613,7 +618,7 @@ export class ServerClient {
       mapId: result.id,
       version: result.version,
     });
-    log('Map updated on server successfully:', result.id);
+    logger.info('Map updated on server successfully:', result.id);
 
     // Update timestamp for successful save
     this.lastSaveTime = Date.now();
@@ -676,7 +681,7 @@ export class ServerClient {
           error: error.message,
         });
       }
-      log('Error loading state from server:', error);
+      logger.info('Error loading state from server:', error);
       return false;
     } finally {
       // Re-enable auto-save listeners and clear loading flag
@@ -741,7 +746,7 @@ export class ServerClient {
     }
 
     // Debug logging to understand the data structure
-    log('ServerClient: Raw mapData structure:', {
+    logger.info('ServerClient: Raw mapData structure:', {
       hasData: !!mapData.data,
       hasState: !!mapData.state,
       hasStateJson: !!mapData.stateJson,
@@ -758,7 +763,7 @@ export class ServerClient {
     const normalizedData = stateData;
 
     const stateJsonString = JSON.stringify({ data: normalizedData });
-    log('ServerClient: Normalized data for import:', {
+    logger.info('ServerClient: Normalized data for import:', {
       noteCount: normalizedData.n.length,
       connectionCount: normalizedData.c.length,
     });
@@ -770,7 +775,7 @@ export class ServerClient {
       mapName: mapData.name,
       version: mapData.version,
     });
-    log('Map loaded from server successfully:', mapData.id);
+    logger.info('Map loaded from server successfully:', mapData.id);
     return true;
   }
 
@@ -871,7 +876,7 @@ export class ServerClient {
     this.setupAutoSaveListeners();
 
     eventBus.emit('server.autosave.enabled');
-    log('Auto-save enabled');
+    logger.info('Auto-save enabled');
     return true;
   }
 
@@ -884,7 +889,7 @@ export class ServerClient {
     eventBus.emit('server.autosave.disabled', {
       reason: 'Manually disabled',
     });
-    log('Auto-save disabled');
+    logger.info('Auto-save disabled');
   }
 
   /**
@@ -903,7 +908,7 @@ export class ServerClient {
     }
 
     if (this.loadingInProgress) {
-      log('ServerClient: Skipping auto-save during loading operation');
+      logger.info('ServerClient: Skipping auto-save during loading operation');
       return false;
     }
 
@@ -964,7 +969,7 @@ export class ServerClient {
       });
 
       eventBus.emit('server.save.queued');
-      log('Save queued - server not available');
+      logger.info('Save queued - server not available');
     }
   }
 
@@ -988,14 +993,14 @@ export class ServerClient {
 
       if (success) {
         eventBus.emit('server.save.queue.processed');
-        log('Queued saves processed successfully');
+        logger.info('Queued saves processed successfully');
       } else {
         eventBus.emit('server.save.queue.failed');
-        log('Failed to process queued saves');
+        logger.info('Failed to process queued saves');
       }
     } catch (error) {
       eventBus.emit('server.save.queue.failed');
-      log('Error processing queued saves:', error);
+      logger.info('Error processing queued saves:', error);
     } finally {
       this.processingQueue = false;
     }
@@ -1030,7 +1035,7 @@ export class ServerClient {
       const { data } = JSON.parse(stateJsonString);
       return data.n.length === 0 && data.c.length === 0;
     } catch (error) {
-      log('Error checking canvas state:', error);
+      logger.info('Error checking canvas state:', error);
       return false; // If we can't check, don't auto-load to be safe
     }
   }
@@ -1057,7 +1062,7 @@ export class ServerClient {
         // Smart auto-loading: if canvas is empty, load server data
         // But only if all required services are initialized
         if (this.isCanvasEmpty() && this.areServicesReady()) {
-          log(
+          logger.info(
             'Canvas is empty and services ready, auto-loading server data...',
           );
           this.loadState(document.getElementById('canvas')).then((success) => {
@@ -1066,11 +1071,11 @@ export class ServerClient {
                 reason: 'Empty canvas on reconnect',
               });
             } else {
-              log('Auto-load failed, but connection is still active');
+              logger.info('Auto-load failed, but connection is still active');
             }
           });
         } else if (this.isCanvasEmpty()) {
-          log(
+          logger.info(
             'Canvas is empty but services not ready yet, deferring auto-load',
           );
         }
@@ -1095,7 +1100,7 @@ export class ServerClient {
         this.isCanvasEmpty() &&
         this.areServicesReady()
       ) {
-        log('Services now ready, attempting deferred auto-load...');
+        logger.info('Services now ready, attempting deferred auto-load...');
         this.loadState(document.getElementById('canvas')).then((success) => {
           if (success) {
             eventBus.emit('server.autoload.success', {
@@ -1106,7 +1111,7 @@ export class ServerClient {
       }
     });
 
-    log('ServerClient initialized');
+    logger.info('ServerClient initialized');
   }
 
   /**
@@ -1117,10 +1122,10 @@ export class ServerClient {
     try {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('currentMapId', mapId);
-        log('Saved currentMapId to localStorage:', mapId);
+        logger.info('Saved currentMapId to localStorage:', mapId);
       }
     } catch (error) {
-      log('Failed to save currentMapId to localStorage:', error);
+      logger.info('Failed to save currentMapId to localStorage:', error);
     }
   }
 
@@ -1133,12 +1138,12 @@ export class ServerClient {
       if (typeof localStorage !== 'undefined') {
         const mapId = localStorage.getItem('currentMapId');
         if (mapId) {
-          log('Loaded currentMapId from localStorage:', mapId);
+          logger.info('Loaded currentMapId from localStorage:', mapId);
           return mapId;
         }
       }
     } catch (error) {
-      log('Failed to load currentMapId from localStorage:', error);
+      logger.info('Failed to load currentMapId from localStorage:', error);
     }
     return null;
   }
@@ -1149,7 +1154,7 @@ export class ServerClient {
   static clearMapsCache() {
     this.mapsCache = null;
     this.mapsCacheExpiry = null;
-    log('Maps cache cleared');
+    logger.info('Maps cache cleared');
   }
 
   /**
@@ -1159,7 +1164,7 @@ export class ServerClient {
     const savedMapId = this.loadCurrentMapIdFromStorage();
     if (savedMapId) {
       this.currentMapId = savedMapId;
-      log('Initialized with saved map ID:', savedMapId);
+      logger.info('Initialized with saved map ID:', savedMapId);
     }
   }
 }

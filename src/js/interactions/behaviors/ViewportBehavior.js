@@ -9,6 +9,7 @@
 import config from '../../core/config.js';
 import { getScaleFromZoomLevel } from '../../core/coordinates/CoordinateConfig.js';
 import { getCoordinateTransform } from '../../core/coordinates/coordinateService.js';
+import { logger } from '../../services/logger.js';
 
 export class ViewportBehavior {
   constructor(eventBus) {
@@ -24,7 +25,7 @@ export class ViewportBehavior {
     // Current zoom state
     this.zoomLevel = config.zoomLevels.default;
 
-    console.log('ViewportBehavior: Created');
+    logger.debug('ViewportBehavior created');
   }
 
   /**
@@ -42,7 +43,7 @@ export class ViewportBehavior {
     try {
       this.coordinateTransform = getCoordinateTransform();
     } catch (error) {
-      console.warn(
+      logger.warn(
         'ViewportBehavior: CoordinateTransform service not available:',
         error.message,
       );
@@ -56,7 +57,7 @@ export class ViewportBehavior {
     this.updateZoomDisplay(); // Initialize zoom display visibility
 
     this.isInitialized = true;
-    console.log('ViewportBehavior: Initialized', {
+    logger.info('Initialized', {
       hasCanvas: !!this.canvas,
       hasZoomDisplay: !!this.zoomDisplay,
       hasCoordinateTransform: !!this.coordinateTransform,
@@ -70,11 +71,11 @@ export class ViewportBehavior {
    */
   handleWheelZoom(direction, x, y, inputType) {
     if (!this.canvas) {
-      console.warn('ViewportBehavior: Canvas not available for wheel zoom');
+      logger.warn('Canvas not available for wheel zoom');
       return;
     }
 
-    console.log('ViewportBehavior: Wheel zoom detected', {
+    logger.info('Wheel zoom detected', {
       direction,
       x,
       y,
@@ -95,11 +96,11 @@ export class ViewportBehavior {
    */
   handlePinchZoom(scaleDelta, centerX, centerY, inputType) {
     if (!this.canvas) {
-      console.warn('ViewportBehavior: Canvas not available for pinch zoom');
+      logger.warn('Canvas not available for pinch zoom');
       return;
     }
 
-    console.log('ViewportBehavior: Pinch zoom detected', {
+    logger.info('ViewportBehavior: Pinch zoom detected', {
       scaleDelta,
       viewportCenter: { x: centerX, y: centerY },
       inputType,
@@ -122,11 +123,11 @@ export class ViewportBehavior {
    */
   handlePan(deltaX, deltaY, inputType) {
     if (!this.canvas) {
-      console.warn('ViewportBehavior: Canvas not available for pan');
+      logger.warn('Canvas not available for pan');
       return;
     }
 
-    console.log('ViewportBehavior: Pan detected', {
+    logger.info('Pan detected', {
       deltaX,
       deltaY,
       inputType,
@@ -147,11 +148,11 @@ export class ViewportBehavior {
    */
   handleDesktopPan(deltaX, deltaY) {
     if (!this.canvas) {
-      console.warn('ViewportBehavior: Canvas not available for desktop pan');
+      logger.warn('Canvas not available for desktop pan');
       return;
     }
 
-    console.log('ViewportBehavior: Desktop pan detected', {
+    logger.info('Desktop pan detected', {
       deltaX,
       deltaY,
     });
@@ -178,13 +179,13 @@ export class ViewportBehavior {
     inputType,
   ) {
     if (!this.canvas) {
-      console.warn(
+      logger.warn(
         'ViewportBehavior: Canvas not available for simultaneous pan/zoom',
       );
       return;
     }
 
-    console.log('ViewportBehavior: Simultaneous pan/zoom detected', {
+    logger.info('Simultaneous pan/zoom detected', {
       panDeltaX,
       panDeltaY,
       scaleDelta,
@@ -254,7 +255,7 @@ export class ViewportBehavior {
 
     this.updateZoomDisplay();
 
-    console.log('ViewportBehavior: Single-transform zoom applied', {
+    logger.info('ViewportBehavior: Single-transform zoom applied', {
       oldZoom,
       newZoom: actualZoomLevel,
       mouse: { x: mouseX, y: mouseY },
@@ -295,7 +296,7 @@ export class ViewportBehavior {
     // Update zoom display
     this.updateZoomDisplay();
 
-    console.log('ViewportBehavior: CSS scale applied with limits', {
+    logger.info('CSS scale applied with limits', {
       requestedScale: scale,
       clampedScale: clampedScale,
       zoomLevel: clampedZoomLevel,
@@ -327,7 +328,7 @@ export class ViewportBehavior {
     this.setZoomLevel(level);
     const newZoom = this.getZoomLevel();
 
-    console.log('ViewportBehavior: Setting fixed zoom:', {
+    logger.info('Setting fixed zoom:', {
       level,
       centerX,
       centerY,
@@ -355,7 +356,7 @@ export class ViewportBehavior {
         canvasX = canvasCoords.x;
         canvasY = canvasCoords.y;
       } catch (error) {
-        console.warn(
+        logger.warn(
           'ViewportBehavior: Coordinate conversion failed in setFixedZoom:',
           error.message,
         );
@@ -379,7 +380,7 @@ export class ViewportBehavior {
       this.updateZoomDisplay();
     }
 
-    console.log(
+    logger.info(
       `ViewportBehavior: Zoom level set from ${oldZoom} to ${newZoom}, centered at canvas(${canvasX}, ${canvasY})`,
     );
   }
@@ -401,13 +402,13 @@ export class ViewportBehavior {
    */
   setupZoomAndPan(canvasContainer) {
     if (!this.canvas || !this.zoomDisplay) {
-      console.warn(
+      logger.warn(
         'ViewportBehavior: Canvas or zoomDisplay not available for setup',
       );
       return;
     }
 
-    console.log('ViewportBehavior: Setting up zoom and pan');
+    logger.info('ViewportBehavior: Setting up zoom and pan');
 
     // Canvas positioning is handled by CSS centering via #canvas-wrapper
     // No need to override with JavaScript positioning
@@ -429,7 +430,7 @@ export class ViewportBehavior {
   positionCanvas() {
     const centerX = this.canvas.clientWidth / 2;
     const centerY = this.canvas.clientHeight / 2;
-    console.log('ViewportBehavior: Positioning canvas at center', {
+    logger.info('Positioning canvas at center', {
       centerX,
       centerY,
       clientWidth: this.canvas.clientWidth,
@@ -442,7 +443,7 @@ export class ViewportBehavior {
    * Utility: Reset zoom to default
    */
   resetZoom() {
-    console.log('ViewportBehavior: Resetting zoom to default');
+    logger.info('ViewportBehavior: Resetting zoom to default');
     this.applyZoomAtPoint(
       config.zoomLevels.default,
       this.canvas.clientWidth / 2,
@@ -454,7 +455,7 @@ export class ViewportBehavior {
    * Utility: Zoom in/out by steps
    */
   zoomIn() {
-    console.log('ViewportBehavior: Zoom in requested');
+    logger.info('ViewportBehavior: Zoom in requested');
     this.applyZoomAtPoint(
       this.zoomLevel + 1,
       this.canvas.clientWidth / 2,
@@ -463,7 +464,7 @@ export class ViewportBehavior {
   }
 
   zoomOut() {
-    console.log('ViewportBehavior: Zoom out requested');
+    logger.info('ViewportBehavior: Zoom out requested');
     this.applyZoomAtPoint(
       this.zoomLevel - 1,
       this.canvas.clientWidth / 2,
@@ -477,7 +478,7 @@ export class ViewportBehavior {
    */
   initializeCenterCanvas() {
     if (!this.canvas || !this.canvas.parentElement) {
-      console.warn(
+      logger.warn(
         'ViewportBehavior: Cannot initialize center - canvas or container not available',
       );
       return;
@@ -495,7 +496,7 @@ export class ViewportBehavior {
 
     this.canvas.style.transform = `translate(${initialTranslateX}px, ${initialTranslateY}px) scale(${initialScale})`;
 
-    console.log('ViewportBehavior: Canvas initialized at center', {
+    logger.info('ViewportBehavior: Canvas initialized at center', {
       viewport: {
         width: container.offsetWidth,
         height: container.offsetHeight,
@@ -516,6 +517,6 @@ export class ViewportBehavior {
     this.canvas = null;
     this.zoomDisplay = null;
     this.isInitialized = false;
-    console.log('ViewportBehavior: Destroyed');
+    logger.info('ViewportBehavior: Destroyed');
   }
 }

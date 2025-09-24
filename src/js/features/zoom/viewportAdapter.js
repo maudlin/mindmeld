@@ -1,3 +1,4 @@
+import { logger } from '../../services/logger.js';
 /**
  * Viewport Adapter - Provides global access to ViewportBehavior methods
  *
@@ -16,7 +17,7 @@ export function setViewportBehavior(behavior) {
 
 export function getZoomLevel() {
   if (!viewportBehavior) {
-    console.warn('ViewportAdapter: ViewportBehavior not initialized');
+    logger.warn('ViewportBehavior not initialized');
     return 5; // Default zoom level
   }
   return viewportBehavior.getZoomLevel();
@@ -24,7 +25,7 @@ export function getZoomLevel() {
 
 export function setZoomLevel(level) {
   if (!viewportBehavior) {
-    console.warn('ViewportAdapter: ViewportBehavior not initialized');
+    logger.warn('ViewportBehavior not initialized');
     return;
   }
   return viewportBehavior.setZoomLevel(level);
@@ -32,7 +33,7 @@ export function setZoomLevel(level) {
 
 export function setFixedZoom(level, centerX, centerY) {
   if (!viewportBehavior) {
-    console.warn('ViewportAdapter: ViewportBehavior not initialized');
+    logger.warn('ViewportBehavior not initialized');
     return;
   }
   return viewportBehavior.setFixedZoom(level, centerX, centerY);
@@ -40,7 +41,7 @@ export function setFixedZoom(level, centerX, centerY) {
 
 export function setupZoomAndPan(canvasContainer, canvas, zoomDisplay) {
   if (!viewportBehavior) {
-    console.warn(
+    logger.warn(
       'ViewportAdapter: ViewportBehavior not initialized yet, deferring setupZoomAndPan',
     );
     // Store parameters for later initialization when ViewportBehavior is ready
@@ -56,7 +57,7 @@ let deferredSetup = null;
 // Called when ViewportBehavior becomes available
 function processDeferredSetup() {
   if (deferredSetup && viewportBehavior) {
-    console.log('ViewportAdapter: Processing deferred setupZoomAndPan');
+    logger.info('ViewportAdapter: Processing deferred setupZoomAndPan');
     viewportBehavior.setupZoomAndPan(deferredSetup.canvasContainer);
     deferredSetup = null;
   }

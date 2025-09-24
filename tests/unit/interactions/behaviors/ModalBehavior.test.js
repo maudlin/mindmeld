@@ -203,10 +203,9 @@ describe('ModalBehavior', () => {
       modalBehavior.handleModalTrigger('unknown-modal', 'touch');
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        'ModalBehavior: Unknown modal ID',
-        {
-          modalId: 'unknown-modal',
-        },
+        expect.stringMatching(
+          /\[.*\] WARN: ModalBehavior: Unknown modal ID[\s\S]*unknown-modal/i,
+        ),
       );
 
       consoleSpy.mockRestore();

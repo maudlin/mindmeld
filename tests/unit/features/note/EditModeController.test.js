@@ -20,6 +20,19 @@ jest.mock('../../../../src/js/features/note/editViewMode.js', () => ({
   getCurrentMarkdownContent: jest.fn(),
 }));
 
+// Mock the logger service
+jest.mock('../../../../src/js/services/logger.js', () => ({
+  logger: {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  },
+  errorHandler: {
+    handleError: jest.fn(),
+  },
+}));
+
 describe('EditModeController', () => {
   let mockNote;
   let mockNoteContent;
@@ -59,23 +72,19 @@ describe('EditModeController', () => {
 
   describe('Initialization', () => {
     it('should initialize only once', () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const { logger } = require('../../../../src/js/services/logger.js');
 
       editModeController.initialize();
       expect(editModeController.initialized).toBe(true);
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'EditModeController: Initialized',
+      expect(logger.debug).toHaveBeenCalledWith(
+        'EditModeController initialized',
       );
 
       // Try to initialize again
       editModeController.initialize();
-      expect(warnSpy).toHaveBeenCalledWith(
-        'EditModeController: Already initialized',
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Already initialized',
       );
-
-      consoleSpy.mockRestore();
-      warnSpy.mockRestore();
     });
 
     it('should set up event listeners on initialization', () => {
@@ -389,23 +398,21 @@ describe('EditModeController', () => {
     });
 
     it('should handle missing note element gracefully', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const { logger } = require('../../../../src/js/services/logger.js');
 
       eventBus.emit('note.requestEdit', {
         noteId: 'note-123',
         noteElement: null,
       });
 
-      expect(warnSpy).toHaveBeenCalledWith(
-        'EditModeController: No note element provided',
+      expect(logger.warn).toHaveBeenCalledWith(
+        'No note element provided',
       );
       expect(editModeController.state).toBe('VIEW');
-
-      warnSpy.mockRestore();
     });
 
     it('should handle missing note content element', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const { logger } = require('../../../../src/js/services/logger.js');
       const emptyNote = document.createElement('div');
       emptyNote.id = 'empty-note';
 
@@ -414,12 +421,10 @@ describe('EditModeController', () => {
         noteElement: emptyNote,
       });
 
-      expect(warnSpy).toHaveBeenCalledWith(
-        'EditModeController: No note content element found',
+      expect(logger.warn).toHaveBeenCalledWith(
+        'No note content element found',
       );
       expect(editModeController.state).toBe('VIEW');
-
-      warnSpy.mockRestore();
     });
 
     it('should handle empty content gracefully', () => {

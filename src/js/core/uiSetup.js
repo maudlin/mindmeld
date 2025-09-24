@@ -1,5 +1,4 @@
 // uiSetup.js - Handles UI initialization and setup
-import { log } from '../utils/utils.js';
 import { canvasManager } from './canvasManager.js';
 import { exportToJSON, importFromJSON } from '../data/dataStore.js';
 import { clearAllState } from '../data/storageManager.js';
@@ -7,6 +6,7 @@ import {
   setupZoomAndPan,
   setFixedZoom,
 } from '../features/zoom/viewportAdapter.js';
+import { logger } from '../services/logger.js';
 import { notificationManager } from '../services/notificationManager.js';
 export function setupUI(elements) {
   populateCanvasStyleDropdown(elements);
@@ -39,7 +39,7 @@ function createDropdownButton(text, onClick) {
 }
 
 function switchCanvas(moduleName, elements) {
-  log('Switching to canvas:', moduleName);
+  logger.info('Switching to canvas:', moduleName);
   try {
     canvasManager.switchBackgroundLayout(moduleName, elements.canvas);
 
@@ -60,7 +60,7 @@ function switchCanvas(moduleName, elements) {
       elements.zoomDisplay,
     );
   } catch (error) {
-    console.error(`Error switching to canvas ${moduleName}:`, error);
+    logger.error(`Error switching to canvas ${moduleName}:`, error);
     notificationManager.error(
       `Failed to switch to ${moduleName}. Please try again.`,
     );
@@ -131,7 +131,7 @@ function handleImportFromFile(canvas) {
         importFromJSON(e.target.result, canvas);
         notificationManager.success('Mind map imported successfully!');
       } catch (error) {
-        console.error('Error importing file:', error);
+        logger.error('Error importing file:', error);
         notificationManager.error(
           "Error importing file. Please make sure it's a valid JSON file.",
         );
@@ -150,7 +150,7 @@ function handleExportToClipboard() {
       notificationManager.success('Mind map exported to clipboard!');
     })
     .catch((error) => {
-      console.error('Error copying to clipboard:', error);
+      logger.error('Error copying to clipboard:', error);
       notificationManager.error(
         'Failed to copy to clipboard. Please try again.',
       );
@@ -165,14 +165,14 @@ function handleImportFromClipboard(canvas) {
         importFromJSON(text, canvas);
         notificationManager.success('Mind map imported from clipboard!');
       } catch (error) {
-        console.error('Error importing from clipboard:', error);
+        logger.error('Error importing from clipboard:', error);
         notificationManager.error(
           'Error importing from clipboard. Please make sure the clipboard contains valid JSON data.',
         );
       }
     })
     .catch((error) => {
-      console.error('Error reading from clipboard:', error);
+      logger.error('Error reading from clipboard:', error);
       notificationManager.error(
         'Failed to read from clipboard. Please try again.',
       );

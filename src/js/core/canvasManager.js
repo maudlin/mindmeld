@@ -1,38 +1,45 @@
 // canvasManager.js
 import config from './config.js';
 import { CanvasModule } from './canvasModule.js';
-import { log } from '../utils/utils.js';
+import { logger } from '../services/logger.js';
 
 export class CanvasManager {
   constructor() {
     this.modules = new Map();
     this.currentModule = null;
     this.defaultModuleName = config.defaultCanvasType;
-    log('CanvasManager initialized with default type:', this.defaultModuleName);
+    logger.info(
+      'CanvasManager initialized with default type:',
+      this.defaultModuleName,
+    );
   }
 
   async loadModules() {
-    log('Loading standard canvas module only (V1 simplification)...');
+    logger.info('Loading standard canvas module only (V1 simplification)...');
 
     try {
       const standardPath =
         '../features/canvas/templates/standardCanvas/standardCanvas.js';
-      log(`Loading standard canvas from: ${standardPath}`);
+      logger.info(`Loading standard canvas from: ${standardPath}`);
 
       // eslint-disable-next-line no-unsanitized/method
       const module = await import(standardPath);
       const instance = new module.default();
       if (instance instanceof CanvasModule) {
         this.registerModule(instance);
-        log('Successfully loaded and registered standard canvas module');
+        logger.info(
+          'Successfully loaded and registered standard canvas module',
+        );
       } else {
-        log('Standard canvas module is not an instance of CanvasModule');
+        logger.info(
+          'Standard canvas module is not an instance of CanvasModule',
+        );
       }
     } catch (error) {
-      console.error('Failed to load standard canvas module:', error);
+      logger.error('Failed to load standard canvas module:', error);
     }
 
-    log(
+    logger.info(
       'Finished loading modules. Available modules:',
       this.getAvailableModules(),
     );
@@ -43,21 +50,21 @@ export class CanvasManager {
       throw new TypeError('Module must be an instance of CanvasModule');
     }
     this.modules.set(module.name, module);
-    log(`Registered module: ${module.name}`);
+    logger.info(`Registered module: ${module.name}`);
     if (module.name === this.defaultModuleName) {
       this.currentModule = module;
-      log(`Set default module: ${module.name}`);
+      logger.info(`Set default module: ${module.name}`);
     }
   }
 
   setCurrentModule(moduleName) {
-    log(`Attempting to set current module to: ${moduleName}`);
+    logger.info(`Attempting to set current module to: ${moduleName}`);
     const module = this.modules.get(moduleName);
     if (module) {
       this.currentModule = module;
-      log(`Successfully set current module to: ${moduleName}`);
+      logger.info(`Successfully set current module to: ${moduleName}`);
     } else {
-      log(`Module ${moduleName} not found. Falling back to default.`);
+      logger.info(`Module ${moduleName} not found. Falling back to default.`);
       this.currentModule = this.modules.get(this.defaultModuleName);
     }
     return this.currentModule;
@@ -65,13 +72,15 @@ export class CanvasManager {
 
   async switchBackgroundLayout(moduleName, canvas) {
     // V1 Simplification: Only Standard Canvas supported
-    log(
+    logger.info(
       `V1: Using Standard Canvas layout only (ignoring request for: ${moduleName})`,
     );
     const module =
       this.currentModule || this.modules.get(this.defaultModuleName);
     if (!module) {
-      log('Standard Canvas module not found. Cannot initialize background.');
+      logger.info(
+        'Standard Canvas module not found. Cannot initialize background.',
+      );
       return;
     }
 
@@ -98,7 +107,7 @@ export class CanvasManager {
     const newBackground = module.createBackgroundLayout();
     canvas.insertBefore(newBackground, canvas.firstChild);
 
-    log(`Applied Standard Canvas layout`);
+    logger.info(`Applied Standard Canvas layout`);
   }
 
   getCurrentModule() {

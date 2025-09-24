@@ -12,6 +12,7 @@ import {
   displayAsEditMode,
   getCurrentMarkdownContent,
 } from './editViewMode.js';
+import { logger } from '../../services/logger.js';
 
 class EditModeController {
   constructor() {
@@ -25,13 +26,13 @@ class EditModeController {
    */
   initialize() {
     if (this.initialized) {
-      console.warn('EditModeController: Already initialized');
+      logger.warn('Already initialized');
       return;
     }
 
     this.setupEventListeners();
     this.initialized = true;
-    console.log('EditModeController: Initialized');
+    logger.debug('EditModeController initialized');
   }
 
   /**
@@ -64,7 +65,7 @@ class EditModeController {
    * Handle request to enter edit mode for a note
    */
   handleEditRequest(data) {
-    console.log('EditModeController: Received edit request', {
+    logger.info('Received edit request', {
       ...data,
       hasNoteElement: !!data.noteElement,
       noteElementId: data.noteElement?.id,
@@ -72,7 +73,7 @@ class EditModeController {
     const { noteId, noteElement } = data;
 
     if (!noteElement) {
-      console.warn('EditModeController: No note element provided');
+      logger.warn('No note element provided');
       return;
     }
 
@@ -112,7 +113,7 @@ class EditModeController {
 
     const noteContent = noteElement.querySelector('.note-content');
     if (!noteContent) {
-      console.warn('EditModeController: No note content element found');
+      logger.warn('No note content element found');
       this.state = 'VIEW';
       return;
     }
@@ -132,10 +133,7 @@ class EditModeController {
 
     // Debug warning if no content found
     if (!currentContent) {
-      console.warn(
-        'EditModeController: No markdown content found for note',
-        noteElement.id,
-      );
+      logger.warn('No markdown content found for note', noteElement.id);
     }
 
     // Switch to edit mode display
@@ -179,8 +177,8 @@ class EditModeController {
     const rawText = getCurrentMarkdownContent(noteContent) || '';
 
     if (!rawText) {
-      console.warn(
-        'EditModeController: Failed to extract content during exit. Content may be lost.',
+      logger.warn(
+        'Failed to extract content during exit. Content may be lost.',
       );
     }
 

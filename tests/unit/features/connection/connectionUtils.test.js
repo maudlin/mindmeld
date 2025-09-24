@@ -125,6 +125,9 @@ describe('ConnectionUtils', () => {
     });
 
     it('handles zoom scaling and edge cases', () => {
+      // Set up logging spy first
+      const logSpy = jest.spyOn(console, 'log').mockImplementation();
+
       // Zoom scaling
       connectionUtils.currentZoomLevel = 10;
       const zoomed = connectionUtils.getClosestPoints(
@@ -134,16 +137,22 @@ describe('ConnectionUtils', () => {
       expect(zoomed.x1).toBe(150);
       expect(zoomed.x2).toBe(200);
 
-      // Invalid inputs
+      // Invalid inputs - this triggers the logging
       expect(connectionUtils.getClosestPoints(null, null)).toEqual({
         x1: 0,
         y1: 0,
         x2: 0,
         y2: 0,
       });
-      expect(mockUtils.log).toHaveBeenCalledWith(
-        'Invalid notes provided to getClosestPoints',
+
+      // Check that logging occurred
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /\[.*\] INFO: Invalid notes provided to getClosestPoints/,
+        ),
       );
+
+      logSpy.mockRestore();
 
       // Zero dimensions - coordinates get scaled by zoom/canvas offset
       connectionUtils.currentZoomLevel = 5; // Reset zoom

@@ -11,8 +11,8 @@ import { setupUI } from '../uiSetup.js';
 import { initializeCanvas } from '../canvasInitialization.js';
 import { DOM_SELECTORS } from '../constants.js';
 import { CanvasStateService } from '../../services/canvasStateService.js';
-import { log } from '../../utils/utils.js';
 import { AdaptiveHelp } from '../../accessibility/adaptiveHelp.js';
+import { logger } from '../../services/logger.js';
 
 export class UIBootstrap extends BaseBootstrap {
   constructor() {
@@ -60,7 +60,7 @@ export class UIBootstrap extends BaseBootstrap {
   async initializeCanvasSystem() {
     try {
       await canvasManager.loadModules();
-      log('UIBootstrap: Canvas management system ready');
+      logger.info('UIBootstrap: Canvas management system ready');
     } catch (error) {
       throw new Error(`Canvas system initialization failed: ${error.message}`);
     }
@@ -69,7 +69,7 @@ export class UIBootstrap extends BaseBootstrap {
   async setupUserInterface(elements) {
     try {
       setupUI(elements);
-      log('UIBootstrap: User interface setup completed');
+      logger.info('UIBootstrap: User interface setup completed');
     } catch (error) {
       throw new Error(`UI setup failed: ${error.message}`);
     }
@@ -83,7 +83,7 @@ export class UIBootstrap extends BaseBootstrap {
       // Restore canvas type state after canvas is available
       await CanvasStateService.restoreCanvasType(elements.canvas);
 
-      log('UIBootstrap: Canvas view initialized');
+      logger.info('UIBootstrap: Canvas view initialized');
     } catch (error) {
       throw new Error(`Canvas initialization failed: ${error.message}`);
     }
@@ -93,7 +93,7 @@ export class UIBootstrap extends BaseBootstrap {
     try {
       this.adaptiveHelp = new AdaptiveHelp();
       this.adaptiveHelp.initialize();
-      log('UIBootstrap: Adaptive accessibility features initialized');
+      logger.info('UIBootstrap: Adaptive accessibility features initialized');
     } catch (error) {
       throw new Error(`Accessibility setup failed: ${error.message}`);
     }
@@ -102,6 +102,6 @@ export class UIBootstrap extends BaseBootstrap {
   async cleanup() {
     await super.cleanup();
     this.adaptiveHelp = null;
-    log('UIBootstrap: UI components cleaned up');
+    logger.info('UIBootstrap: UI components cleaned up');
   }
 }

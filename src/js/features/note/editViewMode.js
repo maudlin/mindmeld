@@ -6,6 +6,7 @@ import { renderMarkdown } from '../markdown/markdownRenderer.js';
 import { defangToPlainText } from '../markdown/defangPipeline.js';
 import { noteManager } from '../../services/noteManager.js';
 import { eventBus } from '../../core/eventBus.js';
+import { logger } from '../../services/logger.js';
 
 /**
  * Display note content in view mode (rendered HTML, not editable)
@@ -57,7 +58,7 @@ export function displayAsEditMode(noteContent, markdownContent = null) {
 
   // Debug warning if no markdown content found
   if (!rawMarkdown && markdownContent === null) {
-    console.warn(
+    logger.warn(
       'displayAsEditMode: No markdown content found. data-markdown may be missing.',
     );
   }
@@ -172,7 +173,7 @@ export function displayAsEditMode(noteContent, markdownContent = null) {
  */
 export function getCurrentMarkdownContent(noteContent) {
   if (!noteContent || typeof noteContent.classList === 'undefined') {
-    console.warn('getCurrentMarkdownContent: Invalid noteContent element');
+    logger.warn('Invalid noteContent element');
     return '';
   }
 
@@ -194,7 +195,7 @@ export function getCurrentMarkdownContent(noteContent) {
     const storedMarkdown = noteContent.getAttribute('data-markdown') || '';
 
     if (!storedMarkdown) {
-      console.warn(
+      logger.warn(
         'getCurrentMarkdownContent: No data-markdown found in view mode. Content may be lost.',
       );
     }

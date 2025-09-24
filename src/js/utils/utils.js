@@ -1,9 +1,5 @@
 //src/js/utils/utils.js
-import {
-  NOTE_CONTENT_LIMIT,
-  LOGGING as defaultLogging,
-} from '../core/constants.js';
-
+import { NOTE_CONTENT_LIMIT } from '../core/constants.js';
 /**
  * Debounces a function call.
  * Ensures the function is called only after a specified delay has passed since the last call.
@@ -54,12 +50,6 @@ export function throttle(func, limit) {
       setTimeout(() => (inThrottle = false), limit);
     }
   };
-}
-
-export function log(message, LOGGING = defaultLogging) {
-  if (LOGGING) {
-    console.log(`[${new Date().toISOString()}] ${message}`);
-  }
 }
 
 export function truncateNoteContent(content) {

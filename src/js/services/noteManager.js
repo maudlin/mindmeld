@@ -6,6 +6,7 @@
  */
 
 import { eventBus } from '../core/eventBus.js';
+import { logger } from './logger.js';
 
 export class NoteManager {
   constructor() {
@@ -18,7 +19,7 @@ export class NoteManager {
    */
   selectNote(note) {
     if (!note || !note.classList) {
-      console.warn('NoteManager: Invalid note element provided to selectNote');
+      logger.warn('Invalid note element provided to selectNote');
       return;
     }
 
@@ -37,9 +38,7 @@ export class NoteManager {
    */
   deselectNote(note) {
     if (!note || !note.classList) {
-      console.warn(
-        'NoteManager: Invalid note element provided to deselectNote',
-      );
+      logger.warn('NoteManager: Invalid note element provided to deselectNote');
       return;
     }
 
@@ -129,7 +128,7 @@ export class NoteManager {
    */
   selectMultiple(notes) {
     if (!Array.isArray(notes)) {
-      console.warn('NoteManager: selectMultiple expects an array of notes');
+      logger.warn('selectMultiple expects an array of notes');
       return;
     }
 

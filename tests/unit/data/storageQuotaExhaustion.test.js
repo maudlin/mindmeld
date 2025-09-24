@@ -217,8 +217,9 @@ describe('Storage Quota Exhaustion Tests', () => {
 
       // Should log meaningful warning about storage quota
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringMatching(/Failed to save to localStorage/i),
-        expect.any(String),
+        expect.stringMatching(
+          /\[.*\] WARN: Failed to save to localStorage:.*quota exceeded/i,
+        ),
       );
 
       consoleSpy.mockRestore();
@@ -407,8 +408,9 @@ describe('Storage Quota Exhaustion Tests', () => {
       saveNotesToStorage(notes);
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringMatching(/Failed to save to localStorage/i),
-        expect.any(String),
+        expect.stringMatching(
+          /\[.*\] WARN: Failed to save to localStorage:.*Storage quota exceeded/i,
+        ),
       );
 
       consoleSpy.mockRestore();

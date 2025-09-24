@@ -4,6 +4,7 @@ import { BaseAdapter } from './BaseAdapter.js';
 import { noteManager } from '../../services/noteManager.js';
 import { CoordinateTransform } from '../../core/coordinates/CoordinateTransform.js';
 import { getZoomLevel } from '../../features/zoom/viewportAdapter.js';
+import { logger } from '../../services/logger.js';
 
 /**
  * Touch input adapter for mobile and tablet interactions
@@ -14,7 +15,7 @@ import { getZoomLevel } from '../../features/zoom/viewportAdapter.js';
 export class TouchAdapter extends BaseAdapter {
   constructor(interactionController) {
     super();
-    console.log('🏗️ TouchAdapter: constructor called - DIAGNOSTIC');
+    logger.info('🏗️ TouchAdapter: constructor called - DIAGNOSTIC');
     this.name = 'touch';
 
     // Behavior references
@@ -61,12 +62,12 @@ export class TouchAdapter extends BaseAdapter {
    */
   async initialize(eventBus) {
     try {
-      console.log('🔍 TouchAdapter: initialize() called - DIAGNOSTIC');
+      logger.info('🔍 TouchAdapter: initialize() called - DIAGNOSTIC');
       await super.initialize(eventBus);
 
       // Get behavior references from interaction controller
       if (this.interactionController) {
-        console.log('TouchAdapter: InteractionController state:', {
+        logger.info('InteractionController state:', {
           isInitialized: this.interactionController.isInitialized,
           behaviorCount: this.interactionController.behaviors?.size,
           availableBehaviors: Array.from(
@@ -87,7 +88,7 @@ export class TouchAdapter extends BaseAdapter {
         this.toolbarBehavior =
           this.interactionController.getBehavior('toolbar');
 
-        console.log('TouchAdapter: Behavior references initialized', {
+        logger.info('Behavior references initialized', {
           hasNoteBehavior: !!this.noteBehavior,
           hasDragBehavior: !!this.dragBehavior,
           hasSelectionBoxBehavior: !!this.selectionBoxBehavior,
@@ -98,15 +99,12 @@ export class TouchAdapter extends BaseAdapter {
           hasToolbarBehavior: !!this.toolbarBehavior,
         });
       } else {
-        console.warn('TouchAdapter: InteractionController not available');
+        logger.warn('InteractionController not available');
       }
 
       await this.initializeEventListeners();
     } catch (error) {
-      console.error(
-        '🔍 TouchAdapter: initialize() failed - DIAGNOSTIC:',
-        error,
-      );
+      logger.error('🔍 TouchAdapter: initialize() failed - DIAGNOSTIC:', error);
       throw error;
     }
   }
@@ -139,7 +137,7 @@ export class TouchAdapter extends BaseAdapter {
     // Set up touch-specific enhancements
     this.setupTouchEnhancements();
 
-    console.log('TouchAdapter: Touch event listeners initialized successfully');
+    logger.info('TouchAdapter: Touch event listeners initialized successfully');
   }
 
   /**
@@ -175,7 +173,7 @@ export class TouchAdapter extends BaseAdapter {
     this.lastTap = null;
     this.currentGesture = null;
 
-    console.log('TouchAdapter: Touch event listeners destroyed');
+    logger.info('TouchAdapter: Touch event listeners destroyed');
   }
 
   /**
@@ -222,7 +220,7 @@ export class TouchAdapter extends BaseAdapter {
             touch.target.dataset &&
             touch.target.dataset.toolbarAction
           ) {
-            console.log(
+            logger.info(
               `TouchAdapter: Toolbar button touch detected: ${touch.target.dataset.toolbarAction}`,
             );
             this.handleToolbarButtonInteraction(
@@ -285,7 +283,7 @@ export class TouchAdapter extends BaseAdapter {
           const panGesture = this.detectTwoFingerPan(event.touches);
 
           if (!this.viewportBehavior) {
-            console.warn(
+            logger.warn(
               'TouchAdapter: ViewportBehavior not available for gestures',
             );
             return;
@@ -430,7 +428,7 @@ export class TouchAdapter extends BaseAdapter {
       { passive: false },
     );
 
-    console.log(
+    logger.info(
       'TouchAdapter: Native touch handlers setup complete (single source of truth)',
     );
   }
@@ -439,7 +437,7 @@ export class TouchAdapter extends BaseAdapter {
    * Handle double-tap detection (mirrors desktop double-click)
    */
   handleDoubleTap(touch) {
-    console.log('TouchAdapter: Native double-tap detected', {
+    logger.info('Native double-tap detected', {
       x: touch.clientX,
       y: touch.clientY,
       target: touch.target?.tagName,
@@ -450,7 +448,7 @@ export class TouchAdapter extends BaseAdapter {
     if (noteElement) {
       // Note double-tap → NoteBehavior for edit mode
       if (this.noteBehavior) {
-        console.log(
+        logger.info(
           'TouchAdapter: Note double-tap, delegating to NoteBehavior',
         );
         this.noteBehavior.handleNoteDoubleClick(noteElement, touch, 'touch');
@@ -461,7 +459,7 @@ export class TouchAdapter extends BaseAdapter {
     ) {
       // Canvas double-tap → CanvasBehavior for note creation
       if (this.canvasBehavior) {
-        console.log(
+        logger.info(
           'TouchAdapter: Canvas double-tap, delegating to CanvasBehavior',
         );
         this.canvasBehavior.handleCanvasDoubleClick(touch, 'touch');
@@ -560,7 +558,7 @@ export class TouchAdapter extends BaseAdapter {
     if (target.id === 'canvas' || target.closest('#canvas')) {
       // Check if we're in connection mode - cancel it
       if (this.connectionBehavior && this.connectionBehavior.isConnecting) {
-        console.log(
+        logger.info(
           'TouchAdapter: Canvas tap during connection mode - cancelling connection',
         );
         this.connectionBehavior.cancel();
@@ -568,7 +566,7 @@ export class TouchAdapter extends BaseAdapter {
       }
 
       // Single tap on canvas - clear note selections and exit edit mode
-      console.log(
+      logger.info(
         'TouchAdapter: Canvas tap detected - clearing selections and exiting edit mode',
       );
       noteManager.clearSelections();
@@ -576,7 +574,7 @@ export class TouchAdapter extends BaseAdapter {
       return;
     }
 
-    console.log('TouchAdapter: No recognized tap target');
+    logger.info('TouchAdapter: No recognized tap target');
   }
 
   /**
@@ -591,7 +589,7 @@ export class TouchAdapter extends BaseAdapter {
     const target = this.expandTouchTarget(touch);
     this.gestureStartTarget = target;
 
-    console.log('TouchAdapter: Drag start detected', {
+    logger.info('Drag start detected', {
       target: target.tagName,
       x: touch.clientX,
       y: touch.clientY,
@@ -610,7 +608,7 @@ export class TouchAdapter extends BaseAdapter {
       return;
     }
 
-    console.log('TouchAdapter: Drag start on unrecognized target');
+    logger.info('TouchAdapter: Drag start on unrecognized target');
   }
 
   /**
@@ -640,7 +638,7 @@ export class TouchAdapter extends BaseAdapter {
   handleDragEnd(touch) {
     if (!touch) return;
 
-    console.log('TouchAdapter: Drag end detected');
+    logger.info('TouchAdapter: Drag end detected');
 
     // Check if we have active interactions and delegate
     if (this.dragBehavior && this.dragBehavior.isDragging) {
@@ -662,18 +660,18 @@ export class TouchAdapter extends BaseAdapter {
    * Handle ghost connector tap - delegate to ConnectionBehavior
    */
   handleGhostConnectorTap(touch, target) {
-    console.log(
+    logger.info(
       'TouchAdapter: Ghost connector tap detected - delegating to ConnectionBehavior',
     );
 
     if (!this.connectionBehavior) {
-      console.warn('TouchAdapter: ConnectionBehavior not available');
+      logger.warn('ConnectionBehavior not available');
       return;
     }
 
     const sourceNote = target.closest('.note');
     if (!sourceNote) {
-      console.warn('TouchAdapter: No source note found for ghost connector');
+      logger.warn('No source note found for ghost connector');
       return;
     }
 
@@ -698,13 +696,13 @@ export class TouchAdapter extends BaseAdapter {
    */
   handleSvgTap(touch, target) {
     if (!this.connectionBehavior) {
-      console.warn(
+      logger.warn(
         'TouchAdapter: ConnectionBehavior not available for line selection',
       );
       return;
     }
 
-    console.log(
+    logger.info(
       'TouchAdapter: SVG tap detected, delegating to ConnectionBehavior',
     );
 
@@ -726,7 +724,7 @@ export class TouchAdapter extends BaseAdapter {
   handleNoteTap(noteElement) {
     // Check if we're in connection mode first
     if (this.connectionBehavior && this.connectionBehavior.isConnecting) {
-      console.log(
+      logger.info(
         'TouchAdapter: Note tap during connection mode - completing connection',
       );
       const connectionHandled =
@@ -737,11 +735,11 @@ export class TouchAdapter extends BaseAdapter {
     }
 
     if (!this.noteBehavior) {
-      console.warn('TouchAdapter: NoteBehavior not available');
+      logger.warn('NoteBehavior not available');
       return;
     }
 
-    console.log(
+    logger.info(
       'TouchAdapter: Note tap detected, delegating to NoteBehavior for selection',
     );
     // Single tap should select the note, not enter edit mode
@@ -753,11 +751,11 @@ export class TouchAdapter extends BaseAdapter {
    */
   handleNoteDragStart(noteElement, touch) {
     if (!this.dragBehavior) {
-      console.warn('TouchAdapter: DragBehavior not available');
+      logger.warn('DragBehavior not available');
       return;
     }
 
-    console.log('TouchAdapter: Note drag detected, delegating to DragBehavior');
+    logger.info('TouchAdapter: Note drag detected, delegating to DragBehavior');
     // Keep consistent with handleDragStart - use 'drag' not 'note-drag'
     this.dragBehavior.startDrag(noteElement, touch, 'touch');
   }
@@ -768,7 +766,7 @@ export class TouchAdapter extends BaseAdapter {
   handleLongPress(touch) {
     if (!touch) return;
 
-    console.log('TouchAdapter: Long press detected', {
+    logger.info('Long press detected', {
       target: touch.target?.tagName,
       x: touch.clientX,
       y: touch.clientY,
@@ -777,7 +775,7 @@ export class TouchAdapter extends BaseAdapter {
     // Check if long press is on a note
     const noteElement = touch.target?.closest('.note');
     if (noteElement) {
-      console.log('TouchAdapter: Long press on note, adding jiggle animation');
+      logger.info('TouchAdapter: Long press on note, adding jiggle animation');
 
       // Ensure note is selected
       if (!noteElement.classList.contains('selected')) {
@@ -797,7 +795,7 @@ export class TouchAdapter extends BaseAdapter {
     }
 
     // Future: Handle long press for context menu on other elements
-    console.log('TouchAdapter: Long press on non-note element');
+    logger.info('TouchAdapter: Long press on non-note element');
   }
 
   /**
@@ -805,11 +803,11 @@ export class TouchAdapter extends BaseAdapter {
    */
   handleSelectionBoxStart(touch) {
     if (!this.selectionBoxBehavior) {
-      console.warn('TouchAdapter: SelectionBoxBehavior not available');
+      logger.warn('SelectionBoxBehavior not available');
       return;
     }
 
-    console.log(
+    logger.info(
       'TouchAdapter: Selection box detected, delegating to SelectionBoxBehavior',
     );
     // Keep consistent with handleDragStart - use 'drag' not 'selection-box'
@@ -999,10 +997,10 @@ export class TouchAdapter extends BaseAdapter {
    * Handle toolbar button interactions - delegate to ToolbarBehavior
    */
   handleToolbarButtonInteraction(event, action) {
-    console.log(`TouchAdapter: Handling toolbar button action: ${action}`);
+    logger.info(`TouchAdapter: Handling toolbar button action: ${action}`);
 
     if (!this.toolbarBehavior) {
-      console.warn('TouchAdapter: ToolbarBehavior not available');
+      logger.warn('ToolbarBehavior not available');
       return;
     }
 
@@ -1018,7 +1016,7 @@ export class TouchAdapter extends BaseAdapter {
         this.toolbarBehavior.handleConnectorTypeSwitch('touch');
         break;
       default:
-        console.warn(`TouchAdapter: Unknown toolbar action: ${action}`);
+        logger.warn(`TouchAdapter: Unknown toolbar action: ${action}`);
     }
   }
 

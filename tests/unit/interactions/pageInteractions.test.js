@@ -95,7 +95,9 @@ describe('PageInteractions Menu Integration', () => {
         'menu',
       );
       expect(consoleSpy).toHaveBeenCalledWith(
-        'PageInteractions: Initialized with MenuBehavior, ServerConnectionBehavior, and UI elements',
+        expect.stringMatching(
+          /\[.*\] INFO: PageInteractions: Initialized with MenuBehavior, ServerConnectionBehavior, and UI elements/,
+        ),
       );
 
       consoleSpy.mockRestore();
@@ -110,7 +112,7 @@ describe('PageInteractions Menu Integration', () => {
       initializePageInteractions(mockControllerWithoutMenu);
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        'PageInteractions: MenuBehavior not available',
+        expect.stringMatching(/\[.*\] WARN: MenuBehavior not available/),
       );
 
       consoleSpy.mockRestore();
@@ -123,7 +125,7 @@ describe('PageInteractions Menu Integration', () => {
       initializePageInteractions(mockInteractionController);
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        'PageInteractions: Menu elements not found',
+        expect.stringMatching(/\[.*\] WARN: Menu elements not found/),
       );
 
       consoleSpy.mockRestore();
@@ -382,7 +384,7 @@ describe('PageInteractions Menu Integration', () => {
       }).not.toThrow();
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        'PageInteractions: Menu elements not found',
+        expect.stringMatching(/\[.*\] WARN: Menu elements not found/),
       );
 
       consoleSpy.mockRestore();

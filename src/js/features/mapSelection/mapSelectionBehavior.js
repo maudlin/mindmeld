@@ -2,7 +2,7 @@
 
 import { eventBus } from '../../core/eventBus.js';
 import { ServerClient } from '../../services/serverClient.js';
-import { log } from '../../utils/utils.js';
+import { logger } from '../../services/logger.js';
 
 /**
  * Map Selection Behavior - Handles the Map Selection Modal UI
@@ -49,7 +49,7 @@ export class MapSelectionBehavior {
     this.cacheElementReferences();
     this.setupEventListeners();
 
-    log('MapSelectionBehavior: Initialized');
+    logger.info('MapSelectionBehavior: Initialized');
   }
 
   /**
@@ -112,7 +112,7 @@ export class MapSelectionBehavior {
     this.isModalOpen = true;
 
     if (!this.modalElement) {
-      log('MapSelectionBehavior: Modal element not found');
+      logger.info('MapSelectionBehavior: Modal element not found');
       return;
     }
 
@@ -136,7 +136,7 @@ export class MapSelectionBehavior {
       ...data,
     });
 
-    log('MapSelectionBehavior: Modal opened');
+    logger.info('MapSelectionBehavior: Modal opened');
   }
 
   /**
@@ -164,7 +164,7 @@ export class MapSelectionBehavior {
       behavior: this,
     });
 
-    log('MapSelectionBehavior: Modal closed');
+    logger.info('MapSelectionBehavior: Modal closed');
   }
 
   /**
@@ -371,7 +371,7 @@ export class MapSelectionBehavior {
         this.hideStates();
       }
     } catch (error) {
-      console.error('MapSelectionBehavior: Error loading maps:', error);
+      logger.error('Error loading maps:', { error: error });
       this.showError(error.message || 'Failed to load maps');
     } finally {
       this.isLoading = false;
@@ -414,12 +414,12 @@ export class MapSelectionBehavior {
           mapName: result.name,
         });
 
-        log(`MapSelectionBehavior: Created new map: ${result.name}`);
+        logger.info(`MapSelectionBehavior: Created new map: ${result.name}`);
       } else {
         this.showError('Failed to create new map');
       }
     } catch (error) {
-      console.error('MapSelectionBehavior: Error creating map:', error);
+      logger.error('Error creating map:', { error: error });
       this.showError(error.message || 'Failed to create new map');
     }
   }
@@ -445,15 +445,17 @@ export class MapSelectionBehavior {
           mapName,
         });
 
-        log(`MapSelectionBehavior: Loaded map: ${mapName}`);
+        logger.info(`MapSelectionBehavior: Loaded map: ${mapName}`);
       } else if (result === false) {
         // User cancelled the operation
-        log(`MapSelectionBehavior: Map loading cancelled by user: ${mapName}`);
+        logger.info(
+          `MapSelectionBehavior: Map loading cancelled by user: ${mapName}`,
+        );
       } else {
         this.showError('Failed to load map');
       }
     } catch (error) {
-      console.error('MapSelectionBehavior: Error loading map:', error);
+      logger.error('Error loading map:', { error: error });
       this.showError(error.message || 'Failed to load map');
     }
   }
@@ -492,7 +494,7 @@ export class MapSelectionBehavior {
         // Update display
         this.updatePageData();
 
-        console.log(`MapSelectionBehavior: Deleted map: ${mapName}`);
+        logger.info(`MapSelectionBehavior: Deleted map: ${mapName}`);
 
         // Show success message briefly
         this.showSuccess('Map deleted successfully');
@@ -501,7 +503,7 @@ export class MapSelectionBehavior {
         this.showError('Failed to delete map');
       }
     } catch (error) {
-      console.error('MapSelectionBehavior: Error deleting map:', error);
+      logger.error('Error deleting map:', { error: error });
       this.showError(error.message || 'Failed to delete map');
     } finally {
       this.isLoading = false;
@@ -733,7 +735,7 @@ export class MapSelectionBehavior {
    * Show success message temporarily
    */
   showSuccess(message) {
-    console.log('MapSelectionBehavior: Success -', message);
+    logger.info('MapSelectionBehavior: Success -', message);
     // For now, just log - could be enhanced with a success notification UI later
   }
 
@@ -766,6 +768,6 @@ export class MapSelectionBehavior {
     // Clear any pending timeouts
     clearTimeout(this.searchTimeout);
 
-    log('MapSelectionBehavior: Destroyed');
+    logger.info('MapSelectionBehavior: Destroyed');
   }
 }

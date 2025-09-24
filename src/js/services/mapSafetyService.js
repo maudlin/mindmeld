@@ -1,7 +1,7 @@
 // src/js/services/mapSafetyService.js
 import { notificationManager } from './notificationManager.js';
 import { eventBus } from '../core/eventBus.js';
-import { log } from '../utils/utils.js';
+import { logger } from './logger.js';
 
 /**
  * MapSafetyService - Data Protection for Map Operations
@@ -36,7 +36,7 @@ export class MapSafetyService {
     });
 
     this.isInitialized = true;
-    log('MapSafetyService initialized with change tracking');
+    logger.info('MapSafetyService initialized with change tracking');
   }
 
   /**
@@ -113,7 +113,7 @@ export class MapSafetyService {
 
       return true;
     } catch (error) {
-      log('Error ensuring map saved:', error);
+      logger.info('Error ensuring map saved:', error);
       return false;
     }
   }
