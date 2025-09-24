@@ -1,5 +1,17 @@
 # MindMeld Development Context
 
+## AI Assistant Quick Brief
+
+**Architecture**: Event-driven JavaScript mind mapping tool with Bootstrap system, Adapter-Behavior pattern, and DataProvider abstraction. Zero circular dependencies enforced.
+
+**Development Rules**: All work needs Jira tickets (MM project). Always TDD (red/green/refactor). Branch naming: feat/fix/doc/test-[ticket-id]-[name]. Cannot merge to main without PR.
+
+**Critical Commands**: `npm test && npm run test:e2e` (all must pass), `npm run health-check` (architecture), `npm run ci:local` (before push).
+
+**Documentation**: Start at `docs/README.md` for navigation. Architecture patterns in `docs/architecture/`, testing in `docs/development/testing-patterns.md`.
+
+**Quality**: Never skip failing tests. Use CanvasPage helpers for E2E. Mobile testing has 500ms throttling. Security-first with XSS prevention.
+
 ## Project Overview
 
 Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven system with clean separation between services, features, and UI components.
@@ -60,15 +72,23 @@ Web-based mind mapping tool with JavaScript/Node.js architecture. Event-driven s
 - `docs/README.md` : start here for detailed information about test standards
 - `playwright.config.js`: E2E configuration with CI optimizations
 
-## Documentation
+## Documentation Structure
 
-- **README.md**: Start here for project overview and setup
-- **/docs folder**: Comprehensive guides including:
-  - `testing.md`: Complete testing patterns and debugging
-  - `developer-guide.md`: Architecture and contribution guidelines
-  - `mobile-interaction-patterns.md`: Touch-friendly UI patterns and utilities
-  - `ci-e2e-troubleshooting.md`: CI/CD troubleshooting guide
-  - Additional specialized documentation
+**Start Points:**
+- **README.md**: Project overview and setup
+- **docs/README.md**: Complete documentation index with navigation paths
+- **docs/developer-guide.md**: Concise architecture overview and workflow
+
+**Key Documentation Paths:**
+- **Architecture**: `docs/architecture/` - Core patterns (Adapter-Behavior, DataProviders, Mobile)
+- **Development**: `docs/development/` - Standards, testing, Git workflow
+- **Operations**: `docs/operations/` - CI/CD, architecture health monitoring
+- **Reference**: `docs/reference/` - File structure navigation
+
+**Critical Patterns:**
+- **Adapter-Behavior**: `docs/architecture/adapter-behavior-pattern.md` - Input/business logic separation
+- **Testing**: `docs/development/testing-patterns.md` - TDD patterns, mobile testing, security tests
+- **Mobile**: `docs/architecture/mobile-architecture.md` - TouchAdapter, gesture recognition
 
 ## Project Management
 

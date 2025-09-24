@@ -245,7 +245,7 @@ Run locally with verbose output:
 npm run test:unit -- --verbose
 ```
 
-- Testing patterns: see [Testing Guide](testing-guide.md)
+- Testing patterns: see [Testing Patterns](../development/testing-patterns.md)
 
 #### 3. Security Issues
 
@@ -307,4 +307,4 @@ npm run security
 - **Security Alerts**: Respond to new vulnerabilities
 - **Architecture Drift**: Prevent degradation over time
 
-See [Developer Guide](developer-guide.md) and [Testing Guide](testing-guide.md).
+See [Developer Guide](../developer-guide.md) and [Testing Patterns](../development/testing-patterns.md).
