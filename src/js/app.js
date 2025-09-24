@@ -5,29 +5,28 @@
  * Maintains clean separation of concerns and robust error handling.
  */
 
-import { log } from './utils/utils.js';
 import { AppBootstrap } from './core/bootstrap/AppBootstrap.js';
 
-import { logger, errorHandler } from './services/logger.js';
-log('app.js loaded');
+import { logger } from './services/logger.js';
+logger.info('app.js loaded');
 
 async function initializeApp() {
-  log('Initializing MindMeld application...');
+  logger.info('Initializing MindMeld application...');
 
   const appBootstrap = new AppBootstrap();
 
   try {
     const result = await appBootstrap.initialize();
 
-    log('MindMeld application initialized successfully');
-    log('Initialization result:', result);
+    logger.info('MindMeld application initialized successfully');
+    logger.info('Initialization result:', result);
 
     // Store bootstrap instance globally for potential cleanup during development/testing
     if (typeof window !== 'undefined') {
       window.__mindmeld_bootstrap = appBootstrap;
     }
   } catch (error) {
-    logger.error('MindMeld application failed to initialize:', { data: error });
+    logger.error('MindMeld application failed to initialize:', error);
 
     // Show user-friendly error message
     showInitializationError();

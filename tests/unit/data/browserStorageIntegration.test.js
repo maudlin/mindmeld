@@ -155,10 +155,9 @@ describe('Browser Storage Integration', () => {
       const largeResult = saveNotesToStorage(largeNotes);
       expect(largeResult).toBe(false);
 
-      // Should provide helpful error message
+      // Should provide helpful error message with structured logging format
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringMatching(/Failed to save to localStorage/i),
-        expect.stringMatching(/Safari Private Browsing mode/i),
+        expect.stringMatching(/\[.*\] WARN: Failed to save to localStorage.*Safari Private Browsing mode/i),
       );
 
       consoleSpy.mockRestore();
@@ -232,10 +231,9 @@ describe('Browser Storage Integration', () => {
       expect(loadResult.notes).toEqual([]);
       expect(loadResult.recovered).toBe(false);
 
-      // Should provide helpful error message
+      // Should provide helpful error message with structured logging format
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringMatching(/Failed to save to localStorage/i),
-        expect.stringMatching(/Firefox is not yet fully supported/i),
+        expect.stringMatching(/\[.*\] WARN: Failed to save to localStorage.*Firefox is not yet fully supported/i),
       );
 
       consoleSpy.mockRestore();

@@ -4,7 +4,7 @@ import { eventBus } from '../core/eventBus.js';
 import { appState } from '../data/observableState.js';
 import { canvasManager } from '../core/canvasManager.js';
 import config from '../core/config.js';
-import { log } from '../utils/utils.js';
+import { logger } from './logger.js';
 
 /**
  * CanvasStateService
@@ -36,7 +36,7 @@ export class CanvasStateService {
   static async setCanvasType(canvasType, canvas = null) {
     // Validate canvas type
     if (!this.isValidCanvasType(canvasType)) {
-      log('CanvasStateService: Invalid canvas type', canvasType);
+      logger.info('CanvasStateService: Invalid canvas type', canvasType);
       return false;
     }
 
@@ -55,7 +55,7 @@ export class CanvasStateService {
       canvasType: canvasType,
     });
 
-    log('CanvasStateService: Set canvas type', canvasType);
+    logger.info('CanvasStateService: Set canvas type', canvasType);
     return true;
   }
 
@@ -76,7 +76,7 @@ export class CanvasStateService {
     if (canvas) {
       await canvasManager.switchBackgroundLayout(canvasType, canvas);
     }
-    log('CanvasStateService: Restored canvas type', canvasType);
+    logger.info('CanvasStateService: Restored canvas type', canvasType);
   }
 
   /**
@@ -99,11 +99,14 @@ export class CanvasStateService {
           await canvasManager.switchBackgroundLayout(canvasType, canvas);
         }
 
-        log('CanvasStateService: Canvas switched via interaction', canvasType);
+        logger.info(
+          'CanvasStateService: Canvas switched via interaction',
+          canvasType,
+        );
       }
     });
 
-    log('CanvasStateService: Initialized');
+    logger.info('CanvasStateService: Initialized');
   }
 
   /**

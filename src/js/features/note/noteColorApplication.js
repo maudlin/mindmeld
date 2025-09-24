@@ -1,8 +1,7 @@
 // src/js/features/note/noteColorApplication.js
 import { ColorService } from '../../services/colorService.js';
 import { eventBus } from '../../core/eventBus.js';
-import { log } from '../../utils/utils.js';
-import { logger, errorHandler } from '../../services/logger.js';
+import { logger } from '../../services/logger.js';
 
 /**
  * Note Color Application System
@@ -16,13 +15,13 @@ export class NoteColorApplication {
    */
   static initialize() {
     if (this.isInitialized) {
-      log('Note color application already initialized');
+      logger.info('Note color application already initialized');
       return;
     }
 
     this.subscribeToEvents();
     this.isInitialized = true;
-    log('Note color application system initialized');
+    logger.info('Note color application system initialized');
   }
 
   /**
@@ -36,7 +35,7 @@ export class NoteColorApplication {
 
     // Apply colors when notes are imported/loaded
     eventBus.on('notes.loaded', () => {
-      console.log('NoteColorApplication: Received notes.loaded event');
+      logger.info('NoteColorApplication: Received notes.loaded event');
       this.applyColorsToAllNotes();
     });
 
@@ -74,7 +73,7 @@ export class NoteColorApplication {
     const noteElement = document.getElementById(noteId);
 
     if (!noteElement) {
-      log(`Note element not found: ${noteId}`);
+      logger.info(`Note element not found: ${noteId}`);
       return;
     }
 
@@ -84,7 +83,7 @@ export class NoteColorApplication {
     // Apply visual styling
     this.applyColorClassesToNote(noteElement, currentColor);
 
-    log(`Applied color ${currentColor} to new note ${noteId}`);
+    logger.info(`Applied color ${currentColor} to new note ${noteId}`);
   }
 
   /**
@@ -108,7 +107,7 @@ export class NoteColorApplication {
    */
   static applyColorClassesToNote(noteElement, color) {
     if (!noteElement || !ColorService.isValidColor(color)) {
-      log(`Invalid note element or color: ${color}`);
+      logger.info(`Invalid note element or color: ${color}`);
       return;
     }
 
@@ -126,7 +125,7 @@ export class NoteColorApplication {
       noteElement.offsetHeight;
     });
 
-    log(`Applied color class color-${color} to note ${noteElement.id}`);
+    logger.info(`Applied color class color-${color} to note ${noteElement.id}`);
   }
 
   /**
@@ -162,12 +161,12 @@ export class NoteColorApplication {
    * Apply colors to all existing notes (used on load/import)
    */
   static applyColorsToAllNotes() {
-    console.log('NoteColorApplication.applyColorsToAllNotes called');
+    logger.info('NoteColorApplication.applyColorsToAllNotes called');
     const allNotes = document.querySelectorAll('.note');
     const allNoteColors = ColorService.getAllNoteColors();
 
-    console.log('Found notes for color application:', allNotes.length);
-    console.log('Available note colors:', allNoteColors);
+    logger.info('Found notes for color application:', allNotes.length);
+    logger.info('Available note colors:', allNoteColors);
 
     allNotes.forEach((noteElement) => {
       const noteId = noteElement.id;
@@ -175,11 +174,11 @@ export class NoteColorApplication {
       const noteColor =
         // eslint-disable-next-line security/detect-object-injection
         allNoteColors[noteId]?.colorScheme || ColorService.getCurrentColor();
-      console.log(`Applying color ${noteColor} to note ${noteId}`);
+      logger.info(`Applying color ${noteColor} to note ${noteId}`);
       this.applyColorClassesToNote(noteElement, noteColor);
     });
 
-    log('Applied colors to all notes');
+    logger.info('Applied colors to all notes');
   }
 
   /**
@@ -209,7 +208,7 @@ export class NoteColorApplication {
       // Color application is handled by the event listener
     }
 
-    log(`Applied color ${color} to ${noteIds.length} selected notes`);
+    logger.info(`Applied color ${color} to ${noteIds.length} selected notes`);
   }
 
   /**
@@ -258,7 +257,7 @@ export class NoteColorApplication {
    */
   static cleanup() {
     this.isInitialized = false;
-    log('Note color application cleaned up');
+    logger.info('Note color application cleaned up');
   }
 }
 

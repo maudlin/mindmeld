@@ -1,4 +1,4 @@
-import { logger, errorHandler } from '../services/logger.js';
+import { logger } from '../services/logger.js';
 /**
  * Browser Detection and Compatibility Utilities
  *
@@ -139,7 +139,7 @@ export function getStorageLimitations(browserInfo, isPrivateMode = false) {
  */
 export function showBrowserMessage(limitations) {
   if (!limitations.supported) {
-    console.warn('Browser Compatibility:', limitations.warning);
+    logger.warn('Browser Compatibility:', limitations.warning);
 
     // Could show a UI notification here in the future
     if (typeof window !== 'undefined' && window.document) {

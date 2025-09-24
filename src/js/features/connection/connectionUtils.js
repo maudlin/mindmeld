@@ -1,9 +1,9 @@
 // src/js/features/connection/connectionUtils.js
-import { log } from '../../utils/utils.js';
 import { getZoomLevel } from '../zoom/viewportAdapter.js';
 import { CONNECTION_TYPES } from '../../core/constants.js';
 import { getScaleFromZoomLevel } from '../../core/coordinates/CoordinateConfig.js';
 import { getCoordinateTransform } from '../../core/coordinates/coordinateService.js';
+import { logger } from '../../services/logger.js';
 
 export const STROKE_COLOR = '#888';
 export const STROKE_WIDTH = '2';
@@ -35,7 +35,7 @@ export class ConnectionUtils {
 
   getClosestPoints(note1, note2) {
     if (!note1 || !note2) {
-      log('Invalid notes provided to getClosestPoints');
+      logger.info('Invalid notes provided to getClosestPoints');
       return { x1: 0, y1: 0, x2: 0, y2: 0 };
     }
 

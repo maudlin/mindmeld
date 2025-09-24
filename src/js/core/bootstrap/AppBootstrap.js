@@ -9,7 +9,6 @@ import { DataBootstrap } from './DataBootstrap.js';
 import { ServiceBootstrap } from './ServiceBootstrap.js';
 import { UIBootstrap } from './UIBootstrap.js';
 import { InteractionBootstrap } from './InteractionBootstrap.js';
-import { log } from '../../utils/utils.js';
 import { logger, errorHandler } from '../../services/logger.js';
 
 export class AppBootstrap {
@@ -29,12 +28,12 @@ export class AppBootstrap {
 
   async initialize() {
     if (this.initialized) {
-      log('AppBootstrap: Already initialized, skipping');
+      logger.info('AppBootstrap: Already initialized, skipping');
       return;
     }
 
     try {
-      log('AppBootstrap: Starting application initialization...');
+      logger.info('AppBootstrap: Starting application initialization...');
 
       // Phase 1: Data layer foundation
       const dataResult = await this.dataBootstrap.safeInitialize();
@@ -53,7 +52,9 @@ export class AppBootstrap {
       await this.dataBootstrap.restoreState(uiResult.elements.canvas);
 
       this.initialized = true;
-      log('AppBootstrap: Application initialization completed successfully');
+      logger.info(
+        'AppBootstrap: Application initialization completed successfully',
+      );
 
       // Emit event to signal that all services are ready
       const { eventBus } = await import('../eventBus.js');
@@ -74,8 +75,8 @@ export class AppBootstrap {
         userMessage: 'Application failed to start. Please refresh the page.',
         metadata: {
           initializationStage: 'bootstrap_orchestration',
-          timestamp: Date.now()
-        }
+          timestamp: Date.now(),
+        },
       });
       await this.handleInitializationFailure(error);
       throw error;
@@ -83,7 +84,7 @@ export class AppBootstrap {
   }
 
   async handleInitializationFailure(error) {
-    log('AppBootstrap: Attempting graceful degradation...');
+    logger.info('AppBootstrap: Attempting graceful degradation...');
 
     try {
       // Try to at least get basic functionality working
@@ -94,8 +95,8 @@ export class AppBootstrap {
         userMessage: 'Attempting to recover from initialization failure...',
         metadata: {
           originalError: error.message,
-          recoveryAttempt: true
-        }
+          recoveryAttempt: true,
+        },
       });
 
       // In a real implementation, we might show a user-friendly error message
@@ -105,18 +106,19 @@ export class AppBootstrap {
         component: 'AppBootstrap',
         operation: 'recovery',
         severity: 'CRITICAL',
-        userMessage: 'Recovery failed. Please refresh the page and contact support if the issue persists.',
+        userMessage:
+          'Recovery failed. Please refresh the page and contact support if the issue persists.',
         metadata: {
           originalError: error.message,
           recoveryError: recoveryError.message,
-          totalFailure: true
-        }
+          totalFailure: true,
+        },
       });
     }
   }
 
   async cleanup() {
-    log('AppBootstrap: Starting application cleanup...');
+    logger.info('AppBootstrap: Starting application cleanup...');
 
     // Cleanup in reverse order with error handling
     const cleanupErrors = [];
@@ -148,11 +150,11 @@ export class AppBootstrap {
     if (cleanupErrors.length > 0) {
       logger.warn('AppBootstrap: Some cleanup operations failed', {
         errors: cleanupErrors,
-        errorCount: cleanupErrors.length
+        errorCount: cleanupErrors.length,
       });
     }
 
     this.initialized = false;
-    log('AppBootstrap: Application cleanup completed');
+    logger.info('AppBootstrap: Application cleanup completed');
   }
 }

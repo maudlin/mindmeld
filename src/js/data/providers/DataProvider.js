@@ -1,4 +1,4 @@
-import { logger, errorHandler } from '../../services/logger.js';
+import { logger } from '../../services/logger.js';
 // src/js/data/providers/DataProvider.js
 // Abstract interface for data providers (LocalJSONProvider, YjsProvider)
 // This file purposefully contains JSDoc-only contracts and minimal runtime stubs.
@@ -47,7 +47,7 @@ export function makeConnectionId(from, to, type) {
 export class DataProvider {
   constructor() {
     if (new.target === DataProvider) {
-      console.warn(
+      logger.warn(
         'DataProvider is an abstract base; use a concrete implementation',
       );
     }

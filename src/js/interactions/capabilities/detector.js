@@ -1,4 +1,4 @@
-import { logger, errorHandler } from '../../services/logger.js';
+import { logger } from '../../services/logger.js';
 // src/js/interactions/capabilities/detector.js
 
 /**
@@ -97,7 +97,7 @@ export class CapabilityDetector {
       const urlParams = new URLSearchParams(window.location.search);
       const manualMode = urlParams.get('mode');
 
-      console.log('🔍 CapabilityDetector: URL mode detection', {
+      logger.info('🔍 CapabilityDetector: URL mode detection', {
         url: window.location.href,
         search: window.location.search,
         manualMode,
@@ -107,14 +107,14 @@ export class CapabilityDetector {
       });
 
       if (manualMode && this._isValidMode(manualMode)) {
-        console.log(
+        logger.info(
           '🎯 CapabilityDetector: Using manual mode override:',
           manualMode,
         );
         return manualMode;
       }
     } catch (error) {
-      console.warn('CapabilityDetector: URLSearchParams failed:', error);
+      logger.warn('CapabilityDetector: URLSearchParams failed:', error);
       // URLSearchParams not supported, continue with detection
     }
 

@@ -29,7 +29,11 @@ function detectEnvironment() {
   if (typeof window !== 'undefined') {
     const hostname = window.location?.hostname || '';
 
-    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.')) {
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.startsWith('192.168.')
+    ) {
       return 'development';
     }
 
@@ -72,7 +76,17 @@ function getEffectiveLogLevel() {
 // Format log message with consistent structure
 function formatMessage(level, message, context = {}) {
   const timestamp = new Date().toISOString();
-  const contextStr = Object.keys(context).length > 0 ? JSON.stringify(context) : '';
+  let contextStr = '';
+
+  if (context && Object.keys(context).length > 0) {
+    try {
+      contextStr = JSON.stringify(context, null, 2);
+    } catch {
+      // Handle circular references and other JSON.stringify errors
+      contextStr = '[Complex object - serialization failed]';
+    }
+  }
+
   return `[${timestamp}] ${level}: ${message}${contextStr ? ' ' + contextStr : ''}`;
 }
 
@@ -138,7 +152,9 @@ class Logger {
     return {
       environment: this.environment,
       currentLevel: this.currentLevel,
-      levelName: Object.keys(LOG_LEVELS).find(key => LOG_LEVELS[key] === this.currentLevel),
+      levelName: Object.keys(LOG_LEVELS).find(
+        (key) => LOG_LEVELS[key] === this.currentLevel,
+      ),
     };
   }
 }
@@ -227,7 +243,8 @@ class ErrorHandler {
             component: options.component || 'ErrorHandler',
             operation: 'fallback',
             severity: ERROR_SEVERITY.HIGH,
-            userMessage: 'System is experiencing issues. Please refresh the page.',
+            userMessage:
+              'System is experiencing issues. Please refresh the page.',
           });
           return null;
         }
@@ -242,7 +259,9 @@ class ErrorHandler {
     if (typeof window !== 'undefined') {
       // Show user-friendly message
       setTimeout(() => {
-        alert(`Critical error: ${userMessage}\n\nThe page may need to be refreshed.`);
+        alert(
+          `Critical error: ${userMessage}\n\nThe page may need to be refreshed.`,
+        );
       }, 0);
     }
   }
@@ -264,7 +283,7 @@ class ErrorHandler {
   }
 
   // Low severity errors - silent handling
-  _handleLowError(error, context) {
+  _handleLowError() {
     // Already logged, no user action needed
   }
 
@@ -288,4 +307,11 @@ const logger = new Logger();
 const errorHandler = new ErrorHandler(logger);
 
 // Export both individual instances and classes for testing
-export { logger, errorHandler, Logger, ErrorHandler, LOG_LEVELS, ERROR_SEVERITY };
+export {
+  logger,
+  errorHandler,
+  Logger,
+  ErrorHandler,
+  LOG_LEVELS,
+  ERROR_SEVERITY,
+};

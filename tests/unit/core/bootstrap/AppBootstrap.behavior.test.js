@@ -125,8 +125,7 @@ describe('Application Bootstrap Behavior', () => {
       );
 
       expect(mockConsole.error).toHaveBeenCalledWith(
-        'AppBootstrap: Critical initialization failure:',
-        initError,
+        expect.stringMatching(/\[.*\] ERROR: AppBootstrap error in initialize/),
       );
     });
   });

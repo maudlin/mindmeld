@@ -1,4 +1,4 @@
-import { logger, errorHandler } from '../../services/logger.js';
+import { logger } from '../../services/logger.js';
 // src/js/features/connection/connectionUpdate.js
 
 export class ConnectionUpdate {
@@ -90,7 +90,7 @@ export class ConnectionUpdate {
       typeof x2 !== 'number' ||
       typeof y2 !== 'number'
     ) {
-      console.log('Invalid coordinates for path:', { x1, y1, x2, y2 });
+      logger.info('Invalid coordinates for path:', { x1, y1, x2, y2 });
       return;
     }
 

@@ -1,13 +1,13 @@
 // noteService.js - Service layer for note operations
 import { createNote } from '../factories/noteFactory.js';
-import { logger, errorHandler } from './logger.js';
+import { logger } from './logger.js';
 // MM-171: Legacy event system disabled - using adapter architecture
 // import { addNoteEventListeners } from '../features/note/noteEvents.js';
 import { displayAsViewMode } from '../features/note/editViewMode.js';
 
 export class NoteService {
   static createNoteFromData(noteData, canvas) {
-    console.warn(
+    logger.warn(
       'DEPRECATED: NoteService.createNoteFromData() - Use NoteBehavior.createNoteFromData() instead. This service method will be removed in future versions for better ID collision prevention.',
     );
     const note = createNote(

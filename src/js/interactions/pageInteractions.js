@@ -1,4 +1,4 @@
-import { logger, errorHandler } from '../services/logger.js';
+import { logger } from '../services/logger.js';
 /**
  * Page Interactions - Simple DOM event handling for page UI elements
  *
@@ -68,7 +68,7 @@ export function initializePageInteractions(interactionController) {
   // Set up server connection modal interactions
   setupServerConnectionModalInteractions();
 
-  console.log(
+  logger.info(
     'PageInteractions: Initialized with MenuBehavior, ServerConnectionBehavior, and UI elements',
   );
 }
@@ -143,7 +143,7 @@ function setupMenuInteractions() {
   // Mobile swipe-to-close functionality
   setupMobileInteractions();
 
-  console.log('PageInteractions: Menu event listeners set up');
+  logger.info('PageInteractions: Menu event listeners set up');
 }
 
 /**
@@ -162,7 +162,7 @@ function openMenu() {
     firstMenuItem.focus();
   }
 
-  console.log('PageInteractions: Menu opened');
+  logger.info('PageInteractions: Menu opened');
 }
 
 /**
@@ -178,7 +178,7 @@ function closeMenu() {
   // Return focus to button for keyboard accessibility
   menuButton.focus();
 
-  console.log('PageInteractions: Menu closed');
+  logger.info('PageInteractions: Menu closed');
 }
 
 /**
@@ -295,5 +295,5 @@ function setupServerConnectionModalInteractions() {
     return;
   }
 
-  console.log('PageInteractions: Server connection modal interactions set up');
+  logger.info('PageInteractions: Server connection modal interactions set up');
 }

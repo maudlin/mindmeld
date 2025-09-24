@@ -4,7 +4,7 @@ import { DataProvider, ORIGIN, makeConnectionId } from './DataProvider.js';
 import { truncateNoteContent } from '../../utils/utils.js';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { logger, errorHandler } from '../../services/logger.js';
+import { logger } from '../../services/logger.js';
 
 export class YjsProvider extends DataProvider {
   constructor() {
@@ -36,7 +36,7 @@ export class YjsProvider extends DataProvider {
 
     // For test mode (no mapId or serverUrl), work in offline mode
     if (!mapId || !this._serverUrl) {
-      console.log('YjsProvider: Running in offline test mode');
+      logger.info('YjsProvider: Running in offline test mode');
       this._initOfflineMode(options);
       return () => this.destroy();
     }
@@ -57,7 +57,7 @@ export class YjsProvider extends DataProvider {
     // Set up WebSocket event handlers
     this._wsProvider.on('status', (event) => {
       if (event.status === 'connected') {
-        console.log(`YjsProvider: Connected to ${wsUrl}`);
+        logger.info(`YjsProvider: Connected to ${wsUrl}`);
         this._ready = true;
         if (typeof options.onReady === 'function') {
           options.onReady();
@@ -67,7 +67,7 @@ export class YjsProvider extends DataProvider {
 
     this._wsProvider.on('sync', (synced) => {
       if (synced) {
-        console.log('YjsProvider: Initial sync complete');
+        logger.info('YjsProvider: Initial sync complete');
         this._ready = true;
         if (typeof options.onReady === 'function') {
           options.onReady();
@@ -125,7 +125,7 @@ export class YjsProvider extends DataProvider {
 
       // CRITICAL: Skip system transactions to prevent feedback loops
       if (transaction.origin === ORIGIN.SYSTEM) {
-        console.log(
+        logger.info(
           'YjsProvider: Skipping system transaction in notes observer',
         );
         return;
@@ -150,7 +150,7 @@ export class YjsProvider extends DataProvider {
 
       // CRITICAL: Skip system transactions to prevent feedback loops
       if (transaction.origin === ORIGIN.SYSTEM) {
-        console.log(
+        logger.info(
           'YjsProvider: Skipping system transaction in connections observer',
         );
         return;
@@ -175,7 +175,7 @@ export class YjsProvider extends DataProvider {
 
       // CRITICAL: Skip system transactions to prevent feedback loops
       if (transaction.origin === ORIGIN.SYSTEM) {
-        console.log(
+        logger.info(
           'YjsProvider: Skipping system transaction in meta observer',
         );
         return;
@@ -317,7 +317,7 @@ export class YjsProvider extends DataProvider {
       } else if (e.message.includes('Invalid data structure')) {
         throw e;
       } else {
-        console.error('YjsProvider.importJSON error:', e);
+        logger.error('YjsProvider.importJSON error:', e);
         throw new Error(`Import failed: ${e.message}`);
       }
     }
@@ -328,7 +328,7 @@ export class YjsProvider extends DataProvider {
       const snapshot = this.getSnapshot();
       return JSON.stringify(snapshot);
     } catch (e) {
-      console.error('YjsProvider.exportJSON error:', e);
+      logger.error('YjsProvider.exportJSON error:', e);
       throw new Error(`Export failed: ${e.message}`);
     }
   }

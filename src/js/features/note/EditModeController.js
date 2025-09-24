@@ -12,7 +12,7 @@ import {
   displayAsEditMode,
   getCurrentMarkdownContent,
 } from './editViewMode.js';
-import { logger, errorHandler } from '../../services/logger.js';
+import { logger } from '../../services/logger.js';
 
 class EditModeController {
   constructor() {
@@ -133,10 +133,7 @@ class EditModeController {
 
     // Debug warning if no content found
     if (!currentContent) {
-      logger.warn(
-        'No markdown content found for note',
-        noteElement.id,
-      );
+      logger.warn('No markdown content found for note', noteElement.id);
     }
 
     // Switch to edit mode display

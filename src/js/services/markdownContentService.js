@@ -13,7 +13,7 @@
 
 import { defangToPlainText } from '../features/markdown/defangPipeline.js';
 import { renderMarkdown } from '../features/markdown/markdownRenderer.js';
-import { logger, errorHandler } from './logger.js';
+import { logger } from './logger.js';
 
 /**
  * Safe content extraction that never corrupts markdown structure
@@ -32,7 +32,7 @@ export function extractMarkdownForStorage(noteContentElement) {
     noteContentElement.contentEditable === 'true'
   ) {
     const currentText = noteContentElement.textContent || '';
-    console.log('📝 Extracting from edit mode:', {
+    logger.info('📝 Extracting from edit mode:', {
       length: currentText.length,
       hasNewlines: currentText.includes('\n'),
     });
@@ -51,19 +51,19 @@ export function extractMarkdownForStorage(noteContentElement) {
 
     if (!hasHTML && noteContentElement.textContent) {
       // This appears to be a new note with plain text, not HTML-rendered content
-      console.log(
+      logger.info(
         '⚠️ Extracting from new note textContent (one-time migration)',
       );
       return noteContentElement.textContent;
     }
 
-    console.warn(
+    logger.warn(
       'extractMarkdownForStorage: No data-markdown found and content appears HTML-rendered. Refusing to extract corrupted content.',
     );
     return '';
   }
 
-  console.log('📖 Extracting from view mode data-markdown:', {
+  logger.info('📖 Extracting from view mode data-markdown:', {
     length: storedMarkdown.length,
     hasNewlines: storedMarkdown.includes('\n'),
   });
@@ -77,14 +77,14 @@ export function extractMarkdownForStorage(noteContentElement) {
  */
 export function processUserInput(rawInput) {
   if (typeof rawInput !== 'string') {
-    console.warn('processUserInput: Invalid input type:', typeof rawInput);
+    logger.warn('processUserInput: Invalid input type:', typeof rawInput);
     return '';
   }
 
   // Run through defang pipeline (security first)
   const sanitized = defangToPlainText(rawInput, false);
 
-  console.log('🔒 User input processed:', {
+  logger.info('🔒 User input processed:', {
     original: rawInput.length,
     sanitized: sanitized.length,
     newlinesPreserved: sanitized.includes('\n'),
@@ -105,7 +105,7 @@ export function renderMarkdownForDisplay(sanitizedMarkdown) {
 
   const html = renderMarkdown(sanitizedMarkdown);
 
-  console.log('🎨 Markdown rendered:', {
+  logger.info('🎨 Markdown rendered:', {
     markdown: sanitizedMarkdown.length,
     html: html.length,
     structure: html.includes('<h1>')
@@ -150,7 +150,7 @@ export function setupViewMode(noteContentElement, markdownContent) {
   noteContentElement.classList.remove('edit-mode');
   noteContentElement.classList.add('view-mode');
 
-  console.log('👁️ View mode setup complete:', {
+  logger.info('👁️ View mode setup complete:', {
     storedMarkdown: sanitized.length,
     renderedHTML: html.length,
   });
@@ -175,7 +175,7 @@ export function setupEditMode(noteContentElement, markdownContent) {
   noteContentElement.classList.remove('view-mode');
   noteContentElement.classList.add('edit-mode');
 
-  console.log('✏️ Edit mode setup complete:', {
+  logger.info('✏️ Edit mode setup complete:', {
     editingContent: sanitized.length,
     hasNewlines: sanitized.includes('\n'),
   });

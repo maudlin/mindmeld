@@ -11,7 +11,7 @@
 import { eventBus } from '../../core/eventBus.js';
 import { ServerConnectionService } from '../../services/serverConnectionService.js';
 import { notificationManager } from '../../services/notificationManager.js';
-import { logger, errorHandler } from '../../services/logger.js';
+import { logger } from '../../services/logger.js';
 
 export class ServerConnectionBehavior {
   constructor(eventBusInstance = eventBus) {
@@ -78,7 +78,7 @@ export class ServerConnectionBehavior {
       this.hideModal();
     });
 
-    console.log('ServerConnectionBehavior: Event listeners setup');
+    logger.info('ServerConnectionBehavior: Event listeners setup');
   }
 
   /**
@@ -96,7 +96,7 @@ export class ServerConnectionBehavior {
     if (this.modalElement) {
       this.modalElement.style.display = 'flex';
     } else {
-      console.error('ServerConnectionBehavior: Modal element not found!');
+      logger.error('ServerConnectionBehavior: Modal element not found!');
     }
 
     // Populate current server URI
@@ -259,7 +259,7 @@ export class ServerConnectionBehavior {
     // Emit event for other systems
     this.eventBus.emit('modal.closed', { type: 'serverConnection' });
 
-    console.log('ServerConnectionBehavior: Modal hidden');
+    logger.info('ServerConnectionBehavior: Modal hidden');
   }
 
   /**
@@ -485,7 +485,7 @@ export class ServerConnectionBehavior {
       this.updateConnectionUI();
     }
 
-    console.log('ServerConnectionBehavior: Disconnect completed');
+    logger.info('ServerConnectionBehavior: Disconnect completed');
   }
 
   /**
@@ -581,6 +581,6 @@ export class ServerConnectionBehavior {
     this.isConnecting = false;
     this.eventBus = null;
 
-    console.log('ServerConnectionBehavior: Destroyed');
+    logger.info('ServerConnectionBehavior: Destroyed');
   }
 }

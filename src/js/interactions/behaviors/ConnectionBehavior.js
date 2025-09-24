@@ -1,8 +1,7 @@
 // src/js/interactions/behaviors/ConnectionBehavior.js
 
 import { connectionManager } from '../../features/connection/connectionManager.js';
-import { log } from '../../utils/utils.js';
-import { logger, errorHandler } from '../../services/logger.js';
+import { logger } from '../../services/logger.js';
 
 export class ConnectionBehavior {
   constructor(eventBus) {
@@ -17,7 +16,7 @@ export class ConnectionBehavior {
   async initialize() {
     // Don't look for SVG container here - it will be created later by InputController
     // We'll lazy-load it when needed in startDesktopDrag/startTouchDrag
-    log(
+    logger.info(
       'ConnectionBehavior: Initialized (SVG container will be lazy-loaded when needed)',
     );
   }
@@ -39,14 +38,14 @@ export class ConnectionBehavior {
     // Lazy-load SVG container (created by InputController after ConnectionBehavior init)
     if (!this.svgContainer) {
       this.svgContainer = document.getElementById('svg-container');
-      log(
+      logger.info(
         'ConnectionBehavior: Lazy-loaded SVG container:',
         !!this.svgContainer,
       );
     }
 
     if (!canvas || !this.svgContainer) {
-      log('ConnectionBehavior: Canvas or SVG container not found');
+      logger.info('ConnectionBehavior: Canvas or SVG container not found');
       return;
     }
 
@@ -56,11 +55,14 @@ export class ConnectionBehavior {
       this.svgContainer,
     );
 
-    console.log(
+    logger.info(
       '🎯 ConnectionBehavior: Connection group created:',
       !!this.activeConnectionGroup,
     );
-    log('ConnectionBehavior: Started desktop drag from note', sourceNote.id);
+    logger.info(
+      'ConnectionBehavior: Started desktop drag from note',
+      sourceNote.id,
+    );
   }
 
   startTouchDrag(sourceNote, event) {
@@ -94,11 +96,11 @@ export class ConnectionBehavior {
       this.activeGhostConnector.classList.add('connector-selected');
     }
 
-    log(
+    logger.info(
       'ConnectionBehavior: Started touch connection mode from note',
       sourceNote.id,
     );
-    log(
+    logger.info(
       'ConnectionBehavior: All ghost connectors shown - tap another note to create connection',
     );
   }
@@ -164,7 +166,7 @@ export class ConnectionBehavior {
     if (endNote && endNote !== this.sourceNote) {
       // Valid connection target found
       this.createFinalConnection(this.sourceNote, endNote);
-      log(
+      logger.info(
         'ConnectionBehavior: Connection created between',
         this.sourceNote.id,
         'and',
@@ -175,7 +177,7 @@ export class ConnectionBehavior {
       if (this.svgContainer && this.activeConnectionGroup.group) {
         this.svgContainer.removeChild(this.activeConnectionGroup.group);
       }
-      log('ConnectionBehavior: Connection cancelled - no valid target');
+      logger.info('ConnectionBehavior: Connection cancelled - no valid target');
     }
 
     // Reset state
@@ -185,7 +187,9 @@ export class ConnectionBehavior {
   createFinalConnection(startNote, endNote) {
     // Check if connection already exists
     if (connectionManager.connectionExists(startNote.id, endNote.id)) {
-      log('ConnectionBehavior: Connection already exists between these notes');
+      logger.info(
+        'ConnectionBehavior: Connection already exists between these notes',
+      );
       if (this.svgContainer && this.activeConnectionGroup?.group) {
         this.svgContainer.removeChild(this.activeConnectionGroup.group);
       }
@@ -204,7 +208,7 @@ export class ConnectionBehavior {
       connectionManager.updateConnections(this.activeConnectionGroup.group);
     } else {
       // For touch tap-to-tap connections, create the connection directly
-      log('ConnectionBehavior: Creating touch connection directly');
+      logger.info('ConnectionBehavior: Creating touch connection directly');
       connectionManager.createConnection(
         startNote.id,
         endNote.id,
@@ -228,7 +232,7 @@ export class ConnectionBehavior {
     }
 
     this.cleanup();
-    log('ConnectionBehavior: Connection cancelled externally');
+    logger.info('ConnectionBehavior: Connection cancelled externally');
   }
 
   showAllGhostConnectors() {
@@ -318,7 +322,7 @@ export class ConnectionBehavior {
       return;
     }
 
-    console.log(`ConnectionBehavior: Line selection from ${inputType}`, {
+    logger.info(`ConnectionBehavior: Line selection from ${inputType}`, {
       target: event.target?.tagName,
       className: event.target?.className,
     });
@@ -360,7 +364,7 @@ export class ConnectionBehavior {
       return;
     }
 
-    console.log('ConnectionBehavior: Connection deletion requested');
+    logger.info('ConnectionBehavior: Connection deletion requested');
 
     // Delegate to connectionManager's existing deletion logic
     connectionManager.handleLineDeletion();

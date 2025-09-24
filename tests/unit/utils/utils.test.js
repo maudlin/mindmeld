@@ -3,7 +3,6 @@
 import {
   debounce,
   throttle,
-  log,
   truncateNoteContent,
   toBase62,
   fromBase62,
@@ -59,25 +58,7 @@ describe('Utility Functions', () => {
     });
   });
 
-  describe('log', () => {
-    beforeEach(() => {
-      console.log = jest.fn(); // Mock console.log
-    });
-
-    it('should log message when LOGGING is enabled', () => {
-      const message = 'Test log message';
-      log(message, true); // Explicitly enable logging for this test
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining(message),
-      );
-    });
-
-    it('should not log message when LOGGING is disabled', () => {
-      const message = 'Test log message';
-      log(message, false); // Explicitly disable logging for this test
-      expect(console.log).not.toHaveBeenCalled();
-    });
-  });
+// Note: log() function removed as part of MM-272 structured logging migration
 
   describe('truncateNoteContent', () => {
     it('should truncate content exceeding the limit', () => {

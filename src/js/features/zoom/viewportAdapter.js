@@ -1,4 +1,4 @@
-import { logger, errorHandler } from '../../services/logger.js';
+import { logger } from '../../services/logger.js';
 /**
  * Viewport Adapter - Provides global access to ViewportBehavior methods
  *
@@ -41,7 +41,7 @@ export function setFixedZoom(level, centerX, centerY) {
 
 export function setupZoomAndPan(canvasContainer, canvas, zoomDisplay) {
   if (!viewportBehavior) {
-    console.warn(
+    logger.warn(
       'ViewportAdapter: ViewportBehavior not initialized yet, deferring setupZoomAndPan',
     );
     // Store parameters for later initialization when ViewportBehavior is ready
@@ -57,7 +57,7 @@ let deferredSetup = null;
 // Called when ViewportBehavior becomes available
 function processDeferredSetup() {
   if (deferredSetup && viewportBehavior) {
-    console.log('ViewportAdapter: Processing deferred setupZoomAndPan');
+    logger.info('ViewportAdapter: Processing deferred setupZoomAndPan');
     viewportBehavior.setupZoomAndPan(deferredSetup.canvasContainer);
     deferredSetup = null;
   }

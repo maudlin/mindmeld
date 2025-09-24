@@ -15,7 +15,7 @@
  */
 
 import { defangToPlainText } from '../features/markdown/defangPipeline.js';
-import { logger, errorHandler } from '../services/logger.js';
+import { logger } from '../services/logger.js';
 import {
   detectBrowser,
   getStorageErrorMessage,
@@ -295,7 +295,7 @@ export function clearStorage() {
       browserInfo,
       false,
     );
-    console.warn('Failed to clear localStorage:', userFriendlyMessage);
+    logger.warn('Failed to clear localStorage:', userFriendlyMessage);
     return false;
   }
 }

@@ -13,7 +13,7 @@ import { getCoordinateTransform } from '../../core/coordinates/coordinateService
 import { connectionManager } from '../../features/connection/connectionManager.js';
 import { DataProviderService } from '../../services/DataProviderService.js';
 import config from '../../core/config.js';
-import { logger, errorHandler } from '../../services/logger.js';
+import { logger } from '../../services/logger.js';
 
 export class NoteBehavior {
   constructor(eventBus) {
@@ -86,7 +86,7 @@ export class NoteBehavior {
       noteId: noteElement.id,
       inputType,
       clickTarget: clickedElement.tagName,
-      isStyledContent: clickedElement !== noteContent
+      isStyledContent: clickedElement !== noteContent,
     });
   }
 
@@ -106,7 +106,7 @@ export class NoteBehavior {
       inputType,
     });
 
-    console.log('NoteBehavior: Edit mode requested for note:', noteElement.id);
+    logger.info('NoteBehavior: Edit mode requested for note:', noteElement.id);
   }
 
   /**
@@ -168,7 +168,7 @@ export class NoteBehavior {
       behavior: this,
     });
 
-    console.log('NoteBehavior: Edit mode requested for note:', noteElement.id);
+    logger.info('NoteBehavior: Edit mode requested for note:', noteElement.id);
   }
 
   /**
@@ -260,7 +260,7 @@ export class NoteBehavior {
         top: note.style.top,
       });
 
-      console.log('NoteBehavior: Created note with ID:', noteId);
+      logger.info('NoteBehavior: Created note with ID:', noteId);
       return note;
     } catch (error) {
       logger.error('Error creating note:', { error: error });
@@ -274,9 +274,7 @@ export class NoteBehavior {
    */
   createNoteFromData(noteData, canvas) {
     if (!noteData || !canvas) {
-      console.warn(
-        'NoteBehavior: Invalid noteData or canvas for note creation',
-      );
+      logger.warn('NoteBehavior: Invalid noteData or canvas for note creation');
       return null;
     }
 
@@ -318,7 +316,7 @@ export class NoteBehavior {
         noteContent.textContent = storedMarkdown;
       }
 
-      console.log('NoteBehavior: Created note from data with ID:', noteId);
+      logger.info('NoteBehavior: Created note from data with ID:', noteId);
       return note;
     } catch (error) {
       logger.error('Error creating note from data:', { error: error });
@@ -333,7 +331,7 @@ export class NoteBehavior {
   ensureUniqueIds(existingNotes) {
     try {
       NoteIdService.ensureUniqueIds(existingNotes);
-      console.log('NoteBehavior: Updated ID counter to prevent collisions');
+      logger.info('NoteBehavior: Updated ID counter to prevent collisions');
     } catch (error) {
       logger.error('Error ensuring unique IDs:', { error: error });
     }
@@ -370,7 +368,7 @@ export class NoteBehavior {
       const dataProviderService = DataProviderService.getInstance();
       dataProviderService.deleteNote(note.id, { origin: 'user' });
     } catch (error) {
-      console.error(
+      logger.error(
         'NoteBehavior: Failed to delete note from data provider:',
         error,
       );
@@ -385,7 +383,7 @@ export class NoteBehavior {
       connectionManager.updateConnections(note, canvas);
     }
 
-    console.log('NoteBehavior: Deleted note with connections:', note.id);
+    logger.info('NoteBehavior: Deleted note with connections:', note.id);
   }
 
   /**
@@ -402,12 +400,12 @@ export class NoteBehavior {
         this.deleteNoteWithConnections(note, canvas);
       });
 
-      console.log(
+      logger.info(
         'NoteBehavior: Deleted selected notes:',
         selectedNotes.length,
       );
     } else {
-      console.log('NoteBehavior: No selected notes to delete');
+      logger.info('NoteBehavior: No selected notes to delete');
     }
   }
 
@@ -417,7 +415,7 @@ export class NoteBehavior {
   cancel() {
     // Currently no ongoing interactions to cancel
     // This method exists for consistency with other behaviors
-    console.log('NoteBehavior: Cancelled');
+    logger.info('NoteBehavior: Cancelled');
   }
 
   /**
@@ -426,6 +424,6 @@ export class NoteBehavior {
   async destroy() {
     this.isInitialized = false;
     this.eventBus = null;
-    console.log('NoteBehavior: Destroyed');
+    logger.info('NoteBehavior: Destroyed');
   }
 }

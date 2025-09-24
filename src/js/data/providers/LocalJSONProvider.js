@@ -5,7 +5,7 @@ import { DataProvider, ORIGIN } from './DataProvider.js';
 import * as dataStore from '../dataStore.js';
 import * as storageManager from '../storageManager.js';
 import { appState } from '../observableState.js';
-import { logger, errorHandler } from '../../services/logger.js';
+import { logger } from '../../services/logger.js';
 
 /**
  * LocalJSONProvider implements DataProvider interface by wrapping existing
@@ -79,7 +79,7 @@ export class LocalJSONProvider extends DataProvider {
       try {
         subscriber(change);
       } catch (error) {
-        console.error('Error in provider subscriber:', error);
+        logger.error('Error in provider subscriber:', error);
       }
     });
   }
@@ -231,7 +231,7 @@ export class LocalJSONProvider extends DataProvider {
     const origin = opts.origin || ORIGIN.USER;
 
     if (!conn.from || !conn.to) {
-      console.warn(
+      logger.warn(
         'LocalJSONProvider: Connection missing required from/to fields',
       );
       return;
@@ -276,7 +276,7 @@ export class LocalJSONProvider extends DataProvider {
       // Trigger autosave if appropriate
       this._triggerAutosave(origin);
     } else {
-      console.warn('LocalJSONProvider: Invalid connection ID format:', connId);
+      logger.warn('LocalJSONProvider: Invalid connection ID format:', connId);
     }
   }
 

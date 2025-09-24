@@ -11,7 +11,7 @@
  */
 
 import { noteManager } from '../../services/noteManager.js';
-import { logger, errorHandler } from '../../services/logger.js';
+import { logger } from '../../services/logger.js';
 
 export class CanvasBehavior {
   constructor(eventBus) {
@@ -48,7 +48,7 @@ export class CanvasBehavior {
       return;
     }
 
-    console.log('CanvasBehavior: Canvas double-click/tap detected', {
+    logger.info('CanvasBehavior: Canvas double-click/tap detected', {
       inputType,
       coordinates: { x: event.clientX, y: event.clientY },
     });
@@ -65,7 +65,7 @@ export class CanvasBehavior {
       behavior: this,
     });
 
-    console.log('CanvasBehavior: Note creation request emitted');
+    logger.info('CanvasBehavior: Note creation request emitted');
   }
 
   /**
@@ -73,7 +73,7 @@ export class CanvasBehavior {
    * Single source of truth for selection clearing business logic
    */
   handleCanvasSingleClick(event, inputType) {
-    console.log('CanvasBehavior: Canvas single-click/tap detected', {
+    logger.info('CanvasBehavior: Canvas single-click/tap detected', {
       inputType,
       coordinates: { x: event.clientX, y: event.clientY },
     });
@@ -89,7 +89,7 @@ export class CanvasBehavior {
       _gesture: inputType === 'desktop' ? 'click' : 'tap',
     });
 
-    console.log('CanvasBehavior: Selections cleared and canvas click emitted');
+    logger.info('CanvasBehavior: Selections cleared and canvas click emitted');
   }
 
   /**
@@ -108,6 +108,6 @@ export class CanvasBehavior {
   async destroy() {
     this.isInitialized = false;
     this.eventBus = null;
-    console.log('CanvasBehavior: Destroyed');
+    logger.info('CanvasBehavior: Destroyed');
   }
 }

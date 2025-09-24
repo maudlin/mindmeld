@@ -370,8 +370,7 @@ describe('Browser Detection Utilities', () => {
       const result = showBrowserMessage(limitations);
       expect(result).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Browser Compatibility:',
-        limitations.warning,
+        expect.stringMatching(/\[.*\] WARN: Browser Compatibility:.*Firefox is not yet fully supported/),
       );
       expect(infoSpy).toHaveBeenCalledWith(
         'Recommendation:',

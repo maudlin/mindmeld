@@ -6,7 +6,7 @@
  */
 
 import { eventBus } from '../core/eventBus.js';
-import { logger, errorHandler } from './logger.js';
+import { logger } from './logger.js';
 
 export class NoteManager {
   constructor() {
@@ -38,9 +38,7 @@ export class NoteManager {
    */
   deselectNote(note) {
     if (!note || !note.classList) {
-      console.warn(
-        'NoteManager: Invalid note element provided to deselectNote',
-      );
+      logger.warn('NoteManager: Invalid note element provided to deselectNote');
       return;
     }
 

@@ -5,8 +5,6 @@
  * Each bootstrap module handles initialization of related system concerns.
  */
 
-import { log } from '../../utils/utils.js';
-
 import { logger, errorHandler } from '../../services/logger.js';
 export class BaseBootstrap {
   constructor(name) {
@@ -50,7 +48,7 @@ export class BaseBootstrap {
    */
   async safeInitialize(...args) {
     if (this.initialized) {
-      log(`${this.name}: Already initialized, skipping`);
+      logger.info(`${this.name}: Already initialized, skipping`);
       return true;
     }
 
@@ -61,10 +59,10 @@ export class BaseBootstrap {
     }
 
     try {
-      log(`${this.name}: Starting initialization...`);
+      logger.info(`${this.name}: Starting initialization...`);
       const result = await this.initialize(...args);
       this.initialized = true;
-      log(`${this.name}: Initialization completed successfully`);
+      logger.info(`${this.name}: Initialization completed successfully`);
       return result;
     } catch (error) {
       errorHandler.handleError(error, {
@@ -72,7 +70,7 @@ export class BaseBootstrap {
         operation: 'operation_name', // TODO: specify operation
         severity: 'MEDIUM',
         userMessage: 'An error occurred. Please try again.',
-        metadata: {}
+        metadata: {},
       });
       throw new Error(`${this.name} initialization failed: ${error.message}`);
     }
@@ -82,7 +80,7 @@ export class BaseBootstrap {
    * Cleanup method for testing and shutdown scenarios
    */
   async cleanup() {
-    log(`${this.name}: Cleaning up...`);
+    logger.info(`${this.name}: Cleaning up...`);
     this.initialized = false;
   }
 }

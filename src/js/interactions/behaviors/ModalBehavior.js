@@ -1,4 +1,4 @@
-import { logger, errorHandler } from '../../services/logger.js';
+import { logger } from '../../services/logger.js';
 /**
  * ModalBehavior - Handles modal dialog interaction logic
  *
@@ -83,7 +83,7 @@ export class ModalBehavior {
   handleModalTrigger(modalId, inputType) {
     const modal = this.modals.get(modalId);
     if (!modal) {
-      console.warn('ModalBehavior: Unknown modal ID', { modalId });
+      logger.warn('ModalBehavior: Unknown modal ID', { modalId });
       return;
     }
 
@@ -276,6 +276,6 @@ export class ModalBehavior {
     this.isInitialized = false;
     this.eventBus = null;
 
-    console.log('ModalBehavior: Destroyed');
+    logger.info('ModalBehavior: Destroyed');
   }
 }

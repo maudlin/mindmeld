@@ -5,13 +5,13 @@ import { NOTE_CONTENT_LIMIT } from '../core/constants.js';
 import { eventBus } from '../core/eventBus.js';
 import { displayAsViewMode } from '../features/note/editViewMode.js';
 import { getCoordinateTransform } from '../core/coordinates/coordinateService.js';
-import { logger, errorHandler } from '../services/logger.js';
+import { logger } from '../services/logger.js';
 
 let nextNoteId = 1;
 let handDrawn = false;
 
 export function createNoteAtPosition(canvas, event, addEventListeners = null) {
-  console.warn(
+  logger.warn(
     'DEPRECATED: createNoteAtPosition() - Use NoteBehavior.createNoteAtPosition() instead. This factory approach will be removed in future versions for better ID collision prevention.',
   );
 
@@ -32,7 +32,7 @@ export function createNoteAtPosition(canvas, event, addEventListeners = null) {
 }
 
 export function createNote(x, y, canvas, addEventListeners = null) {
-  console.warn(
+  logger.warn(
     'DEPRECATED: createNote() - Use NoteBehavior.createNote() instead. This factory approach will be removed in future versions for better ID collision prevention.',
   );
   const note = document.createElement('div');
@@ -82,7 +82,7 @@ export function createNote(x, y, canvas, addEventListeners = null) {
     if (isEmpty && (event.key === 'Backspace' || event.key === 'Delete')) {
       event.preventDefault();
       event.stopPropagation();
-      console.log('Prevented accidental note deletion - content is empty');
+      logger.info('Prevented accidental note deletion - content is empty');
       return;
     }
   });

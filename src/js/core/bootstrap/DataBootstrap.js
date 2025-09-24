@@ -11,7 +11,7 @@ import {
   initializeDataStore,
   updateNotesAndConnections,
 } from '../../data/dataStore.js';
-import { logger, errorHandler } from '../../services/logger.js';
+import { logger } from '../../services/logger.js';
 import { appState } from '../../data/observableState.js';
 import { ZoomStateService } from '../../services/zoomStateService.js';
 import { DataProviderService } from '../../services/DataProviderService.js';
@@ -21,8 +21,6 @@ import {
   isDebounceEnabled,
   getProviderType,
 } from '../featureFlags.js';
-import { log } from '../../utils/utils.js';
-
 export class DataBootstrap extends BaseBootstrap {
   constructor() {
     super('DataBootstrap');
@@ -62,13 +60,13 @@ export class DataBootstrap extends BaseBootstrap {
     eventBus.emit('bootstrap.test');
     eventBus.off('bootstrap.test', testCallback);
 
-    log('DataBootstrap: Event bus verified and ready');
+    logger.info('DataBootstrap: Event bus verified and ready');
   }
 
   async initializeDataStore() {
     try {
       initializeDataStore();
-      log('DataBootstrap: Data store initialized successfully');
+      logger.info('DataBootstrap: Data store initialized successfully');
     } catch (error) {
       throw new Error(`Data store initialization failed: ${error.message}`);
     }
@@ -83,7 +81,7 @@ export class DataBootstrap extends BaseBootstrap {
       const cleanup = dataProvider.init(null, {
         onReady: () => {
           if (isDebugEnabled()) {
-            console.log(
+            logger.info(
               `DataBootstrap: DataProvider (${dataProvider.getProviderType()}) ready`,
             );
           }
@@ -95,7 +93,7 @@ export class DataBootstrap extends BaseBootstrap {
         this._handleProviderChange(change);
       });
 
-      log(
+      logger.info(
         `DataBootstrap: DataProvider (${dataProvider.getProviderType()}) initialized with observers`,
       );
 
@@ -103,11 +101,11 @@ export class DataBootstrap extends BaseBootstrap {
       if (getProviderType() === 'yjs') {
         try {
           DataProviderCompatibility.migrateToProvider();
-          log(
+          logger.info(
             'DataBootstrap: Migrated to DataProvider architecture (YjsProvider)',
           );
         } catch (error) {
-          console.error(
+          logger.error(
             'DataBootstrap: DataProvider migration failed, using legacy handlers:',
             error,
           );
@@ -116,10 +114,7 @@ export class DataBootstrap extends BaseBootstrap {
 
       return cleanup;
     } catch (error) {
-      console.error(
-        'DataBootstrap: DataProvider initialization failed:',
-        error,
-      );
+      logger.error('DataBootstrap: DataProvider initialization failed:', error);
       throw new Error(`DataProvider initialization failed: ${error.message}`);
     }
   }
@@ -134,17 +129,17 @@ export class DataBootstrap extends BaseBootstrap {
         });
       }
 
-      log('DataBootstrap: State management initialized');
+      logger.info('DataBootstrap: State management initialized');
     } catch (error) {
       logger.error('State management setup failed:', { error: error });
       // This is not critical, continue without state management
-      log('DataBootstrap: Continuing without state management');
+      logger.info('DataBootstrap: Continuing without state management');
     }
   }
 
   setupPersistence() {
     // observableState handles automatic persistence, no additional setup needed
-    log('DataBootstrap: Persistence handlers configured');
+    logger.info('DataBootstrap: Persistence handlers configured');
   }
 
   /**
@@ -155,13 +150,13 @@ export class DataBootstrap extends BaseBootstrap {
    */
   _handleProviderChange(change) {
     if (isDebugEnabled()) {
-      console.log('DataBootstrap: Processing provider change', change);
+      logger.info('DataBootstrap: Processing provider change', change);
     }
 
     // Debounce UI updates if enabled to prevent event storms
     if (isDebounceEnabled() && this._updatePending) {
       if (isDebugEnabled()) {
-        console.log('DataBootstrap: Debouncing change event', change.type);
+        logger.info('DataBootstrap: Debouncing change event', change.type);
       }
       return;
     }
@@ -198,7 +193,7 @@ export class DataBootstrap extends BaseBootstrap {
         break;
       default:
         if (isDebugEnabled()) {
-          console.log('DataBootstrap: Unknown change type', change.type);
+          logger.info('DataBootstrap: Unknown change type', change.type);
         }
     }
   }
@@ -279,7 +274,7 @@ export class DataBootstrap extends BaseBootstrap {
 
   async restoreState() {
     if (this.stateRestored) {
-      log('DataBootstrap: State already restored, skipping');
+      logger.info('DataBootstrap: State already restored, skipping');
       return;
     }
 
@@ -294,8 +289,8 @@ export class DataBootstrap extends BaseBootstrap {
 
         if (restored) {
           const loadedState = appState.getState();
-          console.log('DataBootstrap: Loaded state from storage:', loadedState);
-          console.log('Loaded colorState:', loadedState.colorState);
+          logger.info('DataBootstrap: Loaded state from storage:', loadedState);
+          logger.info('Loaded colorState:', loadedState.colorState);
 
           // Apply the loaded state to the UI
           updateNotesAndConnections(loadedState);
@@ -307,21 +302,23 @@ export class DataBootstrap extends BaseBootstrap {
           // since it requires canvas element to be available
 
           this.stateRestored = true;
-          log('DataBootstrap: State restored from storage');
+          logger.info('DataBootstrap: State restored from storage');
 
           // Emit event to notify components that state has been restored
           eventBus.emit('app.state.restored', {
             colorState: loadedState.colorState,
           });
         } else {
-          log('DataBootstrap: Failed to load state from storage');
+          logger.info('DataBootstrap: Failed to load state from storage');
         }
       } else {
-        log('DataBootstrap: No state to restore or restoration disabled');
+        logger.info(
+          'DataBootstrap: No state to restore or restoration disabled',
+        );
       }
     } catch (error) {
       logger.error('State restoration failed:', { error: error });
-      log(
+      logger.info(
         'DataBootstrap: Starting with empty state due to restoration failure',
       );
       // Continue without restored state - not fatal
@@ -340,7 +337,7 @@ export class DataBootstrap extends BaseBootstrap {
       const dataProvider = DataProviderService.getInstance();
       dataProvider.destroy();
     } catch (error) {
-      console.error(
+      logger.error(
         'DataBootstrap: Error cleaning up DataProviderService:',
         error,
       );

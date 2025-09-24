@@ -1,7 +1,7 @@
 // src/js/interactions/InputController.js
 
 import { connectionManager } from '../features/connection/connectionManager.js';
-import { logger, errorHandler } from '../services/logger.js';
+import { logger } from '../services/logger.js';
 
 /**
  * Central controller for input adapters
@@ -21,17 +21,17 @@ export class InputController {
    * Initialize the input controller with optimal adapter
    */
   async initialize() {
-    console.log('🚀 InputController: initialize() called - DIAGNOSTIC');
-    console.log(
+    logger.info('🚀 InputController: initialize() called - DIAGNOSTIC');
+    logger.info(
       '🔍 InputController: capabilityDetector available:',
       !!this.capabilityDetector,
     );
 
     const optimalMode = this.capabilityDetector.getOptimalInputMode();
-    console.log('🎯 InputController: optimalMode detected:', optimalMode);
+    logger.info('🎯 InputController: optimalMode detected:', optimalMode);
 
     await this.switchToMode(optimalMode);
-    console.log('✅ InputController: switched to mode:', optimalMode);
+    logger.info('✅ InputController: switched to mode:', optimalMode);
   }
 
   /**

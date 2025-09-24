@@ -16,7 +16,7 @@ import { MenuBehavior } from './behaviors/MenuBehavior.js';
 import { ToolbarBehavior } from './behaviors/ToolbarBehavior.js';
 import { ServerConnectionBehavior } from '../features/serverConnection/serverConnectionBehavior.js';
 import { MapSelectionBehavior } from '../features/mapSelection/mapSelectionBehavior.js';
-import { logger, errorHandler } from '../services/logger.js';
+import { logger } from '../services/logger.js';
 
 export class InteractionController {
   constructor() {
@@ -51,7 +51,7 @@ export class InteractionController {
     this.setupCoordination();
 
     this.isInitialized = true;
-    console.log(
+    logger.info(
       'InteractionController: Initialized with behaviors:',
       Array.from(this.behaviors.keys()),
     );
@@ -90,45 +90,45 @@ export class InteractionController {
 
       // Initialize all behaviors
       await noteBehavior.initialize();
-      console.log('InteractionController: NoteBehavior initialized');
+      logger.info('InteractionController: NoteBehavior initialized');
 
       await dragBehavior.initialize();
-      console.log('InteractionController: DragBehavior initialized');
+      logger.info('InteractionController: DragBehavior initialized');
 
       await selectionBoxBehavior.initialize();
-      console.log('InteractionController: SelectionBoxBehavior initialized');
+      logger.info('InteractionController: SelectionBoxBehavior initialized');
 
       await canvasBehavior.initialize();
-      console.log('InteractionController: CanvasBehavior initialized');
+      logger.info('InteractionController: CanvasBehavior initialized');
 
       await connectionBehavior.initialize();
-      console.log('InteractionController: ConnectionBehavior initialized');
+      logger.info('InteractionController: ConnectionBehavior initialized');
 
       await toolbarBehavior.initialize();
-      console.log('InteractionController: ToolbarBehavior initialized');
+      logger.info('InteractionController: ToolbarBehavior initialized');
 
       await serverConnectionBehavior.initialize();
-      console.log(
+      logger.info(
         'InteractionController: ServerConnectionBehavior initialized',
       );
 
       // MapSelectionBehavior can initialize immediately - sets up DOM event listeners
       await mapSelectionBehavior.initialize();
-      console.log('InteractionController: MapSelectionBehavior initialized');
+      logger.info('InteractionController: MapSelectionBehavior initialized');
 
       // MenuBehavior will be initialized later when DOM elements are available
-      console.log(
+      logger.info(
         'InteractionController: MenuBehavior created, will initialize later',
       );
 
       // ViewportBehavior needs canvas and zoomDisplay - will be initialized later during bootstrap
-      console.log(
+      logger.info(
         'InteractionController: ViewportBehavior registered (will initialize with canvas)',
       );
 
-      console.log('InteractionController: All behaviors initialized');
+      logger.info('InteractionController: All behaviors initialized');
     } catch (error) {
-      console.error(
+      logger.error(
         'InteractionController: Failed to initialize behaviors:',
         error,
       );
@@ -141,13 +141,13 @@ export class InteractionController {
    */
   registerBehavior(name, behaviorInstance) {
     if (this.behaviors.has(name)) {
-      console.warn(
+      logger.warn(
         `InteractionController: Behavior '${name}' already registered, replacing`,
       );
     }
 
     this.behaviors.set(name, behaviorInstance);
-    console.log(`InteractionController: Registered behavior '${name}'`);
+    logger.info(`InteractionController: Registered behavior '${name}'`);
   }
 
   /**
@@ -167,11 +167,11 @@ export class InteractionController {
       menuBehavior.canvas = canvas;
       canvas.menuBehavior = menuBehavior; // Allow tests to access MenuBehavior from canvas
       await menuBehavior.initialize(); // Initialize now that DOM elements are available
-      console.log(
+      logger.info(
         'InteractionController: MenuBehavior initialized with canvas and DOM elements',
       );
     } else {
-      console.warn(
+      logger.warn(
         'InteractionController: MenuBehavior not found for canvas initialization',
       );
     }
@@ -185,11 +185,11 @@ export class InteractionController {
     const mapSelectionBehavior = this.getBehavior('mapSelection');
     if (mapSelectionBehavior) {
       await mapSelectionBehavior.initialize(); // Initialize now that DOM elements are available
-      console.log(
+      logger.info(
         'InteractionController: MapSelectionBehavior initialized with DOM elements',
       );
     } else {
-      console.warn(
+      logger.warn(
         'InteractionController: MapSelectionBehavior not found for initialization',
       );
     }
@@ -210,11 +210,11 @@ export class InteractionController {
       );
       setViewportBehavior(viewportBehavior);
 
-      console.log(
+      logger.info(
         'InteractionController: ViewportBehavior initialized with canvas',
       );
     } else {
-      console.warn(
+      logger.warn(
         'InteractionController: ViewportBehavior not found for initialization',
       );
     }
@@ -237,7 +237,7 @@ export class InteractionController {
       this.cancelActiveInteraction();
     });
 
-    console.log('InteractionController: Cross-behavior coordination set up');
+    logger.info('InteractionController: Cross-behavior coordination set up');
   }
 
   /**
@@ -254,7 +254,7 @@ export class InteractionController {
     this.activeInteraction = type;
     this.activeBehavior = behavior;
 
-    console.log(`InteractionController: Started '${type}' interaction`);
+    logger.info(`InteractionController: Started '${type}' interaction`);
   }
 
   /**
@@ -267,7 +267,7 @@ export class InteractionController {
       this.activeInteraction = null;
       this.activeBehavior = null;
 
-      console.log(`InteractionController: Ended '${type}' interaction`);
+      logger.info(`InteractionController: Ended '${type}' interaction`);
     }
   }
 
@@ -276,7 +276,7 @@ export class InteractionController {
    */
   cancelActiveInteraction() {
     if (this.activeInteraction && this.activeBehavior) {
-      console.log(
+      logger.info(
         `InteractionController: Cancelling '${this.activeInteraction}' interaction`,
       );
 
@@ -326,9 +326,9 @@ export class InteractionController {
       if (behavior.destroy) {
         try {
           await behavior.destroy();
-          console.log(`InteractionController: Destroyed behavior '${name}'`);
+          logger.info(`InteractionController: Destroyed behavior '${name}'`);
         } catch (error) {
-          console.error(
+          logger.error(
             `InteractionController: Failed to destroy behavior '${name}':`,
             error,
           );
@@ -343,7 +343,7 @@ export class InteractionController {
     this.isInitialized = false;
     this.eventBus = null;
 
-    console.log('InteractionController: Destroyed');
+    logger.info('InteractionController: Destroyed');
   }
 }
 

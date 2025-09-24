@@ -18,8 +18,6 @@ import { ZoomStateService } from '../../services/zoomStateService.js';
 import { CanvasStateService } from '../../services/canvasStateService.js';
 import { ServerClient } from '../../services/serverClient.js';
 import { DataProviderService } from '../../services/DataProviderService.js';
-import { log } from '../../utils/utils.js';
-
 export class ServiceBootstrap extends BaseBootstrap {
   constructor() {
     super('ServiceBootstrap');
@@ -56,7 +54,7 @@ export class ServiceBootstrap extends BaseBootstrap {
       // Initialize provider for default map
       dataProviderService.init(null, {
         onReady: () => {
-          log('ServiceBootstrap: DataProviderService ready');
+          logger.info('ServiceBootstrap: DataProviderService ready');
         },
       });
 
@@ -65,7 +63,7 @@ export class ServiceBootstrap extends BaseBootstrap {
         window.dataProviderServiceDebug = dataProviderService;
       }
 
-      log('ServiceBootstrap: DataProviderService initialized');
+      logger.info('ServiceBootstrap: DataProviderService initialized');
     } catch (error) {
       throw new Error(
         `DataProvider service initialization failed: ${error.message}`,
@@ -76,7 +74,7 @@ export class ServiceBootstrap extends BaseBootstrap {
   async initializeNotificationServices() {
     try {
       notificationManager.initialize();
-      log('ServiceBootstrap: Notification manager initialized');
+      logger.info('ServiceBootstrap: Notification manager initialized');
     } catch (error) {
       throw new Error(
         `Notification service initialization failed: ${error.message}`,
@@ -87,7 +85,7 @@ export class ServiceBootstrap extends BaseBootstrap {
   async initializeNoteServices() {
     try {
       NoteEventService.initialize();
-      log('ServiceBootstrap: Note event service initialized');
+      logger.info('ServiceBootstrap: Note event service initialized');
     } catch (error) {
       throw new Error(`Note service initialization failed: ${error.message}`);
     }
@@ -99,7 +97,7 @@ export class ServiceBootstrap extends BaseBootstrap {
       ConnectionService.setConnectionManager(connectionManager);
       ConnectionService.setDataStoreUpdateCallback(updateConnectionInDataStore);
 
-      log('ServiceBootstrap: Connection service configured and ready');
+      logger.info('ServiceBootstrap: Connection service configured and ready');
     } catch (error) {
       throw new Error(
         `Connection service initialization failed: ${error.message}`,
@@ -111,21 +109,22 @@ export class ServiceBootstrap extends BaseBootstrap {
     try {
       ColorPickerEvents.initialize();
       NoteColorApplication.initialize();
-      log('ServiceBootstrap: Color services initialized');
+      logger.info('ServiceBootstrap: Color services initialized');
     } catch (error) {
       errorHandler.handleError(error, {
         component: 'ServiceBootstrap',
         operation: 'initializeColorServices',
         severity: 'MEDIUM',
         recoverable: true,
-        userMessage: 'Color picker may not work properly, but other features are available.',
+        userMessage:
+          'Color picker may not work properly, but other features are available.',
         metadata: {
           serviceType: 'color',
-          fallbackAvailable: true
-        }
+          fallbackAvailable: true,
+        },
       });
       // Color services are not critical - continue without them
-      log('ServiceBootstrap: Continuing without color services');
+      logger.info('ServiceBootstrap: Continuing without color services');
     }
   }
 
@@ -142,7 +141,7 @@ export class ServiceBootstrap extends BaseBootstrap {
         };
       }
 
-      log('ServiceBootstrap: State services initialized');
+      logger.info('ServiceBootstrap: State services initialized');
     } catch (error) {
       errorHandler.handleError(error, {
         component: 'ServiceBootstrap',
@@ -153,40 +152,41 @@ export class ServiceBootstrap extends BaseBootstrap {
         metadata: {
           serviceType: 'state',
           services: ['ZoomStateService', 'CanvasStateService'],
-          fallbackAvailable: true
-        }
+          fallbackAvailable: true,
+        },
       });
       // State services are not critical - continue without them
-      log('ServiceBootstrap: Continuing without state services');
+      logger.info('ServiceBootstrap: Continuing without state services');
     }
   }
 
   async initializeServerServices() {
     try {
       ServerClient.initialize();
-      log('ServiceBootstrap: Server services initialized');
+      logger.info('ServiceBootstrap: Server services initialized');
     } catch (error) {
       errorHandler.handleError(error, {
         component: 'ServiceBootstrap',
         operation: 'initializeServerServices',
         severity: 'MEDIUM',
         recoverable: true,
-        userMessage: 'Server features may not be available, but local functionality works normally.',
+        userMessage:
+          'Server features may not be available, but local functionality works normally.',
         metadata: {
           serviceType: 'server',
           fallbackAvailable: true,
-          localMode: true
-        }
+          localMode: true,
+        },
       });
       // Server services are not critical - continue without them
-      log('ServiceBootstrap: Continuing without server services');
+      logger.info('ServiceBootstrap: Continuing without server services');
     }
   }
 
   async initializeMenuServices() {
     try {
       // Menu services now handled by MenuBehavior through InteractionBootstrap
-      log('ServiceBootstrap: Menu services delegated to MenuBehavior');
+      logger.info('ServiceBootstrap: Menu services delegated to MenuBehavior');
     } catch (error) {
       errorHandler.handleError(error, {
         component: 'ServiceBootstrap',
@@ -197,17 +197,17 @@ export class ServiceBootstrap extends BaseBootstrap {
         metadata: {
           serviceType: 'menu',
           fallbackAvailable: true,
-          handledByBehavior: true
-        }
+          handledByBehavior: true,
+        },
       });
       // Menu services are not critical - continue without them
-      log('ServiceBootstrap: Continuing without menu services');
+      logger.info('ServiceBootstrap: Continuing without menu services');
     }
   }
 
   async cleanup() {
     await super.cleanup();
     // Services don't currently have cleanup methods, but we could add them here
-    log('ServiceBootstrap: Services cleaned up');
+    logger.info('ServiceBootstrap: Services cleaned up');
   }
 }

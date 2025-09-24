@@ -13,7 +13,7 @@ import {
   snapToPixel,
   getFallbackCoordinates,
 } from './CoordinateConfig.js';
-import { logger, errorHandler } from '../../services/logger.js';
+import { logger } from '../../services/logger.js';
 import { CoordinateCache } from './CoordinateCache.js';
 
 export class CoordinateTransform {
@@ -56,7 +56,7 @@ export class CoordinateTransform {
       const rect = this.cache.getCanvasRect();
       if (!rect || rect.width === 0 || rect.height === 0) {
         if (this.config.debug.logTransformations) {
-          console.warn(
+          logger.warn(
             'CoordinateTransform: Invalid canvas rect, using fallback',
           );
         }
@@ -77,7 +77,7 @@ export class CoordinateTransform {
       this.updateMetrics('transform');
 
       if (this.config.debug.logTransformations) {
-        console.log('CoordinateTransform: viewport->canvas', {
+        logger.info('CoordinateTransform: viewport->canvas', {
           viewport: { x: viewportX, y: viewportY },
           canvas: snapped,
           scale,
@@ -336,7 +336,7 @@ export class CoordinateTransform {
       // Ensure scale is within safe bounds
       return Math.max(this.config.zoom.minScale, scale);
     } catch (error) {
-      console.warn(
+      logger.warn(
         'CoordinateTransform: Failed to get zoom scale, using default:',
         error,
       );
@@ -352,7 +352,7 @@ export class CoordinateTransform {
     this.cache.invalidate();
 
     if (this.config.debug.logTransformations) {
-      console.log('CoordinateTransform: Cache invalidated');
+      logger.info('CoordinateTransform: Cache invalidated');
     }
   }
 
@@ -380,7 +380,7 @@ export class CoordinateTransform {
     this.metrics.errors++;
 
     if (this.config.errorHandling.logErrors) {
-      console.error(`CoordinateTransform.${method}: ${error.message}`, {
+      logger.error(`CoordinateTransform.${method}: ${error.message}`, {
         error,
         context,
         metrics: this.metrics,

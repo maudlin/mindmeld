@@ -7,7 +7,7 @@
  */
 
 import { COORDINATE_CONFIG } from './CoordinateConfig.js';
-import { logger, errorHandler } from '../../services/logger.js';
+import { logger } from '../../services/logger.js';
 
 export class CoordinateCache {
   constructor(canvas) {
@@ -261,7 +261,7 @@ export class CoordinateCache {
    */
   handleCacheError(method, error) {
     if (this.config.debug?.logTransformations) {
-      console.error(`CoordinateCache.${method}: ${error.message}`, {
+      logger.error(`CoordinateCache.${method}: ${error.message}`, {
         error,
         statistics: this.statistics,
         cacheState: {
@@ -281,7 +281,7 @@ export class CoordinateCache {
     this.canvas = null;
 
     if (this.config.debug?.cacheStatistics) {
-      console.log(
+      logger.info(
         'CoordinateCache: Destroyed with final statistics:',
         this.getStatistics(),
       );
@@ -311,7 +311,7 @@ export function createCoordinateCache(canvas) {
       return cache;
     }
   } catch (error) {
-    console.warn(
+    logger.warn(
       'CoordinateCache: Initial validation failed, disabling cache:',
       error,
     );

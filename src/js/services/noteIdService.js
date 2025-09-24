@@ -2,7 +2,7 @@
 // MM-256: Centralized note ID management with collision prevention
 
 import { toBase62, fromBase62 } from '../utils/utils.js';
-import { logger, errorHandler } from './logger.js';
+import { logger } from './logger.js';
 
 /**
  * Service for managing note ID generation and preventing collisions
@@ -40,7 +40,7 @@ export class NoteIdService {
           }
         } catch {
           // Skip invalid IDs that can't be parsed
-          console.warn(`NoteIdService: Skipping invalid ID "${note.id}"`);
+          logger.warn(`NoteIdService: Skipping invalid ID "${note.id}"`);
         }
       }
     });

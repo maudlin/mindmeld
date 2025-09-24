@@ -1,7 +1,7 @@
 // src/js/features/colorPicker/colorPickerEvents.js
 import { ColorService } from '../../services/colorService.js';
 import { eventBus } from '../../core/eventBus.js';
-import { log } from '../../utils/utils.js';
+import { logger } from '../../services/logger.js';
 
 /**
  * Color Picker Event Handling System
@@ -15,7 +15,7 @@ export class ColorPickerEvents {
    */
   static initialize() {
     if (this.isInitialized) {
-      log('Color picker events already initialized');
+      logger.info('Color picker events already initialized');
       return;
     }
 
@@ -24,7 +24,7 @@ export class ColorPickerEvents {
     this.subscribeToStateChanges();
 
     this.isInitialized = true;
-    log('Color picker events initialized');
+    logger.info('Color picker events initialized');
   }
 
   /**
@@ -78,7 +78,7 @@ export class ColorPickerEvents {
     const color = swatch.getAttribute('data-color');
 
     if (!color) {
-      log('No color found on swatch');
+      logger.info('No color found on swatch');
       return;
     }
 
@@ -90,7 +90,7 @@ export class ColorPickerEvents {
 
     // Emit selection event
     eventBus.emit('colorPicker.selection', { color, swatch });
-    log(`Color picker selection: ${color}`);
+    logger.info(`Color picker selection: ${color}`);
   }
 
   /**
@@ -286,7 +286,7 @@ export class ColorPickerEvents {
     });
 
     this.isInitialized = false;
-    log('Color picker events cleaned up');
+    logger.info('Color picker events cleaned up');
   }
 }
 

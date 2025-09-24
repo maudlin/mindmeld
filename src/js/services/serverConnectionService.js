@@ -1,7 +1,7 @@
 // src/js/services/serverConnectionService.js
 import { appState } from '../data/observableState.js';
 import { eventBus } from '../core/eventBus.js';
-import { log } from '../utils/utils.js';
+import { logger } from './logger.js';
 
 /**
  * Server Connection Management Service
@@ -77,7 +77,7 @@ export class ServerConnectionService {
         };
       }
     } catch (error) {
-      log(`Connection test failed for ${uri}:`, error);
+      logger.info(`Connection test failed for ${uri}:`, error);
 
       // Detect CORS errors
       if (
@@ -181,12 +181,14 @@ export class ServerConnectionService {
 
       localStorage.removeItem('mindmeld.serverUri');
       eventBus.emit('server.uri.changed', { serverUri: null });
-      log('Server URI cleared');
+      logger.info('Server URI cleared');
       return true;
     }
 
     if (!this.validateServerUri(uri)) {
-      log(`Invalid server URI: ${uri}. Must be HTTPS URL or HTTP localhost.`);
+      logger.info(
+        `Invalid server URI: ${uri}. Must be HTTPS URL or HTTP localhost.`,
+      );
       return false;
     }
 
@@ -202,7 +204,7 @@ export class ServerConnectionService {
 
     localStorage.setItem('mindmeld.serverUri', uri);
     eventBus.emit('server.uri.changed', { serverUri: uri });
-    log(`Server URI set to: ${uri}`);
+    logger.info(`Server URI set to: ${uri}`);
     return true;
   }
 
@@ -239,7 +241,7 @@ export class ServerConnectionService {
       isConnected,
     });
 
-    log(`Connection status updated to: ${status}`);
+    logger.info(`Connection status updated to: ${status}`);
   }
 
   /**
@@ -270,7 +272,7 @@ export class ServerConnectionService {
       }
       return null;
     } catch (error) {
-      log('Error loading server URI from storage:', error);
+      logger.info('Error loading server URI from storage:', error);
       return null;
     }
   }
@@ -289,6 +291,6 @@ export class ServerConnectionService {
 
     localStorage.removeItem('mindmeld.serverUri');
     eventBus.emit('server.connection.reset');
-    log('Server connection state reset to defaults');
+    logger.info('Server connection state reset to defaults');
   }
 }

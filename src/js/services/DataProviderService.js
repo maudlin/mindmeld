@@ -3,7 +3,7 @@
 
 import { LocalJSONProvider } from '../data/providers/LocalJSONProvider.js';
 import { isDebugEnabled } from '../core/featureFlags.js';
-import { logger, errorHandler } from './logger.js';
+import { logger } from './logger.js';
 
 /**
  * DataProviderService - Central integration point for DataProvider operations
@@ -26,7 +26,7 @@ export class DataProviderService {
       this._applyingSnapshot = false; // Guard for preventing feedback loops
 
       if (isDebugEnabled()) {
-        console.log(
+        logger.info(
           `DataProviderService: Using ${this._providerType} provider`,
         );
       }
@@ -121,7 +121,7 @@ export class DataProviderService {
         // Guard against feedback loops during snapshot application
         if (this._applyingSnapshot && change.origin === 'system') {
           if (isDebugEnabled()) {
-            console.log(
+            logger.info(
               'DataProviderService: Skipping change during snapshot application',
               change,
             );
@@ -130,7 +130,7 @@ export class DataProviderService {
         }
 
         if (isDebugEnabled()) {
-          console.log('DataProviderService: Emitting change', change);
+          logger.info('DataProviderService: Emitting change', change);
         }
 
         onChange(change);
@@ -160,7 +160,7 @@ export class DataProviderService {
     this._applyingSnapshot = true;
     try {
       if (isDebugEnabled()) {
-        console.log(
+        logger.info(
           'DataProviderService: Starting importJSON with snapshot guard',
         );
       }
@@ -168,14 +168,14 @@ export class DataProviderService {
       const result = await this._provider.importJSON(json);
 
       if (isDebugEnabled()) {
-        console.log('DataProviderService: importJSON completed successfully');
+        logger.info('DataProviderService: importJSON completed successfully');
       }
 
       return result;
     } finally {
       this._applyingSnapshot = false;
       if (isDebugEnabled()) {
-        console.log('DataProviderService: Snapshot guard released');
+        logger.info('DataProviderService: Snapshot guard released');
       }
     }
   }

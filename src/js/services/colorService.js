@@ -1,7 +1,7 @@
 // src/js/services/colorService.js
 import { appState } from '../data/observableState.js';
 import { eventBus } from '../core/eventBus.js';
-import { log } from '../utils/utils.js';
+import { logger } from './logger.js';
 
 /**
  * Color State Management Service
@@ -16,7 +16,7 @@ export class ColorService {
    */
   static setCurrentColor(color) {
     if (!this.VALID_COLORS.includes(color)) {
-      log(
+      logger.info(
         `Invalid color: ${color}. Valid colors: ${this.VALID_COLORS.join(', ')}`,
       );
       return false;
@@ -31,7 +31,7 @@ export class ColorService {
     });
 
     eventBus.emit('color.changed', { color });
-    log(`Current color set to: ${color}`);
+    logger.info(`Current color set to: ${color}`);
     return true;
   }
 
@@ -55,7 +55,7 @@ export class ColorService {
    */
   static setNoteColor(noteIds, color) {
     if (!this.VALID_COLORS.includes(color)) {
-      log(
+      logger.info(
         `Invalid color: ${color}. Valid colors: ${this.VALID_COLORS.join(', ')}`,
       );
       return false;
@@ -86,7 +86,7 @@ export class ColorService {
     appState.setState(newState);
 
     eventBus.emit('note.color.changed', { noteIds: ids, color });
-    log(`Color ${color} applied to notes:`, ids);
+    logger.info(`Color ${color} applied to notes:`, ids);
     return true;
   }
 
@@ -130,7 +130,7 @@ export class ColorService {
     });
 
     eventBus.emit('note.color.removed', { noteId });
-    log(`Color removed from note: ${noteId}`);
+    logger.info(`Color removed from note: ${noteId}`);
   }
 
   /**
@@ -181,7 +181,7 @@ export class ColorService {
     });
 
     eventBus.emit('note.colors.imported', { noteColors });
-    log('Note colors imported:', noteColors);
+    logger.info('Note colors imported:', noteColors);
   }
 
   /**
@@ -196,7 +196,7 @@ export class ColorService {
     });
 
     eventBus.emit('color.state.reset');
-    log('Color state reset to defaults');
+    logger.info('Color state reset to defaults');
   }
 
   /**

@@ -2,7 +2,7 @@
 import { ConnectionCreation } from './connectionCreation.js';
 import { ConnectionUpdate } from './connectionUpdate.js';
 // Removed direct dataStore dependency - will use service injection
-import { throttle, log } from '../../utils/utils.js';
+import { throttle } from '../../utils/utils.js';
 import { getCoordinateTransform } from '../../core/coordinates/coordinateService.js';
 import {
   ConnectionUtils,
@@ -12,6 +12,7 @@ import {
   STROKE_DASHARRAY,
 } from './connectionUtils.js';
 import { getZoomLevel } from '../zoom/viewportAdapter.js';
+import { logger } from '../../services/logger.js';
 
 export class ConnectionManager {
   constructor() {
@@ -251,7 +252,7 @@ export class ConnectionManager {
 
   createFinalConnection(startNote, endNote, connectionGroup) {
     if (this.connectionExists(startNote.id, endNote.id)) {
-      log('Connection already exists between these notes');
+      logger.info('Connection already exists between these notes');
       connectionGroup.group.remove();
       return;
     }

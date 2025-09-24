@@ -1,4 +1,4 @@
-import { logger, errorHandler } from '../services/logger.js';
+import { logger } from '../services/logger.js';
 // canvasModule.js
 export class CanvasModule {
   constructor(name, width, height, cssPath) {
@@ -26,7 +26,7 @@ export class CanvasModule {
         style.id = `style-${this.name.replace(/\s+/g, '-').toLowerCase()}`;
         return style;
       } else {
-        console.error(`Failed to load CSS for ${this.name}`);
+        logger.error(`Failed to load CSS for ${this.name}`);
       }
     }
     return null;
