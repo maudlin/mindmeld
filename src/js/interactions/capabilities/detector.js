@@ -1,3 +1,4 @@
+import { logger, errorHandler } from '../../services/logger.js';
 // src/js/interactions/capabilities/detector.js
 
 /**

@@ -2,6 +2,7 @@
 import config from './config.js';
 import { CanvasModule } from './canvasModule.js';
 import { log } from '../utils/utils.js';
+import { logger, errorHandler } from '../services/logger.js';
 
 export class CanvasManager {
   constructor() {

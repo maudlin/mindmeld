@@ -10,6 +10,7 @@ import {
   clearAllNotesAndConnections,
   getCurrentState,
 } from './dataStore.js';
+import { logger, errorHandler } from '../services/logger.js';
 import { log } from '../utils/utils.js';
 
 // Function to check if we're in a browser environment

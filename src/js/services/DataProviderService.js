@@ -3,6 +3,7 @@
 
 import { LocalJSONProvider } from '../data/providers/LocalJSONProvider.js';
 import { isDebugEnabled } from '../core/featureFlags.js';
+import { logger, errorHandler } from './logger.js';
 
 /**
  * DataProviderService - Central integration point for DataProvider operations

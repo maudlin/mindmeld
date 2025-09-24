@@ -9,6 +9,7 @@ import { throttle } from '../../utils/utils.js';
 import { noteManager } from '../../services/noteManager.js';
 import { getZoomLevel } from '../../features/zoom/viewportAdapter.js';
 import { CoordinateTransform } from '../../core/coordinates/CoordinateTransform.js';
+import { logger, errorHandler } from '../../services/logger.js';
 
 export class SelectionBoxBehavior {
   constructor(eventBus) {
@@ -36,7 +37,7 @@ export class SelectionBoxBehavior {
       32, // 30fps for note selection checking - less frequent than visual updates
     );
 
-    console.log('SelectionBoxBehavior: Created');
+    logger.debug('SelectionBoxBehavior created');
   }
 
   /**
@@ -62,7 +63,7 @@ export class SelectionBoxBehavior {
     // Each adapter will call our methods directly based on input detection
 
     this.isInitialized = true;
-    console.log('SelectionBoxBehavior: Initialized');
+    logger.debug('SelectionBoxBehavior initialized');
   }
 
   /**
@@ -296,7 +297,7 @@ export class SelectionBoxBehavior {
       const noteRect = note.getBoundingClientRect();
 
       // Performance: Removed per-note logging to prevent lag
-      // console.log('SelectionBoxBehavior: Checking note', { noteId: note.id, noteRect });
+      // logger.info('Checking note', { noteId: note.id, noteRect });
 
       // Use intersection-based selection instead of containment
       // This is more user-friendly and matches typical selection behavior

@@ -1,5 +1,6 @@
 // noteEventService.js - Handles note-related events from the event bus
 import { createNoteAtPosition } from '../factories/noteFactory.js';
+import { logger, errorHandler } from './logger.js';
 // MM-171: Legacy event system disabled - using adapter architecture
 // import { addNoteEventListeners } from '../features/note/noteEvents.js';
 import { eventBus } from '../core/eventBus.js';
@@ -28,7 +29,7 @@ export class NoteEventService {
 
     // Handle note creation from events using NoteBehavior for unified creation path
     eventBus.on('note.createAtPosition', ({ canvas, event }) => {
-      console.log('NoteEventService: Received note.createAtPosition event', {
+      logger.info('Received note.createAtPosition event', {
         canvas: canvas?.id,
         event: event?.type,
       });

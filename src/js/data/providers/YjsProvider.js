@@ -4,6 +4,7 @@ import { DataProvider, ORIGIN, makeConnectionId } from './DataProvider.js';
 import { truncateNoteContent } from '../../utils/utils.js';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
+import { logger, errorHandler } from '../../services/logger.js';
 
 export class YjsProvider extends DataProvider {
   constructor() {

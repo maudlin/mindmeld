@@ -5,6 +5,7 @@ import { NOTE_CONTENT_LIMIT } from '../core/constants.js';
 import { eventBus } from '../core/eventBus.js';
 import { displayAsViewMode } from '../features/note/editViewMode.js';
 import { getCoordinateTransform } from '../core/coordinates/coordinateService.js';
+import { logger, errorHandler } from '../services/logger.js';
 
 let nextNoteId = 1;
 let handDrawn = false;

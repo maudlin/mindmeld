@@ -1,8 +1,9 @@
 // src/js/data/dataStore.js
 import { debounce, log, truncateNoteContent } from '../utils/utils.js';
 import { appState } from './observableState.js';
+import { logger, errorHandler } from '../services/logger.js';
 import {
-  NOTE_CONTENT_LIMIT,
+NOTE_CONTENT_LIMIT,
   CONNECTION_TYPE_MAP,
   CONNECTION_TYPE_MAP_REVERSE,
   CONNECTION_TYPES,

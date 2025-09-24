@@ -13,6 +13,7 @@ import {
   snapToPixel,
   getFallbackCoordinates,
 } from './CoordinateConfig.js';
+import { logger, errorHandler } from '../../services/logger.js';
 import { CoordinateCache } from './CoordinateCache.js';
 
 export class CoordinateTransform {

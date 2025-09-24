@@ -3,6 +3,7 @@
 import { eventBus } from '../../core/eventBus.js';
 import { ServerClient } from '../../services/serverClient.js';
 import { log } from '../../utils/utils.js';
+import { logger, errorHandler } from '../../services/logger.js';
 
 /**
  * Map Selection Behavior - Handles the Map Selection Modal UI
@@ -371,7 +372,7 @@ export class MapSelectionBehavior {
         this.hideStates();
       }
     } catch (error) {
-      console.error('MapSelectionBehavior: Error loading maps:', error);
+      logger.error('Error loading maps:', { error: error });
       this.showError(error.message || 'Failed to load maps');
     } finally {
       this.isLoading = false;
@@ -419,7 +420,7 @@ export class MapSelectionBehavior {
         this.showError('Failed to create new map');
       }
     } catch (error) {
-      console.error('MapSelectionBehavior: Error creating map:', error);
+      logger.error('Error creating map:', { error: error });
       this.showError(error.message || 'Failed to create new map');
     }
   }
@@ -453,7 +454,7 @@ export class MapSelectionBehavior {
         this.showError('Failed to load map');
       }
     } catch (error) {
-      console.error('MapSelectionBehavior: Error loading map:', error);
+      logger.error('Error loading map:', { error: error });
       this.showError(error.message || 'Failed to load map');
     }
   }
@@ -501,7 +502,7 @@ export class MapSelectionBehavior {
         this.showError('Failed to delete map');
       }
     } catch (error) {
-      console.error('MapSelectionBehavior: Error deleting map:', error);
+      logger.error('Error deleting map:', { error: error });
       this.showError(error.message || 'Failed to delete map');
     } finally {
       this.isLoading = false;

@@ -8,6 +8,7 @@
 import { log } from './utils/utils.js';
 import { AppBootstrap } from './core/bootstrap/AppBootstrap.js';
 
+import { logger, errorHandler } from './services/logger.js';
 log('app.js loaded');
 
 async function initializeApp() {
@@ -26,7 +27,7 @@ async function initializeApp() {
       window.__mindmeld_bootstrap = appBootstrap;
     }
   } catch (error) {
-    console.error('MindMeld application failed to initialize:', error);
+    logger.error('MindMeld application failed to initialize:', { data: error });
 
     // Show user-friendly error message
     showInitializationError();

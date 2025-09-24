@@ -7,6 +7,7 @@
  */
 
 import { COORDINATE_CONFIG } from './CoordinateConfig.js';
+import { logger, errorHandler } from '../../services/logger.js';
 
 export class CoordinateCache {
   constructor(canvas) {
@@ -91,7 +92,7 @@ export class CoordinateCache {
     this.statistics.invalidations++;
 
     if (this.config.debug?.logTransformations) {
-      console.log('CoordinateCache: Cache invalidated', {
+      logger.info('Cache invalidated', {
         statistics: this.statistics,
       });
     }
@@ -118,7 +119,7 @@ export class CoordinateCache {
     );
 
     if (this.config.debug?.cacheStatistics) {
-      console.log('CoordinateCache: Activity updated', {
+      logger.info('Activity updated', {
         level: this.activityLevel,
         duration: this.cacheDuration,
       });

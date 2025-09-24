@@ -6,6 +6,7 @@ import { renderMarkdown } from '../markdown/markdownRenderer.js';
 import { defangToPlainText } from '../markdown/defangPipeline.js';
 import { noteManager } from '../../services/noteManager.js';
 import { eventBus } from '../../core/eventBus.js';
+import { logger, errorHandler } from '../../services/logger.js';
 
 /**
  * Display note content in view mode (rendered HTML, not editable)
@@ -172,7 +173,7 @@ export function displayAsEditMode(noteContent, markdownContent = null) {
  */
 export function getCurrentMarkdownContent(noteContent) {
   if (!noteContent || typeof noteContent.classList === 'undefined') {
-    console.warn('getCurrentMarkdownContent: Invalid noteContent element');
+    logger.warn('Invalid noteContent element');
     return '';
   }
 

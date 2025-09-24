@@ -1,3 +1,4 @@
+import { logger, errorHandler } from '../../services/logger.js';
 // src/js/data/providers/DataProvider.js
 // Abstract interface for data providers (LocalJSONProvider, YjsProvider)
 // This file purposefully contains JSDoc-only contracts and minimal runtime stubs.

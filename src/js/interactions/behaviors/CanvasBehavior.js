@@ -11,6 +11,7 @@
  */
 
 import { noteManager } from '../../services/noteManager.js';
+import { logger, errorHandler } from '../../services/logger.js';
 
 export class CanvasBehavior {
   constructor(eventBus) {
@@ -18,7 +19,7 @@ export class CanvasBehavior {
     this.isInitialized = false;
     this.name = 'CanvasBehavior';
 
-    console.log('CanvasBehavior: Created');
+    logger.debug('CanvasBehavior created');
   }
 
   /**
@@ -34,7 +35,7 @@ export class CanvasBehavior {
     // Each adapter will call our methods directly based on input detection
 
     this.isInitialized = true;
-    console.log('CanvasBehavior: Initialized');
+    logger.debug('CanvasBehavior initialized');
   }
 
   /**
@@ -43,7 +44,7 @@ export class CanvasBehavior {
    */
   handleCanvasDoubleClick(event, inputType) {
     if (!event) {
-      console.warn('CanvasBehavior: No event provided for note creation');
+      logger.warn('No event provided for note creation');
       return;
     }
 

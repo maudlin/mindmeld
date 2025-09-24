@@ -1,6 +1,8 @@
 // src/js/core/featureFlags.js
 // Feature flags for controlling experimental features and provider selection
 
+import { logger, errorHandler } from '../services/logger.js';
+
 /**
  * Feature flags configuration for MindMeld
  *
@@ -83,7 +85,7 @@ export async function initializeYjsProvider() {
       const module = await import('../data/providers/YjsProvider.js');
       return module.YjsProvider;
     } catch (error) {
-      console.error('Failed to load YjsProvider:', error);
+      logger.error('Failed to load YjsProvider:', error);
       throw new Error(
         'YjsProvider not available. Ensure Yjs is properly installed.',
       );

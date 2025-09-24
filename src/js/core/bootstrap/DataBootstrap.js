@@ -11,6 +11,7 @@ import {
   initializeDataStore,
   updateNotesAndConnections,
 } from '../../data/dataStore.js';
+import { logger, errorHandler } from '../../services/logger.js';
 import { appState } from '../../data/observableState.js';
 import { ZoomStateService } from '../../services/zoomStateService.js';
 import { DataProviderService } from '../../services/DataProviderService.js';
@@ -135,7 +136,7 @@ export class DataBootstrap extends BaseBootstrap {
 
       log('DataBootstrap: State management initialized');
     } catch (error) {
-      console.error('DataBootstrap: State management setup failed:', error);
+      logger.error('State management setup failed:', { error: error });
       // This is not critical, continue without state management
       log('DataBootstrap: Continuing without state management');
     }
@@ -319,7 +320,7 @@ export class DataBootstrap extends BaseBootstrap {
         log('DataBootstrap: No state to restore or restoration disabled');
       }
     } catch (error) {
-      console.error('DataBootstrap: State restoration failed:', error);
+      logger.error('State restoration failed:', { error: error });
       log(
         'DataBootstrap: Starting with empty state due to restoration failure',
       );

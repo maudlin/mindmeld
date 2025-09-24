@@ -2,6 +2,7 @@
 
 import { BaseAdapter } from './BaseAdapter.js';
 import { noteManager } from '../../services/noteManager.js';
+import { logger, errorHandler } from '../../services/logger.js';
 
 /**
  * Desktop input adapter for mouse, keyboard, and trackpad interactions
@@ -79,7 +80,7 @@ export class DesktopAdapter extends BaseAdapter {
     );
     // Get behavior references from interaction controller
     if (this.interactionController) {
-      console.log('DesktopAdapter: InteractionController state:', {
+      logger.info('InteractionController state:', {
         isInitialized: this.interactionController.isInitialized,
         behaviorCount: this.interactionController.behaviors?.size,
         availableBehaviors: Array.from(
@@ -99,7 +100,7 @@ export class DesktopAdapter extends BaseAdapter {
       this.menuBehavior = this.interactionController.getBehavior('menu');
       this.toolbarBehavior = this.interactionController.getBehavior('toolbar');
 
-      console.log('DesktopAdapter: Behavior references initialized', {
+      logger.info('Behavior references initialized', {
         hasNoteBehavior: !!this.noteBehavior,
         hasDragBehavior: !!this.dragBehavior,
         hasSelectionBoxBehavior: !!this.selectionBoxBehavior,
@@ -109,7 +110,7 @@ export class DesktopAdapter extends BaseAdapter {
         hasToolbarBehavior: !!this.toolbarBehavior,
       });
     } else {
-      console.warn('DesktopAdapter: No InteractionController provided!');
+      logger.warn('No InteractionController provided!');
     }
 
     await this.initializeEventListeners();
@@ -277,7 +278,7 @@ export class DesktopAdapter extends BaseAdapter {
     this.pointerDownPosition = { x: event.clientX, y: event.clientY };
 
     const target = event.target;
-    console.log('DesktopAdapter: Pointer down detected', {
+    logger.info('Pointer down detected', {
       target: target.tagName,
       targetClass: target.className,
       x: event.clientX,
@@ -348,13 +349,13 @@ export class DesktopAdapter extends BaseAdapter {
     );
 
     if (!this.connectionBehavior) {
-      console.warn('DesktopAdapter: ConnectionBehavior not available');
+      logger.warn('ConnectionBehavior not available');
       return;
     }
 
     const sourceNote = event.target.closest('.note');
     if (!sourceNote) {
-      console.warn('DesktopAdapter: No source note found for ghost connector');
+      logger.warn('No source note found for ghost connector');
       return;
     }
 
@@ -373,7 +374,7 @@ export class DesktopAdapter extends BaseAdapter {
     console.log(`DesktopAdapter: Handling toolbar button action: ${action}`);
 
     if (!this.toolbarBehavior) {
-      console.warn('DesktopAdapter: ToolbarBehavior not available');
+      logger.warn('ToolbarBehavior not available');
       return;
     }
 
@@ -405,7 +406,7 @@ export class DesktopAdapter extends BaseAdapter {
     // Get the connector group element (parent of the hotspot circle)
     const connectorGroup = hotspotElement.closest('g[data-start][data-end]');
     if (!connectorGroup) {
-      console.warn('DesktopAdapter: Could not find connector group');
+      logger.warn('Could not find connector group');
       return;
     }
 
@@ -413,7 +414,7 @@ export class DesktopAdapter extends BaseAdapter {
     const endId = connectorGroup.dataset.end;
     const connectionType = connectorGroup.dataset.type;
 
-    console.log('🔗 DesktopAdapter: Connector selected:', {
+    logger.info('Connector selected:', {
       startId,
       endId,
       connectionType,
@@ -486,7 +487,7 @@ export class DesktopAdapter extends BaseAdapter {
    */
   handleNoteInteractionStart(noteElement, event) {
     if (!this.noteBehavior) {
-      console.warn('DesktopAdapter: NoteBehavior not available');
+      logger.warn('NoteBehavior not available');
       return;
     }
 
@@ -544,7 +545,7 @@ export class DesktopAdapter extends BaseAdapter {
     }
 
     if (!this.selectionBoxBehavior) {
-      console.warn('DesktopAdapter: SelectionBoxBehavior not available');
+      logger.warn('SelectionBoxBehavior not available');
       return;
     }
 
@@ -642,7 +643,7 @@ export class DesktopAdapter extends BaseAdapter {
    */
   handleNoteDragStart(noteElement, event) {
     if (!this.dragBehavior) {
-      console.warn('DesktopAdapter: DragBehavior not available');
+      logger.warn('DragBehavior not available');
       return;
     }
 
@@ -677,7 +678,7 @@ export class DesktopAdapter extends BaseAdapter {
     }
 
     if (!this.selectionBoxBehavior) {
-      console.warn('DesktopAdapter: SelectionBoxBehavior not available');
+      logger.warn('SelectionBoxBehavior not available');
       return;
     }
 
@@ -765,7 +766,7 @@ export class DesktopAdapter extends BaseAdapter {
   handleDoubleClick(event) {
     event.preventDefault();
 
-    console.log('DesktopAdapter: Double-click detected', {
+    logger.info('Double-click detected', {
       x: event.clientX,
       y: event.clientY,
       target: event.target?.id,

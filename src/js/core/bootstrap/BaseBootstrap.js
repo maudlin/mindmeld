@@ -7,6 +7,7 @@
 
 import { log } from '../../utils/utils.js';
 
+import { logger, errorHandler } from '../../services/logger.js';
 export class BaseBootstrap {
   constructor(name) {
     this.name = name;
@@ -66,7 +67,13 @@ export class BaseBootstrap {
       log(`${this.name}: Initialization completed successfully`);
       return result;
     } catch (error) {
-      console.error(`${this.name}: Initialization failed:`, error);
+      errorHandler.handleError(error, {
+        component: 'BaseBootstrap',
+        operation: 'operation_name', // TODO: specify operation
+        severity: 'MEDIUM',
+        userMessage: 'An error occurred. Please try again.',
+        metadata: {}
+      });
       throw new Error(`${this.name} initialization failed: ${error.message}`);
     }
   }

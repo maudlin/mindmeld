@@ -7,6 +7,7 @@ import {
   setupZoomAndPan,
   setFixedZoom,
 } from '../features/zoom/viewportAdapter.js';
+import { logger, errorHandler } from '../services/logger.js';
 import { notificationManager } from '../services/notificationManager.js';
 export function setupUI(elements) {
   populateCanvasStyleDropdown(elements);

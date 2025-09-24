@@ -1,6 +1,7 @@
 // src/js/interactions/InputController.js
 
 import { connectionManager } from '../features/connection/connectionManager.js';
+import { logger, errorHandler } from '../services/logger.js';
 
 /**
  * Central controller for input adapters

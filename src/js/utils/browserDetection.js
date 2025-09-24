@@ -1,3 +1,4 @@
+import { logger, errorHandler } from '../services/logger.js';
 /**
  * Browser Detection and Compatibility Utilities
  *

@@ -1,3 +1,4 @@
+import { logger, errorHandler } from '../services/logger.js';
 /**
  * Page Interactions - Simple DOM event handling for page UI elements
  *
@@ -43,12 +44,12 @@ export function initializePageInteractions(interactionController) {
     interactionController.getBehavior('serverConnection');
 
   if (!menuBehavior) {
-    console.warn('PageInteractions: MenuBehavior not available');
+    logger.warn('MenuBehavior not available');
     return;
   }
 
   if (!serverConnectionBehavior) {
-    console.warn('PageInteractions: ServerConnectionBehavior not available');
+    logger.warn('ServerConnectionBehavior not available');
     return;
   }
 
@@ -57,7 +58,7 @@ export function initializePageInteractions(interactionController) {
   menuElement = document.getElementById('kebab-context-menu');
 
   if (!menuButton || !menuElement) {
-    console.warn('PageInteractions: Menu elements not found');
+    logger.warn('Menu elements not found');
     return;
   }
 
@@ -290,7 +291,7 @@ function setupServerConnectionModalInteractions() {
   // Verify server connection modal elements exist (they should be in index.html)
   const modal = document.getElementById('server-connection-modal');
   if (!modal) {
-    console.warn('PageInteractions: Server connection modal not found in HTML');
+    logger.warn('Server connection modal not found in HTML');
     return;
   }
 

@@ -1,3 +1,4 @@
+import { logger, errorHandler } from '../services/logger.js';
 // eventBus.js - Simple event bus for decoupling components
 export class EventBus {
   constructor() {

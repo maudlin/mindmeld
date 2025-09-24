@@ -13,6 +13,7 @@ import { updateConnectionInDataStore } from '../../data/dataStore.js';
 import { ColorPickerEvents } from '../../features/colorPicker/colorPickerEvents.js';
 import { NoteColorApplication } from '../../features/note/noteColorApplication.js';
 import { notificationManager } from '../../services/notificationManager.js';
+import { logger, errorHandler } from '../../services/logger.js';
 import { ZoomStateService } from '../../services/zoomStateService.js';
 import { CanvasStateService } from '../../services/canvasStateService.js';
 import { ServerClient } from '../../services/serverClient.js';
@@ -112,10 +113,17 @@ export class ServiceBootstrap extends BaseBootstrap {
       NoteColorApplication.initialize();
       log('ServiceBootstrap: Color services initialized');
     } catch (error) {
-      console.error(
-        'ServiceBootstrap: Color service initialization failed:',
-        error,
-      );
+      errorHandler.handleError(error, {
+        component: 'ServiceBootstrap',
+        operation: 'initializeColorServices',
+        severity: 'MEDIUM',
+        recoverable: true,
+        userMessage: 'Color picker may not work properly, but other features are available.',
+        metadata: {
+          serviceType: 'color',
+          fallbackAvailable: true
+        }
+      });
       // Color services are not critical - continue without them
       log('ServiceBootstrap: Continuing without color services');
     }
@@ -136,10 +144,18 @@ export class ServiceBootstrap extends BaseBootstrap {
 
       log('ServiceBootstrap: State services initialized');
     } catch (error) {
-      console.error(
-        'ServiceBootstrap: State service initialization failed:',
-        error,
-      );
+      errorHandler.handleError(error, {
+        component: 'ServiceBootstrap',
+        operation: 'initializeStateServices',
+        severity: 'MEDIUM',
+        recoverable: true,
+        userMessage: 'Some state management features may not work optimally.',
+        metadata: {
+          serviceType: 'state',
+          services: ['ZoomStateService', 'CanvasStateService'],
+          fallbackAvailable: true
+        }
+      });
       // State services are not critical - continue without them
       log('ServiceBootstrap: Continuing without state services');
     }
@@ -150,10 +166,18 @@ export class ServiceBootstrap extends BaseBootstrap {
       ServerClient.initialize();
       log('ServiceBootstrap: Server services initialized');
     } catch (error) {
-      console.error(
-        'ServiceBootstrap: Server service initialization failed:',
-        error,
-      );
+      errorHandler.handleError(error, {
+        component: 'ServiceBootstrap',
+        operation: 'initializeServerServices',
+        severity: 'MEDIUM',
+        recoverable: true,
+        userMessage: 'Server features may not be available, but local functionality works normally.',
+        metadata: {
+          serviceType: 'server',
+          fallbackAvailable: true,
+          localMode: true
+        }
+      });
       // Server services are not critical - continue without them
       log('ServiceBootstrap: Continuing without server services');
     }
@@ -164,10 +188,18 @@ export class ServiceBootstrap extends BaseBootstrap {
       // Menu services now handled by MenuBehavior through InteractionBootstrap
       log('ServiceBootstrap: Menu services delegated to MenuBehavior');
     } catch (error) {
-      console.error(
-        'ServiceBootstrap: Menu service initialization failed:',
-        error,
-      );
+      errorHandler.handleError(error, {
+        component: 'ServiceBootstrap',
+        operation: 'initializeMenuServices',
+        severity: 'LOW',
+        recoverable: true,
+        userMessage: 'Menu functionality may be limited.',
+        metadata: {
+          serviceType: 'menu',
+          fallbackAvailable: true,
+          handledByBehavior: true
+        }
+      });
       // Menu services are not critical - continue without them
       log('ServiceBootstrap: Continuing without menu services');
     }

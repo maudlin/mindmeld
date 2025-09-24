@@ -16,6 +16,7 @@ import { MenuBehavior } from './behaviors/MenuBehavior.js';
 import { ToolbarBehavior } from './behaviors/ToolbarBehavior.js';
 import { ServerConnectionBehavior } from '../features/serverConnection/serverConnectionBehavior.js';
 import { MapSelectionBehavior } from '../features/mapSelection/mapSelectionBehavior.js';
+import { logger, errorHandler } from '../services/logger.js';
 
 export class InteractionController {
   constructor() {
@@ -29,7 +30,7 @@ export class InteractionController {
     this.activeInteraction = null; // 'drag', 'selection', 'edit', etc.
     this.activeBehavior = null;
 
-    console.log('InteractionController: Created');
+    logger.debug('InteractionController created');
   }
 
   /**
@@ -37,7 +38,7 @@ export class InteractionController {
    */
   async initialize(eventBusInstance) {
     if (this.isInitialized) {
-      console.warn('InteractionController: Already initialized');
+      logger.warn('Already initialized');
       return;
     }
 

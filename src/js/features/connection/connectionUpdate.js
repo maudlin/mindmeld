@@ -1,3 +1,4 @@
+import { logger, errorHandler } from '../../services/logger.js';
 // src/js/features/connection/connectionUpdate.js
 
 export class ConnectionUpdate {

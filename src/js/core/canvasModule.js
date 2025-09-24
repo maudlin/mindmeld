@@ -1,3 +1,4 @@
+import { logger, errorHandler } from '../services/logger.js';
 // canvasModule.js
 export class CanvasModule {
   constructor(name, width, height, cssPath) {

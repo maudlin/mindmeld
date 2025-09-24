@@ -2,6 +2,7 @@
 
 import { connectionManager } from '../../features/connection/connectionManager.js';
 import { log } from '../../utils/utils.js';
+import { logger, errorHandler } from '../../services/logger.js';
 
 export class ConnectionBehavior {
   constructor(eventBus) {
@@ -313,7 +314,7 @@ export class ConnectionBehavior {
    */
   handleLineSelection(event, inputType) {
     if (!connectionManager) {
-      console.warn('ConnectionBehavior: connectionManager not available');
+      logger.warn('connectionManager not available');
       return;
     }
 
@@ -355,7 +356,7 @@ export class ConnectionBehavior {
    */
   handleConnectionDeletion() {
     if (!connectionManager) {
-      console.warn('ConnectionBehavior: connectionManager not available');
+      logger.warn('connectionManager not available');
       return;
     }
 

@@ -5,6 +5,7 @@ import { DataProvider, ORIGIN } from './DataProvider.js';
 import * as dataStore from '../dataStore.js';
 import * as storageManager from '../storageManager.js';
 import { appState } from '../observableState.js';
+import { logger, errorHandler } from '../../services/logger.js';
 
 /**
  * LocalJSONProvider implements DataProvider interface by wrapping existing
@@ -157,7 +158,7 @@ export class LocalJSONProvider extends DataProvider {
     const origin = opts.origin || ORIGIN.USER;
 
     if (!note.id) {
-      console.warn('LocalJSONProvider: Note missing required id field');
+      logger.warn('Note missing required id field');
       return;
     }
 

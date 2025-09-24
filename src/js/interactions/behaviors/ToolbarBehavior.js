@@ -9,6 +9,7 @@
 import { ColorService } from '../../services/colorService.js';
 import { noteManager } from '../../services/noteManager.js';
 import { log } from '../../utils/utils.js';
+import { logger, errorHandler } from '../../services/logger.js';
 
 export class ToolbarBehavior {
   constructor(eventBus) {
@@ -17,7 +18,7 @@ export class ToolbarBehavior {
     this.name = 'ToolbarBehavior';
     this.currentContext = { type: 'canvas', data: null };
 
-    console.log('ToolbarBehavior: Created');
+    logger.debug('ToolbarBehavior created');
   }
 
   /**
@@ -65,7 +66,7 @@ export class ToolbarBehavior {
     this.updateContext({ type: 'canvas', data: null });
 
     this.isInitialized = true;
-    console.log('ToolbarBehavior: Initialized');
+    logger.debug('ToolbarBehavior initialized');
   }
 
   /**
@@ -132,7 +133,7 @@ export class ToolbarBehavior {
     } else if (context.type === 'connectorActive' && context.data) {
       // Delete connector
       const { connectionId, startId, endId } = context.data;
-      console.log('🗑️ ToolbarBehavior: Deleting connector:', {
+      logger.info('Deleting connector:', {
         startId,
         endId,
         connectionId,

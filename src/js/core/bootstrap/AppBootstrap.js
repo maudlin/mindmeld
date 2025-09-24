@@ -10,6 +10,7 @@ import { ServiceBootstrap } from './ServiceBootstrap.js';
 import { UIBootstrap } from './UIBootstrap.js';
 import { InteractionBootstrap } from './InteractionBootstrap.js';
 import { log } from '../../utils/utils.js';
+import { logger, errorHandler } from '../../services/logger.js';
 
 export class AppBootstrap {
   constructor() {
@@ -66,7 +67,16 @@ export class AppBootstrap {
         interactions: interactionResult,
       };
     } catch (error) {
-      console.error('AppBootstrap: Critical initialization failure:', error);
+      errorHandler.handleError(error, {
+        component: 'AppBootstrap',
+        operation: 'initialize',
+        severity: 'CRITICAL',
+        userMessage: 'Application failed to start. Please refresh the page.',
+        metadata: {
+          initializationStage: 'bootstrap_orchestration',
+          timestamp: Date.now()
+        }
+      });
       await this.handleInitializationFailure(error);
       throw error;
     }
@@ -77,16 +87,31 @@ export class AppBootstrap {
 
     try {
       // Try to at least get basic functionality working
-      // This could show an error message to the user
-      console.error(
-        'AppBootstrap: Application failed to initialize properly:',
-        error.message,
-      );
+      errorHandler.handleError(error, {
+        component: 'AppBootstrap',
+        operation: 'recovery',
+        severity: 'HIGH',
+        userMessage: 'Attempting to recover from initialization failure...',
+        metadata: {
+          originalError: error.message,
+          recoveryAttempt: true
+        }
+      });
 
       // In a real implementation, we might show a user-friendly error message
       // or attempt to initialize in a minimal mode
     } catch (recoveryError) {
-      console.error('AppBootstrap: Even recovery failed:', recoveryError);
+      errorHandler.handleError(recoveryError, {
+        component: 'AppBootstrap',
+        operation: 'recovery',
+        severity: 'CRITICAL',
+        userMessage: 'Recovery failed. Please refresh the page and contact support if the issue persists.',
+        metadata: {
+          originalError: error.message,
+          recoveryError: recoveryError.message,
+          totalFailure: true
+        }
+      });
     }
   }
 
@@ -121,10 +146,10 @@ export class AppBootstrap {
     }
 
     if (cleanupErrors.length > 0) {
-      console.warn(
-        'AppBootstrap: Some cleanup operations failed:',
-        cleanupErrors,
-      );
+      logger.warn('AppBootstrap: Some cleanup operations failed', {
+        errors: cleanupErrors,
+        errorCount: cleanupErrors.length
+      });
     }
 
     this.initialized = false;

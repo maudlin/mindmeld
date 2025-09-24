@@ -11,6 +11,7 @@
 import { eventBus } from '../../core/eventBus.js';
 import { ServerConnectionService } from '../../services/serverConnectionService.js';
 import { notificationManager } from '../../services/notificationManager.js';
+import { logger, errorHandler } from '../../services/logger.js';
 
 export class ServerConnectionBehavior {
   constructor(eventBusInstance = eventBus) {
@@ -32,7 +33,7 @@ export class ServerConnectionBehavior {
     this.connectButton = null;
     this.statusElement = null;
 
-    console.log('ServerConnectionBehavior: Created');
+    logger.debug('ServerConnectionBehavior created');
   }
 
   /**
@@ -50,7 +51,7 @@ export class ServerConnectionBehavior {
     this.cacheElementReferences();
 
     this.isInitialized = true;
-    console.log('ServerConnectionBehavior: Initialized');
+    logger.debug('ServerConnectionBehavior initialized');
   }
 
   /**
@@ -117,7 +118,7 @@ export class ServerConnectionBehavior {
     // Emit event for other systems
     this.eventBus.emit('modal.opened', { type: 'serverConnection' });
 
-    console.log('ServerConnectionBehavior: Modal shown', {
+    logger.info('Modal shown', {
       currentUri,
       isConnected: data.isConnected,
     });
@@ -434,7 +435,7 @@ export class ServerConnectionBehavior {
         this.showStatusMessage('Failed to save server configuration.', 'error');
       }
     } catch (error) {
-      console.error('ServerConnectionBehavior: Connect error:', error);
+      logger.error('Connect error:', { error: error });
       ServerConnectionService.setConnectionStatus('error');
       this.showStatusMessage(
         'Failed to connect to server. Please check the URL and try again.',
@@ -446,7 +447,7 @@ export class ServerConnectionBehavior {
       this.updateConnectionUI();
     }
 
-    console.log('ServerConnectionBehavior: Connection attempt completed', {
+    logger.info('Connection attempt completed', {
       uri,
     });
   }
@@ -476,7 +477,7 @@ export class ServerConnectionBehavior {
         notificationManager.error('Failed to disconnect from server');
       }
     } catch (error) {
-      console.error('ServerConnectionBehavior: Disconnect error:', error);
+      logger.error('Disconnect error:', { error: error });
       notificationManager.error('Failed to disconnect from server');
     } finally {
       this.isConnecting = false;

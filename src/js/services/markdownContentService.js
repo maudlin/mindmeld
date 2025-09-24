@@ -13,6 +13,7 @@
 
 import { defangToPlainText } from '../features/markdown/defangPipeline.js';
 import { renderMarkdown } from '../features/markdown/markdownRenderer.js';
+import { logger, errorHandler } from './logger.js';
 
 /**
  * Safe content extraction that never corrupts markdown structure
@@ -21,7 +22,7 @@ import { renderMarkdown } from '../features/markdown/markdownRenderer.js';
  */
 export function extractMarkdownForStorage(noteContentElement) {
   if (!noteContentElement) {
-    console.warn('extractMarkdownForStorage: No element provided');
+    logger.warn('No element provided');
     return '';
   }
 

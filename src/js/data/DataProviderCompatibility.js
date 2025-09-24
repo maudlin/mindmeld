@@ -6,6 +6,7 @@ import { eventBus } from '../core/eventBus.js';
 import { ORIGIN } from './providers/DataProvider.js';
 import { getProviderType, isDebugEnabled } from '../core/featureFlags.js';
 import { log } from '../utils/utils.js';
+import { logger, errorHandler } from '../services/logger.js';
 
 /**
  * DataProviderCompatibility - Manages the gradual migration from legacy dataStore
@@ -46,7 +47,7 @@ export class DataProviderCompatibility {
         );
       }
     } catch (error) {
-      console.error('DataProviderCompatibility: Migration failed:', error);
+      logger.error('Migration failed:', { error: error });
       // Attempt rollback on failure
       this.revertToLegacy();
       throw error;
@@ -75,7 +76,7 @@ export class DataProviderCompatibility {
         'DataProviderCompatibility: Successfully reverted to legacy handlers',
       );
     } catch (error) {
-      console.error('DataProviderCompatibility: Rollback failed:', error);
+      logger.error('Rollback failed:', { error: error });
       throw error;
     }
   }

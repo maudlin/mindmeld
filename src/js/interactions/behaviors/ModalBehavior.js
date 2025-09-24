@@ -1,3 +1,4 @@
+import { logger, errorHandler } from '../../services/logger.js';
 /**
  * ModalBehavior - Handles modal dialog interaction logic
  *
@@ -19,7 +20,7 @@ export class ModalBehavior {
     // Modal state
     this.modals = new Map(); // Track multiple modals by ID
 
-    console.log('ModalBehavior: Created');
+    logger.debug('ModalBehavior created');
   }
 
   /**
@@ -32,7 +33,7 @@ export class ModalBehavior {
 
     this.setupEventListeners();
     this.isInitialized = true;
-    console.log('ModalBehavior: Initialized');
+    logger.debug('ModalBehavior initialized');
   }
 
   /**
@@ -64,7 +65,7 @@ export class ModalBehavior {
 
     this.modals.set(modalId, modalConfig);
 
-    console.log('ModalBehavior: Registered modal', {
+    logger.info('Registered modal', {
       modalId,
       config: modalConfig,
     });
@@ -86,7 +87,7 @@ export class ModalBehavior {
       return;
     }
 
-    console.log('ModalBehavior: Modal trigger interaction', {
+    logger.info('Modal trigger interaction', {
       modalId,
       inputType,
     });
@@ -108,7 +109,7 @@ export class ModalBehavior {
       return;
     }
 
-    console.log('ModalBehavior: Modal close interaction', {
+    logger.info('Modal close interaction', {
       modalId,
       closeType,
       inputType,
@@ -131,7 +132,7 @@ export class ModalBehavior {
       return;
     }
 
-    console.log('ModalBehavior: Opening modal', { modalId, inputType });
+    logger.info('Opening modal', { modalId, inputType });
 
     // Update modal state
     modal.isOpen = true;
@@ -169,7 +170,7 @@ export class ModalBehavior {
       return;
     }
 
-    console.log('ModalBehavior: Closing modal', {
+    logger.info('Closing modal', {
       modalId,
       inputType,
       closeType,

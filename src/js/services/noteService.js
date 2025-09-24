@@ -1,5 +1,6 @@
 // noteService.js - Service layer for note operations
 import { createNote } from '../factories/noteFactory.js';
+import { logger, errorHandler } from './logger.js';
 // MM-171: Legacy event system disabled - using adapter architecture
 // import { addNoteEventListeners } from '../features/note/noteEvents.js';
 import { displayAsViewMode } from '../features/note/editViewMode.js';

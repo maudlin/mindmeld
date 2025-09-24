@@ -1,5 +1,6 @@
 // src/js/features/connection/connectionCreation.js
 import { log } from '../../utils/utils.js';
+import { logger, errorHandler } from '../../services/logger.js';
 
 export class ConnectionCreation {
   constructor(connectionManager) {

@@ -9,6 +9,7 @@ import { getZoomLevel } from '../../features/zoom/viewportAdapter.js';
 import { noteManager } from '../../services/noteManager.js';
 import { connectionManager } from '../../features/connection/connectionManager.js';
 import { CoordinateTransform } from '../../core/coordinates/CoordinateTransform.js';
+import { logger, errorHandler } from '../../services/logger.js';
 
 export class DragBehavior {
   constructor(eventBus, coordinateTransform = null) {
@@ -28,7 +29,7 @@ export class DragBehavior {
     this.shiftY = 0;
     this.selectedNotesOffsets = [];
 
-    console.log('DragBehavior: Created');
+    logger.debug('DragBehavior created');
   }
 
   /**
@@ -60,7 +61,7 @@ export class DragBehavior {
     // Each adapter will call our methods directly based on input detection
 
     this.isInitialized = true;
-    console.log('DragBehavior: Initialized');
+    logger.debug('DragBehavior initialized');
   }
 
   /**
@@ -286,13 +287,13 @@ export class DragBehavior {
         };
       });
 
-      console.log('DragBehavior: Calculated drag offsets', {
+      logger.info('Calculated drag offsets', {
         shiftX: this.shiftX,
         shiftY: this.shiftY,
         selectedNotesCount: this.selectedNotesOffsets.length,
       });
     } catch (error) {
-      console.error('DragBehavior: Failed to calculate drag offsets:', error);
+      logger.error('Failed to calculate drag offsets:', { error: error });
       // Graceful fallback
       this.shiftX = 0;
       this.shiftY = 0;
@@ -338,7 +339,7 @@ export class DragBehavior {
         connectionManager.updateConnections(note);
       });
     } catch (error) {
-      console.error('DragBehavior: Failed to update note positions:', error);
+      logger.error('Failed to update note positions:', { error: error });
       // Continue with existing positions on coordinate errors
     }
   }

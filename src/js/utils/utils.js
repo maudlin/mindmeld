@@ -3,6 +3,7 @@ import {
   NOTE_CONTENT_LIMIT,
   LOGGING as defaultLogging,
 } from '../core/constants.js';
+import { logger, errorHandler } from '../services/logger.js';
 
 /**
  * Debounces a function call.

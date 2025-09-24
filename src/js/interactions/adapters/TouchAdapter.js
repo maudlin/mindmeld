@@ -4,6 +4,7 @@ import { BaseAdapter } from './BaseAdapter.js';
 import { noteManager } from '../../services/noteManager.js';
 import { CoordinateTransform } from '../../core/coordinates/CoordinateTransform.js';
 import { getZoomLevel } from '../../features/zoom/viewportAdapter.js';
+import { logger, errorHandler } from '../../services/logger.js';
 
 /**
  * Touch input adapter for mobile and tablet interactions
@@ -66,7 +67,7 @@ export class TouchAdapter extends BaseAdapter {
 
       // Get behavior references from interaction controller
       if (this.interactionController) {
-        console.log('TouchAdapter: InteractionController state:', {
+        logger.info('InteractionController state:', {
           isInitialized: this.interactionController.isInitialized,
           behaviorCount: this.interactionController.behaviors?.size,
           availableBehaviors: Array.from(
@@ -87,7 +88,7 @@ export class TouchAdapter extends BaseAdapter {
         this.toolbarBehavior =
           this.interactionController.getBehavior('toolbar');
 
-        console.log('TouchAdapter: Behavior references initialized', {
+        logger.info('Behavior references initialized', {
           hasNoteBehavior: !!this.noteBehavior,
           hasDragBehavior: !!this.dragBehavior,
           hasSelectionBoxBehavior: !!this.selectionBoxBehavior,
@@ -98,7 +99,7 @@ export class TouchAdapter extends BaseAdapter {
           hasToolbarBehavior: !!this.toolbarBehavior,
         });
       } else {
-        console.warn('TouchAdapter: InteractionController not available');
+        logger.warn('InteractionController not available');
       }
 
       await this.initializeEventListeners();
@@ -439,7 +440,7 @@ export class TouchAdapter extends BaseAdapter {
    * Handle double-tap detection (mirrors desktop double-click)
    */
   handleDoubleTap(touch) {
-    console.log('TouchAdapter: Native double-tap detected', {
+    logger.info('Native double-tap detected', {
       x: touch.clientX,
       y: touch.clientY,
       target: touch.target?.tagName,
@@ -591,7 +592,7 @@ export class TouchAdapter extends BaseAdapter {
     const target = this.expandTouchTarget(touch);
     this.gestureStartTarget = target;
 
-    console.log('TouchAdapter: Drag start detected', {
+    logger.info('Drag start detected', {
       target: target.tagName,
       x: touch.clientX,
       y: touch.clientY,
@@ -667,13 +668,13 @@ export class TouchAdapter extends BaseAdapter {
     );
 
     if (!this.connectionBehavior) {
-      console.warn('TouchAdapter: ConnectionBehavior not available');
+      logger.warn('ConnectionBehavior not available');
       return;
     }
 
     const sourceNote = target.closest('.note');
     if (!sourceNote) {
-      console.warn('TouchAdapter: No source note found for ghost connector');
+      logger.warn('No source note found for ghost connector');
       return;
     }
 
@@ -737,7 +738,7 @@ export class TouchAdapter extends BaseAdapter {
     }
 
     if (!this.noteBehavior) {
-      console.warn('TouchAdapter: NoteBehavior not available');
+      logger.warn('NoteBehavior not available');
       return;
     }
 
@@ -753,7 +754,7 @@ export class TouchAdapter extends BaseAdapter {
    */
   handleNoteDragStart(noteElement, touch) {
     if (!this.dragBehavior) {
-      console.warn('TouchAdapter: DragBehavior not available');
+      logger.warn('DragBehavior not available');
       return;
     }
 
@@ -768,7 +769,7 @@ export class TouchAdapter extends BaseAdapter {
   handleLongPress(touch) {
     if (!touch) return;
 
-    console.log('TouchAdapter: Long press detected', {
+    logger.info('Long press detected', {
       target: touch.target?.tagName,
       x: touch.clientX,
       y: touch.clientY,
@@ -805,7 +806,7 @@ export class TouchAdapter extends BaseAdapter {
    */
   handleSelectionBoxStart(touch) {
     if (!this.selectionBoxBehavior) {
-      console.warn('TouchAdapter: SelectionBoxBehavior not available');
+      logger.warn('SelectionBoxBehavior not available');
       return;
     }
 
@@ -1002,7 +1003,7 @@ export class TouchAdapter extends BaseAdapter {
     console.log(`TouchAdapter: Handling toolbar button action: ${action}`);
 
     if (!this.toolbarBehavior) {
-      console.warn('TouchAdapter: ToolbarBehavior not available');
+      logger.warn('ToolbarBehavior not available');
       return;
     }
 

@@ -2,6 +2,7 @@
 import { ColorService } from '../../services/colorService.js';
 import { eventBus } from '../../core/eventBus.js';
 import { log } from '../../utils/utils.js';
+import { logger, errorHandler } from '../../services/logger.js';
 
 /**
  * Note Color Application System

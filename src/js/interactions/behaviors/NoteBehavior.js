@@ -13,6 +13,7 @@ import { getCoordinateTransform } from '../../core/coordinates/coordinateService
 import { connectionManager } from '../../features/connection/connectionManager.js';
 import { DataProviderService } from '../../services/DataProviderService.js';
 import config from '../../core/config.js';
+import { logger, errorHandler } from '../../services/logger.js';
 
 export class NoteBehavior {
   constructor(eventBus) {
@@ -20,7 +21,7 @@ export class NoteBehavior {
     this.isInitialized = false;
     this.name = 'NoteBehavior';
 
-    console.log('NoteBehavior: Created');
+    logger.debug('NoteBehavior created', { timestamp: Date.now() });
   }
 
   /**
@@ -36,7 +37,7 @@ export class NoteBehavior {
     // Each adapter will call our methods directly based on input detection
 
     this.isInitialized = true;
-    console.log('NoteBehavior: Initialized');
+    logger.debug('NoteBehavior initialized');
   }
 
   /**
@@ -81,10 +82,11 @@ export class NoteBehavior {
       this.requestEditMode(noteElement, inputType);
     }
 
-    console.log(`NoteBehavior: Note click handled from ${inputType}`, {
+    logger.info('Note click handled', {
       noteId: noteElement.id,
+      inputType,
       clickTarget: clickedElement.tagName,
-      isStyledContent: clickedElement !== noteContent,
+      isStyledContent: clickedElement !== noteContent
     });
   }
 
@@ -130,7 +132,7 @@ export class NoteBehavior {
       behavior: this,
     });
 
-    console.log('NoteBehavior: Note selection handled', {
+    logger.info('Note selection handled', {
       noteId: noteElement.id,
       isMultiSelect,
       hasSelectedClass: noteElement.classList.contains('selected'),
@@ -143,11 +145,11 @@ export class NoteBehavior {
    */
   handleNoteDoubleClick(noteElement, event, inputType) {
     if (!noteElement) {
-      console.warn('NoteBehavior: No note element provided for double-click');
+      logger.warn('No note element provided for double-click', { inputType });
       return;
     }
 
-    console.log('NoteBehavior: Note double-click detected', {
+    logger.info('Note double-click detected', {
       noteId: noteElement.id,
       inputType,
       isSelected: noteElement.classList.contains('selected'),
@@ -175,7 +177,7 @@ export class NoteBehavior {
    */
   createNoteAtPosition(canvas, event) {
     if (!canvas || !event) {
-      console.warn('NoteBehavior: Invalid canvas or event for note creation');
+      logger.warn('Invalid canvas or event for note creation');
       return null;
     }
 
@@ -194,7 +196,7 @@ export class NoteBehavior {
         y = transformed.y;
       } catch {
         // Fall back to raw coordinates for testing
-        console.warn('NoteBehavior: Using raw coordinates for testing');
+        logger.warn('Using raw coordinates for testing');
       }
 
       // Offset the note creation position to centre the note
@@ -204,7 +206,7 @@ export class NoteBehavior {
         canvas,
       );
     } catch (error) {
-      console.error('NoteBehavior: Error creating note at position:', error);
+      logger.error('Error creating note at position:', { error: error });
       return null;
     }
   }
@@ -215,7 +217,7 @@ export class NoteBehavior {
    */
   createNote(x, y, canvas) {
     if (!canvas) {
-      console.warn('NoteBehavior: No canvas provided for note creation');
+      logger.warn('No canvas provided for note creation');
       return null;
     }
 
@@ -261,7 +263,7 @@ export class NoteBehavior {
       console.log('NoteBehavior: Created note with ID:', noteId);
       return note;
     } catch (error) {
-      console.error('NoteBehavior: Error creating note:', error);
+      logger.error('Error creating note:', { error: error });
       return null;
     }
   }
@@ -319,7 +321,7 @@ export class NoteBehavior {
       console.log('NoteBehavior: Created note from data with ID:', noteId);
       return note;
     } catch (error) {
-      console.error('NoteBehavior: Error creating note from data:', error);
+      logger.error('Error creating note from data:', { error: error });
       return null;
     }
   }
@@ -333,7 +335,7 @@ export class NoteBehavior {
       NoteIdService.ensureUniqueIds(existingNotes);
       console.log('NoteBehavior: Updated ID counter to prevent collisions');
     } catch (error) {
-      console.error('NoteBehavior: Error ensuring unique IDs:', error);
+      logger.error('Error ensuring unique IDs:', { error: error });
     }
   }
 
@@ -356,7 +358,7 @@ export class NoteBehavior {
    */
   deleteNoteWithConnections(note, canvas) {
     if (!note) {
-      console.warn('NoteBehavior: No note provided for deletion');
+      logger.warn('No note provided for deletion');
       return;
     }
 

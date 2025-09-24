@@ -9,6 +9,7 @@
 import config from '../../core/config.js';
 import { getScaleFromZoomLevel } from '../../core/coordinates/CoordinateConfig.js';
 import { getCoordinateTransform } from '../../core/coordinates/coordinateService.js';
+import { logger, errorHandler } from '../../services/logger.js';
 
 export class ViewportBehavior {
   constructor(eventBus) {
@@ -24,7 +25,7 @@ export class ViewportBehavior {
     // Current zoom state
     this.zoomLevel = config.zoomLevels.default;
 
-    console.log('ViewportBehavior: Created');
+    logger.debug('ViewportBehavior created');
   }
 
   /**
@@ -56,7 +57,7 @@ export class ViewportBehavior {
     this.updateZoomDisplay(); // Initialize zoom display visibility
 
     this.isInitialized = true;
-    console.log('ViewportBehavior: Initialized', {
+    logger.info('Initialized', {
       hasCanvas: !!this.canvas,
       hasZoomDisplay: !!this.zoomDisplay,
       hasCoordinateTransform: !!this.coordinateTransform,
@@ -70,11 +71,11 @@ export class ViewportBehavior {
    */
   handleWheelZoom(direction, x, y, inputType) {
     if (!this.canvas) {
-      console.warn('ViewportBehavior: Canvas not available for wheel zoom');
+      logger.warn('Canvas not available for wheel zoom');
       return;
     }
 
-    console.log('ViewportBehavior: Wheel zoom detected', {
+    logger.info('Wheel zoom detected', {
       direction,
       x,
       y,
@@ -95,7 +96,7 @@ export class ViewportBehavior {
    */
   handlePinchZoom(scaleDelta, centerX, centerY, inputType) {
     if (!this.canvas) {
-      console.warn('ViewportBehavior: Canvas not available for pinch zoom');
+      logger.warn('Canvas not available for pinch zoom');
       return;
     }
 
@@ -122,11 +123,11 @@ export class ViewportBehavior {
    */
   handlePan(deltaX, deltaY, inputType) {
     if (!this.canvas) {
-      console.warn('ViewportBehavior: Canvas not available for pan');
+      logger.warn('Canvas not available for pan');
       return;
     }
 
-    console.log('ViewportBehavior: Pan detected', {
+    logger.info('Pan detected', {
       deltaX,
       deltaY,
       inputType,
@@ -147,11 +148,11 @@ export class ViewportBehavior {
    */
   handleDesktopPan(deltaX, deltaY) {
     if (!this.canvas) {
-      console.warn('ViewportBehavior: Canvas not available for desktop pan');
+      logger.warn('Canvas not available for desktop pan');
       return;
     }
 
-    console.log('ViewportBehavior: Desktop pan detected', {
+    logger.info('Desktop pan detected', {
       deltaX,
       deltaY,
     });
@@ -184,7 +185,7 @@ export class ViewportBehavior {
       return;
     }
 
-    console.log('ViewportBehavior: Simultaneous pan/zoom detected', {
+    logger.info('Simultaneous pan/zoom detected', {
       panDeltaX,
       panDeltaY,
       scaleDelta,
@@ -295,7 +296,7 @@ export class ViewportBehavior {
     // Update zoom display
     this.updateZoomDisplay();
 
-    console.log('ViewportBehavior: CSS scale applied with limits', {
+    logger.info('CSS scale applied with limits', {
       requestedScale: scale,
       clampedScale: clampedScale,
       zoomLevel: clampedZoomLevel,
@@ -327,7 +328,7 @@ export class ViewportBehavior {
     this.setZoomLevel(level);
     const newZoom = this.getZoomLevel();
 
-    console.log('ViewportBehavior: Setting fixed zoom:', {
+    logger.info('Setting fixed zoom:', {
       level,
       centerX,
       centerY,
@@ -429,7 +430,7 @@ export class ViewportBehavior {
   positionCanvas() {
     const centerX = this.canvas.clientWidth / 2;
     const centerY = this.canvas.clientHeight / 2;
-    console.log('ViewportBehavior: Positioning canvas at center', {
+    logger.info('Positioning canvas at center', {
       centerX,
       centerY,
       clientWidth: this.canvas.clientWidth,
