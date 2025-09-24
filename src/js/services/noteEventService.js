@@ -7,18 +7,14 @@ import { eventBus } from '../core/eventBus.js';
 
 /**
  * Get NoteBehavior instance from InteractionController
- * Unified note creation through behavior system
+ * Proper dependency injection through global debug interface
  */
 function getNoteBehavior() {
-  try {
-    if (
-      typeof window !== 'undefined' &&
-      window.mindMeldDebug?.interactionController
-    ) {
-      return window.mindMeldDebug.interactionController.getBehavior('note');
-    }
-  } catch (error) {
-    logger.warn('noteEventService: Failed to get NoteBehavior:', error);
+  if (
+    typeof window !== 'undefined' &&
+    window.mindMeldDebug?.interactionController
+  ) {
+    return window.mindMeldDebug.interactionController.getBehavior('note');
   }
   return null;
 }
