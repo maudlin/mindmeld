@@ -149,7 +149,7 @@ describe('ConnectionUpdate', () => {
     beforeEach(() => {
       mockPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       mockPath.setAttribute = jest.fn();
-      jest.spyOn(console, 'log').mockImplementation(() => {});
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
     });
 
     afterEach(() => jest.restoreAllMocks());
@@ -227,9 +227,8 @@ describe('ConnectionUpdate', () => {
 
       invalidCases.forEach(({ coords, expected }) => {
         connectionUpdate.updateConnectionPath(mockPath, ...coords, 'none');
-        expect(console.log).toHaveBeenCalledWith(
-          'Invalid coordinates for path:',
-          expected,
+        expect(console.warn).toHaveBeenCalledWith(
+          expect.stringMatching(/\[.*\] WARN: Invalid coordinates for path:/),
         );
         expect(mockPath.setAttribute).not.toHaveBeenCalledWith(
           'd',

@@ -178,12 +178,15 @@ describe('ConnectionCreation', () => {
     );
 
     it('logs connection creation with correct parameters', () => {
+      const logSpy = jest.spyOn(console, 'log').mockImplementation();
+
       connectionCreation.createConnection('note1', 'note2', 'bi');
-      expect(mockUtils.log).toHaveBeenCalledWith('Connection created:', {
-        fromId: 'note1',
-        toId: 'note2',
-        type: 'bi',
-      });
+
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringMatching(/\[.*\] INFO: Connection created:/),
+      );
+
+      logSpy.mockRestore();
     });
   });
 

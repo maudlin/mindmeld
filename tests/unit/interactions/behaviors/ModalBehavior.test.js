@@ -204,7 +204,7 @@ describe('ModalBehavior', () => {
 
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringMatching(
-          /\[.*\] WARN: ModalBehavior: Unknown modal ID.*unknown-modal/i,
+          /\[.*\] WARN: ModalBehavior: Unknown modal ID[\s\S]*unknown-modal/i,
         ),
       );
 

@@ -141,9 +141,18 @@ describe('ConnectionUtils', () => {
         x2: 0,
         y2: 0,
       });
-      expect(mockUtils.log).toHaveBeenCalledWith(
-        'Invalid notes provided to getClosestPoints',
+      const logSpy = jest.spyOn(console, 'log').mockImplementation();
+
+      // Call the function again to trigger logging
+      connectionUtils.getClosestPoints([], {});
+
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /\[.*\] INFO: Invalid notes provided to getClosestPoints/,
+        ),
       );
+
+      logSpy.mockRestore();
 
       // Zero dimensions - coordinates get scaled by zoom/canvas offset
       connectionUtils.currentZoomLevel = 5; // Reset zoom
