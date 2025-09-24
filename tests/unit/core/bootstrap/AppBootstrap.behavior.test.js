@@ -109,8 +109,7 @@ describe('Application Bootstrap Behavior', () => {
       await expect(appBootstrap.initialize()).rejects.toThrow('Service failed');
 
       expect(mockConsole.error).toHaveBeenCalledWith(
-        'AppBootstrap: Critical initialization failure:',
-        expect.any(Error),
+        expect.stringMatching(/\[.*\] ERROR: AppBootstrap error in initialize/),
       );
     });
 

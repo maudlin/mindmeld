@@ -351,8 +351,9 @@ describe('Data Corruption Recovery Tests', () => {
 
       // Should log meaningful error information
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringMatching(/Failed to load from localStorage/i),
-        expect.any(String),
+        expect.stringMatching(
+          /\[.*\] WARN: Failed to load from localStorage:.*Storage error/i,
+        ),
       );
 
       consoleSpy.mockRestore();
