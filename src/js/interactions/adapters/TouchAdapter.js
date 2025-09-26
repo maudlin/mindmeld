@@ -222,6 +222,11 @@ export class TouchAdapter extends BaseAdapter {
           ) {
             logger.info(
               `TouchAdapter: Toolbar button touch detected: ${touch.target.dataset.toolbarAction}`,
+              {
+                hasToolbarBehavior: !!this.toolbarBehavior,
+                buttonElement: touch.target,
+                disabled: touch.target.disabled,
+              },
             );
             this.handleToolbarButtonInteraction(
               event,
@@ -565,11 +570,12 @@ export class TouchAdapter extends BaseAdapter {
         return;
       }
 
-      // Single tap on canvas - clear note selections and exit edit mode
+      // Single tap on canvas - clear note selections, connector selections, and exit edit mode
       logger.info(
         'TouchAdapter: Canvas tap detected - clearing selections and exiting edit mode',
       );
       noteManager.clearSelections();
+      this.clearConnectorSelections();
       this.emit('canvas.clicked');
       return;
     }
@@ -695,16 +701,27 @@ export class TouchAdapter extends BaseAdapter {
    * Handle SVG tap for connection line selection
    */
   handleSvgTap(touch, target) {
+    logger.info(
+      'TouchAdapter: SVG tap detected, checking for connector selection',
+      { targetTag: target.tagName, targetClass: target.className },
+    );
+
+    // Check if this is a connector hotspot (circle) tap
+    if (
+      target.tagName === 'circle' &&
+      target.classList.contains('connector-hotspot')
+    ) {
+      this.handleConnectorSelection(touch, target);
+      return;
+    }
+
+    // Fallback to basic line selection for other SVG elements
     if (!this.connectionBehavior) {
       logger.warn(
         'TouchAdapter: ConnectionBehavior not available for line selection',
       );
       return;
     }
-
-    logger.info(
-      'TouchAdapter: SVG tap detected, delegating to ConnectionBehavior',
-    );
 
     // Convert touch to event-like object for ConnectionBehavior
     const syntheticEvent = {
@@ -716,6 +733,91 @@ export class TouchAdapter extends BaseAdapter {
     };
 
     this.connectionBehavior.handleLineSelection(syntheticEvent, 'touch');
+  }
+
+  /**
+   * Handle connector hotspot selection - equivalent to DesktopAdapter.handleConnectorSelection
+   */
+  handleConnectorSelection(touch, hotspotElement) {
+    logger.info('🔗 TouchAdapter: Handling connector selection');
+
+    // Get the connector group element (parent of the hotspot circle)
+    const connectorGroup = hotspotElement.closest('g[data-start][data-end]');
+    if (!connectorGroup) {
+      logger.warn('Could not find connector group');
+      return;
+    }
+
+    const startId = connectorGroup.dataset.start;
+    const endId = connectorGroup.dataset.end;
+    const connectionType = connectorGroup.dataset.type;
+
+    logger.info('Connector selected:', {
+      startId,
+      endId,
+      connectionType,
+    });
+
+    // Clear previous connector selections
+    this.clearConnectorSelections();
+
+    // Apply visual selection state
+    this.applyConnectorSelection(connectorGroup);
+
+    // Emit selection event
+    if (this.eventBus) {
+      this.eventBus.emit('connector.selected', {
+        startId,
+        endId,
+        connectionType,
+        connectorGroup,
+        inputType: 'touch',
+      });
+    }
+  }
+
+  /**
+   * Clear all connector selections
+   */
+  clearConnectorSelections() {
+    const hadSelection =
+      document.querySelector('.connector-hotspot.selected') !== null;
+
+    // Remove selected class from all connector hotspots
+    document
+      .querySelectorAll('.connector-hotspot.selected')
+      .forEach((hotspot) => {
+        hotspot.classList.remove('selected');
+      });
+
+    // Remove selected class from all connection paths
+    document.querySelectorAll('path.selected').forEach((path) => {
+      path.classList.remove('selected');
+    });
+
+    // Emit deselection event if there was a selection
+    if (hadSelection && this.eventBus) {
+      this.eventBus.emit('connector.deselected', { inputType: 'touch' });
+    }
+  }
+
+  /**
+   * Apply visual selection state to a connector
+   */
+  applyConnectorSelection(connectorGroup) {
+    // Add selected class to the connector hotspot
+    const hotspot = connectorGroup.querySelector('.connector-hotspot');
+    if (hotspot) {
+      hotspot.classList.add('selected');
+    }
+
+    // Add selected class to the connection path
+    const path = connectorGroup.querySelector('path');
+    if (path) {
+      path.classList.add('selected');
+    }
+
+    logger.info('TouchAdapter: Applied connector selection visual state');
   }
 
   /**
@@ -997,10 +1099,16 @@ export class TouchAdapter extends BaseAdapter {
    * Handle toolbar button interactions - delegate to ToolbarBehavior
    */
   handleToolbarButtonInteraction(event, action) {
-    logger.info(`TouchAdapter: Handling toolbar button action: ${action}`);
+    logger.info(`TouchAdapter: Handling toolbar button action: ${action}`, {
+      hasToolbarBehavior: !!this.toolbarBehavior,
+      eventType: event?.type,
+      targetTag: event?.target?.tagName,
+    });
 
     if (!this.toolbarBehavior) {
-      logger.warn('ToolbarBehavior not available');
+      logger.error(
+        'TouchAdapter: ToolbarBehavior not available - button interaction will fail!',
+      );
       return;
     }
 
@@ -1010,9 +1118,15 @@ export class TouchAdapter extends BaseAdapter {
     // Delegate to ToolbarBehavior based on action type
     switch (action) {
       case 'delete':
+        logger.info(
+          'TouchAdapter: Delegating delete action to ToolbarBehavior',
+        );
         this.toolbarBehavior.handleDeleteAction('touch');
         break;
       case 'switch-type':
+        logger.info(
+          'TouchAdapter: Delegating switch-type action to ToolbarBehavior',
+        );
         this.toolbarBehavior.handleConnectorTypeSwitch('touch');
         break;
       default:
