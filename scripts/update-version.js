@@ -29,12 +29,12 @@ let updated = html;
 if (updated.match(/<meta\s+name=["']app-version["'][^>]*>/)) {
   updated = updated.replace(
     /<meta\s+name=["']app-version["'][^>]*>/,
-    `<meta name="app-version" content="${pkg.version}">`,
+    `<meta name="app-version" content="${pkg.version}" />`,
   );
 } else {
   updated = updated.replace(
     /<\/head>/,
-    `  <meta name="app-version" content="${pkg.version}">\n</head>`,
+    `    <meta name="app-version" content="${pkg.version}" />\n  </head>`,
   );
 }
 
@@ -42,12 +42,12 @@ if (updated.match(/<meta\s+name=["']app-version["'][^>]*>/)) {
 if (updated.match(/<meta\s+name=["']build-date["'][^>]*>/)) {
   updated = updated.replace(
     /<meta\s+name=["']build-date["'][^>]*>/,
-    `<meta name="build-date" content="${buildDate}">`,
+    `<meta name="build-date" content="${buildDate}" />`,
   );
 } else {
   updated = updated.replace(
     /<\/head>/,
-    `  <meta name="build-date" content="${buildDate}">\n</head>`,
+    `    <meta name="build-date" content="${buildDate}" />\n  </head>`,
   );
 }
 
