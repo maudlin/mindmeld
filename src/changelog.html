@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>What's New - MindMeld</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.0.1" />
+    <link rel="stylesheet" href="css/styles.css?v=1.1.0" />
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap"
       rel="stylesheet"
@@ -45,7 +45,7 @@
           Recent updates and improvements to make your mind mapping experience
           better.
         </p>
-        <p><strong>Current Version:</strong> v1.0.1</p>
+        <p><strong>Current Version:</strong> v1.1.0</p>
       </section>
       
       
@@ -54,9 +54,22 @@
         <ul>
           
             <li>
-              **Code Quality**: Removed 2,711 lines while maintaining functionality, eliminated 9 obsolete test files, updated all assertions for new architecture
+              **Add missing connector selection functionality to TouchAdapter**
               <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/121" target="_blank">#121</a>, September 23, 2025)
+                (<a href="https://github.com/maudlin/mindmeld/pull/126" target="_blank">#126</a>, September 26, 2025)
+              </small>
+            </li>
+          
+        </ul>
+      </section>
+      <section>
+        <h2>⚡ Improvements</h2>
+        <ul>
+          
+            <li>
+              **Improve canvas interaction consistency**
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/126" target="_blank">#126</a>, September 26, 2025)
               </small>
             </li>
           
@@ -65,6 +78,20 @@
       <section>
         <h2>🐛 Bug Fixes</h2>
         <ul>
+          
+            <li>
+              **Fix connector detection in handleSvgTap()**
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/126" target="_blank">#126</a>, September 26, 2025)
+              </small>
+            </li>
+          
+            <li>
+              **Enhance mobile debugging capabilities**
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/126" target="_blank">#126</a>, September 26, 2025)
+              </small>
+            </li>
           
             <li>
               Complete DataProvider migration and fix FIFO bug (MM-266)
@@ -97,27 +124,6 @@
               docs: restructure documentation into focused modular files
               <small style="color: #666; margin-left: 1rem">
                 (<a href="https://github.com/maudlin/mindmeld/pull/122" target="_blank">#122</a>, September 24, 2025)
-              </small>
-            </li>
-          
-            <li>
-              **Legacy Component Removal**: Eliminated delete button factory system (173+ lines), context menu system (413+ lines), and obsolete note deletion module
-              <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/121" target="_blank">#121</a>, September 23, 2025)
-              </small>
-            </li>
-          
-            <li>
-              **Architecture Modernization**: Restored connection drawing via proper adapter delegation, implemented cross-platform SVG event handling
-              <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/121" target="_blank">#121</a>, September 23, 2025)
-              </small>
-            </li>
-          
-            <li>
-              **Zero Breaking Changes**: All functionality preserved through cleaner adapter-behavior patterns
-              <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/121" target="_blank">#121</a>, September 23, 2025)
               </small>
             </li>
           
