@@ -1,28 +1,38 @@
 // noteService.js - Service layer for note operations
 import { createNote } from '../factories/noteFactory.js';
-import { logger } from './logger.js';
-// MM-171: Legacy event system disabled - using adapter architecture
+// Legacy event system disabled - using adapter architecture
 // import { addNoteEventListeners } from '../features/note/noteEvents.js';
 import { displayAsViewMode } from '../features/note/editViewMode.js';
 
 export class NoteService {
   static createNoteFromData(noteData, canvas) {
-    logger.warn(
-      'DEPRECATED: NoteService.createNoteFromData() - Use NoteBehavior.createNoteFromData() instead. This service method will be removed in future versions for better ID collision prevention.',
-    );
+    // Temporarily disable event emission during factory call to prevent duplicate events
+    const originalEventEmission = globalThis.disableFactoryEvents;
+    globalThis.disableFactoryEvents = true;
+
+    // Create DOM note element using factory (will skip event emission due to flag)
     const note = createNote(
       parseFloat(noteData.left || noteData.p[0]),
       parseFloat(noteData.top || noteData.p[1]),
       canvas,
-      null, // MM-171: Legacy event system disabled - adapter system handles events
+      null, // Legacy event system disabled - adapter system handles events
     );
 
-    note.id = noteData.id || noteData.i;
-    note.dataset.id = noteData.id || noteData.i; // Fix: Keep id and data-id in sync
+    // Restore original event emission state
+    globalThis.disableFactoryEvents = originalEventEmission;
+
+    // Override with restored ID (both DOM and data attributes)
+    const restoredId = noteData.id || noteData.i;
+    note.id = restoredId;
+    note.dataset.id = restoredId;
+
+    // Load stored markdown content and render as HTML (view mode)
     const noteContent = note.querySelector('.note-content');
-    // Load stored markdown content and immediately render as HTML (view mode)
     const storedMarkdown = noteData.content || noteData.c || '';
     displayAsViewMode(noteContent, storedMarkdown);
+
+    // Note: No event emission needed during restoration since DataBootstrap
+    // already loaded state into appState. This method only creates DOM representation.
 
     return note;
   }

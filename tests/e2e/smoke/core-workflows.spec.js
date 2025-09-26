@@ -64,19 +64,39 @@ test.describe('Core User Workflows @smoke', () => {
       { x: 200, y: 150, color: 'blue', content: 'Test Note 1' },
       { x: 400, y: 250, color: 'pink', content: 'Test Note 2' },
       { x: 600, y: 350, color: 'green', content: 'Test Note 3' },
+      { x: 800, y: 450, color: 'yellow', content: '' }, // Empty 4th note
     ];
 
     const createdNotes = [];
 
-    for (const noteSpec of testNotes) {
+    for (let i = 0; i < testNotes.length; i++) {
+      const noteSpec = testNotes[i];
       // Select color first
       await canvasPage.selectColor(noteSpec.color);
 
       // Create note at specific position
       const note = await canvasPage.createNote(noteSpec.x, noteSpec.y);
 
-      // Add content
-      await canvasPage.editNote(note, noteSpec.content);
+      // Add content only if not empty
+      if (noteSpec.content) {
+        await canvasPage.editNote(note, noteSpec.content);
+
+        // CRITICAL: Exit edit mode to trigger content save using Escape key
+        await canvasPage.page.keyboard.press('Escape');
+
+        // Wait for EditModeController to process exit and trigger debounced autosave
+        // Increased timeout to ensure debounced save completes
+        await canvasPage.page.waitForTimeout(1000);
+
+        // Verify content was actually set
+        const currentContent = await canvasPage.getNoteContent(note);
+        console.log(
+          `Content verification for Note ${i + 1}: expected "${noteSpec.content}", got "${currentContent}"`,
+        );
+        expect(currentContent.trim()).toBe(noteSpec.content);
+      } else {
+        console.log(`Note ${i + 1}: Skipping content edit (empty note)`);
+      }
 
       // Verify color was applied
       await canvasPage.verifyNoteColor(note, noteSpec.color);
@@ -84,6 +104,8 @@ test.describe('Core User Workflows @smoke', () => {
       // Store note info for later verification
       const noteId = await note.getAttribute('id');
       const position = await canvasPage.getNotePosition(note);
+
+      console.log(`Note ${i + 1} created with ID: ${noteId}`);
 
       createdNotes.push({
         id: noteId,
@@ -99,6 +121,10 @@ test.describe('Core User Workflows @smoke', () => {
     }
 
     // === PERSISTENCE VERIFICATION ===
+    // Wait for autosave debounce to complete (300ms + generous buffer)
+    // The final note needs its debounce timer to complete since there's no subsequent note to trigger save
+    await canvasPage.page.waitForTimeout(600);
+
     // Check that data exists in browser storage before refresh
     const storageData = await canvasPage.page.evaluate(() => {
       return {
@@ -150,13 +176,17 @@ test.describe('Core User Workflows @smoke', () => {
         Math.abs(restoredPosition.y - originalNote.expectedPosition.y),
       ).toBeLessThan(10);
 
-      // 2. Verify content persisted
-      const restoredContent = await canvasPage.getNoteContent(restoredNote);
-      console.log(
-        `  Content: expected "${originalNote.expectedContent}", got "${restoredContent}"`,
-      );
+      // 2. Verify content persisted (skip for empty notes)
+      if (originalNote.expectedContent) {
+        const restoredContent = await canvasPage.getNoteContent(restoredNote);
+        console.log(
+          `  Content: expected "${originalNote.expectedContent}", got "${restoredContent}"`,
+        );
 
-      expect(restoredContent.trim()).toBe(originalNote.expectedContent);
+        expect(restoredContent.trim()).toBe(originalNote.expectedContent);
+      } else {
+        console.log(`  Content: Skipping verification for empty note`);
+      }
 
       // 3. CRITICAL: Verify color persisted
       console.log(`  Color: expected "${originalNote.expectedColor}"`);

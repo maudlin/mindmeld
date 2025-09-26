@@ -28,9 +28,18 @@ export class NoteColorApplication {
    * Subscribe to relevant events
    */
   static subscribeToEvents() {
-    // Apply color when note is created
+    // Apply color when note is created - handle both old and new event systems
+    // Legacy: note.created from noteFactory fallback
     eventBus.on('note.created', (noteData) => {
       this.applyColorToNewNote(noteData.id);
+    });
+
+    // New: note.updated from LocalJSONProvider (for new notes)
+    eventBus.on('note.updated', (noteData) => {
+      // Only apply color to new notes (empty content indicates new note)
+      if (!noteData.content || noteData.content.trim() === '') {
+        this.applyColorToNewNote(noteData.id);
+      }
     });
 
     // Apply colors when notes are imported/loaded
@@ -69,21 +78,27 @@ export class NoteColorApplication {
       return;
     }
 
-    const currentColor = ColorService.getCurrentColor();
     const noteElement = document.getElementById(noteId);
-
     if (!noteElement) {
       logger.info(`Note element not found: ${noteId}`);
       return;
     }
 
-    // Set color in service state
+    // Check if note already has color applied (from optimized note creation)
+    const hasColorClass = ColorService.VALID_COLORS.some((color) =>
+      noteElement.classList.contains(`color-${color}`),
+    );
+
+    if (hasColorClass) {
+      // Note was created with color already applied, no need for additional processing
+      logger.debug(`Note ${noteId} already has color applied during creation`);
+      return;
+    }
+
+    // Fallback: Apply color to notes created through legacy paths
+    const currentColor = ColorService.getCurrentColor();
     ColorService.setNoteColor(noteId, currentColor);
-
-    // Apply visual styling
-    this.applyColorClassesToNote(noteElement, currentColor);
-
-    logger.info(`Applied color ${currentColor} to new note ${noteId}`);
+    logger.info(`Applied fallback color ${currentColor} to note ${noteId}`);
   }
 
   /**
@@ -125,7 +140,9 @@ export class NoteColorApplication {
       noteElement.offsetHeight;
     });
 
-    logger.info(`Applied color class color-${color} to note ${noteElement.id}`);
+    logger.debug(
+      `Applied color class color-${color} to note ${noteElement.id}`,
+    );
   }
 
   /**

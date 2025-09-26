@@ -5,7 +5,7 @@
  * Integrates with ServerConnectionService for actual connection logic.
  * Works with MenuBehavior for menu integration.
  *
- * MM-104: Server Connection Configuration UI
+ * Server Connection Configuration UI
  */
 
 import { eventBus } from '../../core/eventBus.js';

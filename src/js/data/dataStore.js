@@ -15,26 +15,14 @@ import { CanvasStateService } from '../services/canvasStateService.js';
 import { eventBus } from '../core/eventBus.js';
 import { getCurrentMarkdownContent } from '../features/note/editViewMode.js';
 
-/**
- * Get NoteBehavior instance from InteractionController
- * Unified note creation through behavior system
- */
-function getNoteBehavior() {
-  try {
-    if (
-      typeof window !== 'undefined' &&
-      window.mindMeldDebug?.interactionController
-    ) {
-      return window.mindMeldDebug.interactionController.getBehavior('note');
-    }
-  } catch (error) {
-    logger.warn('dataStore: Failed to get NoteBehavior:', error);
-  }
-  return null;
-}
-
 export function addNote(note) {
   const currentNotes = appState.getState().notes;
+
+  logger.info('🔍 TRACE addNote called', {
+    newNoteId: note.id,
+    currentNoteCount: currentNotes.length,
+    currentNoteIds: currentNotes.map((n) => n.id),
+  });
 
   // Prevent duplicate notes during state restoration
   const existingNote = currentNotes.find((n) => n.id === note.id);
@@ -45,17 +33,39 @@ export function addNote(note) {
     return note;
   }
 
-  appState.setState({ notes: [...currentNotes, note] });
+  const newNotes = [...currentNotes, note];
+  logger.info('🔍 TRACE addNote updating appState', {
+    oldCount: currentNotes.length,
+    newCount: newNotes.length,
+    newNoteIds: newNotes.map((n) => n.id),
+  });
+
+  appState.setState({ notes: newNotes });
   return note;
 }
 
 export function updateNote(id, updatedNote) {
   const currentNotes = appState.getState().notes;
   const index = currentNotes.findIndex((note) => note.id === id);
+
+  logger.info('🔍 TRACE updateNote called', {
+    noteId: id,
+    currentNoteCount: currentNotes.length,
+    currentNoteIds: currentNotes.map((n) => n.id),
+    foundIndex: index,
+  });
+
   if (index !== -1) {
     const updatedNotes = [...currentNotes];
     // eslint-disable-next-line security/detect-object-injection
     updatedNotes[index] = { ...updatedNotes[index], ...updatedNote };
+
+    logger.info('🔍 TRACE updateNote updating appState', {
+      oldCount: currentNotes.length,
+      newCount: updatedNotes.length,
+      newNoteIds: updatedNotes.map((n) => n.id),
+    });
+
     appState.setState({ notes: updatedNotes });
   }
 }
@@ -63,76 +73,20 @@ export function updateNote(id, updatedNote) {
 export function deleteNoteById(id) {
   const currentNotes = appState.getState().notes;
   const updatedNotes = currentNotes.filter((note) => note.id !== id);
+
+  logger.info('🔍 TRACE deleteNoteById called', {
+    deletedNoteId: id,
+    oldCount: currentNotes.length,
+    newCount: updatedNotes.length,
+    oldNoteIds: currentNotes.map((n) => n.id),
+    newNoteIds: updatedNotes.map((n) => n.id),
+  });
+
   appState.setState({ notes: updatedNotes });
 }
 
 export function getNotes() {
   return appState.getState().notes;
-}
-
-export function updateNotesAndConnections(state) {
-  const canvas = document.querySelector('#canvas');
-
-  // Clear existing notes and connections from DOM only
-  NoteService.clearAllNotes();
-  document.querySelectorAll('g[data-start]').forEach((conn) => conn.remove());
-
-  // Preserve the loaded colorState during restoration
-  const loadedColorState = state.colorState || {
-    currentColor: 'yellow',
-    notes: {},
-  };
-
-  // Temporarily disable color application during restoration
-  window.noteRestorationInProgress = true;
-
-  // Create notes using NoteBehavior for unified creation path
-  const noteBehavior = getNoteBehavior();
-  if (noteBehavior) {
-    // First, ensure unique IDs to prevent collisions
-    noteBehavior.ensureUniqueIds(state.notes);
-
-    state.notes.forEach((noteData) => {
-      noteBehavior.createNoteFromData(noteData, canvas);
-    });
-  } else {
-    logger.warn(
-      'dataStore: NoteBehavior not available, falling back to NoteService',
-    );
-    state.notes.forEach((noteData) => {
-      NoteService.createNoteFromData(noteData, canvas);
-    });
-  }
-
-  // Re-enable color application
-  window.noteRestorationInProgress = false;
-
-  // Create connections
-  state.connections.forEach((conn) => {
-    ConnectionService.createConnection(conn.from, conn.to, conn.type);
-  });
-
-  // Update all connections
-  ConnectionService.updateConnections();
-
-  // Ensure colorState and connections are preserved in appState after all operations
-  const currentState = appState.getState();
-  appState.setState({
-    ...currentState,
-    connections: state.connections, // Preserve loaded connections
-    colorState: loadedColorState,
-  });
-
-  // Emit notes.loaded event for color application (same as import process)
-  eventBus.emit('notes.loaded');
-  logger.info(
-    'Emitted notes.loaded event for color application with colorState:',
-    loadedColorState,
-  );
-
-  logger.info(
-    `Updated ${state.notes.length} notes and ${state.connections.length} connections`,
-  );
 }
 
 const debouncedUpdateConnection = debounce((startId, endId, type) => {
@@ -257,21 +211,25 @@ export async function importFromJSON(jsonData, canvas) {
     NoteService.clearAllNotes();
     document.querySelectorAll('g[data-start]').forEach((conn) => conn.remove());
 
-    // Extract color data for import
+    // Extract color data for import and ensure default colors for notes without explicit colors
     const noteColors = {};
     data.n.forEach((noteData) => {
       if (noteData.cl && ColorService.isValidColor(noteData.cl)) {
+        // Use explicit color from import data
         noteColors[noteData.i] = { colorScheme: noteData.cl };
+      } else {
+        // Use default yellow for notes without color data (not current color picker setting)
+        noteColors[noteData.i] = { colorScheme: 'yellow' };
       }
     });
 
-    // Import colors if any exist
+    // Import all colors (both explicit and defaults)
     if (Object.keys(noteColors).length > 0) {
       ColorService.setAllNoteColors(noteColors);
       // Trigger immediate save via event system for cross-tab consistency
       eventBus.emit('state.save');
       logger.info(
-        'Triggered state save for imported color cross-tab persistence',
+        'Applied colors to imported notes (explicit colors + yellow defaults)',
       );
     }
 
@@ -284,13 +242,7 @@ export async function importFromJSON(jsonData, canvas) {
       );
     }
 
-    // Create notes using NoteBehavior for unified creation path
-    const noteBehavior = getNoteBehavior();
-    if (noteBehavior) {
-      // First, ensure unique IDs to prevent collisions
-      noteBehavior.ensureUniqueIds(data.n);
-    }
-
+    // Create notes using NoteService directly - DataProvider will handle proper behavior delegation
     const notes = data.n.map((noteData) => {
       const noteCreateData = {
         i: noteData.i,
@@ -298,15 +250,7 @@ export async function importFromJSON(jsonData, canvas) {
         p: noteData.p,
       };
 
-      let note;
-      if (noteBehavior) {
-        note = noteBehavior.createNoteFromData(noteCreateData, canvas);
-      } else {
-        logger.warn(
-          'dataStore: NoteBehavior not available, falling back to NoteService',
-        );
-        note = NoteService.createNoteFromData(noteCreateData, canvas);
-      }
+      const note = NoteService.createNoteFromData(noteCreateData, canvas);
       return {
         id: note.id,
         content: truncateNoteContent(noteData.c, NOTE_CONTENT_LIMIT),

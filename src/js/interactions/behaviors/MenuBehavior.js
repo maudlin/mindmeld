@@ -5,12 +5,13 @@
  * Receives input from both DesktopAdapter and TouchAdapter.
  * Manages menu state, server connections, and system operations.
  *
- * MM-104: Server Connection Configuration UI
+ * Server Connection Configuration UI
  */
 
 import { createMapsApi } from '../../services/mapsApi.js';
 import { DataProviderService } from '../../services/DataProviderService.js';
-import { clearAllState } from '../../data/storageManager.js';
+import { clearAllNotesAndConnections } from '../../data/dataStore.js';
+import { appState } from '../../data/observableState.js';
 import { notificationManager } from '../../services/notificationManager.js';
 import { ServerClient } from '../../services/serverClient.js';
 import { ServerConnectionService } from '../../services/serverConnectionService.js';
@@ -37,7 +38,7 @@ export class MenuBehavior {
     // API client instance
     this.mapsApi = null;
 
-    // Map state tracking (MM-228)
+    // Map state tracking
     this.currentMapName = 'Untitled Map';
 
     logger.debug('MenuBehavior created');
@@ -528,8 +529,22 @@ export class MenuBehavior {
     );
 
     if (confirmed) {
-      clearAllState(this.canvas);
+      // Clear localStorage and reset state
+      appState.clearLocalStorage();
+      appState.setState({
+        notes: [],
+        connections: [],
+        zoomLevel: 5,
+        colorState: {
+          currentColor: 'yellow',
+          notes: {},
+        },
+      });
+      // Clear DOM elements
+      clearAllNotesAndConnections();
+
       notificationManager.success('Canvas cleared successfully!');
+      logger.info('All state cleared, local storage cleared, and UI reset');
     }
   }
 
@@ -633,7 +648,7 @@ export class MenuBehavior {
   }
 
   /**
-   * Handle load from server action (MM-106)
+   * Handle load from server action
    */
   async handleLoadFromServer(inputType) {
     logger.info('Loading from server', { inputType });
@@ -848,14 +863,14 @@ export class MenuBehavior {
   }
 
   /**
-   * Get current map name (MM-228)
+   * Get current map name
    */
   getCurrentMapName() {
     return this.currentMapName;
   }
 
   /**
-   * Set current map name and update UI (MM-228)
+   * Set current map name and update UI
    */
   setCurrentMapName(name) {
     this.currentMapName = name || 'Untitled Map';
@@ -864,7 +879,7 @@ export class MenuBehavior {
   }
 
   /**
-   * Handle new map creation request (MM-228)
+   * Handle new map creation request
    */
   handleNewMap(inputType) {
     logger.info('New Map requested', { inputType });
@@ -891,7 +906,7 @@ export class MenuBehavior {
   }
 
   /**
-   * Handle browse maps request (MM-228)
+   * Handle browse maps request
    */
   handleBrowseMaps(inputType) {
     logger.info('Browse Maps requested', { inputType });
@@ -965,7 +980,7 @@ export class MenuBehavior {
     const statusDot = connectItem?.querySelector('.server-status-dot');
     const disconnectItem = document.querySelector('.server-disconnect-item');
     const loadItem = document.querySelector('.server-load-item');
-    // MM-228: New map management items
+    // New map management items
     const newMapItem = document.querySelector('.server-new-map-item');
     const browseMapsItem = document.querySelector('.server-browse-maps-item');
 
@@ -982,7 +997,7 @@ export class MenuBehavior {
     }
 
     if (isConnected) {
-      // Update main menu item to show connected state with map name (MM-228)
+      // Update main menu item to show connected state with map name
       const mapName = this.getCurrentMapName();
       menuText.textContent = `Connected: ${mapName}`;
       statusDot.className = 'server-status-dot connected';
@@ -994,7 +1009,7 @@ export class MenuBehavior {
       // Show server operation items
       disconnectItem.style.display = 'flex';
       loadItem.style.display = 'flex';
-      // MM-228: Show new map management items
+      // Show new map management items
       newMapItem.style.display = 'flex';
       browseMapsItem.style.display = 'flex';
     } else {
@@ -1008,7 +1023,7 @@ export class MenuBehavior {
       // Hide server operation items
       disconnectItem.style.display = 'none';
       loadItem.style.display = 'none';
-      // MM-228: Hide new map management items
+      // Hide new map management items
       newMapItem.style.display = 'none';
       browseMapsItem.style.display = 'none';
     }
@@ -1024,7 +1039,7 @@ export class MenuBehavior {
       'load-from-server': '.server-load-item',
     };
 
-    if (!Object.prototype.hasOwnProperty.call(actionMap, action)) return;
+    if (!(action in actionMap)) return;
     const selector = actionMap[action];
 
     const menuItem = document.querySelector(selector);

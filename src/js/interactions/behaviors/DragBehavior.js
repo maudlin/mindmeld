@@ -10,6 +10,7 @@ import { noteManager } from '../../services/noteManager.js';
 import { connectionManager } from '../../features/connection/connectionManager.js';
 import { CoordinateTransform } from '../../core/coordinates/CoordinateTransform.js';
 import { logger } from '../../services/logger.js';
+import { DataProviderService } from '../../services/DataProviderService.js';
 
 export class DragBehavior {
   constructor(eventBus, coordinateTransform = null) {
@@ -325,12 +326,18 @@ export class DragBehavior {
           note.style.left = `${noteX}px`;
           note.style.top = `${noteY}px`;
 
-          // Update data store via event bus
-          this.eventBus.emit('note.updated', {
-            id: note.id,
-            left: note.style.left,
-            top: note.style.top,
-          });
+          // Update data store via DataProvider
+          const dataProvider = DataProviderService.getInstance();
+          const left = parseInt(note.style.left.replace('px', ''), 10);
+          const top = parseInt(note.style.top.replace('px', ''), 10);
+
+          dataProvider.upsertNote(
+            {
+              id: note.id,
+              pos: [left, top],
+            },
+            { origin: 'user' },
+          );
         },
       );
 

@@ -1,17 +1,19 @@
 // uiSetup.js - Handles UI initialization and setup
 import { canvasManager } from './canvasManager.js';
 import { exportToJSON, importFromJSON } from '../data/dataStore.js';
-import { clearAllState } from '../data/storageManager.js';
+import { clearAllNotesAndConnections } from '../data/dataStore.js';
+import { appState } from '../data/observableState.js';
 import {
   setupZoomAndPan,
   setFixedZoom,
 } from '../features/zoom/viewportAdapter.js';
 import { logger } from '../services/logger.js';
 import { notificationManager } from '../services/notificationManager.js';
+import { persistenceService } from '../services/PersistenceService.js';
 export function setupUI(elements) {
   populateCanvasStyleDropdown(elements);
   setupExportImport(elements.menu, elements.canvas);
-  setupClearCanvas(elements.menu, elements.canvas);
+  setupClearCanvas();
   // Note: Mobile dropdown behavior is now handled by MenuBehavior via adapter-behavior pattern
 }
 
@@ -179,7 +181,7 @@ function handleImportFromClipboard(canvas) {
     });
 }
 
-function setupClearCanvas(menu, canvas) {
+function setupClearCanvas() {
   const clearButton = document.getElementById('clear-canvas-button');
   if (clearButton) {
     clearButton.addEventListener('click', async () => {
@@ -187,8 +189,18 @@ function setupClearCanvas(menu, canvas) {
         'Are you sure you want to clear the canvas?',
       );
       if (confirmed) {
-        clearAllState(canvas);
+        // Use PersistenceService for clean state clearing
+        persistenceService.clear();
+
+        // Sync cleared state to appState for UI consistency
+        const clearedState = persistenceService.getState();
+        appState.setState(clearedState, true); // silent to avoid autosave
+
+        // Clear DOM elements
+        clearAllNotesAndConnections();
+
         notificationManager.success('Canvas cleared successfully!');
+        logger.info('PersistenceService: All state cleared completely');
       }
     });
   }

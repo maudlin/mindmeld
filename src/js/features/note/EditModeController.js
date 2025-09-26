@@ -13,6 +13,7 @@ import {
   getCurrentMarkdownContent,
 } from './editViewMode.js';
 import { logger } from '../../services/logger.js';
+import { DataProviderService } from '../../services/DataProviderService.js';
 
 class EditModeController {
   constructor() {
@@ -44,7 +45,9 @@ class EditModeController {
     eventBus.on('note.requestView', (data) => this.handleViewRequest(data));
 
     // Listen for external triggers to exit edit mode
-    eventBus.on('canvas.clicked', () => this.exitEditMode());
+    eventBus.on('canvas.clicked', () => {
+      this.exitEditMode();
+    });
     eventBus.on('note.selected', (data) => {
       // Exit edit mode if a different note is selected
       if (this.currentEditingNote && this.currentEditingNote.id !== data.id) {
@@ -211,12 +214,15 @@ class EditModeController {
     // Blur handling is now done through adapters
     // this.removeBlurHandler(noteElement);
 
-    // Save the updated content
-    eventBus.emit('note.updated', {
-      id: noteElement.id,
-      content: rawText,
-    });
-    eventBus.emit('state.save');
+    // Save the updated content directly to DataProvider
+    const dataProvider = DataProviderService.getInstance();
+    dataProvider.upsertNote(
+      {
+        id: noteElement.id,
+        content: rawText,
+      },
+      { origin: 'user' },
+    );
 
     // Emit edit mode exited event
     eventBus.emit('note.editModeExited', {

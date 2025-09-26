@@ -17,7 +17,33 @@ class ObservableState {
   }
 
   setState(newState, silent = false) {
+    const oldNoteCount = this.state.notes ? this.state.notes.length : 0;
+    const oldNoteIds = this.state.notes
+      ? this.state.notes.map((n) => n.id)
+      : [];
+
     this.state = { ...this.state, ...newState };
+
+    const newNoteCount = this.state.notes ? this.state.notes.length : 0;
+    const newNoteIds = this.state.notes
+      ? this.state.notes.map((n) => n.id)
+      : [];
+
+    // Only log when notes actually change
+    if (JSON.stringify(oldNoteIds) !== JSON.stringify(newNoteIds)) {
+      // Import synchronously to avoid async issues in setState
+      import('../services/logger.js').then(({ logger }) => {
+        logger.info('🔍 TRACE appState.setState notes changed', {
+          oldCount: oldNoteCount,
+          newCount: newNoteCount,
+          oldNoteIds,
+          newNoteIds,
+          silent,
+          willSave: !silent,
+        });
+      });
+    }
+
     this.notifyObservers();
     if (!silent) {
       this.debouncedSave();

@@ -16,10 +16,10 @@ async function initializeApp() {
   const appBootstrap = new AppBootstrap();
 
   try {
-    const result = await appBootstrap.initialize();
+    await appBootstrap.initialize();
 
     logger.info('MindMeld application initialized successfully');
-    logger.info('Initialization result:', result);
+    logger.info('Initialization completed with all bootstrap modules ready');
 
     // Store bootstrap instance globally for potential cleanup during development/testing
     if (typeof window !== 'undefined') {

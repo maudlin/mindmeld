@@ -106,7 +106,7 @@ export class ViewportBehavior {
       inputType,
     });
 
-    // MM-222: Linear scaling for consistent zoom sensitivity across all zoom levels
+    // Linear scaling for consistent zoom sensitivity across all zoom levels
     // scaleDelta 1.0 = no change, scaleDelta > 1.0 = zoom in, scaleDelta < 1.0 = zoom out
     // Linear approach: same finger movement = same zoom amount regardless of current zoom level
     const ZOOM_SENSITIVITY = 2.0; // Calibrated for 1-2cm finger movement = full 4x zoom range
@@ -202,7 +202,7 @@ export class ViewportBehavior {
   }
 
   /**
-   * Apply zoom at a specific point using simplified single-transform approach (MM-221)
+   * Apply zoom at a specific point using simplified single-transform approach
    * Industry standard viewport-to-content coordinate conversion
    */
   applyZoomAtPoint(newZoomLevel, viewportX, viewportY) {
@@ -474,7 +474,7 @@ export class ViewportBehavior {
 
   /**
    * Initialize canvas to center position (replaces CSS centering)
-   * Implements single-transform approach per MM-221 architecture
+   * Implements single-transform approach
    */
   initializeCenterCanvas() {
     if (!this.canvas || !this.canvas.parentElement) {

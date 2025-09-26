@@ -8,7 +8,7 @@ import { logger } from '../../services/logger.js';
  * Desktop input adapter for mouse, keyboard, and trackpad interactions
  * Thin input layer that detects desktop-specific interactions and delegates to behaviors
  *
- * MM-203: Rebuilt as thin input layer with behavior delegation
+ * Rebuilt as thin input layer with behavior delegation
  */
 export class DesktopAdapter extends BaseAdapter {
   constructor(interactionController) {
@@ -254,6 +254,12 @@ export class DesktopAdapter extends BaseAdapter {
    * Handle pointer down events - detect interaction type and delegate to behaviors
    */
   handlePointerDown(event) {
+    console.log('[DEBUG] DesktopAdapter.handlePointerDown called!', {
+      target: event.target.tagName,
+      targetId: event.target.id,
+      targetClass: event.target.className,
+    });
+
     // Handle right button for canvas panning
     if (event.button === 2 && this.isClickOnCanvas(event.target)) {
       event.preventDefault();

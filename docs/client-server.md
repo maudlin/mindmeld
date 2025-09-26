@@ -179,7 +179,7 @@ MindMeld now includes **Yjs-based DataProvider infrastructure** that enables fut
 
 ### Current Status
 🔧 **Foundation Complete**: YjsProvider implementation with comprehensive test coverage
-🚧 **Integration Pending**: UI observers and real-time features (MM-246)
+🚧 **Integration Pending**: UI observers and real-time features
 📋 **Future**: Full multi-user collaboration interface
 
 ### For Developers

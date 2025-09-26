@@ -10,7 +10,7 @@ import { logger } from '../../services/logger.js';
  * Touch input adapter for mobile and tablet interactions
  * Thin input layer that detects touch gestures and delegates to behaviors
  *
- * MM-204: Rebuilt as thin input layer with behavior delegation
+ * Rebuilt as thin input layer with behavior delegation
  */
 export class TouchAdapter extends BaseAdapter {
   constructor(interactionController) {
@@ -44,16 +44,16 @@ export class TouchAdapter extends BaseAdapter {
     this.lastTap = null; // For double-tap detection
     this.longPressTimer = null; // For long press detection
 
-    // MM-212: Multi-touch gesture state
-    // MM-213: Enhanced with previousCenter for frame-to-frame delta calculation
+    // Multi-touch gesture state
+    // Enhanced with previousCenter for frame-to-frame delta calculation
     this.multiTouchState = {
       fingers: new Map(), // Track individual finger positions by identifier
       initialDistance: null, // Distance between fingers at start
       initialCenter: null, // Center point between fingers at start
       lastDistance: null, // Previous distance for pinch detection
       lastCenter: null, // Previous center for pan detection
-      previousCenter: null, // MM-213: Previous frame center for delta-based pan
-      pinchThreshold: 0.15, // MM-213: Increased from 10% to 15% for less sensitivity
+      previousCenter: null, // Previous frame center for delta-based pan
+      pinchThreshold: 0.15, // Increased from 10% to 15% for less sensitivity
     };
   }
 
@@ -199,7 +199,7 @@ export class TouchAdapter extends BaseAdapter {
           return;
         }
 
-        // MM-212: Handle multi-touch gestures
+        // Handle multi-touch gestures
         if (event.touches.length === 2) {
           // Prevent browser default zoom behavior immediately
           event.preventDefault();
@@ -271,7 +271,7 @@ export class TouchAdapter extends BaseAdapter {
       },
 
       touchMove: (event) => {
-        // MM-212: Handle multi-touch gestures
+        // Handle multi-touch gestures
         if (event.touches.length === 2) {
           // Prevent browser default zoom behavior immediately
           event.preventDefault();
@@ -381,7 +381,7 @@ export class TouchAdapter extends BaseAdapter {
         // Always reset gesture state on touch end (even without touchStartData)
         this.currentGesture = null;
 
-        // MM-212: Clean up multi-touch state when touches end
+        // Clean up multi-touch state when touches end
         if (!event || !event.touches || event.touches.length === 0) {
           // No touches remaining - clean up everything
           this.cleanupMultiTouchState();
@@ -407,7 +407,7 @@ export class TouchAdapter extends BaseAdapter {
         touchStartData = null;
         this.currentGesture = null;
 
-        // MM-212: Clean up multi-touch state on cancel
+        // Clean up multi-touch state on cancel
         this.cleanupMultiTouchState();
       },
     };
@@ -858,7 +858,7 @@ export class TouchAdapter extends BaseAdapter {
     });
   }
 
-  // MM-212: Multi-touch gesture detection methods
+  // Multi-touch gesture detection methods
 
   /**
    * Calculate distance between two touch points
@@ -886,7 +886,7 @@ export class TouchAdapter extends BaseAdapter {
 
   /**
    * Update multi-touch state with current finger positions
-   * MM-213: Enhanced with previousCenter tracking for smooth delta calculation
+   * Enhanced with previousCenter tracking for smooth delta calculation
    */
   updateMultiTouchState(touches) {
     // Update finger positions
@@ -917,7 +917,7 @@ export class TouchAdapter extends BaseAdapter {
         return;
       }
 
-      // MM-213: Store previous center before updating current
+      // Store previous center before updating current
       this.multiTouchState.previousCenter = this.multiTouchState.lastCenter;
 
       // Update current state
@@ -1022,7 +1022,7 @@ export class TouchAdapter extends BaseAdapter {
 
   /**
    * Clean up multi-touch state
-   * MM-213: Enhanced to clean up previousCenter tracking
+   * Enhanced to clean up previousCenter tracking
    */
   cleanupMultiTouchState() {
     this.multiTouchState.fingers.clear();
@@ -1030,6 +1030,6 @@ export class TouchAdapter extends BaseAdapter {
     this.multiTouchState.initialCenter = null;
     this.multiTouchState.lastDistance = null;
     this.multiTouchState.lastCenter = null;
-    this.multiTouchState.previousCenter = null; // MM-213: Clean up previous center
+    this.multiTouchState.previousCenter = null; // Clean up previous center
   }
 }

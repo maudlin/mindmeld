@@ -2,7 +2,7 @@
 import { test, expect } from '@playwright/test';
 import { CanvasPage } from './helpers/CanvasPage.js';
 
-test.describe('Server Connection UI (MM-104)', () => {
+test.describe('Server Connection UI', () => {
   let canvasPage;
 
   test.beforeEach(async ({ page }) => {

@@ -4,7 +4,7 @@ import { logger } from '../services/logger.js';
  *
  * Handles interactions for elements outside the canvas (menus, nav, etc.)
  * Incorporates the working KebabMenu UI logic with MenuBehavior business logic.
- * MM-104: Server Connection Configuration UI
+ * Server Connection Configuration UI
  */
 
 let menuBehavior = null;
@@ -121,14 +121,18 @@ function setupMenuInteractions() {
       return;
     }
 
-    if (!menuElement.contains(e.target) && !menuButton.contains(e.target)) {
+    if (
+      !menuElement.contains(e.target) &&
+      !menuButton.contains(e.target) &&
+      isMenuOpen
+    ) {
       closeMenu();
     }
   });
 
   // Escape key to close
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
+    if (e.key === 'Escape' && isMenuOpen) {
       closeMenu();
     }
   });
@@ -285,7 +289,7 @@ function setupMobileInteractions() {
 
 /**
  * Set up server connection modal interactions
- * MM-104: Server Connection Configuration UI
+ * Server Connection Configuration UI
  */
 function setupServerConnectionModalInteractions() {
   // Verify server connection modal elements exist (they should be in index.html)

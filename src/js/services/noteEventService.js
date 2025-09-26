@@ -1,24 +1,18 @@
 // noteEventService.js - Handles note-related events from the event bus
 import { createNoteAtPosition } from '../factories/noteFactory.js';
 import { logger } from './logger.js';
-// MM-171: Legacy event system disabled - using adapter architecture
-// import { addNoteEventListeners } from '../features/note/noteEvents.js';
 import { eventBus } from '../core/eventBus.js';
 
 /**
  * Get NoteBehavior instance from InteractionController
- * Unified note creation through behavior system
+ * Proper dependency injection through global debug interface
  */
 function getNoteBehavior() {
-  try {
-    if (
-      typeof window !== 'undefined' &&
-      window.mindMeldDebug?.interactionController
-    ) {
-      return window.mindMeldDebug.interactionController.getBehavior('note');
-    }
-  } catch (error) {
-    logger.warn('noteEventService: Failed to get NoteBehavior:', error);
+  if (
+    typeof window !== 'undefined' &&
+    window.mindMeldDebug?.interactionController
+  ) {
+    return window.mindMeldDebug.interactionController.getBehavior('note');
   }
   return null;
 }
@@ -41,7 +35,7 @@ export class NoteEventService {
         logger.warn(
           'NoteEventService: NoteBehavior not available, falling back to factory',
         );
-        createNoteAtPosition(canvas, event, null); // MM-171: Legacy disabled
+        createNoteAtPosition(canvas, event, null);
       }
     });
 

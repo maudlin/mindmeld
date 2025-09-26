@@ -7,26 +7,19 @@
 
 import { BaseBootstrap } from './BaseBootstrap.js';
 import { eventBus } from '../eventBus.js';
-import {
-  initializeDataStore,
-  updateNotesAndConnections,
-} from '../../data/dataStore.js';
+import { initializeDataStore } from '../../data/dataStore.js';
+import { ConnectionService } from '../../services/connectionService.js';
 import { logger } from '../../services/logger.js';
 import { appState } from '../../data/observableState.js';
 import { ZoomStateService } from '../../services/zoomStateService.js';
 import { DataProviderService } from '../../services/DataProviderService.js';
-import { DataProviderCompatibility } from '../../data/DataProviderCompatibility.js';
-import {
-  isDebugEnabled,
-  isDebounceEnabled,
-  getProviderType,
-} from '../featureFlags.js';
+import { persistenceService } from '../../services/PersistenceService.js';
+import { isDebugEnabled, getProviderType } from '../featureFlags.js';
 export class DataBootstrap extends BaseBootstrap {
   constructor() {
     super('DataBootstrap');
     this.stateRestored = false;
     this._dataProviderUnsubscribe = null;
-    this._updatePending = false; // Guard for debouncing UI updates
   }
 
   async initialize() {
@@ -88,29 +81,26 @@ export class DataBootstrap extends BaseBootstrap {
         },
       });
 
-      // Subscribe to DataProvider changes and route them to existing event bus patterns
+      // Subscribe to DataProvider changes for debugging/monitoring only
+      // Note: LocalJSONProvider now emits events directly, so no routing needed
       this._dataProviderUnsubscribe = dataProvider.subscribe((change) => {
-        this._handleProviderChange(change);
+        if (isDebugEnabled()) {
+          logger.info(
+            'DataBootstrap: DataProvider change (monitoring only)',
+            change,
+          );
+        }
       });
 
       logger.info(
         `DataBootstrap: DataProvider (${dataProvider.getProviderType()}) initialized with observers`,
       );
 
-      // Migrate to DataProvider architecture if using YjsProvider
-      if (getProviderType() === 'yjs') {
-        try {
-          DataProviderCompatibility.migrateToProvider();
-          logger.info(
-            'DataBootstrap: Migrated to DataProvider architecture (YjsProvider)',
-          );
-        } catch (error) {
-          logger.error(
-            'DataBootstrap: DataProvider migration failed, using legacy handlers:',
-            error,
-          );
-        }
-      }
+      // DataProvider architecture is now the primary system
+      // UI components call DataProvider directly, which emits events for coordination
+      logger.info(
+        `DataBootstrap: DataProvider architecture active (${getProviderType()}Provider)`,
+      );
 
       return cleanup;
     } catch (error) {
@@ -142,136 +132,6 @@ export class DataBootstrap extends BaseBootstrap {
     logger.info('DataBootstrap: Persistence handlers configured');
   }
 
-  /**
-   * Handle DataProvider changes and route them to existing event bus patterns
-   * This bridges the DataProvider observer system with the existing UI event system
-   * @param {Object} change - DataProvider change event
-   * @private
-   */
-  _handleProviderChange(change) {
-    if (isDebugEnabled()) {
-      logger.info('DataBootstrap: Processing provider change', change);
-    }
-
-    // Debounce UI updates if enabled to prevent event storms
-    if (isDebounceEnabled() && this._updatePending) {
-      if (isDebugEnabled()) {
-        logger.info('DataBootstrap: Debouncing change event', change.type);
-      }
-      return;
-    }
-
-    if (isDebounceEnabled()) {
-      this._updatePending = true;
-      requestAnimationFrame(() => {
-        this._processBatchedChanges(change);
-        this._updatePending = false;
-      });
-    } else {
-      this._processBatchedChanges(change);
-    }
-  }
-
-  /**
-   * Process batched changes and emit appropriate event bus events
-   * @param {Object} change - DataProvider change event
-   * @private
-   */
-  _processBatchedChanges(change) {
-    switch (change.type) {
-      case 'notes':
-        this._handleNoteChange(change);
-        break;
-      case 'connections':
-        this._handleConnectionChange(change);
-        break;
-      case 'meta':
-        this._handleMetaChange(change);
-        break;
-      case 'snapshot':
-        this._handleSnapshotChange(change);
-        break;
-      default:
-        if (isDebugEnabled()) {
-          logger.info('DataBootstrap: Unknown change type', change.type);
-        }
-    }
-  }
-
-  /**
-   * Handle note changes from DataProvider
-   * @param {Object} change
-   * @private
-   */
-  _handleNoteChange(change) {
-    if (change.payload.deleted) {
-      eventBus.emit('note.deleted', {
-        id: change.payload.id,
-        origin: change.origin,
-      });
-    } else {
-      eventBus.emit('note.updated', {
-        id: change.payload.id,
-        origin: change.origin,
-      });
-    }
-
-    // Emit general notes changed event
-    eventBus.emit('notes.changed', {
-      origin: change.origin,
-      type: 'note',
-    });
-  }
-
-  /**
-   * Handle connection changes from DataProvider
-   * @param {Object} change
-   * @private
-   */
-  _handleConnectionChange(change) {
-    if (change.payload.deleted) {
-      eventBus.emit('connection.deleted', {
-        id: change.payload.id,
-        origin: change.origin,
-      });
-    } else {
-      eventBus.emit('connection.updated', {
-        id: change.payload.id,
-        origin: change.origin,
-      });
-    }
-
-    // Emit general notes changed event
-    eventBus.emit('notes.changed', {
-      origin: change.origin,
-      type: 'connection',
-    });
-  }
-
-  /**
-   * Handle metadata changes from DataProvider
-   * @param {Object} change
-   * @private
-   */
-  _handleMetaChange(change) {
-    eventBus.emit('meta.updated', {
-      meta: change.payload.meta,
-      origin: change.origin,
-    });
-  }
-
-  /**
-   * Handle snapshot changes (bulk import) from DataProvider
-   * @param {Object} change
-   * @private
-   */
-  _handleSnapshotChange(change) {
-    // For snapshot changes, trigger a full reload
-    eventBus.emit('notes.loaded', {
-      origin: change.origin,
-    });
-  }
-
   async restoreState() {
     if (this.stateRestored) {
       logger.info('DataBootstrap: State already restored, skipping');
@@ -279,42 +139,58 @@ export class DataBootstrap extends BaseBootstrap {
     }
 
     try {
-      // Check if we should restore state (has localStorage and current state is empty)
-      const currentState = appState.getState();
-      const hasStoredState = localStorage.getItem('mindmeld_state');
+      // Initialize PersistenceService and check for stored state
+      const hasStoredState = persistenceService.initialize();
 
-      if (hasStoredState && currentState.notes.length === 0) {
-        // Load state from localStorage using observableState
-        const restored = appState.loadFromLocalStorage();
+      if (hasStoredState) {
+        const loadedState = persistenceService.getState();
+        logger.info('DataBootstrap: Loaded state from PersistenceService:', {
+          noteCount: loadedState.notes.length,
+          connectionCount: loadedState.connections.length,
+          noteIds: loadedState.notes.map((n) => n.id),
+        });
+        logger.info('Loaded colorState:', loadedState.colorState);
 
-        if (restored) {
-          const loadedState = appState.getState();
-          logger.info('DataBootstrap: Loaded state from storage:', loadedState);
-          logger.info('Loaded colorState:', loadedState.colorState);
+        // Sync PersistenceService state to appState for UI
+        appState.setState(loadedState, true); // silent to avoid autosave
 
-          // Apply the loaded state to the UI
-          updateNotesAndConnections(loadedState);
+        // Initialize noteIdService with existing IDs to prevent collisions
+        const { NoteIdService } = await import(
+          '../../services/noteIdService.js'
+        );
+        NoteIdService.ensureUniqueIds(loadedState.notes);
+        logger.info(
+          'NoteIdService: Initialized with existing note IDs:',
+          loadedState.notes.map((n) => n.id),
+        );
 
-          // Restore zoom level to zoomManager
-          ZoomStateService.restoreZoomLevel();
+        // Apply the loaded state to the UI
+        await this.restoreNotesAndConnections(loadedState);
 
-          // Note: Canvas type restoration will be handled after UI is initialized
-          // since it requires canvas element to be available
+        // Restore zoom level to zoomManager
+        ZoomStateService.restoreZoomLevel();
 
-          this.stateRestored = true;
-          logger.info('DataBootstrap: State restored from storage');
+        // Note: Canvas type restoration will be handled after UI is initialized
+        // since it requires canvas element to be available
 
-          // Emit event to notify components that state has been restored
-          eventBus.emit('app.state.restored', {
-            colorState: loadedState.colorState,
-          });
-        } else {
-          logger.info('DataBootstrap: Failed to load state from storage');
-        }
+        this.stateRestored = true;
+        logger.info('DataBootstrap: State restored from storage');
+
+        // Emit event to notify components that state has been restored
+        eventBus.emit('app.state.restored', {
+          colorState: loadedState.colorState,
+        });
+        // Mark as restored
+        this.stateRestored = true;
+        logger.info(
+          'DataBootstrap: State restored successfully from PersistenceService',
+        );
       } else {
         logger.info(
-          'DataBootstrap: No state to restore or restoration disabled',
+          'DataBootstrap: No stored state found, starting with defaults',
         );
+        // Initialize with default state
+        appState.setState(persistenceService.getState(), true);
       }
     } catch (error) {
       logger.error('State restoration failed:', { error: error });
@@ -323,6 +199,76 @@ export class DataBootstrap extends BaseBootstrap {
       );
       // Continue without restored state - not fatal
     }
+  }
+
+  async restoreNotesAndConnections(state) {
+    const canvas = document.querySelector('#canvas');
+    if (!canvas) {
+      logger.error('DataBootstrap: Canvas not found for note restoration');
+      return;
+    }
+
+    logger.info('🔍 TRACE restoreNotesAndConnections called', {
+      incomingNoteCount: state.notes.length,
+      incomingNoteIds: state.notes.map((n) => n.id),
+    });
+
+    // Clear existing notes and connections from DOM
+    document.querySelectorAll('.note').forEach((note) => note.remove());
+    document.querySelectorAll('g[data-start]').forEach((conn) => conn.remove());
+
+    // Preserve the loaded colorState during restoration
+    const loadedColorState = state.colorState || {
+      currentColor: 'yellow',
+      notes: {},
+    };
+
+    // Temporarily disable color application during restoration
+    window.noteRestorationInProgress = true;
+
+    // Create notes using NoteBehavior directly for proper ID management
+    const { NoteBehavior } = await import(
+      '../../interactions/behaviors/NoteBehavior.js'
+    );
+    const noteBehavior = new NoteBehavior();
+
+    state.notes.forEach((noteData) => {
+      logger.info('🔍 TRACE Creating DOM note from data', {
+        noteId: noteData.id,
+      });
+      noteBehavior.createNoteFromData(noteData, canvas);
+    });
+
+    // Re-enable color application
+    window.noteRestorationInProgress = false;
+
+    // Create connections
+    state.connections.forEach((conn) => {
+      ConnectionService.createConnection(conn.from, conn.to, conn.type);
+    });
+
+    // Update all connections
+    ConnectionService.updateConnections();
+
+    // Explicitly sync all restored data to appState - don't rely on events
+    appState.setState({
+      notes: state.notes, // Explicitly set notes from restored state
+      connections: state.connections, // Preserve loaded connections
+      colorState: loadedColorState,
+      zoomLevel: state.zoomLevel || 5,
+      canvasType: state.canvasType || 'Standard Canvas',
+    });
+
+    // Emit notes.loaded event for color application
+    eventBus.emit('notes.loaded');
+    logger.info(
+      'Emitted notes.loaded event for color application with colorState:',
+      loadedColorState,
+    );
+
+    logger.info(
+      `Restored ${state.notes.length} notes and ${state.connections.length} connections`,
+    );
   }
 
   async cleanup() {

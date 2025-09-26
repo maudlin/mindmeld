@@ -101,10 +101,14 @@ export class InteractionBootstrap extends BaseBootstrap {
 
       // Global debug flag for E2E tests
       if (typeof window !== 'undefined') {
+        // Import appState for debugging access
+        const { appState } = await import('../../data/observableState.js');
+
         window.mindMeldDebug = {
           modernInputSystemReady: true,
           inputController: this.inputController,
           interactionController: this.interactionController,
+          appState: appState,
           timestamp: Date.now(),
         };
       }

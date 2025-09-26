@@ -157,7 +157,9 @@ describe('Browser Storage Integration', () => {
 
       // Should provide helpful error message with structured logging format
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringMatching(/\[.*\] WARN: Failed to save to localStorage.*Safari Private Browsing mode/i),
+        expect.stringMatching(
+          /\[.*\] WARN: Failed to save to localStorage.*Safari Private Browsing mode/i,
+        ),
       );
 
       consoleSpy.mockRestore();
@@ -233,7 +235,9 @@ describe('Browser Storage Integration', () => {
 
       // Should provide helpful error message with structured logging format
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringMatching(/\[.*\] WARN: Failed to save to localStorage.*Firefox is not yet fully supported/i),
+        expect.stringMatching(
+          /\[.*\] WARN: Failed to save to localStorage.*Firefox is not yet fully supported/i,
+        ),
       );
 
       consoleSpy.mockRestore();

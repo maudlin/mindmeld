@@ -603,7 +603,7 @@ describe('TouchAdapter - Native Gesture Detection', () => {
     });
   });
 
-  // MM-212: Multi-touch Gesture Detection Tests (RED Phase)
+  // Multi-touch Gesture Detection Tests (RED Phase)
   describe('Multi-touch Pinch Gesture Detection', () => {
     beforeEach(async () => {
       await touchAdapter.initialize(mockEventBus);
@@ -678,7 +678,7 @@ describe('TouchAdapter - Native Gesture Detection', () => {
         createTouchEvent('touchstart', [touch1, touch2]),
       );
 
-      // MM-213: Move fingers with larger movement to exceed 15% threshold
+      // Move fingers with larger movement to exceed 15% threshold
       // Initial distance ~283, new distance needs to be >325 for 15% change
       const touch1Moved = createMockTouch(1, 270, 200, mockCanvas); // Further apart
       const touch2Moved = createMockTouch(2, 530, 400, mockCanvas); // Further apart
@@ -751,7 +751,7 @@ describe('TouchAdapter - Native Gesture Detection', () => {
     test('should calculate pan delta from average finger movement', () => {
       const touch1Start = createMockTouch(1, 300, 200, mockCanvas);
       const touch2Start = createMockTouch(2, 500, 400, mockCanvas);
-      // MM-213: Move fingers in parallel to avoid distance change (pure pan)
+      // Move fingers in parallel to avoid distance change (pure pan)
       const touch1End = createMockTouch(1, 350, 250, mockCanvas); // +50, +50
       const touch2End = createMockTouch(2, 550, 450, mockCanvas); // +50, +50
 

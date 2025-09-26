@@ -1,10 +1,10 @@
 // tests/unit/services/noteIdService.test.js
-// MM-256: Test suite for ID collision prevention service
+// Test suite for ID collision prevention service
 
 import { NoteIdService } from '../../../src/js/services/noteIdService.js';
 import { toBase62, fromBase62 } from '../../../src/js/utils/utils.js';
 
-describe('NoteIdService - ID Collision Prevention (MM-256)', () => {
+describe('NoteIdService - ID Collision Prevention', () => {
   beforeEach(() => {
     // Reset ID service state before each test
     NoteIdService.reset();
