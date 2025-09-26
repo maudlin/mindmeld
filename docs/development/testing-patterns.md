@@ -241,7 +241,7 @@ test('removes dangerous URI schemes', () => {
 
 ## Critical Regression Tests
 
-### Data Corruption Prevention (MM-174)
+### Data Corruption Prevention
 
 **File:** `tests/unit/data/refreshPersistenceRegression.test.js`
 
@@ -250,7 +250,6 @@ test('removes dangerous URI schemes', () => {
 **Critical Test:**
 ```javascript
 test('getCurrentState preserves markdown through refresh cycle', () => {
-  // Simulate the corruption scenario that MM-174 addressed
   const noteElement = createNoteWithMarkdown('# Header\n**Bold text**');
 
   // This should return markdown, never HTML

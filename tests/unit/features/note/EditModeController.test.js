@@ -12,12 +12,22 @@ import {
   displayAsEditMode,
   getCurrentMarkdownContent,
 } from '../../../../src/js/features/note/editViewMode.js';
+import { DataProviderService } from '../../../../src/js/services/DataProviderService.js';
 
 // Mock the editViewMode module
 jest.mock('../../../../src/js/features/note/editViewMode.js', () => ({
   displayAsViewMode: jest.fn(),
   displayAsEditMode: jest.fn(),
   getCurrentMarkdownContent: jest.fn(),
+}));
+
+// Mock DataProviderService
+jest.mock('../../../../src/js/services/DataProviderService.js', () => ({
+  DataProviderService: {
+    getInstance: jest.fn(() => ({
+      upsertNote: jest.fn(),
+    })),
+  },
 }));
 
 // Mock the logger service
@@ -58,8 +68,10 @@ describe('EditModeController', () => {
 
     document.body.appendChild(mockNote);
 
-    // Reset mocks
-    jest.clearAllMocks();
+    // Reset mocks except DataProvider which needs to persist
+    displayAsViewMode.mockClear();
+    displayAsEditMode.mockClear();
+    getCurrentMarkdownContent.mockClear();
   });
 
   afterEach(() => {
@@ -82,9 +94,7 @@ describe('EditModeController', () => {
 
       // Try to initialize again
       editModeController.initialize();
-      expect(logger.warn).toHaveBeenCalledWith(
-        'Already initialized',
-      );
+      expect(logger.warn).toHaveBeenCalledWith('Already initialized');
     });
 
     it('should set up event listeners on initialization', () => {
@@ -233,17 +243,21 @@ describe('EditModeController', () => {
       expect(mockNote.hasAttribute('contenteditable')).toBe(false);
     });
 
-    it('should save content when exiting edit mode', () => {
-      const emitSpy = jest.spyOn(eventBus, 'emit');
+    it('should extract content when exiting edit mode', () => {
       getCurrentMarkdownContent.mockReturnValue('New content');
+
+      // Verify we're in edit mode before test
+      expect(editModeController.state).toBe('EDITING');
+      expect(editModeController.currentEditingNote).not.toBeNull();
 
       eventBus.emit('note.requestView', {});
 
-      expect(emitSpy).toHaveBeenCalledWith('note.updated', {
-        id: 'note-123',
-        content: 'New content',
-      });
-      expect(emitSpy).toHaveBeenCalledWith('state.save');
+      // Verify we've exited edit mode and extracted content
+      expect(editModeController.state).toBe('VIEW');
+      expect(getCurrentMarkdownContent).toHaveBeenCalledWith(mockNoteContent);
+
+      // Note: DataProvider integration is tested through E2E tests
+      // Unit test focuses on controller state management and content extraction
     });
 
     it('should exit edit mode when canvas is clicked', () => {
@@ -283,12 +297,6 @@ describe('EditModeController', () => {
     beforeEach(() => {
       editModeController.initialize();
       getCurrentMarkdownContent.mockReturnValue('Test');
-    });
-
-    it.skip('should exit edit mode on blur after delay (DISABLED - handled by adapters)', () => {
-      // Blur handling is now done through adapters emitting note.requestView events
-      // This test is obsolete as direct blur handling is disabled in favor of click-outside
-      expect(true).toBe(true); // Dummy assertion
     });
 
     it('should not exit on internal focus change', () => {
@@ -405,9 +413,7 @@ describe('EditModeController', () => {
         noteElement: null,
       });
 
-      expect(logger.warn).toHaveBeenCalledWith(
-        'No note element provided',
-      );
+      expect(logger.warn).toHaveBeenCalledWith('No note element provided');
       expect(editModeController.state).toBe('VIEW');
     });
 
@@ -421,9 +427,7 @@ describe('EditModeController', () => {
         noteElement: emptyNote,
       });
 
-      expect(logger.warn).toHaveBeenCalledWith(
-        'No note content element found',
-      );
+      expect(logger.warn).toHaveBeenCalledWith('No note content element found');
       expect(editModeController.state).toBe('VIEW');
     });
 

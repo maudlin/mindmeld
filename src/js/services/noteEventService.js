@@ -1,8 +1,6 @@
 // noteEventService.js - Handles note-related events from the event bus
 import { createNoteAtPosition } from '../factories/noteFactory.js';
 import { logger } from './logger.js';
-// MM-171: Legacy event system disabled - using adapter architecture
-// import { addNoteEventListeners } from '../features/note/noteEvents.js';
 import { eventBus } from '../core/eventBus.js';
 
 /**
@@ -37,7 +35,7 @@ export class NoteEventService {
         logger.warn(
           'NoteEventService: NoteBehavior not available, falling back to factory',
         );
-        createNoteAtPosition(canvas, event, null); // MM-171: Legacy disabled
+        createNoteAtPosition(canvas, event, null);
       }
     });
 

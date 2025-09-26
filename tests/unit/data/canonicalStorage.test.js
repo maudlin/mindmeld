@@ -1,7 +1,7 @@
 // tests/unit/data/canonicalStorage.test.js
 
 describe('Canonical Markdown Storage Tests', () => {
-  let storageManager;
+  let canonicalStorage;
   let mockLocalStorage;
 
   const createMockLocalStorage = () => ({
@@ -32,7 +32,7 @@ describe('Canonical Markdown Storage Tests', () => {
       '../../../src/js/data/canonicalStorage.js'
     );
 
-    storageManager = storageModule;
+    canonicalStorage = storageModule;
   });
 
   afterEach(() => {
@@ -55,7 +55,7 @@ describe('Canonical Markdown Storage Tests', () => {
         { id: 'note3', content: '- Item 1\n- Item 2', position: [500, 600] },
       ];
 
-      storageManager.saveNotesToStorage(notes);
+      canonicalStorage.saveNotesToStorage(notes);
 
       const savedData = JSON.parse(mockLocalStorage.getItem('mindmeld-notes'));
       expect(savedData.notes).toHaveLength(3);
@@ -77,7 +77,7 @@ describe('Canonical Markdown Storage Tests', () => {
         { id: 'note4', position: [700, 800] }, // missing content
       ];
 
-      const processedNotes = storageManager.processNotesForStorage(notes);
+      const processedNotes = canonicalStorage.processNotesForStorage(notes);
 
       processedNotes.forEach((note) => {
         expect(note.content).toBe('');
@@ -105,7 +105,7 @@ describe('Canonical Markdown Storage Tests', () => {
       ];
 
       const processedNotes =
-        storageManager.processNotesForStorage(maliciousNotes);
+        canonicalStorage.processNotesForStorage(maliciousNotes);
 
       processedNotes.forEach((note) => {
         expect(note.content).not.toContain('<script>');
@@ -133,7 +133,7 @@ describe('Canonical Markdown Storage Tests', () => {
         { id: 'plain', content: 'Plain text content', position: [500, 600] },
       ];
 
-      const processedNotes = storageManager.processNotesForStorage(htmlNotes);
+      const processedNotes = canonicalStorage.processNotesForStorage(htmlNotes);
 
       expect(processedNotes[0].content).toContain('Title');
       expect(processedNotes[0].content).toContain('Paragraph');
@@ -162,7 +162,8 @@ describe('Canonical Markdown Storage Tests', () => {
         },
       ];
 
-      const processedNotes = storageManager.processNotesForStorage(entityNotes);
+      const processedNotes =
+        canonicalStorage.processNotesForStorage(entityNotes);
 
       expect(processedNotes[0].content).toBe('Encoded');
       expect(processedNotes[0].content).not.toContain('&lt;');
@@ -182,7 +183,8 @@ describe('Canonical Markdown Storage Tests', () => {
         { id: 'plain', content: 'Just plain text', position: [300, 400] },
       ];
 
-      const processedNotes = storageManager.processNotesForStorage(cleanNotes);
+      const processedNotes =
+        canonicalStorage.processNotesForStorage(cleanNotes);
 
       expect(processedNotes[0].content).toBe('# Header\n**Bold** text');
       expect(processedNotes[1].content).toBe('Just plain text');
@@ -193,7 +195,7 @@ describe('Canonical Markdown Storage Tests', () => {
     it('should enforce consistent storage format structure', () => {
       const notes = [{ id: 'note1', content: '# Test', position: [100, 200] }];
 
-      storageManager.saveNotesToStorage(notes);
+      canonicalStorage.saveNotesToStorage(notes);
       const savedData = JSON.parse(mockLocalStorage.getItem('mindmeld-notes'));
 
       expect(savedData).toHaveProperty('version');
@@ -210,7 +212,8 @@ describe('Canonical Markdown Storage Tests', () => {
         { id: 'badpos', content: 'Bad position', position: 'invalid' }, // Invalid: bad position
       ];
 
-      const processedNotes = storageManager.validateAndCleanNotes(invalidNotes);
+      const processedNotes =
+        canonicalStorage.validateAndCleanNotes(invalidNotes);
 
       expect(processedNotes).toHaveLength(1); // Only valid note remains
       expect(processedNotes[0].id).toBe('valid');
@@ -223,7 +226,7 @@ describe('Canonical Markdown Storage Tests', () => {
         { id: 'note3', content: 'Test', position: { x: 500, y: 600 } }, // Object format
       ];
 
-      const processedNotes = storageManager.validateAndCleanNotes(notes);
+      const processedNotes = canonicalStorage.validateAndCleanNotes(notes);
 
       processedNotes.forEach((note) => {
         expect(Array.isArray(note.position)).toBe(true);
@@ -248,7 +251,7 @@ describe('Canonical Markdown Storage Tests', () => {
         const notes = [
           { id: 'test', content: htmlContent, position: [100, 200] },
         ];
-        const processedNotes = storageManager.processNotesForStorage(notes);
+        const processedNotes = canonicalStorage.processNotesForStorage(notes);
 
         expect(processedNotes[0].content).not.toContain('<');
         expect(processedNotes[0].content).not.toContain('>');
@@ -263,7 +266,7 @@ describe('Canonical Markdown Storage Tests', () => {
         { id: 'large', content: largeContent, position: [100, 200] },
       ];
 
-      const processedNotes = storageManager.processNotesForStorage(notes);
+      const processedNotes = canonicalStorage.processNotesForStorage(notes);
 
       expect(processedNotes[0].content.length).toBeLessThanOrEqual(10000); // Truncated to 10KB
     });
@@ -288,7 +291,7 @@ describe('Canonical Markdown Storage Tests', () => {
       ];
 
       const processedNotes =
-        storageManager.processNotesForStorage(dangerousNotes);
+        canonicalStorage.processNotesForStorage(dangerousNotes);
 
       processedNotes.forEach((note) => {
         expect(note.content).not.toContain('javascript:');
@@ -309,8 +312,8 @@ describe('Canonical Markdown Storage Tests', () => {
         { id: 'note2', content: '- Item 1\n- Item 2', position: [300, 400] },
       ];
 
-      const jsonExport = storageManager.exportToJson(notes);
-      const csvExport = storageManager.exportToCsv(notes);
+      const jsonExport = canonicalStorage.exportToJson(notes);
+      const csvExport = canonicalStorage.exportToCsv(notes);
 
       expect(jsonExport).not.toContain('<');
       expect(jsonExport).not.toContain('>');
@@ -334,7 +337,7 @@ describe('Canonical Markdown Storage Tests', () => {
         ],
       };
 
-      const processedData = storageManager.processImportedData(importedData);
+      const processedData = canonicalStorage.processImportedData(importedData);
 
       expect(processedData.notes[0].content).toBe('Title Content');
       expect(processedData.notes[0].content).not.toContain('<h1>');
@@ -353,13 +356,13 @@ describe('Canonical Markdown Storage Tests', () => {
       ];
 
       // Save to storage
-      storageManager.saveNotesToStorage(originalNotes);
+      canonicalStorage.saveNotesToStorage(originalNotes);
 
       // Load from storage
       const loadedData = JSON.parse(mockLocalStorage.getItem('mindmeld-notes'));
 
       // Re-process loaded data
-      const processedNotes = storageManager.processNotesForStorage(
+      const processedNotes = canonicalStorage.processNotesForStorage(
         loadedData.notes,
       );
 
@@ -376,7 +379,7 @@ describe('Canonical Markdown Storage Tests', () => {
       }));
 
       const startTime = performance.now();
-      const processedNotes = storageManager.processNotesForStorage(manyNotes);
+      const processedNotes = canonicalStorage.processNotesForStorage(manyNotes);
       const endTime = performance.now();
 
       expect(processedNotes).toHaveLength(1000);
@@ -391,7 +394,7 @@ describe('Canonical Markdown Storage Tests', () => {
       }));
 
       const startTime = performance.now();
-      storageManager.saveNotesToStorage(largeDataSet);
+      canonicalStorage.saveNotesToStorage(largeDataSet);
       const endTime = performance.now();
 
       expect(mockLocalStorage.setItem).toHaveBeenCalled();
@@ -410,14 +413,14 @@ describe('Canonical Markdown Storage Tests', () => {
       ];
 
       expect(() => {
-        storageManager.saveNotesToStorage(notes);
+        canonicalStorage.saveNotesToStorage(notes);
       }).not.toThrow();
     });
 
     it('should recover from corrupted storage data', () => {
       mockLocalStorage.getItem.mockReturnValue('invalid json data');
 
-      const result = storageManager.loadNotesFromStorage();
+      const result = canonicalStorage.loadNotesFromStorage();
 
       expect(result).toEqual({ notes: [], recovered: false });
     });
@@ -436,7 +439,8 @@ describe('Canonical Markdown Storage Tests', () => {
         undefined,
       ];
 
-      const cleanedNotes = storageManager.validateAndCleanNotes(corruptedNotes);
+      const cleanedNotes =
+        canonicalStorage.validateAndCleanNotes(corruptedNotes);
 
       expect(cleanedNotes).toHaveLength(2); // Only valid notes remain
       expect(cleanedNotes[0].id).toBe('good');

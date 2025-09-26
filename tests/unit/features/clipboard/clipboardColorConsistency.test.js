@@ -1,7 +1,7 @@
 // tests/unit/features/clipboard/clipboardColorConsistency.test.js
-// MM-255: Test for cross-tab color consistency in clipboard operations
+// Test for cross-tab color consistency in clipboard operations
 
-describe('Clipboard Color Consistency (MM-255)', () => {
+describe('Clipboard Color Consistency', () => {
   let DataProviderService;
   let ColorService;
   let mockAppState;
@@ -36,8 +36,17 @@ describe('Clipboard Color Consistency (MM-255)', () => {
       appState: mockAppState,
     }));
 
-    jest.doMock('../../../../src/js/data/storageManager.js', () => ({
-      saveStateToStorage: jest.fn(),
+    jest.doMock('../../../../src/js/services/PersistenceService.js', () => ({
+      persistenceService: {
+        save: jest.fn(),
+        setState: jest.fn(),
+        getState: jest.fn(() => ({
+          notes: [],
+          connections: [],
+          zoomLevel: 5,
+          canvasType: 'Standard Canvas',
+        })),
+      },
     }));
 
     jest.doMock('../../../../src/js/core/eventBus.js', () => ({
@@ -201,11 +210,11 @@ describe('Clipboard Color Consistency (MM-255)', () => {
       const dataProviderService = DataProviderService.getInstance();
       await dataProviderService.importJSON(clipboardData);
 
-      // ASSERT: Only notes with explicit colors should be set
+      // ASSERT: All notes should have colors (explicit or default yellow)
       expect(ColorService.setAllNoteColors).toHaveBeenCalledWith({
         'note-1': { colorScheme: 'blue' },
         'note-2': { colorScheme: 'pink' },
-        // note-3 should not be included (no explicit color)
+        'note-3': { colorScheme: 'yellow' }, // Default yellow for notes without explicit color
       });
     });
 
@@ -232,8 +241,11 @@ describe('Clipboard Color Consistency (MM-255)', () => {
       const dataProviderService = DataProviderService.getInstance();
       await dataProviderService.importJSON(clipboardData);
 
-      // ASSERT: setAllNoteColors should not be called when no color data exists
-      expect(ColorService.setAllNoteColors).not.toHaveBeenCalled();
+      // ASSERT: setAllNoteColors should be called with default yellow for all notes
+      expect(ColorService.setAllNoteColors).toHaveBeenCalledWith({
+        'note-1': { colorScheme: 'yellow' }, // Default yellow for notes without explicit color
+        'note-2': { colorScheme: 'yellow' }, // Default yellow for notes without explicit color
+      });
     });
   });
 

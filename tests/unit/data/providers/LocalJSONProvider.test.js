@@ -7,7 +7,7 @@ describe('LocalJSONProvider TDD Tests', () => {
   let LocalJSONProvider;
   let provider;
   let mockDataStore;
-  let mockStorageManager;
+  let mockPersistenceService;
   let mockAppState;
   let mockEventBus;
 
@@ -32,11 +32,16 @@ describe('LocalJSONProvider TDD Tests', () => {
       clearAllNotesAndConnections: jest.fn(),
     };
 
-    mockStorageManager = {
-      saveStateToStorage: jest.fn(),
-      loadStateFromStorage: jest.fn(),
-      clearStateFromStorage: jest.fn(),
-      setupStateListeners: jest.fn(),
+    mockPersistenceService = {
+      save: jest.fn(),
+      setState: jest.fn(),
+      clear: jest.fn(),
+      getState: jest.fn(() => ({
+        notes: [],
+        connections: [],
+        zoomLevel: 5,
+        canvasType: 'Standard Canvas',
+      })),
     };
 
     mockAppState = {
@@ -60,10 +65,9 @@ describe('LocalJSONProvider TDD Tests', () => {
 
     // Mock the imports
     jest.doMock('../../../../src/js/data/dataStore.js', () => mockDataStore);
-    jest.doMock(
-      '../../../../src/js/data/storageManager.js',
-      () => mockStorageManager,
-    );
+    jest.doMock('../../../../src/js/services/PersistenceService.js', () => ({
+      persistenceService: mockPersistenceService,
+    }));
     jest.doMock('../../../../src/js/data/observableState.js', () => ({
       appState: mockAppState,
     }));
@@ -135,7 +139,7 @@ describe('LocalJSONProvider TDD Tests', () => {
       provider.upsertNote({ id: 'test', content: 'test' }, { origin: 'user' });
 
       // Should not trigger autosave during hydration
-      expect(mockStorageManager.saveStateToStorage).not.toHaveBeenCalled();
+      expect(mockPersistenceService.setState).not.toHaveBeenCalled();
     });
 
     test('should allow autosave when hydrationInProgress is false', () => {
@@ -144,7 +148,7 @@ describe('LocalJSONProvider TDD Tests', () => {
       provider.upsertNote({ id: 'test', content: 'test' }, { origin: 'user' });
 
       // Should trigger autosave when not hydrating
-      expect(mockAppState.saveToLocalStorage).toHaveBeenCalled();
+      expect(mockPersistenceService.setState).toHaveBeenCalled();
     });
   });
 
@@ -155,19 +159,19 @@ describe('LocalJSONProvider TDD Tests', () => {
         { origin: 'system' },
       );
 
-      expect(mockStorageManager.saveStateToStorage).not.toHaveBeenCalled();
+      expect(mockPersistenceService.setState).not.toHaveBeenCalled();
     });
 
     test('should trigger autosave for USER origin operations', () => {
       provider.upsertNote({ id: 'test', content: 'test' }, { origin: 'user' });
 
-      expect(mockAppState.saveToLocalStorage).toHaveBeenCalled();
+      expect(mockPersistenceService.setState).toHaveBeenCalled();
     });
 
     test('should default to USER origin when not specified', () => {
       provider.upsertNote({ id: 'test', content: 'test' });
 
-      expect(mockAppState.saveToLocalStorage).toHaveBeenCalled();
+      expect(mockPersistenceService.setState).toHaveBeenCalled();
     });
 
     test('should respect autosaveEnabled flag', () => {
@@ -175,7 +179,7 @@ describe('LocalJSONProvider TDD Tests', () => {
 
       provider.upsertNote({ id: 'test', content: 'test' }, { origin: 'user' });
 
-      expect(mockStorageManager.saveStateToStorage).not.toHaveBeenCalled();
+      expect(mockPersistenceService.setState).not.toHaveBeenCalled();
     });
   });
 
@@ -415,7 +419,7 @@ describe('LocalJSONProvider TDD Tests', () => {
 
       provider.upsertNote({ id: 'test', content: 'test' }, { origin: 'user' });
 
-      expect(mockStorageManager.saveStateToStorage).not.toHaveBeenCalled();
+      expect(mockPersistenceService.setState).not.toHaveBeenCalled();
     });
   });
 
@@ -460,20 +464,28 @@ describe('LocalJSONProvider TDD Tests', () => {
 
   describe('Snapshot Operations', () => {
     test('should return current state snapshot', () => {
-      const mockState = {
+      // Mock the PersistenceService state format
+      const mockPersistenceState = {
         notes: [{ id: '1', content: 'test' }],
         connections: [{ from: '1', to: '2', type: 1 }],
         zoomLevel: 3.0,
       };
-      mockDataStore.getCurrentState.mockReturnValue(mockState);
+      mockPersistenceService.getState.mockReturnValue(mockPersistenceState);
+
+      // Expected output format (with added left/top properties)
+      const expectedOutput = {
+        notes: [{ id: '1', content: 'test', left: '0px', top: '0px' }],
+        connections: [{ from: '1', to: '2', type: 1 }],
+        zoomLevel: 3.0,
+      };
 
       const snapshot = provider.getSnapshot();
 
-      expect(snapshot).toEqual({ data: mockState });
+      expect(snapshot).toEqual({ data: expectedOutput });
     });
 
     test('should handle empty state gracefully', () => {
-      mockDataStore.getCurrentState.mockReturnValue({
+      mockPersistenceService.getState.mockReturnValue({
         notes: [],
         connections: [],
         zoomLevel: 5,

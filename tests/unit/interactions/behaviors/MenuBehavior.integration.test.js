@@ -78,8 +78,10 @@ describe('MenuBehavior - Server Connection Integration', () => {
       importFromJSON: jest.fn(),
     }));
 
-    jest.doMock('../../../../src/js/data/storageManager.js', () => ({
-      clearAllState: jest.fn(),
+    jest.doMock('../../../../src/js/services/PersistenceService.js', () => ({
+      persistenceService: {
+        clear: jest.fn(),
+      },
     }));
 
     jest.doMock('../../../../src/js/services/notificationManager.js', () => ({
@@ -162,7 +164,7 @@ describe('MenuBehavior - Server Connection Integration', () => {
       });
     });
 
-    describe('handleMenuAction - server save/load (MM-106)', () => {
+    describe('handleMenuAction - server save/load', () => {
       let mockServerClient;
 
       beforeEach(() => {

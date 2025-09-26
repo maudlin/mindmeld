@@ -7,14 +7,13 @@
 
 import { BaseBootstrap } from './BaseBootstrap.js';
 import { eventBus } from '../eventBus.js';
-import {
-  initializeDataStore,
-  updateNotesAndConnections,
-} from '../../data/dataStore.js';
+import { initializeDataStore } from '../../data/dataStore.js';
+import { ConnectionService } from '../../services/connectionService.js';
 import { logger } from '../../services/logger.js';
 import { appState } from '../../data/observableState.js';
 import { ZoomStateService } from '../../services/zoomStateService.js';
 import { DataProviderService } from '../../services/DataProviderService.js';
+import { persistenceService } from '../../services/PersistenceService.js';
 import { isDebugEnabled, getProviderType } from '../featureFlags.js';
 export class DataBootstrap extends BaseBootstrap {
   constructor() {
@@ -140,42 +139,58 @@ export class DataBootstrap extends BaseBootstrap {
     }
 
     try {
-      // Check if we should restore state (has localStorage and current state is empty)
-      const currentState = appState.getState();
-      const hasStoredState = localStorage.getItem('mindmeld_state');
+      // Initialize PersistenceService and check for stored state
+      const hasStoredState = persistenceService.initialize();
 
-      if (hasStoredState && currentState.notes.length === 0) {
-        // Load state from localStorage using observableState
-        const restored = appState.loadFromLocalStorage();
+      if (hasStoredState) {
+        const loadedState = persistenceService.getState();
+        logger.info('DataBootstrap: Loaded state from PersistenceService:', {
+          noteCount: loadedState.notes.length,
+          connectionCount: loadedState.connections.length,
+          noteIds: loadedState.notes.map((n) => n.id),
+        });
+        logger.info('Loaded colorState:', loadedState.colorState);
 
-        if (restored) {
-          const loadedState = appState.getState();
-          logger.info('DataBootstrap: Loaded state from storage:', loadedState);
-          logger.info('Loaded colorState:', loadedState.colorState);
+        // Sync PersistenceService state to appState for UI
+        appState.setState(loadedState, true); // silent to avoid autosave
 
-          // Apply the loaded state to the UI
-          updateNotesAndConnections(loadedState);
+        // Initialize noteIdService with existing IDs to prevent collisions
+        const { NoteIdService } = await import(
+          '../../services/noteIdService.js'
+        );
+        NoteIdService.ensureUniqueIds(loadedState.notes);
+        logger.info(
+          'NoteIdService: Initialized with existing note IDs:',
+          loadedState.notes.map((n) => n.id),
+        );
 
-          // Restore zoom level to zoomManager
-          ZoomStateService.restoreZoomLevel();
+        // Apply the loaded state to the UI
+        await this.restoreNotesAndConnections(loadedState);
 
-          // Note: Canvas type restoration will be handled after UI is initialized
-          // since it requires canvas element to be available
+        // Restore zoom level to zoomManager
+        ZoomStateService.restoreZoomLevel();
 
-          this.stateRestored = true;
-          logger.info('DataBootstrap: State restored from storage');
+        // Note: Canvas type restoration will be handled after UI is initialized
+        // since it requires canvas element to be available
 
-          // Emit event to notify components that state has been restored
-          eventBus.emit('app.state.restored', {
-            colorState: loadedState.colorState,
-          });
-        } else {
-          logger.info('DataBootstrap: Failed to load state from storage');
-        }
+        this.stateRestored = true;
+        logger.info('DataBootstrap: State restored from storage');
+
+        // Emit event to notify components that state has been restored
+        eventBus.emit('app.state.restored', {
+          colorState: loadedState.colorState,
+        });
+        // Mark as restored
+        this.stateRestored = true;
+        logger.info(
+          'DataBootstrap: State restored successfully from PersistenceService',
+        );
       } else {
         logger.info(
-          'DataBootstrap: No state to restore or restoration disabled',
+          'DataBootstrap: No stored state found, starting with defaults',
         );
+        // Initialize with default state
+        appState.setState(persistenceService.getState(), true);
       }
     } catch (error) {
       logger.error('State restoration failed:', { error: error });
@@ -184,6 +199,76 @@ export class DataBootstrap extends BaseBootstrap {
       );
       // Continue without restored state - not fatal
     }
+  }
+
+  async restoreNotesAndConnections(state) {
+    const canvas = document.querySelector('#canvas');
+    if (!canvas) {
+      logger.error('DataBootstrap: Canvas not found for note restoration');
+      return;
+    }
+
+    logger.info('🔍 TRACE restoreNotesAndConnections called', {
+      incomingNoteCount: state.notes.length,
+      incomingNoteIds: state.notes.map((n) => n.id),
+    });
+
+    // Clear existing notes and connections from DOM
+    document.querySelectorAll('.note').forEach((note) => note.remove());
+    document.querySelectorAll('g[data-start]').forEach((conn) => conn.remove());
+
+    // Preserve the loaded colorState during restoration
+    const loadedColorState = state.colorState || {
+      currentColor: 'yellow',
+      notes: {},
+    };
+
+    // Temporarily disable color application during restoration
+    window.noteRestorationInProgress = true;
+
+    // Create notes using NoteBehavior directly for proper ID management
+    const { NoteBehavior } = await import(
+      '../../interactions/behaviors/NoteBehavior.js'
+    );
+    const noteBehavior = new NoteBehavior();
+
+    state.notes.forEach((noteData) => {
+      logger.info('🔍 TRACE Creating DOM note from data', {
+        noteId: noteData.id,
+      });
+      noteBehavior.createNoteFromData(noteData, canvas);
+    });
+
+    // Re-enable color application
+    window.noteRestorationInProgress = false;
+
+    // Create connections
+    state.connections.forEach((conn) => {
+      ConnectionService.createConnection(conn.from, conn.to, conn.type);
+    });
+
+    // Update all connections
+    ConnectionService.updateConnections();
+
+    // Explicitly sync all restored data to appState - don't rely on events
+    appState.setState({
+      notes: state.notes, // Explicitly set notes from restored state
+      connections: state.connections, // Preserve loaded connections
+      colorState: loadedColorState,
+      zoomLevel: state.zoomLevel || 5,
+      canvasType: state.canvasType || 'Standard Canvas',
+    });
+
+    // Emit notes.loaded event for color application
+    eventBus.emit('notes.loaded');
+    logger.info(
+      'Emitted notes.loaded event for color application with colorState:',
+      loadedColorState,
+    );
+
+    logger.info(
+      `Restored ${state.notes.length} notes and ${state.connections.length} connections`,
+    );
   }
 
   async cleanup() {

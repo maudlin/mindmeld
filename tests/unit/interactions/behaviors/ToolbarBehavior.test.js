@@ -3,7 +3,7 @@
  *
  * Tests the unified toolbar behavior that handles color picker and context-sensitive actions.
  * Follows Adapter-Behavior pattern with clean separation of input detection and business logic.
- * Part of MM-251 Context-Sensitive Toolbar Architecture Refactor.
+ * Part of Context-Sensitive Toolbar Architecture Refactor.
  */
 
 import { ToolbarBehavior } from '../../../../src/js/interactions/behaviors/ToolbarBehavior.js';

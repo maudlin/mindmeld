@@ -9,6 +9,7 @@ import {
 } from '../features/zoom/viewportAdapter.js';
 import { logger } from '../services/logger.js';
 import { notificationManager } from '../services/notificationManager.js';
+import { persistenceService } from '../services/PersistenceService.js';
 export function setupUI(elements) {
   populateCanvasStyleDropdown(elements);
   setupExportImport(elements.menu, elements.canvas);
@@ -188,22 +189,18 @@ function setupClearCanvas() {
         'Are you sure you want to clear the canvas?',
       );
       if (confirmed) {
-        // Clear localStorage and reset state
-        appState.clearLocalStorage();
-        appState.setState({
-          notes: [],
-          connections: [],
-          zoomLevel: 5,
-          colorState: {
-            currentColor: 'yellow',
-            notes: {},
-          },
-        });
+        // Use PersistenceService for clean state clearing
+        persistenceService.clear();
+
+        // Sync cleared state to appState for UI consistency
+        const clearedState = persistenceService.getState();
+        appState.setState(clearedState, true); // silent to avoid autosave
+
         // Clear DOM elements
         clearAllNotesAndConnections();
 
         notificationManager.success('Canvas cleared successfully!');
-        logger.info('All state cleared, local storage cleared, and UI reset');
+        logger.info('PersistenceService: All state cleared completely');
       }
     });
   }

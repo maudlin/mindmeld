@@ -3,7 +3,7 @@
  *
  * Unified behavior for note clicks, selection, and edit mode requests.
  * Receives input from both DesktopAdapter and TouchAdapter.
- * Fixes MM-183: Styled content can now be clicked to enter edit mode.
+ * Styled content can now be clicked to enter edit mode.
  */
 
 import { noteManager } from '../../services/noteManager.js';
@@ -43,7 +43,7 @@ export class NoteBehavior {
 
   /**
    * Handle note click from any adapter
-   * Fixes MM-183: Unified handling for both normal and styled content
+   * Unified handling for both normal and styled content
    */
   handleNoteClick(noteElement, event, inputType) {
     if (!noteElement) {
@@ -62,7 +62,7 @@ export class NoteBehavior {
     }
 
     // Detect styled content using event composition path
-    // This solves MM-183: styled elements like <strong>, <h1>, <em> are now clickable
+    // Styled elements like <strong>, <h1>, <em> are now clickable
     const clickedElement = event.target;
 
     // Handle direct clicks on note content or its children
@@ -174,7 +174,7 @@ export class NoteBehavior {
 
   /**
    * Create note at specified position using modern ID management
-   * MM-256: Prevents ID collisions with existing notes
+   * Prevents ID collisions with existing notes
    */
   createNoteAtPosition(canvas, event) {
     if (!canvas || !event) {
@@ -214,7 +214,7 @@ export class NoteBehavior {
 
   /**
    * Create note with collision-free ID generation
-   * MM-256: Uses NoteIdService to prevent duplicate IDs
+   * Uses NoteIdService to prevent duplicate IDs
    */
   createNote(x, y, canvas) {
     if (!canvas) {
@@ -248,7 +248,7 @@ export class NoteBehavior {
       note.style.width = `${config?.noteSize?.width || 200}px`;
       note.style.padding = `${config?.noteSize?.padding || 10}px`;
 
-      // MM-256: Use collision-free ID generation
+      // Use collision-free ID generation
       const noteId = NoteIdService.generateNextId();
       note.id = noteId;
       note.dataset.id = noteId;
@@ -289,7 +289,7 @@ export class NoteBehavior {
 
   /**
    * Create note from data (import/restore scenarios)
-   * MM-256: Uses provided ID without affecting counter
+   * Uses provided ID without affecting counter
    */
   createNoteFromData(noteData, canvas) {
     if (!noteData || !canvas) {
@@ -345,7 +345,7 @@ export class NoteBehavior {
 
   /**
    * Ensure future generated IDs won't collide with existing notes
-   * MM-256: Updates ID service counter based on existing notes
+   * Updates ID service counter based on existing notes
    */
   ensureUniqueIds(existingNotes) {
     try {

@@ -45,6 +45,7 @@ This document provides a complete navigation guide for the MindMeld codebase. Us
 - **`noteIdService.js`** - Unique note ID generation and management
 - **`noteEventService.js`** - Note event coordination (being consolidated)
 - **`connectionService.js`** - Note connection handling and validation
+- **`PersistenceService.js`** - Single source of truth for all state persistence
 
 ### Specialized Services
 - **`markdownContentService.js`** - Markdown processing and content handling
@@ -75,7 +76,6 @@ This document provides a complete navigation guide for the MindMeld codebase. Us
 ### Data Management
 - **`dataStore.js`** - Application state management and persistence
 - **`observableState.js`** - Reactive state management system
-- **`storageManager.js`** - Legacy storage (being migrated out - MM-266)
 - **`canonicalStorage.js`** - Canonical data format and validation
 - **`DataProviderCompatibility.js`** - Provider compatibility layer
 
@@ -238,12 +238,6 @@ import { BaseClass } from './BaseClass.js';
 
 ### Data Flow
 `User Action` → `Behavior` → `DataProvider` → `Storage` → `Change Event` → `UI Update`
-
-## Migration Status
-
-### Active Migrations
-- **MM-266**: `storageManager.js` → DataProvider pattern
-- **MM-258**: Note service consolidation (`noteManager.js`, `noteEventService.js` → unified service)
 
 ### Stable Components
 - Bootstrap system architecture

@@ -2,7 +2,7 @@
 import { test, expect } from '@playwright/test';
 import { CanvasPage } from './helpers/CanvasPage.js';
 
-test.describe('Server Save/Load - E2E (MM-106)', () => {
+test.describe('Server Save/Load - E2E', () => {
   let canvasPage;
 
   test.beforeEach(async ({ page }) => {

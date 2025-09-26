@@ -1,6 +1,6 @@
 // tests/unit/integration/eventFlow.test.js
 /**
- * MM-99: Event Flow Integration Tests
+ * Event Flow Integration Tests
  *
  * Tests the complete event-driven architecture for end-to-end workflows.
  * Validates communication between services, proper event propagation,
@@ -89,7 +89,7 @@ class SimpleTestApp {
   }
 }
 
-describe('MM-99: Event Flow Integration Tests', () => {
+describe('Event Flow Integration Tests', () => {
   let testApp;
   let testElements = [];
   let eventLog = [];

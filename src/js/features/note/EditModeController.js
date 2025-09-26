@@ -45,7 +45,9 @@ class EditModeController {
     eventBus.on('note.requestView', (data) => this.handleViewRequest(data));
 
     // Listen for external triggers to exit edit mode
-    eventBus.on('canvas.clicked', () => this.exitEditMode());
+    eventBus.on('canvas.clicked', () => {
+      this.exitEditMode();
+    });
     eventBus.on('note.selected', (data) => {
       // Exit edit mode if a different note is selected
       if (this.currentEditingNote && this.currentEditingNote.id !== data.id) {

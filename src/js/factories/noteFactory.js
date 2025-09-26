@@ -63,13 +63,15 @@ export function createNote(x, y, canvas, addEventListeners = null) {
   note.id = noteId;
   note.dataset.id = noteId;
 
-  // Emit event instead of direct dataStore call
-  eventBus.emit('note.created', {
-    id: noteId,
-    content: '',
-    left: note.style.left,
-    top: note.style.top,
-  });
+  // Emit event instead of direct dataStore call (unless disabled during restoration)
+  if (!globalThis.disableFactoryEvents) {
+    eventBus.emit('note.created', {
+      id: noteId,
+      content: '',
+      left: note.style.left,
+      top: note.style.top,
+    });
+  }
 
   // Prevent accidental note deletion with backspace/delete on empty content
   noteContent.addEventListener('keydown', function (event) {

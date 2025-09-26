@@ -1,5 +1,5 @@
 /**
- * Storage Quota Exhaustion Tests (MM-160 Priority 1)
+ * Storage Quota Exhaustion Tests
  *
  * Comprehensive testing for localStorage quota scenarios including:
  * - Progressive quota consumption detection

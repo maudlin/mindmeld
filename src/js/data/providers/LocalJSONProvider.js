@@ -1,5 +1,5 @@
 // src/js/data/providers/LocalJSONProvider.js
-// LocalJSONProvider - Wraps existing dataStore/storageManager behind DataProvider interface
+// LocalJSONProvider - Wraps existing dataStore behind DataProvider interface
 
 import { DataProvider, ORIGIN } from './DataProvider.js';
 import * as dataStore from '../dataStore.js';
@@ -7,11 +7,12 @@ import { appState } from '../observableState.js';
 import { debounce } from '../../utils/utils.js';
 import { logger } from '../../services/logger.js';
 import { eventBus } from '../../core/eventBus.js';
+import { persistenceService } from '../../services/PersistenceService.js';
 
 /**
  * LocalJSONProvider implements DataProvider interface by wrapping existing
- * dataStore and storageManager. Provides autosave race prevention and
- * hydration guards for MM-234.
+ * dataStore and PersistenceService. Provides autosave race prevention and
+ * hydration guards
  */
 export class LocalJSONProvider extends DataProvider {
   constructor() {
@@ -27,7 +28,7 @@ export class LocalJSONProvider extends DataProvider {
     // Canvas reference for DOM operations
     this.canvas = null;
 
-    // Create debounced autosave function (300ms delay like original storageManager)
+    // Create debounced autosave function (300ms delay for optimal performance)
     this._debouncedAutosave = debounce(this._performAutosave.bind(this), 300);
   }
 
@@ -111,9 +112,10 @@ export class LocalJSONProvider extends DataProvider {
    * @private
    */
   _performAutosave() {
-    // Use maintained state instead of expensive DOM scraping
-    // This is faster and works consistently for local/remote saves
-    appState.saveToLocalStorage();
+    // Use PersistenceService for clean, race-condition-free saves
+    // Sync current appState to PersistenceService
+    const currentState = appState.getState();
+    persistenceService.setState(currentState);
   }
 
   /**
@@ -121,7 +123,25 @@ export class LocalJSONProvider extends DataProvider {
    * @returns {{ data: { n:any[], c:any[] } }}
    */
   getSnapshot() {
-    const currentState = dataStore.getCurrentState();
+    // Use PersistenceService as single source of truth
+    const state = persistenceService.getState();
+    // Convert to legacy format for backward compatibility
+    const currentState = {
+      notes: (state.notes || []).map((note) => ({
+        id: note.id,
+        content: note.content || '',
+        left:
+          typeof note.pos?.[0] === 'number'
+            ? `${note.pos[0]}px`
+            : note.left || '0px',
+        top:
+          typeof note.pos?.[1] === 'number'
+            ? `${note.pos[1]}px`
+            : note.top || '0px',
+      })),
+      connections: state.connections || [],
+      zoomLevel: state.zoomLevel || 1,
+    };
     return { data: currentState };
   }
 

@@ -58,8 +58,6 @@ describe('Utility Functions', () => {
     });
   });
 
-  // Note: log() function removed as part of MM-272 structured logging migration
-
   describe('truncateNoteContent', () => {
     it('should truncate content exceeding the limit', () => {
       const content = 'a'.repeat(NOTE_CONTENT_LIMIT + 10);

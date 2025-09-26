@@ -3,7 +3,7 @@
  *
  * Tests the unified note interaction behavior that handles click detection,
  * edit mode requests, and selection logic for both normal and styled content.
- * Addresses MM-183 bug where styled content couldn't be clicked to enter edit mode.
+ * Addresses bug where styled content couldn't be clicked to enter edit mode.
  */
 
 import { NoteBehavior } from '../../../../src/js/interactions/behaviors/NoteBehavior.js';
@@ -127,7 +127,7 @@ describe('NoteBehavior', () => {
       });
     });
 
-    describe('Styled Content Clicks (MM-183 Bug Fix)', () => {
+    describe('Styled Content Clicks', () => {
       test('should handle click on bold text', () => {
         const mockStrongElement = {
           tagName: 'STRONG',
@@ -438,15 +438,30 @@ describe('NoteBehavior', () => {
     });
   });
 
-  // MM-256: Note Creation Methods (Behavior Refactor)
-  describe('Note Creation (MM-256 Behavior Refactor)', () => {
+  // Note Creation Methods (Behavior Refactor)
+  describe('Note Creation', () => {
     let mockCanvas;
+    let mockDataProvider;
 
     beforeEach(async () => {
       await noteBehavior.initialize();
 
       // Reset ID service for each test
       NoteIdService.reset();
+
+      // Create mock DataProvider
+      mockDataProvider = {
+        upsertNote: jest.fn(),
+        deleteNote: jest.fn(),
+      };
+
+      // Mock DataProviderService
+      const { DataProviderService } = await import(
+        '../../../../src/js/services/DataProviderService.js'
+      );
+      jest
+        .spyOn(DataProviderService, 'getInstance')
+        .mockReturnValue(mockDataProvider);
 
       // Create mock canvas element
       mockCanvas = {
@@ -495,12 +510,7 @@ describe('NoteBehavior', () => {
         expect(note.id).toBe('1'); // First ID from NoteIdService
         expect(note.dataset.id).toBe('1');
         expect(mockCanvas.appendChild).toHaveBeenCalledWith(note);
-        expect(mockEventBus.emit).toHaveBeenCalledWith('note.created', {
-          id: '1',
-          content: '',
-          left: expect.any(String),
-          top: expect.any(String),
-        });
+        // Note: note.created event no longer emitted - handled by DataProvider pattern
       });
 
       test('should generate sequential unique IDs for multiple notes', () => {
@@ -664,17 +674,20 @@ describe('NoteBehavior', () => {
     });
 
     describe('Integration with Legacy Factory', () => {
-      test('should emit same events as legacy factory', () => {
+      test('should call DataProvider with integrated color data', () => {
         const mockEvent = { clientX: 100, clientY: 100 };
 
         noteBehavior.createNoteAtPosition(mockCanvas, mockEvent);
 
-        expect(mockEventBus.emit).toHaveBeenCalledWith('note.created', {
-          id: '1',
-          content: '',
-          left: expect.any(String),
-          top: expect.any(String),
-        });
+        expect(mockDataProvider.upsertNote).toHaveBeenCalledWith(
+          {
+            id: '1',
+            content: '',
+            pos: [expect.any(Number), expect.any(Number)],
+            color: expect.any(String),
+          },
+          { origin: 'user' },
+        );
       });
 
       test('should create DOM structure compatible with legacy system', () => {

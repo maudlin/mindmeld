@@ -18,6 +18,12 @@ import { getCurrentMarkdownContent } from '../features/note/editViewMode.js';
 export function addNote(note) {
   const currentNotes = appState.getState().notes;
 
+  logger.info('🔍 TRACE addNote called', {
+    newNoteId: note.id,
+    currentNoteCount: currentNotes.length,
+    currentNoteIds: currentNotes.map((n) => n.id),
+  });
+
   // Prevent duplicate notes during state restoration
   const existingNote = currentNotes.find((n) => n.id === note.id);
   if (existingNote) {
@@ -27,17 +33,39 @@ export function addNote(note) {
     return note;
   }
 
-  appState.setState({ notes: [...currentNotes, note] });
+  const newNotes = [...currentNotes, note];
+  logger.info('🔍 TRACE addNote updating appState', {
+    oldCount: currentNotes.length,
+    newCount: newNotes.length,
+    newNoteIds: newNotes.map((n) => n.id),
+  });
+
+  appState.setState({ notes: newNotes });
   return note;
 }
 
 export function updateNote(id, updatedNote) {
   const currentNotes = appState.getState().notes;
   const index = currentNotes.findIndex((note) => note.id === id);
+
+  logger.info('🔍 TRACE updateNote called', {
+    noteId: id,
+    currentNoteCount: currentNotes.length,
+    currentNoteIds: currentNotes.map((n) => n.id),
+    foundIndex: index,
+  });
+
   if (index !== -1) {
     const updatedNotes = [...currentNotes];
     // eslint-disable-next-line security/detect-object-injection
     updatedNotes[index] = { ...updatedNotes[index], ...updatedNote };
+
+    logger.info('🔍 TRACE updateNote updating appState', {
+      oldCount: currentNotes.length,
+      newCount: updatedNotes.length,
+      newNoteIds: updatedNotes.map((n) => n.id),
+    });
+
     appState.setState({ notes: updatedNotes });
   }
 }
@@ -45,63 +73,20 @@ export function updateNote(id, updatedNote) {
 export function deleteNoteById(id) {
   const currentNotes = appState.getState().notes;
   const updatedNotes = currentNotes.filter((note) => note.id !== id);
+
+  logger.info('🔍 TRACE deleteNoteById called', {
+    deletedNoteId: id,
+    oldCount: currentNotes.length,
+    newCount: updatedNotes.length,
+    oldNoteIds: currentNotes.map((n) => n.id),
+    newNoteIds: updatedNotes.map((n) => n.id),
+  });
+
   appState.setState({ notes: updatedNotes });
 }
 
 export function getNotes() {
   return appState.getState().notes;
-}
-
-export function updateNotesAndConnections(state) {
-  const canvas = document.querySelector('#canvas');
-
-  // Clear existing notes and connections from DOM only
-  NoteService.clearAllNotes();
-  document.querySelectorAll('g[data-start]').forEach((conn) => conn.remove());
-
-  // Preserve the loaded colorState during restoration
-  const loadedColorState = state.colorState || {
-    currentColor: 'yellow',
-    notes: {},
-  };
-
-  // Temporarily disable color application during restoration
-  window.noteRestorationInProgress = true;
-
-  // Create notes using NoteService directly - DataProvider will handle the proper behavior delegation
-  state.notes.forEach((noteData) => {
-    NoteService.createNoteFromData(noteData, canvas);
-  });
-
-  // Re-enable color application
-  window.noteRestorationInProgress = false;
-
-  // Create connections
-  state.connections.forEach((conn) => {
-    ConnectionService.createConnection(conn.from, conn.to, conn.type);
-  });
-
-  // Update all connections
-  ConnectionService.updateConnections();
-
-  // Ensure colorState and connections are preserved in appState after all operations
-  const currentState = appState.getState();
-  appState.setState({
-    ...currentState,
-    connections: state.connections, // Preserve loaded connections
-    colorState: loadedColorState,
-  });
-
-  // Emit notes.loaded event for color application (same as import process)
-  eventBus.emit('notes.loaded');
-  logger.info(
-    'Emitted notes.loaded event for color application with colorState:',
-    loadedColorState,
-  );
-
-  logger.info(
-    `Updated ${state.notes.length} notes and ${state.connections.length} connections`,
-  );
 }
 
 const debouncedUpdateConnection = debounce((startId, endId, type) => {

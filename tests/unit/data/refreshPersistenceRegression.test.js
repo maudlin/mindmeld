@@ -1,10 +1,10 @@
 /**
- * REGRESSION TEST: Page Refresh Markdown Corruption Prevention (MM-174)
+ * REGRESSION TEST: Page Refresh Markdown Corruption Prevention
  *
  * CRITICAL REGRESSION TEST: Ensures markdown content is never corrupted during page refreshes.
  * Prevents return of the critical bug: MD -> HTML -> stripped text corruption.
  *
- * BUG HISTORY: MM-174 - Fixed in getCurrentState() to use getCurrentMarkdownContent()
+ * Fixed in getCurrentState() to use getCurrentMarkdownContent()
  * instead of innerHTML to prevent HTML from being saved to localStorage.
  *
  * This test MUST pass to prevent data loss regression.
@@ -43,7 +43,7 @@ Object.defineProperty(window, 'localStorage', {
   value: mockLocalStorage,
 });
 
-describe('REGRESSION: Page Refresh Markdown Corruption (MM-174)', () => {
+describe('REGRESSION: Page Refresh Markdown Corruption', () => {
   beforeEach(() => {
     mockLocalStorage.clear();
     jest.clearAllMocks();
@@ -51,7 +51,7 @@ describe('REGRESSION: Page Refresh Markdown Corruption (MM-174)', () => {
 
   describe('⚠️ CRITICAL: getCurrentState Must Never Save HTML', () => {
     it('REGRESSION TEST: getCurrentState must return markdown content, never HTML', () => {
-      // BACKGROUND: MM-174 - getCurrentState was reading innerHTML instead of markdown
+      // BACKGROUND: getCurrentState was reading innerHTML instead of markdown
       // IMPACT: Page refreshes would save HTML to localStorage, causing corruption
       // FIX: Modified getCurrentState() to use getCurrentMarkdownContent()
 
@@ -88,7 +88,6 @@ describe('REGRESSION: Page Refresh Markdown Corruption (MM-174)', () => {
     });
 
     it('REGRESSION TEST: Page refresh simulation must preserve markdown integrity', () => {
-      // Simulate the complete page refresh cycle that was broken in MM-174
       const originalMarkdown = '# Header\n- List item\n**Bold text**';
 
       // Step 1: Initial save (normal operation)
@@ -225,31 +224,6 @@ describe('REGRESSION: Page Refresh Markdown Corruption (MM-174)', () => {
       expect(loaded.notes[1].content).toBe('- Item 1\n- Item 2');
 
       console.log('✅ Canonical storage preserving markdown correctly');
-    });
-  });
-
-  describe('📚 Historical Context', () => {
-    it('documents the original bug behavior (for understanding)', () => {
-      // This test documents what the bug WAS, not what it should be
-      // It helps future developers understand the issue we fixed
-
-      const markdownContent = '# H1';
-      const corruptedHtmlContent = '<h1>H1</h1>';
-      const finalCorruptedContent = 'H1'; // After defang strips HTML
-
-      // Simulate what WOULD have happened with the bug
-      const buggyResult = defangToPlainText(corruptedHtmlContent, true);
-      expect(buggyResult).toBe(finalCorruptedContent);
-
-      // Show the corruption path
-      console.log('📚 HISTORICAL: Bug corruption path:');
-      console.log(`  Original: "${markdownContent}"`);
-      console.log(`  After bug: "${corruptedHtmlContent}"`);
-      console.log(`  After defang: "${buggyResult}"`);
-      console.log('  ❌ This is what we PREVENTED with MM-174 fix');
-
-      // The fix ensures this path never happens
-      expect(markdownContent).not.toBe(buggyResult); // Shows data loss
     });
   });
 });
