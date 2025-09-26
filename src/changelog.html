@@ -67,6 +67,13 @@
         <ul>
           
             <li>
+              Complete DataProvider migration and fix FIFO bug (MM-266)
+              <small style="color: #666; margin-left: 1rem">
+                (<a href="https://github.com/maudlin/mindmeld/pull/125" target="_blank">#125</a>, September 26, 2025)
+              </small>
+            </li>
+          
+            <li>
               feat: Implement comprehensive structured logging & centralized error handling (MM-272)
               <small style="color: #666; margin-left: 1rem">
                 (<a href="https://github.com/maudlin/mindmeld/pull/124" target="_blank">#124</a>, September 24, 2025)
@@ -111,27 +118,6 @@
               **Zero Breaking Changes**: All functionality preserved through cleaner adapter-behavior patterns
               <small style="color: #666; margin-left: 1rem">
                 (<a href="https://github.com/maudlin/mindmeld/pull/121" target="_blank">#121</a>, September 23, 2025)
-              </small>
-            </li>
-          
-            <li>
-              **Root Cause**: Two independent ID generation systems (factory vs import) creating duplicate IDs
-              <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/120" target="_blank">#120</a>, September 23, 2025)
-              </small>
-            </li>
-          
-            <li>
-              **Impact**: Connection targeting corruption when duplicate IDs existed in DOM
-              <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/120" target="_blank">#120</a>, September 23, 2025)
-              </small>
-            </li>
-          
-            <li>
-              **Solution**: Centralized ID management through NoteBehavior with collision prevention
-              <small style="color: #666; margin-left: 1rem">
-                (<a href="https://github.com/maudlin/mindmeld/pull/120" target="_blank">#120</a>, September 23, 2025)
               </small>
             </li>
           
