@@ -528,6 +528,9 @@ export class ServerClient {
     this.currentMapId = result.id;
     this.currentETag = etag;
 
+    // Clear maps cache since we have a new map
+    this.clearMapsCache();
+
     eventBus.emit('server.save.success', {
       mapId: result.id,
       version: result.version,
