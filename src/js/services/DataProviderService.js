@@ -19,9 +19,9 @@ export class DataProviderService {
     }
 
     try {
-      // For now, force local provider to avoid Yjs import issues
+      // Start with local provider, can be switched later
       this._providerType = 'local';
-      this._provider = this._createProvider(this._providerType);
+      this._provider = new LocalJSONProvider();
       this._cleanup = null;
       this._applyingSnapshot = false; // Guard for preventing feedback loops
 
@@ -42,16 +42,25 @@ export class DataProviderService {
   /**
    * Create provider instance based on type
    * @param {'local'|'yjs'} type
-   * @returns {LocalJSONProvider}
+   * @returns {LocalJSONProvider|YjsProvider}
    * @private
    */
-  _createProvider(type) {
+  async _createProvider(type) {
     switch (type) {
       case 'yjs':
-        // YjsProvider temporarily disabled to avoid import issues
-        throw new Error(
-          'YjsProvider temporarily disabled. Use LocalJSONProvider instead.',
-        );
+        try {
+          // Dynamic import to avoid loading when not needed
+          const { YjsProvider } = await import(
+            '../data/providers/YjsProvider.js'
+          );
+          return new YjsProvider();
+        } catch (error) {
+          logger.warn(
+            'YjsProvider not available, falling back to LocalJSONProvider:',
+            error.message,
+          );
+          return new LocalJSONProvider();
+        }
       case 'local':
       default:
         return new LocalJSONProvider();
@@ -287,6 +296,88 @@ export class DataProviderService {
    */
   get isApplyingSnapshot() {
     return this._applyingSnapshot;
+  }
+
+  /**
+   * Enable collaboration mode by switching to YjsProvider
+   * @param {string} serverUrl - The collaboration server URL
+   * @param {string} mapId - The map ID for collaboration
+   * @returns {Promise<boolean>} true if successfully enabled, false otherwise
+   */
+  async enableCollaboration(serverUrl, mapId) {
+    try {
+      logger.info(
+        'DataProviderService: Attempting to enable collaboration mode',
+        { serverUrl, mapId },
+      );
+
+      // Clean up current provider
+      if (this._cleanup) {
+        this._cleanup();
+        this._cleanup = null;
+      }
+
+      // Create YjsProvider for collaboration
+      const newProvider = await this._createProvider('yjs');
+
+      // If YjsProvider was successfully created, switch to it
+      if (newProvider.constructor.name === 'YjsProvider') {
+        this._provider = newProvider;
+        this._providerType = 'yjs';
+
+        logger.info(
+          'DataProviderService: Successfully switched to YjsProvider for collaboration',
+        );
+        return true;
+      } else {
+        logger.warn(
+          'DataProviderService: Failed to create YjsProvider, staying with LocalJSONProvider',
+        );
+        return false;
+      }
+    } catch (error) {
+      logger.error('DataProviderService: Error enabling collaboration:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Disable collaboration mode and return to local provider
+   * @returns {boolean} true if successfully disabled, false otherwise
+   */
+  async disableCollaboration() {
+    try {
+      logger.info('DataProviderService: Disabling collaboration mode');
+
+      // Clean up current provider
+      if (this._cleanup) {
+        this._cleanup();
+        this._cleanup = null;
+      }
+
+      // Switch back to local provider
+      this._provider = new LocalJSONProvider();
+      this._providerType = 'local';
+
+      logger.info(
+        'DataProviderService: Successfully switched back to LocalJSONProvider',
+      );
+      return true;
+    } catch (error) {
+      logger.error(
+        'DataProviderService: Error disabling collaboration:',
+        error,
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Check if collaboration mode is currently active
+   * @returns {boolean}
+   */
+  isCollaborationEnabled() {
+    return this._providerType === 'yjs';
   }
 
   /**
