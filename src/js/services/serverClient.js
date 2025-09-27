@@ -141,8 +141,8 @@ export class ServerClient {
         // Update existing map
         return await this.updateExistingMap(serverUri, stateData);
       } else {
-        // Create new map - use private method for auto-save
-        return await this._createNewMapInternal(serverUri, stateData);
+        // Create new map - pass complete state including metadata
+        return await this._createNewMapInternal(serverUri, parsedState);
       }
     } catch (error) {
       ServerConnectionService.setConnectionStatus('error');
@@ -492,7 +492,12 @@ export class ServerClient {
    * Internal method for creating new maps during auto-save
    * @private
    */
-  static async _createNewMapInternal(serverUri, stateData) {
+  static async _createNewMapInternal(serverUri, parsedState) {
+    // Extract map name from metadata, fallback to generic name
+    const mapName =
+      parsedState.metadata?.title ||
+      `MindMeld Map - ${new Date().toLocaleDateString()}`;
+
     const response = await fetch(`${serverUri}/maps`, {
       method: 'POST',
       headers: {
@@ -500,8 +505,8 @@ export class ServerClient {
         Accept: 'application/json',
       },
       body: JSON.stringify({
-        name: `MindMeld Map - ${new Date().toLocaleDateString()}`,
-        data: stateData,
+        name: mapName,
+        data: parsedState.data,
       }),
     });
 
@@ -927,6 +932,7 @@ export class ServerClient {
     eventBus.on('connection.updated', ServerClient.debouncedSave);
     eventBus.on('connection.deleted', ServerClient.debouncedSave);
     eventBus.on('note.color.changed', ServerClient.debouncedSave);
+    eventBus.on('map.title.changed', ServerClient.debouncedSave);
   }
 
   static removeAutoSaveListeners() {
@@ -938,6 +944,7 @@ export class ServerClient {
     eventBus.off('connection.updated', this.debouncedSave);
     eventBus.off('connection.deleted', this.debouncedSave);
     eventBus.off('note.color.changed', this.debouncedSave);
+    eventBus.off('map.title.changed', this.debouncedSave);
   }
 
   /**
