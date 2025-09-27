@@ -13,6 +13,7 @@ import { CanvasBehavior } from './behaviors/CanvasBehavior.js';
 import { ConnectionBehavior } from './behaviors/ConnectionBehavior.js';
 import { ViewportBehavior } from './behaviors/ViewportBehavior.js';
 import { MenuBehavior } from './behaviors/MenuBehavior.js';
+import { NavbarBehavior } from './behaviors/NavbarBehavior.js';
 import { ToolbarBehavior } from './behaviors/ToolbarBehavior.js';
 import { ServerConnectionBehavior } from '../features/serverConnection/serverConnectionBehavior.js';
 import { MapSelectionBehavior } from '../features/mapSelection/mapSelectionBehavior.js';
@@ -70,6 +71,7 @@ export class InteractionController {
       const connectionBehavior = new ConnectionBehavior(this.eventBus);
       const viewportBehavior = new ViewportBehavior(this.eventBus);
       const menuBehavior = new MenuBehavior(this.eventBus);
+      const navbarBehavior = new NavbarBehavior(this.eventBus);
       const toolbarBehavior = new ToolbarBehavior(this.eventBus);
       const serverConnectionBehavior = new ServerConnectionBehavior(
         this.eventBus,
@@ -84,6 +86,7 @@ export class InteractionController {
       this.registerBehavior('connection', connectionBehavior);
       this.registerBehavior('viewport', viewportBehavior);
       this.registerBehavior('menu', menuBehavior);
+      this.registerBehavior('navbar', navbarBehavior);
       this.registerBehavior('toolbar', toolbarBehavior);
       this.registerBehavior('serverConnection', serverConnectionBehavior);
       this.registerBehavior('mapSelection', mapSelectionBehavior);
@@ -165,7 +168,9 @@ export class InteractionController {
     const menuBehavior = this.getBehavior('menu');
     if (menuBehavior) {
       menuBehavior.canvas = canvas;
+      menuBehavior.interactionController = this; // Provide access to other behaviors
       canvas.menuBehavior = menuBehavior; // Allow tests to access MenuBehavior from canvas
+      canvas.interactionController = this; // Allow MenuBehavior to access other behaviors
       await menuBehavior.initialize(); // Initialize now that DOM elements are available
       logger.info(
         'InteractionController: MenuBehavior initialized with canvas and DOM elements',
@@ -173,6 +178,24 @@ export class InteractionController {
     } else {
       logger.warn(
         'InteractionController: MenuBehavior not found for canvas initialization',
+      );
+    }
+  }
+
+  /**
+   * Initialize NavbarBehavior for map title editing and collaboration
+   * Called after DOM elements are available during bootstrap
+   */
+  async initializeNavbarBehavior() {
+    const navbarBehavior = this.getBehavior('navbar');
+    if (navbarBehavior) {
+      await navbarBehavior.initialize(); // Initialize now that DOM elements are available
+      logger.info(
+        'InteractionController: NavbarBehavior initialized with DOM elements',
+      );
+    } else {
+      logger.warn(
+        'InteractionController: NavbarBehavior not found for initialization',
       );
     }
   }

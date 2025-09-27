@@ -32,7 +32,7 @@
       media="(prefers-color-scheme: dark)"
     />
     <meta name="app-version" content="1.1.0" />
-    <meta name="build-date" content="2025-09-26" />
+    <meta name="build-date" content="2025-09-27" />
   </head>
   <body>
     <nav id="navbar">
@@ -40,11 +40,15 @@
         <img src="img/icon64.png" alt="MindMeld Logo" id="logo-icon" />
         mindmeld
       </div>
-      <ul id="menu">
-        <li class="menu-item">
-          <a href="about.html" class="menu-link">About</a>
-        </li>
-      </ul>
+      <div id="map-title" class="editable-title">Untitled Map</div>
+      <div class="navbar-right">
+        <div id="collaborators" style="display: none;"></div>
+        <ul id="menu">
+          <li class="menu-item">
+            <a href="about.html" class="menu-link">About</a>
+          </li>
+        </ul>
+      </div>
       <!-- Hidden elements for kebab menu functionality -->
       <div style="display: none">
         <button id="import-from-file-button">Import from File</button>

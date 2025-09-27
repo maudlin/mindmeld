@@ -38,8 +38,8 @@ export class MenuBehavior {
     // API client instance
     this.mapsApi = null;
 
-    // Map state tracking
-    this.currentMapName = 'Untitled Map';
+    // Map state tracking - NavbarBehavior is the source of truth
+    // this.currentMapName removed - use NavbarBehavior instead
 
     logger.debug('MenuBehavior created');
   }
@@ -86,6 +86,12 @@ export class MenuBehavior {
     // Listen for server connection status changes to update menu UI
     this.eventBus.on('server.connection.status.changed', () => {
       this.updateMenuUI();
+    });
+
+    // Listen for map title changes from NavbarBehavior (source of truth)
+    this.eventBus.on('map.title.changed', (data) => {
+      logger.info('MenuBehavior: Map title changed, updating menu UI', data);
+      this.updateMenuUI(); // Update menu to reflect new map name
     });
 
     // Note: Menu actions now handled directly by adapters calling handleMenuAction
@@ -863,19 +869,38 @@ export class MenuBehavior {
   }
 
   /**
-   * Get current map name
+   * Get current map name from NavbarBehavior (source of truth)
    */
   getCurrentMapName() {
-    return this.currentMapName;
+    const navbarBehavior = this.getNavbarBehavior();
+    return navbarBehavior ? navbarBehavior.getCurrentMapName() : 'Untitled Map';
   }
 
   /**
-   * Set current map name and update UI
+   * Set current map name via NavbarBehavior (source of truth)
    */
   setCurrentMapName(name) {
-    this.currentMapName = name || 'Untitled Map';
+    const navbarBehavior = this.getNavbarBehavior();
+    if (navbarBehavior) {
+      navbarBehavior.setCurrentMapName(name);
+    }
     this.updateMenuUI(); // Trigger menu refresh
-    logger.info('MenuBehavior: Map name updated to:', this.currentMapName);
+    logger.info('MenuBehavior: Map name updated via NavbarBehavior to:', name);
+  }
+
+  /**
+   * Get NavbarBehavior instance from InteractionController
+   */
+  getNavbarBehavior() {
+    // Access NavbarBehavior through the InteractionController
+    if (this.interactionController) {
+      return this.interactionController.getBehavior('navbar');
+    }
+    // Fallback to canvas reference
+    if (this.canvas && this.canvas.interactionController) {
+      return this.canvas.interactionController.getBehavior('navbar');
+    }
+    return null;
   }
 
   /**

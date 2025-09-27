@@ -77,6 +77,17 @@ export class InteractionBootstrap extends BaseBootstrap {
         );
       }
 
+      // Initialize NavbarBehavior for map title editing and collaboration
+      try {
+        await this.initializeNavbarBehavior();
+        logger.info('NavbarBehavior initialization completed successfully');
+      } catch (error) {
+        logger.error(
+          'InteractionBootstrap: NavbarBehavior initialization failed:',
+          error,
+        );
+      }
+
       // Initialize page interactions for menu UI
       try {
         initializePageInteractions(this.interactionController);
@@ -156,6 +167,18 @@ export class InteractionBootstrap extends BaseBootstrap {
     } catch (error) {
       logger.error(
         'InteractionBootstrap: Failed to initialize MenuBehavior:',
+        error,
+      );
+    }
+  }
+
+  async initializeNavbarBehavior() {
+    try {
+      await this.interactionController.initializeNavbarBehavior();
+      logger.info('InteractionBootstrap: NavbarBehavior initialized');
+    } catch (error) {
+      logger.error(
+        'InteractionBootstrap: Failed to initialize NavbarBehavior:',
         error,
       );
     }
