@@ -1051,6 +1051,26 @@ export class ServerClient {
   }
 
   /**
+   * Check if there are unsaved changes that would be lost by auto-loading
+   * @returns {boolean} true if there are unsaved changes
+   * @private
+   */
+  static hasUnsavedChanges() {
+    // If we've never saved, any edits are unsaved
+    if (!this.lastSaveTime && this.lastEditTime) {
+      return true;
+    }
+
+    // If we have both timestamps, check if edits occurred after last save
+    if (this.lastEditTime && this.lastSaveTime) {
+      return this.lastEditTime > this.lastSaveTime;
+    }
+
+    // No edit timestamp means no tracked changes
+    return false;
+  }
+
+  /**
    * Initialize server client functionality
    */
   static initialize() {
@@ -1069,9 +1089,13 @@ export class ServerClient {
         this.enableAutoSave();
         this.processQueuedSaves();
 
-        // Smart auto-loading: if canvas is empty, load server data
-        // But only if all required services are initialized
-        if (this.isCanvasEmpty() && this.areServicesReady()) {
+        // Smart auto-loading: only if canvas is empty AND no unsaved changes
+        // Prevent data loss by never auto-loading when user has unsaved work
+        if (this.hasUnsavedChanges()) {
+          logger.info(
+            'Skipping auto-load: unsaved changes detected, preventing data loss',
+          );
+        } else if (this.isCanvasEmpty() && this.areServicesReady()) {
           logger.info(
             'Canvas is empty and services ready, auto-loading server data...',
           );
@@ -1107,6 +1131,7 @@ export class ServerClient {
         ServerConnectionService.getConnectionState();
       if (
         currentConnectionState.isConnected &&
+        !this.hasUnsavedChanges() &&
         this.isCanvasEmpty() &&
         this.areServicesReady()
       ) {
@@ -1118,6 +1143,10 @@ export class ServerClient {
             });
           }
         });
+      } else if (this.hasUnsavedChanges()) {
+        logger.info(
+          'Skipping deferred auto-load: unsaved changes detected, preventing data loss',
+        );
       }
     });
 
