@@ -412,6 +412,7 @@ export class MapSelectionBehavior {
         this.eventBus.emit('map.created', {
           mapId: result.id,
           mapName: result.name,
+          metadata: { title: result.name }, // Add metadata for NavbarBehavior compatibility
         });
 
         logger.info(`MapSelectionBehavior: Created new map: ${result.name}`);
@@ -443,6 +444,7 @@ export class MapSelectionBehavior {
         this.eventBus.emit('map.loaded', {
           mapId,
           mapName,
+          metadata: { title: mapName }, // Add metadata for NavbarBehavior compatibility
         });
 
         logger.info(`MapSelectionBehavior: Loaded map: ${mapName}`);

@@ -13,7 +13,6 @@ import { DataProviderService } from '../../services/DataProviderService.js';
 import { clearAllNotesAndConnections } from '../../data/dataStore.js';
 import { appState } from '../../data/observableState.js';
 import { notificationManager } from '../../services/notificationManager.js';
-import { ServerClient } from '../../services/serverClient.js';
 import { ServerConnectionService } from '../../services/serverConnectionService.js';
 import { logger } from '../../services/logger.js';
 
@@ -445,11 +444,7 @@ export class MenuBehavior {
     logger.info('Menu action selected', { action, inputType });
 
     // Show loading indicator for server operations
-    if (
-      ['connect-server', 'disconnect-server', 'load-from-server'].includes(
-        action,
-      )
-    ) {
+    if (['connect-server', 'disconnect-server'].includes(action)) {
       this.showMenuItemLoading(action, true);
     }
 
@@ -491,11 +486,6 @@ export class MenuBehavior {
         break;
       case 'disconnect-server':
         this.handleServerDisconnect(inputType);
-        break;
-      case 'load-from-server':
-        this.handleLoadFromServer(inputType).catch((error) =>
-          logger.error('MenuBehavior: Error in load from server:', error),
-        );
         break;
       case 'new-map':
         this.handleNewMap(inputType);
@@ -654,45 +644,6 @@ export class MenuBehavior {
   }
 
   /**
-   * Handle load from server action
-   */
-  async handleLoadFromServer(inputType) {
-    logger.info('Loading from server', { inputType });
-
-    try {
-      const status = ServerClient.getConnectionStatus();
-
-      if (!status.isConnected) {
-        notificationManager.error('Not connected to server');
-        return;
-      }
-
-      if (!this.canvas) {
-        logger.error(
-          'MenuBehavior: Canvas reference is null! Cannot load from server.',
-        );
-        notificationManager.error(
-          'Cannot load from server - canvas reference missing',
-        );
-        return;
-      }
-
-      const success = await ServerClient.loadState(this.canvas);
-      if (success) {
-        notificationManager.success('Data loaded from server successfully!');
-      } else {
-        notificationManager.error('Failed to load data from server');
-      }
-    } catch (error) {
-      logger.error('Error loading from server:', { error: error });
-      notificationManager.error('Failed to load data from server');
-    } finally {
-      // Always clear loading state
-      this.showMenuItemLoading('load-from-server', false);
-    }
-  }
-
-  /**
    * Get server connection status for menu state
    */
   getServerConnectionStatus() {
@@ -707,10 +658,7 @@ export class MenuBehavior {
    * Get available server actions based on connection status
    */
   getAvailableServerActions() {
-    const status = ServerClient.getConnectionStatus();
-    return {
-      loadFromServer: status.isConnected,
-    };
+    return {};
   }
 
   /**
@@ -1004,7 +952,6 @@ export class MenuBehavior {
     const menuText = connectItem?.querySelector('.server-menu-text');
     const statusDot = connectItem?.querySelector('.server-status-dot');
     const disconnectItem = document.querySelector('.server-disconnect-item');
-    const loadItem = document.querySelector('.server-load-item');
     // New map management items
     const newMapItem = document.querySelector('.server-new-map-item');
     const browseMapsItem = document.querySelector('.server-browse-maps-item');
@@ -1014,7 +961,6 @@ export class MenuBehavior {
       !menuText ||
       !statusDot ||
       !disconnectItem ||
-      !loadItem ||
       !newMapItem ||
       !browseMapsItem
     ) {
@@ -1033,7 +979,6 @@ export class MenuBehavior {
 
       // Show server operation items
       disconnectItem.style.display = 'flex';
-      loadItem.style.display = 'flex';
       // Show new map management items
       newMapItem.style.display = 'flex';
       browseMapsItem.style.display = 'flex';
@@ -1047,7 +992,6 @@ export class MenuBehavior {
 
       // Hide server operation items
       disconnectItem.style.display = 'none';
-      loadItem.style.display = 'none';
       // Hide new map management items
       newMapItem.style.display = 'none';
       browseMapsItem.style.display = 'none';
@@ -1061,10 +1005,9 @@ export class MenuBehavior {
     const actionMap = {
       'connect-server': '.server-connect-item',
       'disconnect-server': '.server-disconnect-item',
-      'load-from-server': '.server-load-item',
     };
 
-    if (!(action in actionMap)) return;
+    if (!Object.prototype.hasOwnProperty.call(actionMap, action)) return;
     const selector = actionMap[action];
 
     const menuItem = document.querySelector(selector);

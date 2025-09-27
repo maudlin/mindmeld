@@ -67,6 +67,13 @@ export class NavbarBehavior {
       }
     });
 
+    // Listen for new map creation
+    this.eventBus.on('map.created', (data) => {
+      if (data.metadata && data.metadata.title) {
+        this.setCurrentMapName(data.metadata.title);
+      }
+    });
+
     // Listen for server connection changes
     this.eventBus.on('server.connected', () => {
       this.updateCollaboratorDisplay();

@@ -381,6 +381,66 @@ describe('NavbarBehavior - Navbar Functionality', () => {
     });
   });
 
+  describe('Map Event Integration', () => {
+    test('should listen for map.loaded events', () => {
+      navbarBehavior.setupEventListeners();
+
+      expect(mockEventBus.on).toHaveBeenCalledWith(
+        'map.loaded',
+        expect.any(Function),
+      );
+    });
+
+    test('should listen for map.created events', () => {
+      navbarBehavior.setupEventListeners();
+
+      expect(mockEventBus.on).toHaveBeenCalledWith(
+        'map.created',
+        expect.any(Function),
+      );
+    });
+
+    test('should update title when receiving map.loaded events', () => {
+      const setTitleSpy = jest.spyOn(navbarBehavior, 'setCurrentMapName');
+
+      navbarBehavior.setupEventListeners();
+
+      // Get the event handler
+      const mapLoadedHandler = mockEventBus.on.mock.calls.find(
+        (call) => call[0] === 'map.loaded',
+      )[1];
+
+      // Simulate map loaded event
+      mapLoadedHandler({
+        mapId: 'test-map',
+        mapName: 'Test Map',
+        metadata: { title: 'Test Map' },
+      });
+
+      expect(setTitleSpy).toHaveBeenCalledWith('Test Map');
+    });
+
+    test('should update title when receiving map.created events', () => {
+      const setTitleSpy = jest.spyOn(navbarBehavior, 'setCurrentMapName');
+
+      navbarBehavior.setupEventListeners();
+
+      // Get the event handler
+      const mapCreatedHandler = mockEventBus.on.mock.calls.find(
+        (call) => call[0] === 'map.created',
+      )[1];
+
+      // Simulate map created event
+      mapCreatedHandler({
+        mapId: 'new-map',
+        mapName: 'New Map',
+        metadata: { title: 'New Map' },
+      });
+
+      expect(setTitleSpy).toHaveBeenCalledWith('New Map');
+    });
+  });
+
   describe('Collaboration Integration', () => {
     test('should listen for collaboration title change events', () => {
       navbarBehavior.setupCollaborationEventListeners();
