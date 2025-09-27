@@ -2,6 +2,7 @@
 import { debounce, truncateNoteContent } from '../utils/utils.js';
 import { appState } from './observableState.js';
 import { logger } from '../services/logger.js';
+import { persistenceService } from '../services/PersistenceService.js';
 import {
   NOTE_CONTENT_LIMIT,
   CONNECTION_TYPE_MAP,
@@ -196,16 +197,47 @@ export function exportToJSON() {
   // V1 Simplification: Always use Standard Canvas, don't export canvas type
   // (Canvas templates temporarily disabled)
 
-  return JSON.stringify({ data: compressedData }, null, 2);
+  // Include metadata from PersistenceService
+  const persistedState = persistenceService.getState();
+  const exportData = {
+    data: compressedData,
+    metadata: persistedState.metadata || { title: 'Untitled Map' },
+  };
+
+  return JSON.stringify(exportData, null, 2);
 }
 
 export async function importFromJSON(jsonData, canvas) {
   try {
-    const { data } = JSON.parse(jsonData);
+    const parsedData = JSON.parse(jsonData);
+    const { data, metadata } = parsedData;
+
     logger.info('Parsed JSON data:', {
       noteCount: data.n.length,
       connectionCount: data.c.length,
+      hasMetadata: !!metadata,
     });
+
+    // Import metadata if present
+    if (metadata) {
+      const currentState = persistenceService.getState();
+      currentState.metadata = { ...currentState.metadata, ...metadata };
+      persistenceService.setState(currentState);
+
+      // Notify NavbarBehavior of map title change
+      if (metadata.title) {
+        // Use setTimeout to ensure eventBus is available
+        setTimeout(() => {
+          if (window.eventBus) {
+            window.eventBus.emit('map.loaded', {
+              mapId: metadata.mapId || 'imported-map',
+              mapName: metadata.title,
+              metadata: metadata,
+            });
+          }
+        }, 0);
+      }
+    }
 
     // Clear existing notes and connections
     NoteService.clearAllNotes();
