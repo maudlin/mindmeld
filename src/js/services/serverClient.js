@@ -134,12 +134,9 @@ export class ServerClient {
       const stateJsonString = exportToJSON();
       const parsedState = JSON.parse(stateJsonString);
 
-      // Extract the actual data (notes and connections) from the wrapper
-      const stateData = parsedState.data;
-
       if (this.currentMapId && this.currentETag) {
-        // Update existing map
-        return await this.updateExistingMap(serverUri, stateData);
+        // Update existing map - pass complete state including metadata
+        return await this.updateExistingMap(serverUri, parsedState);
       } else {
         // Create new map - pass complete state including metadata
         return await this._createNewMapInternal(serverUri, parsedState);
@@ -547,7 +544,20 @@ export class ServerClient {
    * Update existing map on server
    * @private
    */
-  static async updateExistingMap(serverUri, stateData, retryCount = 0) {
+  static async updateExistingMap(serverUri, parsedState, retryCount = 0) {
+    // Extract map name from metadata, keep existing name if no metadata
+    const mapName = parsedState.metadata?.title;
+
+    const requestBody = {
+      data: parsedState.data,
+      version: 1,
+    };
+
+    // Include name in update if metadata provides one
+    if (mapName) {
+      requestBody.name = mapName;
+    }
+
     const response = await fetch(`${serverUri}/maps/${this.currentMapId}`, {
       method: 'PUT',
       headers: {
@@ -555,10 +565,7 @@ export class ServerClient {
         Accept: 'application/json',
         'If-Match': `"${this.currentETag}"`,
       },
-      body: JSON.stringify({
-        data: stateData,
-        version: 1,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (response.status === 409) {
@@ -587,7 +594,7 @@ export class ServerClient {
         );
         return await this.updateExistingMap(
           serverUri,
-          stateData,
+          parsedState,
           retryCount + 1,
         );
       } catch (retryError) {

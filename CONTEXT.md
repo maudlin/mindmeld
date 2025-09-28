@@ -1,188 +1,265 @@
-# MindMeld Development Status: MM-283 UI Components Implementation
+# MindMeld MM-281 Collaboration Implementation Context
 
-## Current State Summary (September 27, 2025)
+## Current Status: Foundation Phase Critical Issues
 
-**🎯 Current Focus**: MM-283 UI Components - Google Docs style ambient collaboration
+**Branch**: `feat/MM-281-collaboration-implementation`
+**Epic**: MM-281 Real-Time Collaboration Implementation
+**Phase**: Phase 1 - Foundation Enhancement (Weeks 1-2)
+**Date**: September 28, 2025
 
-**✅ Infrastructure Status**:
-- Collaboration backend: **COMPLETE** (MM-282)
-- CollaborationService: **READY** with 64 comprehensive tests
-- Provider switching: **TESTED** and working
-- Event system: **INTEGRATED** for real-time updates
+## Executive Summary
 
----
+The MM-281 Real-Time Collaboration epic specifies a **"Hybrid Data Flow"** architecture where YjsProvider handles real-time sync while ServerClient manages sessions and metadata. However, the current implementation has critical foundation issues that must be resolved before Phase 2 real-time features can be implemented.
 
-## 🚀 MM-283: Ambient Collaboration UI (Google Docs Style)
+## Critical Issues Identified
 
-### Design Philosophy: Seamless Integration
-Following Google Docs approach - collaboration is ambient and automatic, not explicit UI complexity.
+### 1. Map Name Persistence Bug (**MM-294**)
 
-**Core Principles:**
-- **No "Start Collaboration" buttons** - happens automatically when connecting to server
-- **Minimal presence indicators** - show who's here, not complex session management
-- **Content-focused experience** - collaboration doesn't change core mind mapping flow
+**Problem**: Map names revert to "Untitled Map" after browser refresh when YjsProvider is active.
 
-### Implementation Plan
+**Root Cause**: ServerClient metadata extraction logic doesn't integrate with YjsProvider's metadata handling.
 
-**1. Navbar Enhancement**
-```html
-<nav id="navbar">
-  <div id="logo">MindMeld</div>
-  <div id="map-title" class="editable-title">Untitled Map</div>
-  <div class="navbar-right">
-    <div id="collaborators" style="display: none;">
-      <div class="collaborator-avatar">JS</div>
-      <div class="collaborator-avatar">MK</div>
-    </div>
-    <ul id="menu">About</ul>
-  </div>
-</nav>
+**Code Location**: `src/js/services/serverClient.js:497-498`
+```javascript
+const mapName = parsedState.metadata?.title ||
+  `MindMeld Map - ${new Date().toLocaleDateString()}`;
 ```
 
-**2. Editable Map Title**
-- Click-to-edit inline editing (following existing note editing patterns)
-- Input validation and XSS prevention
-- Auto-save to PersistenceService and server sync
-- Real-time updates to collaborators
+**Issue**: This relies on `exportToJSON()` including metadata, but when YjsProvider is active, metadata is stored in Yjs's `_yMeta` map instead of traditional `persistenceService.metadata`.
 
-**3. Collaborator Presence**
-- Small avatar circles (28px) showing initials
-- Appear only when other users are active
-- Positioned in navbar right side, left of menu
-- Fade in/out as users join/leave
+### 2. Auto-Loading Conflicts (**MM-295**)
 
-**4. Note Movement Feedback**
-- Dashed outline replaces solid outline during note movement by others
-- Minimal visual feedback without complexity
+**Problem**: Intermittent client state overwriting occurs when ServerClient auto-loading triggers during YjsProvider sessions.
 
-**5. Color Picker Enhancement**
-- Shows user's selected color OR clicked note's color
-- Personal selection state (not shared between users)
-- Clicking different colored note updates picker display
+**Root Cause**: Competing persistence mechanisms operating simultaneously:
+- **ServerClient**: REST API with auto-save/auto-load
+- **YjsProvider**: Real-time WebSocket synchronization
+- **PersistenceService**: Local browser storage
 
-### Technical Implementation
-
-**Auto-Collaboration Activation:**
+**Code Location**: `src/js/services/serverClient.js:1104-1120`
 ```javascript
-// In MenuBehavior.handleServerConnect()
-if (success) {
-  await this.collaborationService.enableCollaboration(sessionId, url);
-  this.updateCollaboratorDisplay();
+if (this.hasUnsavedChanges()) {
+  // Skip auto-load
+} else if (this.isCanvasEmpty() && this.areServicesReady()) {
+  // Auto-load server data - CAN OVERWRITE YJS STATE
+  this.loadState(document.getElementById('canvas'))
 }
 ```
 
-**Title Editing Pattern:**
+### 3. Missing Provider Coordination (**MM-296**)
+
+**Problem**: YjsProvider and ServerClient operate independently without coordination.
+
+**Root Cause**: The system wasn't designed for dual-provider scenarios where both systems operate concurrently.
+
+**Architecture Issue**: No central coordination mechanism exists to manage provider states, transitions, and conflicts.
+
+## Created Jira Tickets
+
+### MM-294: Fix map name persistence bug in YjsProvider-ServerClient integration
+- **Type**: Bug
+- **Priority**: Critical foundation issue
+- **Status**: To Do
+- **Focus**: Metadata bridging between YjsProvider `_yMeta` and ServerClient extraction logic
+
+### MM-295: Prevent auto-loading conflicts during YjsProvider-ServerClient transitions
+- **Type**: Bug
+- **Priority**: Critical foundation issue
+- **Status**: To Do
+- **Focus**: Race condition prevention and provider detection
+
+### MM-296: Implement comprehensive YjsProvider-ServerClient coordination
+- **Type**: Task
+- **Priority**: Foundation for real-time collaboration
+- **Status**: To Do
+- **Focus**: Hybrid data flow architecture implementation
+
+## Current Work in Progress
+
+### Staged Changes Analysis
+**File**: `src/js/services/serverClient.js`
+
+**Changes Made**:
+1. **Enhanced metadata passing**: Now passes complete `parsedState` including metadata to `updateExistingMap()`
+2. **Metadata extraction**: Added logic to extract `mapName` from `parsedState.metadata?.title`
+3. **Conditional name updates**: Only includes name in request body when metadata provides one
+
+**Code Changes**:
 ```javascript
-// Click-to-edit with validation and persistence
-handleTitleClick() {
-  // Create inline input (following note editing patterns)
-  // Handle save/cancel with Enter/Escape/blur
-  // Validate and sanitize input
-  // Save to PersistenceService + server sync
-  // Emit collaboration events
-}
+// OLD: Pass only state data
+return await this.updateExistingMap(serverUri, stateData);
+
+// NEW: Pass complete state including metadata
+return await this.updateExistingMap(serverUri, parsedState);
+
+// NEW: Extract map name from metadata
+const mapName = parsedState.metadata?.title;
 ```
 
-**Presence Updates:**
-```javascript
-// Listen for collaboration events
-this.eventBus.on('collaboration.presence.updated', (data) => {
-  this.updateCollaboratorAvatars(data.participants);
-});
-```
+**Progress**: ~50% complete for MM-294 implementation
 
-### Files to Modify
+### Recent Commits Context
+1. **b9f3e3b**: "fix: prevent data loss from aggressive auto-loading overwrites" → MM-295 scope
+2. **e616dff**: "fix: add missing cache invalidation after auto-save map creation"
+3. **80b3687**: "fix: implement complete server persistence for map names" → MM-294 scope
+4. **dc6d900**: "fix: implement comprehensive metadata persistence for map names" → MM-296 foundation
 
-**Core Files:**
-1. **src/index.html** - Update navbar structure and layout
-2. **src/css/styles.css** - Navbar flexbox, avatar styling, note movement styles
-3. **src/js/interactions/behaviors/MenuBehavior.js** - Add title editing, collaborator display, auto-collaboration
-4. **Color picker components** - Update to track user vs note color state
+## Architecture Analysis
 
-**New Components:**
-- Title editing behavior (inline in MenuBehavior)
-- Collaborator avatar display logic
-- Note movement state tracking
+### Current System Components
 
-### User Experience Flow
+1. **YjsProvider** (`src/js/data/providers/YjsProvider.js`)
+   - Real-time collaborative data provider using Yjs and WebSocket
+   - Stores metadata in `_yMeta` Y.Map
+   - Handles notes, connections, and metadata via Y.Doc
 
-✅ **Single user**: Normal experience, map title visible and editable
-✅ **Connect to server**: Collaboration automatically activates
-✅ **Others join**: Small avatar circles appear in navbar
-✅ **Edit map title**: Click to edit, auto-saves, syncs to collaborators
-✅ **Note interactions**: Dashed outline shows remote note movement
-✅ **Color selection**: Personal picker state, independent per user
+2. **ServerClient** (`src/js/services/serverClient.js`)
+   - REST API interface for map management
+   - Auto-save/auto-load functionality
+   - Map persistence and session management
 
----
+3. **PersistenceService** (`src/js/services/PersistenceService.js`)
+   - Local browser storage management
+   - Fallback persistence layer
+   - Metadata handling via `persistenceService.metadata`
 
-## 🏗️ Architecture Status: Ready for UI Implementation
+4. **DataProvider Abstraction** (`src/js/data/providers/DataProvider.js`)
+   - Abstract interface for data providers
+   - Origin tracking (USER vs SYSTEM)
+   - Connection ID generation utilities
 
-### Collaboration Infrastructure (MM-282) - Complete
-- **CollaborationService**: Session management, user presence, provider switching
-- **DataProviderService**: enableCollaboration()/disableCollaboration() methods
-- **Event System**: Real-time collaboration events via EventBus
-- **Test Coverage**: 64 comprehensive tests, 100% pass rate
+### Provider Coordination Gaps
 
-### UI Integration Points (MM-283) - Ready
-- **MenuBehavior**: Server connection flow ready for collaboration activation
-- **Existing Patterns**: Inline editing, input validation, persistence patterns established
-- **Event Bus**: Ready for real-time UI updates
-- **Modal Infrastructure**: Server connection modal as reference pattern
+**Missing Coordination Points**:
+1. **Metadata synchronization** between YjsProvider `_yMeta` and ServerClient metadata extraction
+2. **Provider detection logic** to determine active provider and prevent conflicts
+3. **State transition management** for safe provider switching
+4. **Event bus coordination** for cross-provider communication
 
-### Data Flow (Established)
-```
-User Actions → DataProvider → PersistenceService → Storage
-                    ↓              ↓
-            CollaborationService → EventBus → UI Updates
-```
+## Implementation Strategy
 
----
+### Phase 1 Foundation (Immediate - Week 1)
 
-## 🎯 Implementation Tasks (MM-283)
+#### MM-294: Metadata Bridge Implementation
+1. **Enhanced metadata extraction** in ServerClient:
+   ```javascript
+   const mapName =
+     parsedState.metadata?.title ||           // Traditional path
+     window.dataProvider?.getMeta?.()?.mapName || // YjsProvider path
+     this.currentMapName ||                   // Current state
+     `MindMeld Map - ${new Date().toLocaleDateString()}`;
+   ```
 
-### Phase 1: Navbar Enhancement
-1. **Add map title display** - Editable title in navbar
-2. **Implement title editing** - Click-to-edit with validation and persistence
-3. **Add collaborator avatar container** - Right side of navbar
+2. **Bi-directional metadata sync**:
+   ```javascript
+   // In YjsProvider: Listen for server metadata updates
+   eventBus.on('map.loaded', ({ metadata }) => {
+     this.setMeta(metadata, { origin: ORIGIN.SYSTEM });
+   });
+   ```
 
-### Phase 2: Collaboration Integration
-4. **Auto-enable collaboration** - On server connect
-5. **Presence avatar display** - Show/hide collaborator circles
-6. **Note movement feedback** - Dashed outline for remote movement
+#### MM-295: Conflict Prevention
+1. **Provider detection logic**:
+   ```javascript
+   // Check if YjsProvider is active
+   const isYjsActive = window.dataProvider instanceof YjsProvider;
+   if (isYjsActive) {
+     // Disable ServerClient auto-loading
+     return;
+   }
+   ```
 
-### Phase 3: Color Picker Enhancement
-7. **User-specific color state** - Track personal vs note color selection
-8. **Visual feedback polish** - Smooth transitions and responsive behavior
+2. **Safe auto-loading conditions**:
+   - Verify no active YjsProvider session
+   - Check for unsaved changes
+   - Validate canvas state before loading
 
-### Success Criteria
-- ✅ **Seamless collaboration activation** - No explicit session management
-- ✅ **Editable map titles** - With real-time sync to collaborators
-- ✅ **Minimal presence awareness** - Avatar circles when others present
-- ✅ **Preserved core experience** - Mind mapping flow unchanged
-- ✅ **Google Docs feel** - Ambient collaboration discovery
+### Phase 2 Coordination (Week 2)
 
----
+#### MM-296: Comprehensive Coordination
+1. **ProviderCoordinator service** (new file):
+   ```javascript
+   // src/js/services/ProviderCoordinator.js
+   export class ProviderCoordinator {
+     static currentProvider = null;
+     static providerStack = [];
 
-## 📊 Project Health Dashboard
+     static registerProvider(provider) { /* */ }
+     static switchProvider(newProvider) { /* */ }
+     static resolveConflicts(conflict) { /* */ }
+   }
+   ```
 
-**Architecture**: 🟢 Excellent
-- Collaboration infrastructure complete and tested
-- Clean integration patterns established
-- Zero circular dependencies maintained
+2. **Event-driven coordination**:
+   - `provider.switched` - Provider change notification
+   - `metadata.synced` - Cross-provider metadata sync
+   - `state.conflict` - State conflict detection
 
-**Collaboration Readiness**: 🟢 Ready
-- Backend services fully implemented
-- Event system integrated
-- Provider switching tested
-- UI patterns established
+## Success Criteria
 
-**Implementation Approach**: 🟢 Validated
-- Google Docs style approach confirmed
-- Minimal UI complexity approach
-- Leverages existing patterns and real estate
+### MM-294 Success Criteria
+- [ ] Map names persist correctly after browser refresh in YjsProvider mode
+- [ ] Map name changes sync between YjsProvider and ServerClient
+- [ ] No regressions in traditional (non-collaborative) mode
+- [ ] Unit tests cover both metadata paths
 
----
+### MM-295 Success Criteria
+- [ ] Auto-loading disabled when YjsProvider is active
+- [ ] No state overwriting during provider transitions
+- [ ] Graceful degradation when providers conflict
+- [ ] Integration tests for transition scenarios
 
-**Status**: Implementing MM-283 UI Components
-**Architecture**: Stable collaboration foundation
-**Next Milestone**: Complete ambient collaboration user experience
+### MM-296 Success Criteria
+- [ ] Seamless provider transitions without data loss
+- [ ] Metadata consistency across all providers
+- [ ] Clear user feedback during state transitions
+- [ ] Comprehensive test coverage for all scenarios
+
+## Files Requiring Changes
+
+### Immediate Changes (MM-294, MM-295)
+- `src/js/services/serverClient.js` - Metadata extraction and auto-loading logic
+- `src/js/data/providers/YjsProvider.js` - Metadata event handling
+- `src/js/data/dataStore.js` - exportToJSON metadata integration
+
+### Future Changes (MM-296)
+- `src/js/services/ProviderCoordinator.js` - New coordination service
+- `src/js/core/bootstrap/DataBootstrap.js` - Provider initialization
+- `src/js/core/eventBus.js` - Coordination events
+
+## Testing Strategy
+
+### Unit Tests Required
+- Metadata extraction with different provider states
+- Provider detection logic
+- State transition validation
+- Conflict resolution mechanisms
+
+### Integration Tests Required
+- Browser refresh behavior with YjsProvider active
+- Provider switching scenarios
+- Multi-tab coordination
+- Network interruption recovery
+
+## Risk Mitigation
+
+### High Priority Risks
+1. **Data Loss**: Implement comprehensive state validation before any provider switches
+2. **Performance**: Ensure provider coordination doesn't impact real-time performance
+3. **Complexity**: Keep coordination logic simple and well-documented
+
+### Mitigation Strategies
+- Incremental implementation with feature flags
+- Comprehensive test coverage for all transition scenarios
+- Clear rollback procedures for each change
+- User feedback for any state conflicts
+
+## Next Steps
+
+1. **Commit current staged changes** - Foundation for MM-294
+2. **Complete MM-294 implementation** - Metadata bridging
+3. **Implement MM-295** - Auto-loading conflict prevention
+4. **Build MM-296** - Comprehensive coordination layer
+5. **Validate Phase 1 completion** before moving to Phase 2 real-time features
+
+This foundation work is **critical** for the success of MM-281 Phase 2 and Phase 3 collaboration features. Without resolving these coordination issues, real-time collaboration will be unstable and cause data loss.
