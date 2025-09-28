@@ -5,6 +5,7 @@ import { truncateNoteContent } from '../../utils/utils.js';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { logger } from '../../services/logger.js';
+import { eventBus } from '../../core/eventBus.js';
 
 export class YjsProvider extends DataProvider {
   constructor() {
@@ -27,6 +28,9 @@ export class YjsProvider extends DataProvider {
       canvasType: 'Standard Canvas',
       mapName: 'Untitled Map',
     };
+
+    // Listen for server metadata updates for bi-directional sync
+    this._setupServerMetadataSync();
   }
 
   init(mapId, options = {}) {
@@ -80,6 +84,12 @@ export class YjsProvider extends DataProvider {
   }
 
   destroy() {
+    // Clean up metadata sync listeners
+    if (this._metadataSyncListeners) {
+      this._metadataSyncListeners.forEach((cleanup) => cleanup());
+      this._metadataSyncListeners = null;
+    }
+
     if (this._wsProvider) {
       this._wsProvider.destroy();
       this._wsProvider = null;
@@ -477,5 +487,36 @@ export class YjsProvider extends DataProvider {
     });
 
     return { ...this._meta, ...meta }; // Merge with defaults
+  }
+
+  /**
+   * Set up bi-directional metadata synchronization with ServerClient
+   * Listens for server metadata updates and syncs them to YjsProvider
+   * @private
+   */
+  _setupServerMetadataSync() {
+    // Listen for map loaded events from ServerClient to sync metadata
+    eventBus.on('map.loaded', ({ metadata }) => {
+      if (metadata && this._yMeta) {
+        logger.info('YjsProvider: Syncing server metadata to Yjs', metadata);
+        this.setMeta(metadata, { origin: ORIGIN.SYSTEM });
+      }
+    });
+
+    // Listen for server load success events that include metadata
+    eventBus.on('server.load.success', ({ mapName }) => {
+      if (mapName && this._yMeta) {
+        logger.info('YjsProvider: Syncing map name from server load', {
+          mapName,
+        });
+        this.setMeta({ mapName }, { origin: ORIGIN.SYSTEM });
+      }
+    });
+
+    // Store reference for cleanup
+    this._metadataSyncListeners = [
+      () => eventBus.off('map.loaded', this._setupServerMetadataSync),
+      () => eventBus.off('server.load.success', this._setupServerMetadataSync),
+    ];
   }
 }

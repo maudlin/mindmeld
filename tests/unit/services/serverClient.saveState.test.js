@@ -77,7 +77,9 @@ describe('ServerClient - saveState', () => {
       isConnected: true,
       connectionStatus: 'connected',
     });
-    mockDataStore.exportToJSON.mockReturnValue('{"data":{"n":[],"c":[]}}');
+    mockDataStore.exportToJSON.mockReturnValue(
+      '{"data":{"n":[],"c":[]},"metadata":{"title":"MindMeld Map - 9/7/2025"}}',
+    );
   });
 
   afterEach(() => {
@@ -151,6 +153,7 @@ describe('ServerClient - saveState', () => {
         body: JSON.stringify({
           data: { n: [], c: [] },
           version: 1,
+          name: 'MindMeld Map - 9/7/2025',
         }),
       },
     );

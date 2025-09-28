@@ -109,7 +109,9 @@ describe('ServerClient', () => {
         isConnected: true,
         connectionStatus: 'connected',
       });
-      mockDataStore.exportToJSON.mockReturnValue('{"data":{"n":[],"c":[]}}');
+      mockDataStore.exportToJSON.mockReturnValue(
+        '{"data":{"n":[],"c":[]},"metadata":{"title":"MindMeld Map - 9/7/2025"}}',
+      );
     });
 
     it('should create new map when no current map exists', async () => {
@@ -192,6 +194,7 @@ describe('ServerClient', () => {
           body: JSON.stringify({
             data: { n: [], c: [] },
             version: 1,
+            name: 'MindMeld Map - 9/7/2025',
           }),
         },
       );

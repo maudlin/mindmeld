@@ -490,9 +490,11 @@ export class ServerClient {
    * @private
    */
   static async _createNewMapInternal(serverUri, parsedState) {
-    // Extract map name from metadata, fallback to generic name
+    // Extract map name from multiple metadata sources for YjsProvider compatibility
     const mapName =
-      parsedState.metadata?.title ||
+      parsedState.metadata?.title || // Traditional path
+      window.dataProvider?.getMeta?.()?.mapName || // YjsProvider path
+      this.currentMapName || // Current state
       `MindMeld Map - ${new Date().toLocaleDateString()}`;
 
     const response = await fetch(`${serverUri}/maps`, {
@@ -545,8 +547,10 @@ export class ServerClient {
    * @private
    */
   static async updateExistingMap(serverUri, parsedState, retryCount = 0) {
-    // Extract map name from metadata, keep existing name if no metadata
-    const mapName = parsedState.metadata?.title;
+    // Extract map name from multiple metadata sources for YjsProvider compatibility
+    const mapName =
+      parsedState.metadata?.title || // Traditional path
+      window.dataProvider?.getMeta?.()?.mapName; // YjsProvider path
 
     const requestBody = {
       data: parsedState.data,
