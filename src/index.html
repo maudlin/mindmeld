@@ -32,7 +32,7 @@
       media="(prefers-color-scheme: dark)"
     />
     <meta name="app-version" content="1.1.0" />
-    <meta name="build-date" content="2025-09-28" />
+    <meta name="build-date" content="2025-09-30" />
   </head>
   <body>
     <nav id="navbar">
@@ -42,7 +42,7 @@
       </div>
       <div id="map-title" class="editable-title">Untitled Map</div>
       <div class="navbar-right">
-        <div id="collaborators" style="display: none;"></div>
+        <div id="collaborators" style="display: none"></div>
         <ul id="menu">
           <li class="menu-item">
             <a href="about.html" class="menu-link">About</a>
@@ -315,6 +315,16 @@
           style="display: none"
         >
           <span>Browse Maps...</span>
+        </div>
+        <!-- TODO: REMOVE when MM-298 smart dialog is implemented -->
+        <div
+          class="kebab-menu-item server-save-map-item"
+          role="menuitem"
+          data-action="save-map-to-server"
+          tabindex="0"
+          style="display: none"
+        >
+          <span>Save Map to Server</span>
         </div>
         <div class="kebab-menu-divider"></div>
       </div>
