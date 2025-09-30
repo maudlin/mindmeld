@@ -2,8 +2,7 @@
 // Real-time collaborative data provider using Yjs and WebSocket
 import { DataProvider, ORIGIN, makeConnectionId } from './DataProvider.js';
 import { truncateNoteContent } from '../../utils/utils.js';
-import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
+import { Y, WebsocketProvider } from './YjsClientStub.js';
 import { logger } from '../../services/logger.js';
 import { eventBus } from '../../core/eventBus.js';
 

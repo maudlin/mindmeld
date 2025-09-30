@@ -6,8 +6,8 @@ import {
   isValidOrigin,
   makeConnectionId,
 } from '../../../src/js/data/providers/DataProvider.js';
-import { YjsProvider } from '../../../src/js/data/providers/YjsProvider.js';
 import { LocalJSONProvider } from '../../../src/js/data/providers/LocalJSONProvider.js';
+import { YjsProvider } from '../../../src/js/data/providers/YjsProvider.js';
 
 class DummyProvider extends DataProvider {
   init() {
