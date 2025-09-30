@@ -592,13 +592,17 @@ export class ServerClient {
         // Fetch the latest version to get the current ETag
         await this.loadState(document.getElementById('canvas'));
 
-        // Try saving again with the updated ETag - increment retry count to prevent infinite recursion
+        // Re-export current state after loading fresh data
+        const freshStateJsonString = exportToJSON();
+        const freshParsedState = JSON.parse(freshStateJsonString);
+
+        // Try saving again with the updated ETag and fresh state
         logger.info(
           `ServerClient: Retrying save after ETag refresh (attempt ${retryCount + 1})...`,
         );
         return await this.updateExistingMap(
           serverUri,
-          parsedState,
+          freshParsedState,
           retryCount + 1,
         );
       } catch (retryError) {
