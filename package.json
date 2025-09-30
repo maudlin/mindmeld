@@ -16,7 +16,10 @@
     "test:unit": "jest --coverage",
     "test:e2e": "playwright test",
     "test:e2e:smoke": "playwright test tests/e2e/smoke/",
-    "test:dev": "npm run test:unit && npm run test:e2e",
+    "test:e2e:integration": "playwright test --grep '@integration|@server-required'",
+    "test:e2e:no-integration": "playwright test --grep-invert '@integration|@server-required'",
+    "test:dev": "npm run test:unit && npm run test:e2e:no-integration",
+    "test:dev:full": "npm run test:unit && npm run test:e2e",
     "test:ci": "npm run test:unit && npm run test:e2e:smoke",
     "test": "npm run test:dev",
     "e2e:instrument": "rm -rf .instrumented && BABEL_ENV=e2e-instrument babel src --out-dir .instrumented --extensions \".js\" --source-maps inline",
@@ -104,9 +107,5 @@
     "statements": 80,
     "functions": 80,
     "branches": 80
-  },
-  "dependencies": {
-    "y-websocket": "^3.0.0",
-    "yjs": "^13.6.27"
   }
 }
