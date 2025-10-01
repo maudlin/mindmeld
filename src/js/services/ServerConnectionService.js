@@ -1,5 +1,7 @@
 // src/js/services/ServerConnectionService.js
-// ServerConnectionService - Two-phase server connection management for collaboration
+// Two-phase server connection management for collaboration:
+//   Phase 1: Server validation and configuration (validate server and capabilities without connecting)
+//   Phase 2: WebSocket connection during map loading (connect for real-time collaboration, prevents double-hydration)
 
 /**
  * ServerConnectionService handles the two-phase connection pattern:

@@ -1,5 +1,5 @@
 // tests/unit/data/providers/OriginTracker.test.js
-// TDD Tests for Origin Marking System - Prevents feedback loops in collaborative scenarios
+// Unit tests for Origin Marking System - Prevents feedback loops in collaborative scenarios
 
 import { jest } from '@jest/globals';
 

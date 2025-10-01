@@ -39,7 +39,7 @@ describe('ProviderCoordinator', () => {
     jest.clearAllMocks();
 
     // Reset ProviderCoordinator state before each test
-    ProviderCoordinator._reset?.(); // Will be implemented during GREEN phase
+    ProviderCoordinator._reset?.();
   });
 
   describe('Provider Registration', () => {

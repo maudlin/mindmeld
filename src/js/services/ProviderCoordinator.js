@@ -18,7 +18,7 @@ import { logger } from './logger.js';
 export class ProviderCoordinator {
   // Private static fields for provider management
   static #providers = new Map(); // Map<string, Provider>
-  static #currentProvider = null;
+  static #currentProvider = null; // Provider|null
 
   // Required interface methods that all providers must implement
   static #REQUIRED_METHODS = [

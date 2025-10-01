@@ -1,5 +1,5 @@
 // tests/unit/interactions/behaviors/NavbarBehavior.test.js
-// TDD tests for navbar functionality including map title editing
+// Tests for navbar functionality, including map title editing
 
 describe('NavbarBehavior - Navbar Functionality', () => {
   let NavbarBehavior;

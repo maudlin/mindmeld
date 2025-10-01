@@ -1,5 +1,5 @@
 // tests/unit/services/ServerConnectionService.test.js
-// TDD Tests for ServerConnectionService - Two-phase server connection management
+// Unit tests for ServerConnectionService - Two-phase server connection management
 
 import { jest } from '@jest/globals';
 
