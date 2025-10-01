@@ -55,6 +55,10 @@ export class TouchAdapter extends BaseAdapter {
       previousCenter: null, // Previous frame center for delta-based pan
       pinchThreshold: 0.15, // Increased from 10% to 15% for less sensitivity
     };
+
+    // WeakMap to store event handlers associated with toolbar buttons
+    // Prevents memory leaks by allowing garbage collection when buttons are removed
+    this.toolbarHandlers = new WeakMap();
   }
 
   /**
@@ -137,6 +141,9 @@ export class TouchAdapter extends BaseAdapter {
     // Set up touch-specific enhancements
     this.setupTouchEnhancements();
 
+    // Add toolbar button event listeners
+    this.setupToolbarEventListeners();
+
     logger.info('TouchAdapter: Touch event listeners initialized successfully');
   }
 
@@ -166,6 +173,9 @@ export class TouchAdapter extends BaseAdapter {
       clearTimeout(this.longPressTimer);
       this.longPressTimer = null;
     }
+
+    // Remove toolbar button listeners
+    this.cleanupToolbarEventListeners();
 
     // Reset state
     this.canvas = null;
@@ -214,25 +224,14 @@ export class TouchAdapter extends BaseAdapter {
           const touch = event.touches[0];
           const now = Date.now();
 
-          // Check for toolbar button interactions first
+          // Toolbar button interactions are now handled by dedicated touchend listeners
+          // Skip processing if touch is on a toolbar button
           if (
             touch.target &&
             touch.target.dataset &&
             touch.target.dataset.toolbarAction
           ) {
-            logger.info(
-              `TouchAdapter: Toolbar button touch detected: ${touch.target.dataset.toolbarAction}`,
-              {
-                hasToolbarBehavior: !!this.toolbarBehavior,
-                buttonElement: touch.target,
-                disabled: touch.target.disabled,
-              },
-            );
-            this.handleToolbarButtonInteraction(
-              event,
-              touch.target.dataset.toolbarAction,
-            );
-            return;
+            return; // Let dedicated toolbar listeners handle this
           }
 
           // Store touch start data for gesture detection
@@ -436,6 +435,57 @@ export class TouchAdapter extends BaseAdapter {
     logger.info(
       'TouchAdapter: Native touch handlers setup complete (single source of truth)',
     );
+  }
+
+  /**
+   * Set up toolbar button event listeners
+   */
+  setupToolbarEventListeners() {
+    // Find all toolbar action buttons
+    const toolbarButtons = document.querySelectorAll('[data-toolbar-action]');
+
+    toolbarButtons.forEach((button) => {
+      // Store bound handler for cleanup
+      const boundHandler = (event) => {
+        logger.info(
+          '🔧 TouchAdapter: Toolbar button touched:',
+          button.dataset.toolbarAction,
+        );
+        this.handleToolbarButtonInteraction(
+          event,
+          button.dataset.toolbarAction,
+        );
+      };
+
+      // Store handler in WeakMap to prevent memory leaks
+      this.toolbarHandlers.set(button, boundHandler);
+
+      // Add touchend listener (touchend is the touch equivalent of click)
+      button.addEventListener('touchend', boundHandler);
+    });
+
+    logger.info(
+      'TouchAdapter: Toolbar button listeners added for',
+      toolbarButtons.length,
+      'buttons',
+    );
+  }
+
+  /**
+   * Clean up toolbar button event listeners
+   */
+  cleanupToolbarEventListeners() {
+    const toolbarButtons = document.querySelectorAll('[data-toolbar-action]');
+
+    toolbarButtons.forEach((button) => {
+      const handler = this.toolbarHandlers.get(button);
+      if (handler) {
+        button.removeEventListener('touchend', handler);
+        this.toolbarHandlers.delete(button);
+      }
+    });
+
+    logger.info('TouchAdapter: Toolbar button listeners cleaned up');
   }
 
   /**

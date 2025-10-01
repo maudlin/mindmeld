@@ -241,6 +241,7 @@ export class SelectionBoxBehavior {
       position: 'absolute',
       border: '1px dashed #000',
       backgroundColor: 'rgba(0, 0, 255, 0.1)',
+      borderRadius: '3px',
       left: `${startX}px`,
       top: `${startY}px`,
       width: '0px',
