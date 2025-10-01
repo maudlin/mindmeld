@@ -287,18 +287,40 @@ describe('TouchAdapter - Native Gesture Detection', () => {
         }),
       };
 
+      // Mock document.querySelectorAll to return our mock button
+      const originalQuerySelectorAll = document.querySelectorAll;
+      document.querySelectorAll = jest.fn((selector) => {
+        if (selector === '[data-toolbar-action]') {
+          return [mockDeleteButton];
+        }
+        return [];
+      });
+
       const testAdapter = new TouchAdapter(mockInteractionController);
       await testAdapter.initialize(mockEventBus);
 
-      // Simulate touch on delete button
-      const touch = createMockTouch(1, 100, 100, mockDeleteButton);
-      const touchEvent = createTouchEvent('touchstart', [touch]);
+      // Verify touchend listener was registered
+      expect(mockDeleteButton.addEventListener).toHaveBeenCalledWith(
+        'touchend',
+        expect.any(Function),
+      );
 
-      testAdapter.boundHandlers.touchStart(touchEvent);
+      // Get the registered handler and simulate touchend
+      const touchendHandler = mockDeleteButton.addEventListener.mock.calls.find(
+        (call) => call[0] === 'touchend',
+      )[1];
+
+      const touch = createMockTouch(1, 100, 100, mockDeleteButton);
+      const touchEvent = createTouchEvent('touchend', [touch]);
+
+      touchendHandler(touchEvent);
 
       expect(mockToolbarBehavior.handleDeleteAction).toHaveBeenCalledWith(
         'touch',
       );
+
+      // Restore original querySelectorAll
+      document.querySelectorAll = originalQuerySelectorAll;
     });
 
     test('should handle connector switch button touches and delegate to ToolbarBehavior', async () => {
@@ -324,18 +346,40 @@ describe('TouchAdapter - Native Gesture Detection', () => {
         }),
       };
 
+      // Mock document.querySelectorAll to return our mock button
+      const originalQuerySelectorAll = document.querySelectorAll;
+      document.querySelectorAll = jest.fn((selector) => {
+        if (selector === '[data-toolbar-action]') {
+          return [mockSwitchButton];
+        }
+        return [];
+      });
+
       const testAdapter = new TouchAdapter(mockInteractionController);
       await testAdapter.initialize(mockEventBus);
 
-      // Simulate touch on switch button
-      const touch = createMockTouch(1, 100, 100, mockSwitchButton);
-      const touchEvent = createTouchEvent('touchstart', [touch]);
+      // Verify touchend listener was registered
+      expect(mockSwitchButton.addEventListener).toHaveBeenCalledWith(
+        'touchend',
+        expect.any(Function),
+      );
 
-      testAdapter.boundHandlers.touchStart(touchEvent);
+      // Get the registered handler and simulate touchend
+      const touchendHandler = mockSwitchButton.addEventListener.mock.calls.find(
+        (call) => call[0] === 'touchend',
+      )[1];
+
+      const touch = createMockTouch(1, 100, 100, mockSwitchButton);
+      const touchEvent = createTouchEvent('touchend', [touch]);
+
+      touchendHandler(touchEvent);
 
       expect(
         mockToolbarBehavior.handleConnectorTypeSwitch,
       ).toHaveBeenCalledWith('touch');
+
+      // Restore original querySelectorAll
+      document.querySelectorAll = originalQuerySelectorAll;
     });
   });
 
