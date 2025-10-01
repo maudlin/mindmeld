@@ -173,41 +173,6 @@ describe('MenuBehavior - Server Connection Integration', () => {
         mockServerClient = ServerClientModule.ServerClient;
       });
 
-      it('should handle load-from-server action when connected', async () => {
-        mockServerClient.getConnectionStatus.mockReturnValue({
-          isConnected: true,
-          connectionStatus: 'connected',
-        });
-        mockServerClient.loadState.mockResolvedValue(true);
-
-        const notificationManager =
-          require('../../../../src/js/services/notificationManager.js').notificationManager;
-
-        await behavior.handleLoadFromServer('click');
-
-        expect(mockServerClient.loadState).toHaveBeenCalledWith(mockCanvas);
-        expect(notificationManager.success).toHaveBeenCalledWith(
-          'Data loaded from server successfully!',
-        );
-      });
-
-      it('should show error when load-from-server clicked while disconnected', async () => {
-        mockServerClient.getConnectionStatus.mockReturnValue({
-          isConnected: false,
-          connectionStatus: 'disconnected',
-        });
-
-        const notificationManager =
-          require('../../../../src/js/services/notificationManager.js').notificationManager;
-
-        await behavior.handleLoadFromServer('click');
-
-        expect(mockServerClient.loadState).not.toHaveBeenCalled();
-        expect(notificationManager.error).toHaveBeenCalledWith(
-          'Not connected to server',
-        );
-      });
-
       it('should get server connection status for menu state', () => {
         mockServerConnectionService.getConnectionState.mockReturnValue({
           isConnected: true,
@@ -220,28 +185,6 @@ describe('MenuBehavior - Server Connection Integration', () => {
           isConnected: true,
           connectionStatus: 'connected',
         });
-      });
-
-      it('should determine available server actions based on connection', () => {
-        mockServerClient.getConnectionStatus.mockReturnValue({
-          isConnected: true,
-          connectionStatus: 'connected',
-        });
-
-        const actions = behavior.getAvailableServerActions();
-
-        expect(actions.loadFromServer).toBe(true);
-      });
-
-      it('should disable server actions when disconnected', () => {
-        mockServerClient.getConnectionStatus.mockReturnValue({
-          isConnected: false,
-          connectionStatus: 'disconnected',
-        });
-
-        const actions = behavior.getAvailableServerActions();
-
-        expect(actions.loadFromServer).toBe(false);
       });
     });
 
@@ -435,9 +378,7 @@ describe('MenuBehavior - Server Connection Integration', () => {
             isConnected: true,
             connectionStatus: 'connected',
           },
-          availableActions: {
-            loadFromServer: true,
-          },
+          availableActions: {},
         });
       });
 

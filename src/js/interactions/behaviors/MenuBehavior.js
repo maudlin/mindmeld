@@ -13,7 +13,6 @@ import { DataProviderService } from '../../services/DataProviderService.js';
 import { clearAllNotesAndConnections } from '../../data/dataStore.js';
 import { appState } from '../../data/observableState.js';
 import { notificationManager } from '../../services/notificationManager.js';
-import { ServerClient } from '../../services/serverClient.js';
 import { ServerConnectionService } from '../../services/serverConnectionService.js';
 import { logger } from '../../services/logger.js';
 
@@ -38,8 +37,8 @@ export class MenuBehavior {
     // API client instance
     this.mapsApi = null;
 
-    // Map state tracking
-    this.currentMapName = 'Untitled Map';
+    // Map state tracking - NavbarBehavior is the source of truth
+    // this.currentMapName removed - use NavbarBehavior instead
 
     logger.debug('MenuBehavior created');
   }
@@ -86,6 +85,12 @@ export class MenuBehavior {
     // Listen for server connection status changes to update menu UI
     this.eventBus.on('server.connection.status.changed', () => {
       this.updateMenuUI();
+    });
+
+    // Listen for map title changes from NavbarBehavior (source of truth)
+    this.eventBus.on('map.title.changed', (data) => {
+      logger.info('MenuBehavior: Map title changed, updating menu UI', data);
+      this.updateMenuUI(); // Update menu to reflect new map name
     });
 
     // Note: Menu actions now handled directly by adapters calling handleMenuAction
@@ -439,11 +444,7 @@ export class MenuBehavior {
     logger.info('Menu action selected', { action, inputType });
 
     // Show loading indicator for server operations
-    if (
-      ['connect-server', 'disconnect-server', 'load-from-server'].includes(
-        action,
-      )
-    ) {
+    if (['connect-server', 'disconnect-server'].includes(action)) {
       this.showMenuItemLoading(action, true);
     }
 
@@ -485,11 +486,6 @@ export class MenuBehavior {
         break;
       case 'disconnect-server':
         this.handleServerDisconnect(inputType);
-        break;
-      case 'load-from-server':
-        this.handleLoadFromServer(inputType).catch((error) =>
-          logger.error('MenuBehavior: Error in load from server:', error),
-        );
         break;
       case 'new-map':
         this.handleNewMap(inputType);
@@ -648,45 +644,6 @@ export class MenuBehavior {
   }
 
   /**
-   * Handle load from server action
-   */
-  async handleLoadFromServer(inputType) {
-    logger.info('Loading from server', { inputType });
-
-    try {
-      const status = ServerClient.getConnectionStatus();
-
-      if (!status.isConnected) {
-        notificationManager.error('Not connected to server');
-        return;
-      }
-
-      if (!this.canvas) {
-        logger.error(
-          'MenuBehavior: Canvas reference is null! Cannot load from server.',
-        );
-        notificationManager.error(
-          'Cannot load from server - canvas reference missing',
-        );
-        return;
-      }
-
-      const success = await ServerClient.loadState(this.canvas);
-      if (success) {
-        notificationManager.success('Data loaded from server successfully!');
-      } else {
-        notificationManager.error('Failed to load data from server');
-      }
-    } catch (error) {
-      logger.error('Error loading from server:', { error: error });
-      notificationManager.error('Failed to load data from server');
-    } finally {
-      // Always clear loading state
-      this.showMenuItemLoading('load-from-server', false);
-    }
-  }
-
-  /**
    * Get server connection status for menu state
    */
   getServerConnectionStatus() {
@@ -701,10 +658,7 @@ export class MenuBehavior {
    * Get available server actions based on connection status
    */
   getAvailableServerActions() {
-    const status = ServerClient.getConnectionStatus();
-    return {
-      loadFromServer: status.isConnected,
-    };
+    return {};
   }
 
   /**
@@ -863,19 +817,30 @@ export class MenuBehavior {
   }
 
   /**
-   * Get current map name
+   * Set current map name via NavbarBehavior (source of truth)
    */
-  getCurrentMapName() {
-    return this.currentMapName;
+  setCurrentMapName(name) {
+    const navbarBehavior = this.getNavbarBehavior();
+    if (navbarBehavior) {
+      navbarBehavior.setCurrentMapName(name);
+    }
+    this.updateMenuUI(); // Trigger menu refresh
+    logger.info('MenuBehavior: Map name updated via NavbarBehavior to:', name);
   }
 
   /**
-   * Set current map name and update UI
+   * Get NavbarBehavior instance from InteractionController
    */
-  setCurrentMapName(name) {
-    this.currentMapName = name || 'Untitled Map';
-    this.updateMenuUI(); // Trigger menu refresh
-    logger.info('MenuBehavior: Map name updated to:', this.currentMapName);
+  getNavbarBehavior() {
+    // Access NavbarBehavior through the InteractionController
+    if (this.interactionController) {
+      return this.interactionController.getBehavior('navbar');
+    }
+    // Fallback to canvas reference
+    if (this.canvas && this.canvas.interactionController) {
+      return this.canvas.interactionController.getBehavior('navbar');
+    }
+    return null;
   }
 
   /**
@@ -979,7 +944,6 @@ export class MenuBehavior {
     const menuText = connectItem?.querySelector('.server-menu-text');
     const statusDot = connectItem?.querySelector('.server-status-dot');
     const disconnectItem = document.querySelector('.server-disconnect-item');
-    const loadItem = document.querySelector('.server-load-item');
     // New map management items
     const newMapItem = document.querySelector('.server-new-map-item');
     const browseMapsItem = document.querySelector('.server-browse-maps-item');
@@ -989,7 +953,6 @@ export class MenuBehavior {
       !menuText ||
       !statusDot ||
       !disconnectItem ||
-      !loadItem ||
       !newMapItem ||
       !browseMapsItem
     ) {
@@ -997,9 +960,8 @@ export class MenuBehavior {
     }
 
     if (isConnected) {
-      // Update main menu item to show connected state with map name
-      const mapName = this.getCurrentMapName();
-      menuText.textContent = `Connected: ${mapName}`;
+      // Update main menu item to show connected state
+      menuText.textContent = 'Connected';
       statusDot.className = 'server-status-dot connected';
       statusDot.style.display = 'inline-block';
 
@@ -1008,7 +970,6 @@ export class MenuBehavior {
 
       // Show server operation items
       disconnectItem.style.display = 'flex';
-      loadItem.style.display = 'flex';
       // Show new map management items
       newMapItem.style.display = 'flex';
       browseMapsItem.style.display = 'flex';
@@ -1022,7 +983,6 @@ export class MenuBehavior {
 
       // Hide server operation items
       disconnectItem.style.display = 'none';
-      loadItem.style.display = 'none';
       // Hide new map management items
       newMapItem.style.display = 'none';
       browseMapsItem.style.display = 'none';
@@ -1036,10 +996,9 @@ export class MenuBehavior {
     const actionMap = {
       'connect-server': '.server-connect-item',
       'disconnect-server': '.server-disconnect-item',
-      'load-from-server': '.server-load-item',
     };
 
-    if (!(action in actionMap)) return;
+    if (!Object.prototype.hasOwnProperty.call(actionMap, action)) return;
     const selector = actionMap[action];
 
     const menuItem = document.querySelector(selector);

@@ -52,7 +52,7 @@ export class ServiceBootstrap extends BaseBootstrap {
       const dataProviderService = DataProviderService.getInstance();
 
       // Initialize provider for default map
-      dataProviderService.init(null, {
+      await dataProviderService.init(null, {
         onReady: () => {
           logger.info('ServiceBootstrap: DataProviderService ready');
         },

@@ -1,5 +1,12 @@
 // tests/unit/services/serverClient.test.js
 
+// Test constants
+const MOCK_MAP_DATE = new Date('2025-09-07').toLocaleDateString('en-US', {
+  month: 'numeric',
+  day: 'numeric',
+  year: 'numeric',
+});
+
 // Create mock objects - these will be reused across all tests
 const mockEventBus = {
   emit: jest.fn(),
@@ -109,7 +116,9 @@ describe('ServerClient', () => {
         isConnected: true,
         connectionStatus: 'connected',
       });
-      mockDataStore.exportToJSON.mockReturnValue('{"data":{"n":[],"c":[]}}');
+      mockDataStore.exportToJSON.mockReturnValue(
+        `{"data":{"n":[],"c":[]},"metadata":{"title":"MindMeld Map - ${MOCK_MAP_DATE}"}}`,
+      );
     });
 
     it('should create new map when no current map exists', async () => {
@@ -119,7 +128,7 @@ describe('ServerClient', () => {
         status: 201,
         json: jest.fn().mockResolvedValue({
           id: 'test-map-id',
-          name: 'MindMeld Map - 9/7/2025',
+          name: `MindMeld Map - ${MOCK_MAP_DATE}`,
           version: 1,
           updatedAt: '2025-09-07T11:40:09.628Z',
         }),
@@ -192,6 +201,7 @@ describe('ServerClient', () => {
           body: JSON.stringify({
             data: { n: [], c: [] },
             version: 1,
+            name: `MindMeld Map - ${MOCK_MAP_DATE}`,
           }),
         },
       );

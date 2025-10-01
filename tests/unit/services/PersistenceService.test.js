@@ -48,6 +48,9 @@ describe('PersistenceService', () => {
           currentColor: 'yellow',
           notes: {},
         },
+        metadata: {
+          title: 'Untitled Map',
+        },
       });
       expect(service.isInitialized).toBe(false);
     });

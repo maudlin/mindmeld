@@ -6,8 +6,8 @@ import {
   isValidOrigin,
   makeConnectionId,
 } from '../../../src/js/data/providers/DataProvider.js';
-import { YjsProvider } from '../../../src/js/data/providers/YjsProvider.js';
 import { LocalJSONProvider } from '../../../src/js/data/providers/LocalJSONProvider.js';
+import { YjsProvider } from '../../../src/js/data/providers/YjsProvider.js';
 
 class DummyProvider extends DataProvider {
   init() {
@@ -67,9 +67,9 @@ describe('DataProvider contract', () => {
     expect(typeof p.getMeta).toBe('function');
   });
 
-  test('YjsProvider skeleton is a DataProvider', () => {
+  test('YjsProvider skeleton is a DataProvider', async () => {
     const y = new YjsProvider();
-    const cleanup = y.init(null, { onReady: () => {} });
+    const cleanup = await y.init(null, { onReady: () => {} });
     expect(typeof cleanup).toBe('function');
     expect(typeof y.getSnapshot()).toBe('object');
     y.setMeta({ mapName: 'Test' });

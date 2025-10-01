@@ -1,5 +1,12 @@
 // tests/unit/services/serverClient.saveState.test.js
 
+// Test constants
+const MOCK_MAP_DATE = new Date('2025-09-07').toLocaleDateString('en-US', {
+  month: 'numeric',
+  day: 'numeric',
+  year: 'numeric',
+});
+
 // Create focused mock objects for this specific test suite
 const mockEventBus = {
   emit: jest.fn(),
@@ -77,7 +84,9 @@ describe('ServerClient - saveState', () => {
       isConnected: true,
       connectionStatus: 'connected',
     });
-    mockDataStore.exportToJSON.mockReturnValue('{"data":{"n":[],"c":[]}}');
+    mockDataStore.exportToJSON.mockReturnValue(
+      `{"data":{"n":[],"c":[]},"metadata":{"title":"MindMeld Map - ${MOCK_MAP_DATE}"}}`,
+    );
   });
 
   afterEach(() => {
@@ -90,7 +99,7 @@ describe('ServerClient - saveState', () => {
       status: 201,
       json: jest.fn().mockResolvedValue({
         id: 'test-map-id',
-        name: 'MindMeld Map - 9/7/2025',
+        name: `MindMeld Map - ${MOCK_MAP_DATE}`,
         version: 1,
         updatedAt: '2025-09-07T11:40:09.628Z',
       }),
@@ -151,6 +160,7 @@ describe('ServerClient - saveState', () => {
         body: JSON.stringify({
           data: { n: [], c: [] },
           version: 1,
+          name: `MindMeld Map - ${MOCK_MAP_DATE}`,
         }),
       },
     );

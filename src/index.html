@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MindMeld</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.1.0" />
+    <link rel="stylesheet" href="css/styles.css?v=1.2.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -31,8 +31,8 @@
       href="img/icon16.png"
       media="(prefers-color-scheme: dark)"
     />
-    <meta name="app-version" content="1.1.0" />
-    <meta name="build-date" content="2025-09-26" />
+    <meta name="app-version" content="1.2.0" />
+    <meta name="build-date" content="2025-10-01" />
   </head>
   <body>
     <nav id="navbar">
@@ -40,11 +40,15 @@
         <img src="img/icon64.png" alt="MindMeld Logo" id="logo-icon" />
         mindmeld
       </div>
-      <ul id="menu">
-        <li class="menu-item">
-          <a href="about.html" class="menu-link">About</a>
-        </li>
-      </ul>
+      <div id="map-title" class="editable-title">Untitled Map</div>
+      <div class="navbar-right">
+        <div id="collaborators" style="display: none"></div>
+        <ul id="menu">
+          <li class="menu-item">
+            <a href="about.html" class="menu-link">About</a>
+          </li>
+        </ul>
+      </div>
       <!-- Hidden elements for kebab menu functionality -->
       <div style="display: none">
         <button id="import-from-file-button">Import from File</button>
@@ -312,16 +316,17 @@
         >
           <span>Browse Maps...</span>
         </div>
-        <div class="kebab-menu-divider"></div>
+        <!-- TODO: REMOVE when MM-298 smart dialog is implemented -->
         <div
-          class="kebab-menu-item server-load-item"
+          class="kebab-menu-item server-save-map-item"
           role="menuitem"
-          data-action="load-from-server"
+          data-action="save-map-to-server"
           tabindex="0"
           style="display: none"
         >
-          <span>Load from Server</span>
+          <span>Save Map to Server</span>
         </div>
+        <div class="kebab-menu-divider"></div>
       </div>
     </div>
 
@@ -581,6 +586,6 @@
       </div>
     </div>
 
-    <script type="module" src="js/app.js?v=1.1.0"></script>
+    <script type="module" src="js/app.js?v=1.2.0"></script>
   </body>
 </html>

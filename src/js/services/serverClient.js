@@ -134,15 +134,12 @@ export class ServerClient {
       const stateJsonString = exportToJSON();
       const parsedState = JSON.parse(stateJsonString);
 
-      // Extract the actual data (notes and connections) from the wrapper
-      const stateData = parsedState.data;
-
       if (this.currentMapId && this.currentETag) {
-        // Update existing map
-        return await this.updateExistingMap(serverUri, stateData);
+        // Update existing map - pass complete state including metadata
+        return await this.updateExistingMap(serverUri, parsedState);
       } else {
-        // Create new map - use private method for auto-save
-        return await this._createNewMapInternal(serverUri, stateData);
+        // Create new map - pass complete state including metadata
+        return await this._createNewMapInternal(serverUri, parsedState);
       }
     } catch (error) {
       ServerConnectionService.setConnectionStatus('error');
@@ -400,6 +397,63 @@ export class ServerClient {
       // Import the map data into the canvas
       await importFromJSON(stateJsonString, canvas);
 
+      // Switch to YjsProvider for real-time collaboration
+      // This enables WebSocket-based sync instead of HTTP/ETag
+      try {
+        const { DataProviderService } = await import(
+          './DataProviderService.js'
+        );
+        const dataProviderService = DataProviderService.getInstance();
+
+        logger.info(
+          `ServerClient: Switching to YjsProvider for map ${mapData.id}`,
+        );
+
+        // Enable collaboration mode (switches from LocalJSON to Yjs)
+        const yjsEnabled = await dataProviderService.enableCollaboration(
+          serverUri,
+          mapData.id,
+        );
+
+        if (yjsEnabled) {
+          logger.info(
+            'ServerClient: Successfully enabled YjsProvider for real-time sync',
+          );
+
+          // Remove HTTP/ETag-based autosave listeners - Yjs handles sync via WebSocket
+          this.removeAutoSaveListeners();
+          this.autoSaveEnabled = false;
+          logger.info(
+            'ServerClient: Disabled HTTP autosave - using Yjs WebSocket sync',
+          );
+
+          // Initialize the Yjs provider with the loaded state
+          await dataProviderService.init(mapData.id, {
+            serverUrl: serverUri,
+            onReady: () => {
+              logger.info(
+                `ServerClient: YjsProvider connected to /yjs/${mapData.id}`,
+              );
+            },
+            onSync: (synced) => {
+              if (synced) {
+                logger.info('ServerClient: YjsProvider initial sync complete');
+              }
+            },
+          });
+        } else {
+          logger.warn(
+            'ServerClient: Failed to enable YjsProvider, falling back to LocalJSON + ETags',
+          );
+        }
+      } catch (error) {
+        logger.error(
+          'ServerClient: Error switching to YjsProvider:',
+          error.message,
+        );
+        // Continue with LocalJSONProvider if Yjs fails
+      }
+
       eventBus.emit('map.changed', {
         mapId: mapData.id,
         mapName: mapData.name,
@@ -423,10 +477,12 @@ export class ServerClient {
       logger.info('Error loading map:', error);
       throw error;
     } finally {
-      // Re-enable auto-save listeners and clear loading flag
+      // Clear loading flag immediately to prevent race conditions
+      this.loadingInProgress = false;
+
+      // Re-enable auto-save listeners after a delay to let import events settle
       setTimeout(() => {
         this.setupAutoSaveListeners();
-        this.loadingInProgress = false;
       }, 100);
     }
   }
@@ -492,7 +548,14 @@ export class ServerClient {
    * Internal method for creating new maps during auto-save
    * @private
    */
-  static async _createNewMapInternal(serverUri, stateData) {
+  static async _createNewMapInternal(serverUri, parsedState) {
+    // Extract map name from multiple metadata sources for YjsProvider compatibility
+    const mapName =
+      parsedState.metadata?.title || // Traditional path
+      window.dataProvider?.getMeta?.()?.mapName || // YjsProvider path
+      this.currentMapName || // Current state
+      `MindMeld Map - ${new Date().toLocaleDateString()}`;
+
     const response = await fetch(`${serverUri}/maps`, {
       method: 'POST',
       headers: {
@@ -500,8 +563,8 @@ export class ServerClient {
         Accept: 'application/json',
       },
       body: JSON.stringify({
-        name: `MindMeld Map - ${new Date().toLocaleDateString()}`,
-        data: stateData,
+        name: mapName,
+        data: parsedState.data,
       }),
     });
 
@@ -523,6 +586,9 @@ export class ServerClient {
     this.currentMapId = result.id;
     this.currentETag = etag;
 
+    // Clear maps cache since we have a new map
+    this.clearMapsCache();
+
     eventBus.emit('server.save.success', {
       mapId: result.id,
       version: result.version,
@@ -536,10 +602,60 @@ export class ServerClient {
   }
 
   /**
+   * Fetch the latest ETag for the current map without loading its data
+   * @private
+   * @returns {Promise<string>} The latest ETag
+   */
+  static async fetchLatestETag(serverUri) {
+    if (!this.currentMapId) {
+      throw new Error('No current map ID to fetch ETag for');
+    }
+
+    const normalizedUri = serverUri.replace(/\/$/, '');
+    const response = await fetch(
+      `${normalizedUri}/maps/${encodeURIComponent(this.currentMapId)}`,
+      {
+        method: 'HEAD',
+        headers: {
+          Accept: 'application/json',
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch ETag: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    const etag = response.headers.get('ETag')?.replace(/"/g, '');
+    if (!etag) {
+      throw new Error('Server did not return an ETag');
+    }
+
+    return etag;
+  }
+
+  /**
    * Update existing map on server
    * @private
    */
-  static async updateExistingMap(serverUri, stateData, retryCount = 0) {
+  static async updateExistingMap(serverUri, parsedState, retryCount = 0) {
+    // Extract map name from multiple metadata sources for YjsProvider compatibility
+    const mapName =
+      parsedState.metadata?.title || // Traditional path
+      window.dataProvider?.getMeta?.()?.mapName; // YjsProvider path
+
+    const requestBody = {
+      data: parsedState.data,
+      version: 1,
+    };
+
+    // Include name in update if metadata provides one
+    if (mapName) {
+      requestBody.name = mapName;
+    }
+
     const response = await fetch(`${serverUri}/maps/${this.currentMapId}`, {
       method: 'PUT',
       headers: {
@@ -547,10 +663,7 @@ export class ServerClient {
         Accept: 'application/json',
         'If-Match': `"${this.currentETag}"`,
       },
-      body: JSON.stringify({
-        data: stateData,
-        version: 1,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (response.status === 409) {
@@ -566,20 +679,26 @@ export class ServerClient {
       }
 
       logger.info(
-        `ServerClient: ETag conflict detected (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), auto-resolving by fetching latest version`,
+        `ServerClient: ETag conflict detected (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), fetching latest ETag`,
       );
 
       try {
-        // Fetch the latest version to get the current ETag
-        await this.loadState(document.getElementById('canvas'));
+        // Fetch just the ETag without reloading map data (preserves user changes)
+        const latestETag = await this.fetchLatestETag(serverUri);
+        const oldETag = this.currentETag;
+        this.currentETag = latestETag;
 
-        // Try saving again with the updated ETag - increment retry count to prevent infinite recursion
         logger.info(
-          `ServerClient: Retrying save after ETag refresh (attempt ${retryCount + 1})...`,
+          `ServerClient: ETag refreshed from ${oldETag} to ${latestETag}`,
         );
+        logger.info(
+          `ServerClient: Retrying save with refreshed ETag (attempt ${retryCount + 1})...`,
+        );
+
+        // Retry with the same state but updated ETag
         return await this.updateExistingMap(
           serverUri,
-          stateData,
+          parsedState,
           retryCount + 1,
         );
       } catch (retryError) {
@@ -587,6 +706,7 @@ export class ServerClient {
           'ServerClient: Failed to resolve ETag conflict:',
           retryError.message,
         );
+        ServerConnectionService.setConnectionStatus('error');
         eventBus.emit('server.save.error', {
           error:
             'Could not save - map was modified elsewhere. Changes may be lost.',
@@ -770,6 +890,52 @@ export class ServerClient {
 
     await importFromJSON(stateJsonString, canvas);
 
+    // Switch to YjsProvider for real-time collaboration
+    try {
+      const { DataProviderService } = await import('./DataProviderService.js');
+      const dataProviderService = DataProviderService.getInstance();
+
+      logger.info(
+        `ServerClient: Switching to YjsProvider for map ${mapData.id}`,
+      );
+
+      const yjsEnabled = await dataProviderService.enableCollaboration(
+        serverUri,
+        mapData.id,
+      );
+
+      if (yjsEnabled) {
+        logger.info(
+          'ServerClient: Successfully enabled YjsProvider for real-time sync',
+        );
+
+        // Remove HTTP/ETag-based autosave listeners - Yjs handles sync via WebSocket
+        this.removeAutoSaveListeners();
+        this.autoSaveEnabled = false;
+        logger.info(
+          'ServerClient: Disabled HTTP autosave - using Yjs WebSocket sync',
+        );
+
+        await dataProviderService.init(mapData.id, {
+          serverUrl: serverUri,
+          onReady: () => {
+            logger.info(
+              `ServerClient: YjsProvider connected to /yjs/${mapData.id}`,
+            );
+          },
+        });
+      } else {
+        logger.warn(
+          'ServerClient: Failed to enable YjsProvider, falling back to LocalJSON + ETags',
+        );
+      }
+    } catch (error) {
+      logger.error(
+        'ServerClient: Error switching to YjsProvider:',
+        error.message,
+      );
+    }
+
     eventBus.emit('server.load.success', {
       mapId: mapData.id,
       mapName: mapData.name,
@@ -861,6 +1027,21 @@ export class ServerClient {
    * @returns {boolean} True if auto-save enabled successfully
    */
   static enableAutoSave() {
+    // Don't enable HTTP-based autosave when using YjsProvider
+    // YjsProvider handles sync via WebSocket, not HTTP PUT with ETags
+    const dataProvider = window.dataProvider;
+    const isUsingYjs = dataProvider?.constructor?.name === 'YjsProvider';
+
+    if (isUsingYjs) {
+      logger.info(
+        'ServerClient: Auto-save disabled - using YjsProvider for real-time sync',
+      );
+      eventBus.emit('server.autosave.disabled', {
+        reason: 'Using YjsProvider - real-time sync via WebSocket',
+      });
+      return false;
+    }
+
     const connectionState = ServerConnectionService.getConnectionState();
 
     if (!connectionState.isConnected) {
@@ -917,9 +1098,21 @@ export class ServerClient {
 
   /**
    * Set up event listeners for auto-save triggers
+   * Only sets up listeners for LocalJSONProvider (not YjsProvider)
    */
   static setupAutoSaveListeners() {
-    // Listen for events that should trigger auto-save
+    // Don't set up listeners if using YjsProvider
+    const dataProvider = window.dataProvider;
+    const isUsingYjs = dataProvider?.constructor?.name === 'YjsProvider';
+
+    if (isUsingYjs) {
+      logger.info(
+        'ServerClient: Skipping auto-save listener setup - using YjsProvider',
+      );
+      return;
+    }
+
+    // Listen for events that should trigger auto-save (LocalJSONProvider only)
     eventBus.on('note.created', ServerClient.debouncedSave);
     eventBus.on('note.updated', ServerClient.debouncedSave);
     eventBus.on('note.deleted', ServerClient.debouncedSave);
@@ -927,6 +1120,7 @@ export class ServerClient {
     eventBus.on('connection.updated', ServerClient.debouncedSave);
     eventBus.on('connection.deleted', ServerClient.debouncedSave);
     eventBus.on('note.color.changed', ServerClient.debouncedSave);
+    eventBus.on('map.title.changed', ServerClient.debouncedSave);
   }
 
   static removeAutoSaveListeners() {
@@ -938,6 +1132,7 @@ export class ServerClient {
     eventBus.off('connection.updated', this.debouncedSave);
     eventBus.off('connection.deleted', this.debouncedSave);
     eventBus.off('note.color.changed', this.debouncedSave);
+    eventBus.off('map.title.changed', this.debouncedSave);
   }
 
   /**
@@ -1041,6 +1236,26 @@ export class ServerClient {
   }
 
   /**
+   * Check if there are unsaved changes that would be lost by auto-loading
+   * @returns {boolean} true if there are unsaved changes
+   * @private
+   */
+  static hasUnsavedChanges() {
+    // If we've never saved, any edits are unsaved
+    if (!this.lastSaveTime && this.lastEditTime) {
+      return true;
+    }
+
+    // If we have both timestamps, check if edits occurred after last save
+    if (this.lastEditTime && this.lastSaveTime) {
+      return this.lastEditTime > this.lastSaveTime;
+    }
+
+    // No edit timestamp means no tracked changes
+    return false;
+  }
+
+  /**
    * Initialize server client functionality
    */
   static initialize() {
@@ -1059,9 +1274,13 @@ export class ServerClient {
         this.enableAutoSave();
         this.processQueuedSaves();
 
-        // Smart auto-loading: if canvas is empty, load server data
-        // But only if all required services are initialized
-        if (this.isCanvasEmpty() && this.areServicesReady()) {
+        // Smart auto-loading: only if canvas is empty AND no unsaved changes
+        // Prevent data loss by never auto-loading when user has unsaved work
+        if (this.hasUnsavedChanges()) {
+          logger.info(
+            'Skipping auto-load: unsaved changes detected, preventing data loss',
+          );
+        } else if (this.isCanvasEmpty() && this.areServicesReady()) {
           logger.info(
             'Canvas is empty and services ready, auto-loading server data...',
           );
@@ -1097,6 +1316,7 @@ export class ServerClient {
         ServerConnectionService.getConnectionState();
       if (
         currentConnectionState.isConnected &&
+        !this.hasUnsavedChanges() &&
         this.isCanvasEmpty() &&
         this.areServicesReady()
       ) {
@@ -1108,6 +1328,10 @@ export class ServerClient {
             });
           }
         });
+      } else if (this.hasUnsavedChanges()) {
+        logger.info(
+          'Skipping deferred auto-load: unsaved changes detected, preventing data loss',
+        );
       }
     });
 

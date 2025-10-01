@@ -30,6 +30,9 @@ export class PersistenceService {
         currentColor: 'yellow',
         notes: {},
       },
+      metadata: {
+        title: 'Untitled Map',
+      },
     };
 
     // Debounced save to prevent excessive localStorage writes
@@ -273,6 +276,10 @@ export class PersistenceService {
         colorState: {
           currentColor: parsedState.colorState?.currentColor || 'yellow',
           notes: parsedState.colorState?.notes || {},
+        },
+        metadata: {
+          title: parsedState.metadata?.title || 'Untitled Map',
+          ...parsedState.metadata,
         },
       };
 

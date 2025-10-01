@@ -71,6 +71,13 @@ jest.mock('../../../src/js/interactions/behaviors/ToolbarBehavior.js', () => ({
   })),
 }));
 
+jest.mock('../../../src/js/interactions/behaviors/NavbarBehavior.js', () => ({
+  NavbarBehavior: jest.fn().mockImplementation(() => ({
+    initialize: jest.fn().mockResolvedValue(undefined),
+    destroy: jest.fn().mockResolvedValue(undefined),
+  })),
+}));
+
 jest.mock(
   '../../../src/js/features/serverConnection/serverConnectionBehavior.js',
   () => ({
@@ -135,7 +142,7 @@ describe('InteractionController', () => {
       await interactionController.initialize(mockEventBus);
 
       expect(interactionController.isInitialized).toBe(true);
-      expect(interactionController.behaviors.size).toBe(10); // All behaviors including toolbar
+      expect(interactionController.behaviors.size).toBe(11); // All behaviors including toolbar and navbar
 
       // Verify ToolbarBehavior is registered
       expect(interactionController.getBehavior('toolbar')).toBeDefined();
@@ -155,7 +162,7 @@ describe('InteractionController', () => {
 
       expect(interactionController.isInitialized).toBe(true);
       // Should only register behaviors once
-      expect(interactionController.behaviors.size).toBe(10);
+      expect(interactionController.behaviors.size).toBe(11);
     });
   });
 
@@ -209,7 +216,7 @@ describe('InteractionController', () => {
 
       const state = interactionController.getState();
       expect(state.behaviors).toContain('toolbar');
-      expect(state.behaviorCount).toBe(10);
+      expect(state.behaviorCount).toBe(11);
     });
   });
 
@@ -225,7 +232,7 @@ describe('InteractionController', () => {
 
     test('should clear all behaviors including ToolbarBehavior', async () => {
       await interactionController.initialize(mockEventBus);
-      expect(interactionController.behaviors.size).toBe(10);
+      expect(interactionController.behaviors.size).toBe(11);
 
       await interactionController.destroy();
 

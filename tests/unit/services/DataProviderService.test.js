@@ -109,12 +109,12 @@ describe('DataProviderService TDD Tests', () => {
       expect(mockProvider.init).toHaveBeenCalledWith('test-map', options);
     });
 
-    test('should store cleanup function from provider.init', () => {
+    test('should store cleanup function from provider.init', async () => {
       const cleanupFn = jest.fn();
-      mockProvider.init.mockReturnValue(cleanupFn);
+      mockProvider.init.mockResolvedValue(cleanupFn);
 
       const service = DataProviderService.getInstance();
-      service.init('test-map');
+      await service.init('test-map');
 
       // Cleanup should be called when service is destroyed
       service.destroy();
@@ -311,11 +311,11 @@ describe('DataProviderService TDD Tests', () => {
       service = DataProviderService.getInstance();
     });
 
-    test('should support destroy operation', () => {
+    test('should support destroy operation', async () => {
       const cleanupFn = jest.fn();
-      mockProvider.init.mockReturnValue(cleanupFn);
+      mockProvider.init.mockResolvedValue(cleanupFn);
 
-      service.init('test-map');
+      await service.init('test-map');
       service.destroy();
 
       expect(cleanupFn).toHaveBeenCalled();

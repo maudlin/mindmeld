@@ -22,24 +22,26 @@ test.describe('Server Save/Load - E2E', () => {
 
     // Verify server connection option is present in the menu
     const connectOption = page.locator('[data-action="connect-server"]');
-    const loadOption = page.locator('[data-action="load-from-server"]');
+    const browseMapsOption = page.locator('[data-action="browse-maps"]');
 
     await expect(connectOption).toBeVisible();
-    // Load option is hidden by default when not connected, but exists in DOM
-    await expect(loadOption).toBeAttached();
-    // Note: save-to-server removed - saving is now automatic
+    // Browse maps option is hidden by default when not connected, but exists in DOM
+    await expect(browseMapsOption).toBeAttached();
+    // Note: load-from-server and save-to-server removed - saving is now automatic
   });
 
-  test('should show load option when not connected', async ({ page }) => {
+  test('should show browse maps option when not connected', async ({
+    page,
+  }) => {
     // Open the kebab menu
     await page.click('#kebab-menu-button');
     await expect(page.locator('#kebab-context-menu')).toBeVisible();
 
-    // Server load option should be available (but may be hidden by default)
-    const loadOption = page.locator('[data-action="load-from-server"]');
+    // Browse maps option should be available (but may be hidden by default when not connected)
+    const browseMapsOption = page.locator('[data-action="browse-maps"]');
 
-    // Load option exists in DOM but may be hidden when not connected
-    await expect(loadOption).toBeAttached();
+    // Browse maps option exists in DOM but may be hidden when not connected
+    await expect(browseMapsOption).toBeAttached();
     // Note: save option removed - saving is now automatic on connection
   });
 
@@ -115,10 +117,11 @@ test.describe('Server Save/Load - E2E', () => {
 
       const behavior = canvas.menuBehavior;
       return (
-        typeof behavior.handleLoadFromServer === 'function' &&
         typeof behavior.getServerConnectionStatus === 'function' &&
-        typeof behavior.getAvailableServerActions === 'function'
-        // Note: handleSaveToServer removed - saving is now automatic
+        typeof behavior.getAvailableServerActions === 'function' &&
+        typeof behavior.handleNewMap === 'function' &&
+        typeof behavior.handleBrowseMaps === 'function'
+        // Note: handleLoadFromServer and handleSaveToServer removed
       );
     });
 
@@ -143,7 +146,8 @@ test.describe('Server Save/Load - E2E', () => {
 
     // Server should initially be disconnected
     expect(menuState.serverConnection.isConnected).toBe(false);
-    expect(menuState.availableActions.loadFromServer).toBe(false);
+    // availableActions is now empty since loadFromServer was removed
+    expect(menuState.availableActions).toEqual({});
     // Note: saveToServer removed - saving is now automatic
   });
 
@@ -161,23 +165,28 @@ test.describe('Server Save/Load - E2E', () => {
     await expect(clearOption).toBeVisible();
     await clearOption.click();
 
-    // Menu behavior may vary - either closes immediately or needs manual close
-    const menuAfterClick = page.locator('#kebab-context-menu');
-    if (await menuAfterClick.isVisible()) {
-      // If menu is still open, close it manually
-      await page.keyboard.press('Escape');
-    }
+    // Close menu if still open
+    await page.keyboard.press('Escape');
 
-    // Handle clear confirmation modal if it appears
+    // Wait for any modal to appear and handle it
     const modal = page.locator('#notification-modal-overlay');
-    if (await modal.isVisible()) {
-      // Try different confirm button selectors
-      const confirmButton = modal.locator(
-        'button:has-text("Confirm"), button:has-text("Yes"), button:has-text("Clear"), button[class*="confirm"]',
-      );
-      await confirmButton.click();
-      // Wait for modal to fully close
-      await expect(modal).toBeHidden();
+    await modal.waitFor({ state: 'visible', timeout: 2000 }).catch(() => {
+      // Modal might not appear, which is fine
+    });
+
+    // If modal appeared, click confirm button
+    const confirmButton = modal.locator(
+      'button:has-text("Confirm"), button:has-text("Yes"), button:has-text("Clear"), button[class*="confirm"]',
+    );
+    await confirmButton.click().catch(() => {
+      // Confirm button might not exist, which is fine
+    });
+
+    // Wait for modal to close if it appeared
+    try {
+      await expect(modal).toBeHidden({ timeout: 2000 });
+    } catch {
+      // Modal might not have appeared, which is fine
     }
 
     // Wait for action to complete

@@ -57,11 +57,24 @@ export default defineConfig({
       name: 'dev-chromium',
       testMatch: '**/*.spec.js',
       use: { ...devices['Desktop Chrome'], hasTouch: true },
+      // Dev runs all tests including @integration tagged ones
     },
     ...(isCI
       ? [
-          { name: 'ci-chromium', use: { ...devices['Desktop Chrome'] } },
-          { name: 'ci-webkit', use: { ...devices['Desktop Safari'] } },
+          {
+            name: 'ci-chromium',
+            use: { ...devices['Desktop Chrome'] },
+            // CI excludes tests requiring external servers
+            testIgnore: ['**/integration/**', '**/*.integration.spec.js'],
+            grep: /^(?!.*@integration)(?!.*@server-required).*$/,
+          },
+          {
+            name: 'ci-webkit',
+            use: { ...devices['Desktop Safari'] },
+            // CI excludes tests requiring external servers
+            testIgnore: ['**/integration/**', '**/*.integration.spec.js'],
+            grep: /^(?!.*@integration)(?!.*@server-required).*$/,
+          },
           // Add firefox if you care: { name: 'ci-firefox', use: { ...devices['Desktop Firefox'] } },
         ]
       : []),
