@@ -817,14 +817,6 @@ export class MenuBehavior {
   }
 
   /**
-   * Get current map name from NavbarBehavior (source of truth)
-   */
-  getCurrentMapName() {
-    const navbarBehavior = this.getNavbarBehavior();
-    return navbarBehavior ? navbarBehavior.getCurrentMapName() : 'Untitled Map';
-  }
-
-  /**
    * Set current map name via NavbarBehavior (source of truth)
    */
   setCurrentMapName(name) {
@@ -968,9 +960,8 @@ export class MenuBehavior {
     }
 
     if (isConnected) {
-      // Update main menu item to show connected state with map name
-      const mapName = this.getCurrentMapName();
-      menuText.textContent = `Connected: ${mapName}`;
+      // Update main menu item to show connected state
+      menuText.textContent = 'Connected';
       statusDot.className = 'server-status-dot connected';
       statusDot.style.display = 'inline-block';
 

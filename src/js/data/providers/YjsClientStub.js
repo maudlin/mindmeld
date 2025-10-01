@@ -12,6 +12,7 @@ class YMap {
     this._name = name;
     this._data = new Map();
     this._observers = new Set();
+    this._doc = null; // Reference to parent YDoc (set by YDoc.getMap)
   }
 
   /**
@@ -20,6 +21,16 @@ class YMap {
   set(key, value) {
     const oldValue = this._data.get(key);
     this._data.set(key, value);
+
+    // Record change for transmission to server
+    if (this._doc && this._doc._transacting) {
+      this._doc._pendingChanges.push({
+        mapName: this._name,
+        key,
+        value,
+        action: 'add',
+      });
+    }
 
     // Notify observers of change
     this._notifyObservers({
@@ -52,6 +63,15 @@ class YMap {
     const result = this._data.delete(key);
 
     if (result) {
+      // Record change for transmission to server
+      if (this._doc && this._doc._transacting) {
+        this._doc._pendingChanges.push({
+          mapName: this._name,
+          key,
+          action: 'delete',
+        });
+      }
+
       this._notifyObservers({
         action: 'delete',
         key,
@@ -146,6 +166,7 @@ class YDoc {
     this._maps = new Map();
     this._transacting = false;
     this._pendingChanges = [];
+    this._provider = null; // Reference to WebsocketProvider for sending updates
   }
 
   /**
@@ -153,7 +174,9 @@ class YDoc {
    */
   getMap(name) {
     if (!this._maps.has(name)) {
-      this._maps.set(name, new YMap(name));
+      const yMap = new YMap(name);
+      yMap._doc = this; // Give map reference to doc for change tracking
+      this._maps.set(name, yMap);
     }
     return this._maps.get(name);
   }
@@ -182,8 +205,25 @@ class YDoc {
    * Process accumulated changes from transaction
    */
   _processPendingChanges() {
-    // In a full implementation, this would encode changes to binary format
-    // and send to server. For now, changes are already applied locally.
+    if (this._pendingChanges.length === 0) {
+      return;
+    }
+
+    // Group changes by map name
+    const changesByMap = {};
+    this._pendingChanges.forEach((change) => {
+      if (!changesByMap[change.mapName]) {
+        changesByMap[change.mapName] = {};
+      }
+      changesByMap[change.mapName][change.key] =
+        change.action === 'delete' ? null : change.value;
+    });
+
+    // Send updates to server via WebsocketProvider
+    if (this._provider) {
+      this._provider.sendUpdate(changesByMap);
+    }
+
     this._pendingChanges = [];
   }
 
@@ -235,8 +275,39 @@ class WebsocketProvider {
     this.ws = null;
     this.connected = false;
     this.synced = false;
+    this.destroyed = false;
+
+    // Queue for updates sent before WebSocket is ready
+    this._pendingUpdates = [];
+
+    // Event handlers for compatibility with YjsProvider expectations
+    this._eventHandlers = {
+      status: [],
+      sync: [],
+    };
+
+    // Connect doc to this provider for sending updates
+    this.doc._provider = this;
 
     this._connect();
+  }
+
+  /**
+   * Register event handler (compatibility with real Yjs WebsocketProvider)
+   */
+  on(event, handler) {
+    if (this._eventHandlers[event]) {
+      this._eventHandlers[event].push(handler);
+    }
+  }
+
+  /**
+   * Emit event to registered handlers
+   */
+  _emit(event, data) {
+    if (this._eventHandlers[event]) {
+      this._eventHandlers[event].forEach((handler) => handler(data));
+    }
   }
 
   /**
@@ -252,8 +323,14 @@ class WebsocketProvider {
         this.connected = true;
         console.log('[YjsProvider] WebSocket connected:', this.roomName);
 
+        // Emit status event for YjsProvider
+        this._emit('status', { status: 'connected' });
+
         // Send initial sync message
         this._sendSyncMessage();
+
+        // Flush any pending updates that were queued before connection
+        this._flushPendingUpdates();
       };
 
       this.ws.onmessage = (event) => {
@@ -302,8 +379,22 @@ class WebsocketProvider {
   /**
    * Handle incoming WebSocket messages
    */
-  _handleMessage(data) {
+  async _handleMessage(data) {
     try {
+      // Handle binary messages (Blob from real Yjs server)
+      if (data instanceof Blob) {
+        console.log('[YjsProvider] Received binary message (Yjs protocol)');
+        // Real Yjs uses binary protocol - for now, just mark as synced
+        // Full implementation would decode the Yjs binary update format
+        if (!this.synced) {
+          this.synced = true;
+          this._emit('sync', true);
+          console.log('[YjsProvider] Sync complete (binary protocol)');
+        }
+        return;
+      }
+
+      // Handle JSON messages (for testing or custom protocols)
       const message = JSON.parse(data);
 
       switch (message.type) {
@@ -313,6 +404,7 @@ class WebsocketProvider {
             this.doc.fromJSON(message.state);
           }
           this.synced = true;
+          this._emit('sync', true);
           break;
 
         case 'update':
@@ -360,9 +452,16 @@ class WebsocketProvider {
    */
   sendUpdate(changes) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      // Queue update for later if WebSocket not ready yet
+      console.log(
+        '[YjsProvider] Queueing update until WebSocket ready:',
+        changes,
+      );
+      this._pendingUpdates.push(changes);
       return;
     }
 
+    console.log('[YjsProvider] Sending update to server:', changes);
     this.ws.send(
       JSON.stringify({
         type: 'update',
@@ -370,6 +469,26 @@ class WebsocketProvider {
         changes,
       }),
     );
+  }
+
+  /**
+   * Flush pending updates after WebSocket connects
+   */
+  _flushPendingUpdates() {
+    if (this._pendingUpdates.length === 0) {
+      return;
+    }
+
+    console.log(
+      `[YjsProvider] Flushing ${this._pendingUpdates.length} pending updates`,
+    );
+
+    // Send all queued updates
+    this._pendingUpdates.forEach((changes) => {
+      this.sendUpdate(changes);
+    });
+
+    this._pendingUpdates = [];
   }
 
   /**

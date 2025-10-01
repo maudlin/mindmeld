@@ -32,7 +32,7 @@ export class YjsProvider extends DataProvider {
     this._setupServerMetadataSync();
   }
 
-  init(mapId, options = {}) {
+  async init(mapId, options = {}) {
     // Store connection details
     this._mapId = mapId;
     this._serverUrl = options.serverUrl;
@@ -44,8 +44,16 @@ export class YjsProvider extends DataProvider {
       return () => this.destroy();
     }
 
+    // Try to load real Yjs from server
+    const ServerYjs = await this._loadServerYjs(this._serverUrl);
+
+    // Use server-provided Yjs or fallback to stub
+    const YjsImpl = ServerYjs || { Y, WebsocketProvider };
+    const yjsSource = ServerYjs ? 'server-provided Yjs' : 'YjsClientStub';
+    logger.info(`YjsProvider: Using ${yjsSource} for collaboration`);
+
     // Initialize Y.Doc and data structures
-    this._ydoc = new Y.Doc();
+    this._ydoc = new YjsImpl.Y.Doc();
     this._yNotes = this._ydoc.getMap('notes');
     this._yConnections = this._ydoc.getMap('connections');
     this._yMeta = this._ydoc.getMap('meta');
@@ -55,7 +63,11 @@ export class YjsProvider extends DataProvider {
 
     // Connect to WebSocket server at /yjs/:mapId endpoint
     const wsUrl = `${this._serverUrl.replace(/^http/, 'ws')}/yjs/${mapId}`;
-    this._wsProvider = new WebsocketProvider(wsUrl, 'mindmeld', this._ydoc);
+    this._wsProvider = new YjsImpl.WebsocketProvider(
+      wsUrl,
+      'mindmeld',
+      this._ydoc,
+    );
 
     // Set up WebSocket event handlers
     this._wsProvider.on('status', (event) => {
@@ -102,6 +114,37 @@ export class YjsProvider extends DataProvider {
     this._yMeta = null;
     this._onChange = null;
     this._ready = false;
+  }
+
+  /**
+   * Dynamically load Yjs from server
+   * Returns the Yjs module or null if unavailable
+   */
+  async _loadServerYjs(serverUrl) {
+    try {
+      // Server provides bundled Yjs client at /client/mindmeld-yjs-client.js
+      const yjsModuleUrl = `${serverUrl}/client/mindmeld-yjs-client.js`;
+
+      logger.info(`YjsProvider: Attempting to load Yjs from ${yjsModuleUrl}`);
+      // eslint-disable-next-line no-unsanitized/method
+      const YjsModule = await import(yjsModuleUrl);
+
+      // Validate that we got the expected exports
+      if (YjsModule.Y && YjsModule.WebsocketProvider) {
+        logger.info('YjsProvider: Successfully loaded server-provided Yjs');
+        return YjsModule;
+      } else {
+        logger.warn(
+          'YjsProvider: Server Yjs module missing required exports (Y, WebsocketProvider)',
+        );
+        return null;
+      }
+    } catch (error) {
+      logger.info(
+        `YjsProvider: Could not load server Yjs (${error.message}), using stub`,
+      );
+      return null;
+    }
   }
 
   /**

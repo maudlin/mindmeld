@@ -82,11 +82,11 @@ export class DataProviderService {
    * Initialize the provider
    * @param {string|null} mapId
    * @param {import('../data/providers/DataProvider.js').ProviderInitOptions} [options]
-   * @returns {() => void} cleanup function
+   * @returns {Promise<() => void>} cleanup function
    */
-  init(mapId = null, options = {}) {
+  async init(mapId = null, options = {}) {
     this._ensureInitialized();
-    this._cleanup = this._provider.init(mapId, options);
+    this._cleanup = await this._provider.init(mapId, options);
     return this._cleanup;
   }
 
