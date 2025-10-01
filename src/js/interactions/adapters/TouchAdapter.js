@@ -55,6 +55,10 @@ export class TouchAdapter extends BaseAdapter {
       previousCenter: null, // Previous frame center for delta-based pan
       pinchThreshold: 0.15, // Increased from 10% to 15% for less sensitivity
     };
+
+    // WeakMap to store event handlers associated with toolbar buttons
+    // Prevents memory leaks by allowing garbage collection when buttons are removed
+    this.toolbarHandlers = new WeakMap();
   }
 
   /**
@@ -453,8 +457,8 @@ export class TouchAdapter extends BaseAdapter {
         );
       };
 
-      // Store for cleanup
-      button._touchAdapterHandler = boundHandler;
+      // Store handler in WeakMap to prevent memory leaks
+      this.toolbarHandlers.set(button, boundHandler);
 
       // Add touchend listener (touchend is the touch equivalent of click)
       button.addEventListener('touchend', boundHandler);
@@ -474,9 +478,10 @@ export class TouchAdapter extends BaseAdapter {
     const toolbarButtons = document.querySelectorAll('[data-toolbar-action]');
 
     toolbarButtons.forEach((button) => {
-      if (button._touchAdapterHandler) {
-        button.removeEventListener('touchend', button._touchAdapterHandler);
-        delete button._touchAdapterHandler;
+      const handler = this.toolbarHandlers.get(button);
+      if (handler) {
+        button.removeEventListener('touchend', handler);
+        this.toolbarHandlers.delete(button);
       }
     });
 

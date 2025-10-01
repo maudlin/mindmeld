@@ -46,6 +46,20 @@ const createMockNoteElement = (id = 'test-note') => ({
   })),
 });
 
+// Helper function to mock toolbar button queries
+const mockToolbarButtons = (buttons) => {
+  const originalQuerySelectorAll = document.querySelectorAll;
+  document.querySelectorAll = jest.fn((selector) => {
+    if (selector === '[data-toolbar-action]') {
+      return buttons;
+    }
+    return [];
+  });
+  return () => {
+    document.querySelectorAll = originalQuerySelectorAll;
+  };
+};
+
 describe('TouchAdapter - Native Gesture Detection', () => {
   let TouchAdapter;
   let touchAdapter;
@@ -288,13 +302,7 @@ describe('TouchAdapter - Native Gesture Detection', () => {
       };
 
       // Mock document.querySelectorAll to return our mock button
-      const originalQuerySelectorAll = document.querySelectorAll;
-      document.querySelectorAll = jest.fn((selector) => {
-        if (selector === '[data-toolbar-action]') {
-          return [mockDeleteButton];
-        }
-        return [];
-      });
+      const restoreQuerySelectorAll = mockToolbarButtons([mockDeleteButton]);
 
       const testAdapter = new TouchAdapter(mockInteractionController);
       await testAdapter.initialize(mockEventBus);
@@ -320,7 +328,7 @@ describe('TouchAdapter - Native Gesture Detection', () => {
       );
 
       // Restore original querySelectorAll
-      document.querySelectorAll = originalQuerySelectorAll;
+      restoreQuerySelectorAll();
     });
 
     test('should handle connector switch button touches and delegate to ToolbarBehavior', async () => {
@@ -347,13 +355,7 @@ describe('TouchAdapter - Native Gesture Detection', () => {
       };
 
       // Mock document.querySelectorAll to return our mock button
-      const originalQuerySelectorAll = document.querySelectorAll;
-      document.querySelectorAll = jest.fn((selector) => {
-        if (selector === '[data-toolbar-action]') {
-          return [mockSwitchButton];
-        }
-        return [];
-      });
+      const restoreQuerySelectorAll = mockToolbarButtons([mockSwitchButton]);
 
       const testAdapter = new TouchAdapter(mockInteractionController);
       await testAdapter.initialize(mockEventBus);
@@ -379,7 +381,7 @@ describe('TouchAdapter - Native Gesture Detection', () => {
       ).toHaveBeenCalledWith('touch');
 
       // Restore original querySelectorAll
-      document.querySelectorAll = originalQuerySelectorAll;
+      restoreQuerySelectorAll();
     });
   });
 
